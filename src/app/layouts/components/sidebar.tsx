@@ -4,7 +4,6 @@ import { ChevronDown, PanelLeft, PanelLeftClose, X } from 'lucide-react'
 import { navGroups, type NavItem } from '@/config/navigation'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
-import { asset } from '@/lib/asset'
 
 function isActivePath(to: string | undefined, pathname: string) {
   if (!to) return false
@@ -65,20 +64,13 @@ export function Sidebar() {
           collapsed ? 'lg:w-16' : 'lg:w-72',
         )}
       >
-        {/* Brand + controls */}
+        {/* Controls */}
         <div
           className={cn(
             'flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4',
-            collapsed ? 'justify-center' : 'justify-between',
+            collapsed ? 'justify-center' : 'justify-end',
           )}
         >
-          {!collapsed && (
-            <img
-              src={asset("media/logos/sidebar-logo.png")}
-              alt="Rajani Group"
-              className="mx-auto h-12 w-auto shrink-0 object-contain"
-            />
-          )}
           {/* Desktop collapse toggle */}
           <button
             onClick={toggle}
@@ -144,8 +136,8 @@ const leafClasses = (collapsed: boolean) =>
     'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
     collapsed && 'justify-center px-0',
     'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-    // Selected: soft navy highlight + white bold text; orange accent on the icon.
-    '[&.active]:bg-[#24365a] [&.active]:font-semibold [&.active]:text-white dark:[&.active]:bg-accent',
+    // Selected: soft sky tint + accent-colored bold text (icon picks up sidebar-primary).
+    '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground',
   )
 
 function NavLeaf({

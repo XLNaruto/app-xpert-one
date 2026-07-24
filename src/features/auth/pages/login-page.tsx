@@ -1,25 +1,41 @@
-import { Phone } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useLogin } from "../hooks/use-login";
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
+import { useLogin } from '../hooks/use-login'
 
-/** Step 1 of sign-in: collect a mobile number and request an OTP via Firebase. */
+const fieldClasses =
+  'h-11 border border-border bg-white/80 pl-10 text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 dark:border-white/15 dark:bg-white/5 dark:focus-visible:border-primary'
+
+/** Role · email · password sign-in. */
 export function LoginPage() {
-  const { register, errors, mobileField, onSubmit, isPending, isError, error } =
-    useLogin();
+  const { register, errors, onSubmit, isPending, isError, error } = useLogin()
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div>
-      <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-        Sign in
+      {/* Lock badge */}
+      <div className="mx-auto grid size-16 place-items-center rounded-full border border-primary/20 bg-primary/10">
+        <Lock className="size-7 text-primary" />
+      </div>
+
+      <h1 className="mt-5 text-center font-heading text-3xl font-bold tracking-tight text-foreground">
+        Welcome Back!
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Enter your mobile number and we&apos;ll text you a code to sign in.
+      <p className="mt-1.5 text-center text-sm text-muted-foreground">
+        Sign in to continue to XpertOne
       </p>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-5">
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        autoComplete="off"
+        className="mt-7 space-y-5"
+      >
         {isError && (
           <p
             role="alert"
@@ -29,54 +45,101 @@ export function LoginPage() {
           </p>
         )}
 
-        <div className="space-y-3.5">
-          <Label htmlFor="mobile" className="mb-3 block text-foreground/90">
-            Mobile number
+        {/* Email */}
+        <div className="space-y-2">
+          <Label htmlFor="email" className="block text-foreground/90">
+            Email
           </Label>
           <div className="group relative">
-            <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+            <Mail
+              strokeWidth={2.25}
+              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+            />
             <Input
-              id="mobile"
+              id="email"
               type="text"
-              inputMode="numeric"
-              maxLength={10}
               autoComplete="off"
-              placeholder="98765 43210"
-              className="h-11 border-foreground/15 bg-transparent pl-10 text-foreground shadow-none placeholder:text-muted-foreground/60 focus-visible:border-primary/60 focus-visible:ring-0"
-              {...mobileField}
-              onChange={(e) => {
-                e.target.value = e.target.value.replace(/\D/g, "");
-                mobileField.onChange(e);
-              }}
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              placeholder="Enter your email address"
+              className={fieldClasses}
+              {...register('email')}
             />
           </div>
-          {errors.mobile && (
-            <p className="text-xs text-destructive">{errors.mobile.message}</p>
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
 
-        <div className="flex w-fit items-center gap-2.5 text-sm text-muted-foreground">
-          <Checkbox
-            id="remember"
-            className="border-foreground/15 bg-transparent shadow-none"
-            {...register("remember")}
-          />
-          <Label
-            htmlFor="remember"
-            className="cursor-pointer select-none font-normal text-muted-foreground"
-          >
-            Remember me
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password" className="block text-foreground/90">
+            Password
           </Label>
+          <div className="group relative">
+            <Lock
+              strokeWidth={2.25}
+              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+            />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="off"
+              placeholder="Enter your password"
+              className={cn(fieldClasses, 'pr-10')}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-2 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:text-primary"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-xs text-destructive">{errors.password.message}</p>
+          )}
         </div>
 
+        {/* Remember + forgot */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2.5">
+            <Checkbox
+              id="remember"
+              className="border-border shadow-none"
+              {...register('remember')}
+            />
+            <Label
+              htmlFor="remember"
+              className="cursor-pointer select-none font-normal text-muted-foreground"
+            >
+              Remember me
+            </Label>
+          </div>
+          <Link
+            to="/forgot-password"
+            className="font-medium text-primary transition-opacity hover:opacity-80"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        {/* Sign in */}
         <Button
           type="submit"
-          className="group h-11 w-full text-sm font-semibold text-white"
+          className="h-12 w-full bg-linear-to-r from-primary to-primary-hover text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-95"
           disabled={isPending}
         >
-          {isPending ? "Sending code…" : "Send code"}
+          {isPending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
     </div>
-  );
+  )
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @import "@fontsource/figtree/400.css";
 @import "@fontsource/figtree/500.css";
@@ -15,100 +16,100 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
-/* Design tokens — the Sales Admin design system                       */
+/* Design tokens — the XpertOne design system                          */
 /* ------------------------------------------------------------------ */
-/* Palette: orange accent on deep-navy / slate base.
-   Brand accent -> --primary/--ring; navy shell -> --sidebar + dark surfaces. */
+/* Palette: sky-blue accent on a light slate base with a white sidebar.
+   Brand accent -> --primary/--ring; white shell -> --sidebar + light surfaces. */
 :root {
   --radius: 0.625rem;
 
-  --background: #f4f6fb; /* soft gray page   */
-  --foreground: #0f1b2d; /* darker navy-ink  */
+  --background: #f8fafc; /* soft slate page  */
+  --foreground: #0f172a; /* slate-900 ink    */
   --card: #ffffff; /* white cards      */
-  --card-foreground: #0f1b2d;
-  --popover: #f8fafc;
-  --popover-foreground: #0f1b2d;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
 
-  --primary: #ea580c; /* accent / orange-600 (burnt) */
+  --primary: #0ea5e9; /* accent / sky-500 */
   --primary-foreground: #ffffff;
-  --primary-hover: #c2410c; /* orange-700       */
+  --primary-hover: #0284c7; /* sky-600          */
 
-  --secondary: #d6dee9; /* between page & border */
-  --secondary-foreground: #0f1b2d;
-  --muted: #d6dee9;
-  --muted-foreground: #52627a; /* deeper slate-blue */
-  --accent: #fceee3; /* soft burnt-orange tint (subtle hover bg) */
-  --accent-foreground: #c2410c;
+  --secondary: #f1f5f9; /* slate-100, between page & border */
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b; /* slate-500        */
+  --accent: #e0f2fe; /* soft sky tint (subtle hover bg) */
+  --accent-foreground: #0369a1; /* sky-700          */
 
   --destructive: #b91c1c; /* danger           */
   --destructive-foreground: #ffffff;
   --success: #15803d;
   --warning: #b45309;
-  --info: #1d4ed8;
+  --info: #0284c7;
 
-  --border: #cbd5e1; /* slate-300        */
-  --input: #cbd5e1;
-  --ring: #ea580c;
+  --border: #e2e8f0; /* slate-200        */
+  --input: #e2e8f0;
+  --ring: #0ea5e9;
 
-  --chart-1: #ea580c; /* accent           */
-  --chart-2: #1d4ed8; /* info             */
+  --chart-1: #0ea5e9; /* accent / sky     */
+  --chart-2: #6366f1; /* indigo           */
   --chart-3: #15803d; /* success          */
   --chart-4: #b45309; /* warning          */
-  --chart-5: #6d28d9; /* violet           */
+  --chart-5: #8b5cf6; /* violet           */
 
-  --sidebar: #0a1a30; /* deep navy        */
-  --sidebar-foreground: #dde6f0;
-  --sidebar-primary: #ea580c;
+  --sidebar: #ffffff; /* white shell      */
+  --sidebar-foreground: #334155; /* slate-700 nav text */
+  --sidebar-primary: #0ea5e9;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #14263f;
-  --sidebar-accent-foreground: #dde6f0;
-  --sidebar-border: #1a2a40;
-  --sidebar-ring: #ea580c;
+  --sidebar-accent: #e0f2fe; /* active/hover tint */
+  --sidebar-accent-foreground: #0369a1; /* active nav text */
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0ea5e9;
 }
 
 .dark {
-  --background: #060f1c; /* near-black navy page */
-  --foreground: #dde6f0; /* soft off-white   */
-  --card: #0b1728; /* deep navy cards  */
-  --card-foreground: #dde6f0;
-  --popover: #0b1728;
-  --popover-foreground: #dde6f0;
+  --background: #0b1220; /* deep slate page  */
+  --foreground: #e2e8f0; /* soft off-white   */
+  --card: #111a2b; /* deep slate cards */
+  --card-foreground: #e2e8f0;
+  --popover: #111a2b;
+  --popover-foreground: #e2e8f0;
 
-  --primary: #f97316; /* orange-500 on dark */
-  --primary-foreground: #ffffff; /* white text on orange */
-  --primary-hover: #ea580c; /* orange-600       */
+  --primary: #38bdf8; /* sky-400 on dark  */
+  --primary-foreground: #04121f; /* dark ink on bright sky */
+  --primary-hover: #0ea5e9; /* sky-500          */
 
-  --secondary: #14263f;
-  --secondary-foreground: #dde6f0;
-  --muted: #14263f;
-  --muted-foreground: #7f90a6; /* muted slate-blue */
-  --accent: #1a2a40; /* subtle navy hover bg */
-  --accent-foreground: #f97316;
+  --secondary: #1e293b; /* slate-800        */
+  --secondary-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8; /* slate-400        */
+  --accent: #0c2438; /* dark sky tint hover bg */
+  --accent-foreground: #7dd3fc; /* sky-300          */
 
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --success: #16a34a;
   --warning: #d97706;
-  --info: #2563eb;
+  --info: #38bdf8;
 
-  --border: #1a2a40; /* dim navy border  */
-  --input: #1a2a40;
-  --ring: #f97316;
+  --border: #1e293b; /* slate-800 border */
+  --input: #1e293b;
+  --ring: #38bdf8;
 
-  --chart-1: #f97316;
-  --chart-2: #2563eb;
+  --chart-1: #38bdf8;
+  --chart-2: #818cf8;
   --chart-3: #16a34a;
   --chart-4: #d97706;
-  --chart-5: #8b5cf6;
+  --chart-5: #a78bfa;
 
-  --sidebar: #060f1c; /* match page background */
-  --sidebar-foreground: #dde6f0;
-  --sidebar-primary: #f97316;
-  --sidebar-primary-foreground: #060f1c;
-  --sidebar-accent: #0b1728;
-  --sidebar-accent-foreground: #dde6f0;
-  --sidebar-border: #1a2a40;
-  --sidebar-ring: #f97316;
+  --sidebar: #0b1220; /* match page background */
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #04121f;
+  --sidebar-accent: #0c2438;
+  --sidebar-accent-foreground: #7dd3fc;
+  --sidebar-border: #1e293b;
+  --sidebar-ring: #38bdf8;
 }
 
 @theme inline {

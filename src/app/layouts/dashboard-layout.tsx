@@ -1,27 +1,9 @@
-import { useEffect } from 'react'
 import { Outlet } from '@tanstack/react-router'
-import { useForegroundPush } from '@/features/notifications'
-import { useAppConfig } from '@/features/config'
-import { CompanySelectGate } from '@/features/company'
 import { asset } from '@/lib/asset'
 import { Sidebar } from './components/sidebar'
 import { Topbar } from './components/topbar'
 
-/** Register this device for FCM push once, and toast foreground messages. */
-function usePushBootstrap() {
-  // const register = useRegisterPushToken()
-  useForegroundPush()
-  useEffect(() => {
-    // register.mutate()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-}
-
 export function DashboardLayout() {
-  usePushBootstrap()
-  // Load the media base URL once, globally, so `mediaUrl()` can resolve image
-  // paths on every page inside the authenticated shell.
-  useAppConfig()
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
@@ -37,7 +19,7 @@ export function DashboardLayout() {
                 <span className="text-[22px] leading-none">©</span>
                 <span>
                   {new Date().getFullYear()}{' '}
-                  <span className="font-semibold text-foreground">Rajani Group</span>.
+                  <span className="font-semibold text-foreground">XpertOne</span>.
                   All Rights Reserved.
                 </span>
               </p>
@@ -58,9 +40,6 @@ export function DashboardLayout() {
           </footer>
         </main>
       </div>
-
-      {/* Required post-login company selection (multi-company admins only). */}
-      <CompanySelectGate />
     </div>
   )
 }

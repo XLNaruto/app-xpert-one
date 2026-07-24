@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
-      name: 'sales-admin-auth',
+      name: 'xpertone-auth',
       // Tokens encrypted at rest; hydrated explicitly in main.tsx so the
       // synchronous route guards see the restored session on first load.
       storage: createJSONStorage(createIdbSessionStorage),

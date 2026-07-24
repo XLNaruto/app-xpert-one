@@ -23,6 +23,6 @@ export const useConfigStore = create<ConfigState>()(
       mediaBaseUrl: '',
       setMediaBaseUrl: (mediaBaseUrl) => set({ mediaBaseUrl }),
     }),
-    { name: 'sales-admin-config' },
+    { name: 'xpertone-config' },
   ),
 )

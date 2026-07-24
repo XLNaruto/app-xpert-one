@@ -32,7 +32,7 @@ export const useUiStore = create<UiState>()(
       toggleTheme: () => set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
     }),
     {
-      name: 'sales-admin-ui',
+      name: 'xpertone-ui',
       // Don't persist the transient mobile drawer state.
       partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed, theme: s.theme }),
     },

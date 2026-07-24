@@ -5,7 +5,7 @@ import { pageNameForPath } from '@/config/navigation'
 import { OfflineScreen } from '@/features/error'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 
-const APP_NAME = 'Sales Admin'
+const APP_NAME = 'XpertOne'
 
 /**
  * Router context available to every route. The `queryClient` lets route
@@ -31,7 +31,7 @@ function RootComponent() {
   })
   const online = useOnlineStatus()
 
-  // Reflect the active page in the browser tab: "Sales Admin | <page>".
+  // Reflect the active page in the browser tab: "XpertOne | <page>".
   useEffect(() => {
     const pageName = pageNameForPath(pathname)
     document.title = pageName ? `${APP_NAME} | ${pageName}` : APP_NAME

@@ -1,33 +1,35 @@
-# CLAUDE.md — Sales Admin Web Portal
+# CLAUDE.md — XpertOne
 
-Guidance for Claude Code. Modular, feature-based architecture — TanStack Query for server state, Zustand for client state.
+Guidance for Claude Code. Modular, **feature-based** architecture — TanStack Query for server state, Zustand for client state.
 
 ## Stack
 
 - **React 19 + Vite + TypeScript** (strict)
 - **TanStack Query** — all server state
 - **TanStack Router** — file-based routing
-- **TanStack Table** — all data tables
+- **TanStack Table** — all data tables (`<DataTable>`)
 - **Zustand** — client/UI state only
 - **Tailwind + shadcn/ui** — styling & components
-- **Recharts** — sales / target analytics
 - **Axios** — HTTP · **Zod** — validation
-- **react-hook-form** — forms (onboarding, visit forms, TA/DA)
-- Maps: **leaflet + react-leaflet** (GPS)
+- **react-hook-form** — forms
 
-## First-time setup
+## Current status
 
-```bash
-npm create vite@latest sales-admin-portal -- --template react-ts
-cd sales-admin-portal
-npm install @tanstack/react-query @tanstack/react-router @tanstack/react-table zustand axios zod react-hook-form @hookform/resolvers
-npm install -D @tanstack/react-query-devtools @tanstack/router-devtools @tanstack/router-plugin vite-tsconfig-paths
-npm install tailwindcss @tailwindcss/vite
-npx shadcn@latest init          # choose the "@/" alias
-npm install recharts date-fns leaflet react-leaflet
-# fonts (design system)
-npm install @fontsource/space-grotesk @fontsource/inter @fontsource/jetbrains-mono
-```
+XpertOne is an early-stage admin portal. Only two screens are live today:
+
+| Route | Feature folder | Notes |
+|---|---|---|
+| `/dashboard` | `features/dashboard/` | Placeholder "Coming Soon" shell; KPI widgets land here later |
+| `/profile` | `features/profile/` | Read-only "My Profile" view |
+
+Authentication is **email + password** (`features/auth/`). There is **no backend
+API yet** — sign-in is a local mock that accepts any valid credentials and
+establishes a client session, and the profile screen returns mock data. Each
+feature `api/` hook is written so that when the real API arrives you only swap
+the hook's `queryFn`/`mutationFn` — nothing else changes.
+
+New feature modules get added under `src/features/` as the product grows, each
+following the same self-contained folder shape.
 
 ## Non-negotiable rules
 
@@ -39,50 +41,24 @@ npm install @fontsource/space-grotesk @fontsource/inter @fontsource/jetbrains-mo
 6. **`@/` alias**, never long relative chains.
 7. **One generic `<DataTable>`** powers every list screen.
 8. **Zustand stores stay small and single-concern**; select narrowly.
-9. **External integrations (Field Assist, WhatsApp) and calculations (TA/DA) stay behind a service/hook** — never leak SDKs or calc logic into components.
+9. **External integrations and calculations stay behind a service/pure-function boundary** — never leak SDKs or calc logic into components.
 
 ## Folder structure
 
 ```
 src/
-├── app/            providers, layouts (sidebar/topbar shell)
-├── routes/         file-based route tree
+├── app/            providers, router, layouts (sidebar/topbar shell)
+├── routes/         file-based route tree (TanStack Router)
 ├── features/       the modules — each self-contained
+│   ├── auth/         email/password sign-in (mock until the API lands)
+│   ├── dashboard/    KPI hub (placeholder for now)
+│   ├── profile/      "My Profile" view
+│   └── error/        404 + offline screens
 ├── components/     ui/ (shadcn), data-table/, charts/, maps/, common/
-├── lib/            api-client, query-client, query-keys, utils
-├── stores/         GLOBAL zustand: auth-store, ui-store
+├── lib/            api-client, http, query-client, query-keys, endpoints, utils
+├── stores/         GLOBAL zustand: auth-store, ui-store, config-store
 ├── hooks/ · types/ · config/ · styles/
 ```
-
-## The feature modules
-
-| Folder | Nav module(s) | Covers |
-|---|---|---|
-| `dashboard/` | 1 (Dashboard) | KPI dashboard, daily sales overview (zone/product/primary/secondary), team & beat performance, target vs achievement, attendance summary, AI analytics, daily summary |
-| `distributor-management/` | 1 + 4 | Onboarding, approval, category mapping, performance tracking, allocate to sales incharge |
-| `employee-management/` | 1 | Leave, expense, task management, pending approvals |
-| `communication/` | 1 | Internal comms, **WhatsApp integration** |
-| `team-management/` | 2 | Salesman hierarchy, monitoring, performance, productivity, daily activity, sales incharge onboarding |
-| `beat-tour/` | 3 | Beat creation/allocation/programs/planning; monthly & day-wise & territory tour planning, route mapping, party mapping, editable + next-day schedules |
-| `crm-sales/` | 4 | Sales-manager visit forms, route mgmt, service-center + distance-based allocation, meeting & CRM-controlled scheduling, secondary-sales/retailer/market-visit monitoring |
-| `approvals/` | 5 | Central inbox: tour / expense / attendance / leave approvals |
-| `gps-tracking/` | 6 | Salesman GPS, route + geo-location monitoring, **fake-location detection** |
-| `reports-analytics/` | 7 | Sales, target-achievement, attendance, visit-history, expense, performance reports |
-| `retailer-management/` | 8 | Onboarding, distributor mapping, performance, retailer-wise analytics, **Field Assist import** |
-| `expense-tada/` | 9 | TA/DA master, effective-date & HQ-based calc, additional expenses |
-| `notifications/` | 10 | Push notifications, sales alerts, birthday/anniversary/festival greetings |
-
-### Two intentional consolidations
-- **Distributor Management** is listed under both Dashboard (1) and CRM (4) → one `distributor-management/` feature.
-- **Approvals**: the `approvals/` feature is the central inbox; individual approve/reject **mutations** live with their source domain (leave in `employee-management/api/`, tour in `beat-tour/api/`, etc.) and the inbox composes them.
-
-## Domain specifics
-
-- **Field Assist import** → `retailer-management/api/`: import service + `useImportRetailers`, Zod-validate rows.
-- **WhatsApp** → `communication/api/`: wrap provider in one service; expose `useSendWhatsAppMessage`.
-- **GPS / fake-location** → `gps-tracking/`: live via Query `refetchInterval` or WebSocket → `setQueryData`; fake-location check is a **pure function** in the feature `lib/`.
-- **TA/DA** → `expense-tada/`: effective-date + HQ-based rules are **pure functions** (input → amount), UnitTest-able, separate from UI/API.
-- **Wizards** (distributor / retailer / incharge onboarding): step state in a feature-local Zustand slice; submit via one mutation.
 
 ## Conventions
 
@@ -101,4 +77,3 @@ npm run dev · npm run build · npm run preview · npm run lint
 - `npm run build` passes (no TS errors).
 - No server data in Zustand; no direct `fetch`/axios in components.
 - New API calls went through a feature `api/` hook + centralized query key.
-- External integrations and TA/DA calc stayed behind their service/pure-function boundary.

@@ -1,11 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  LayoutDashboard,
-  UserCog,
-  Network,
-  Building2,
-  MapPinned,
-} from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 export interface NavItem {
   label: string;
@@ -29,31 +23,12 @@ export const navGroups: NavGroup[] = [
     title: "Overview",
     items: [{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard }],
   },
-  {
-    title: "Sales Network",
-    items: [
-      { label: "Sales Incharge", to: "/sales-incharge", icon: UserCog },
-      {
-        label: "Sales Incharge Hierarchy",
-        to: "/sales-incharge-hierarchy",
-        icon: Network,
-      },
-      { label: "Distributor Management", to: "/distributors", icon: Building2 },
-    ],
-  },
-  {
-    title: 'Beat Foundation',
-    items: [{ label: 'Beat Creation', to: '/beats', icon: MapPinned }],
-  },
 ];
 
 /** Page names for routes that don't appear in the sidebar (auth, errors, etc.). */
 const extraTitles: Record<string, string> = {
   "/profile": "My Profile",
   "/login": "Login",
-  "/verify-otp": "Verify OTP",
-  "/forgot-password": "Forgot Password",
-  "/reset-password": "Reset Password",
 };
 
 /** Flattened nav items (parents + children) that have a `to`, longest path first. */

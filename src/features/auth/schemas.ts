@@ -1,24 +1,52 @@
 import { z } from 'zod'
 
-/** 10-digit Indian mobile number (leading 6–9). */
-const mobile = z
-  .string()
-  .trim()
-  .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit mobile number')
+/** Basic email shape — kept as a regex to stay version-agnostic across zod. */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Step 1 — request an OTP for a mobile number. */
-export const mobileSchema = z.object({
-  mobile,
+/** Email + password sign-in. */
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .regex(EMAIL_RE, 'Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
   remember: z.boolean(),
 })
 
-/** Step 2 — verify the 6-digit code. */
-export const otpSchema = z.object({
+export type LoginValues = z.infer<typeof loginSchema>
+
+/** Step 1 — request an OTP for the account email. */
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .regex(EMAIL_RE, 'Enter a valid email address'),
+})
+
+export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>
+
+/** Step 2 — verify the 6-digit OTP. */
+export const verifyOtpSchema = z.object({
   otp: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, 'Enter the 6-digit code'),
+    .length(6, 'Enter the 6-digit code')
+    .regex(/^\d+$/, 'Code must be digits only'),
 })
 
-export type MobileValues = z.infer<typeof mobileSchema>
-export type OtpValues = z.infer<typeof otpSchema>
+export type VerifyOtpValues = z.infer<typeof verifyOtpSchema>
+
+/** Step 3 — set a new password. */
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>
