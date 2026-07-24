@@ -135,9 +135,9 @@ const leafClasses = (collapsed: boolean) =>
   cn(
     'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
     collapsed && 'justify-center px-0',
-    'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+    'text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
     // Selected: soft sky tint + accent-colored bold text (icon picks up sidebar-primary).
-    '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground',
+    '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',
   )
 
 function NavLeaf({
@@ -186,14 +186,20 @@ function NavParent({
     if (childActive) setOpen(true)
   }, [childActive])
 
-  // Collapsed rail: flatten to icon-only child links.
+  // Collapsed rail: show the parent's own icon (no submenu), linking to its
+  // first child and highlighted when any child route is active.
   if (collapsed) {
+    const target = children.find((c) => c.to)?.to
+    if (!target) return null
     return (
-      <div className="space-y-0.5">
-        {children.map((c) => (
-          <NavLeaf key={c.to} item={c} collapsed onNavigate={onNavigate} />
-        ))}
-      </div>
+      <Link
+        to={target}
+        title={item.label}
+        onClick={onNavigate}
+        className={cn(leafClasses(true), childActive && 'active')}
+      >
+        <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
+      </Link>
     )
   }
 
@@ -204,7 +210,7 @@ function NavParent({
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className={cn(
-          'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+          'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
           childActive ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75',
         )}
       >
@@ -215,12 +221,28 @@ function NavParent({
         />
       </button>
       {open && (
-        <ul className="mt-0.5 ml-4 space-y-0.5 border-l border-sidebar-border pl-3">
-          {children.map((c) => (
-            <li key={c.to}>
-              <NavLeaf item={c} collapsed={false} onNavigate={onNavigate} />
-            </li>
-          ))}
+        <ul className="mt-0.5 ml-4 space-y-0.5 pl-3">
+          {children.map((c) =>
+            c.to ? (
+              <li key={c.to}>
+                <Link
+                  to={c.to}
+                  activeOptions={{ exact: c.exact ?? false }}
+                  onClick={onNavigate}
+                  className={cn(
+                    'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
+                    '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',
+                  )}
+                >
+                  <span className="grid size-[18px] shrink-0 place-items-center">
+                    <span className="size-1.5 rounded-full bg-current opacity-60 transition-opacity group-[.active]:bg-sidebar-primary group-[.active]:opacity-100" />
+                  </span>
+                  <span className="truncate">{c.label}</span>
+                </Link>
+              </li>
+            ) : null,
+          )}
         </ul>
       )}
     </div>

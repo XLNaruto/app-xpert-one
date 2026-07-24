@@ -8,6 +8,28 @@ export const queryKeys = {
     all: ['profile'] as const,
     me: () => [...queryKeys.profile.all, 'me'] as const,
   },
+  company: {
+    all: ['company'] as const,
+    list: () => [...queryKeys.company.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.company.all, 'detail', id] as const,
+  },
+  department: {
+    all: ['department'] as const,
+    list: () => [...queryKeys.department.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
+  },
+  state: {
+    all: ['state'] as const,
+    list: () => [...queryKeys.state.all, 'list'] as const,
+  },
+  district: {
+    all: ['district'] as const,
+    list: () => [...queryKeys.district.all, 'list'] as const,
+  },
+  asset: {
+    all: ['asset'] as const,
+    list: () => [...queryKeys.asset.all, 'list'] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     kpis: () => [...queryKeys.dashboard.all, 'kpis'] as const,

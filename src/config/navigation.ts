@@ -1,5 +1,11 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard } from "lucide-react";
+import {
+  Boxes,
+  LayoutDashboard,
+  Map,
+  MapPinned,
+  SlidersHorizontal,
+} from "lucide-react";
 
 export interface NavItem {
   label: string;
@@ -22,6 +28,28 @@ export const navGroups: NavGroup[] = [
   {
     title: "Overview",
     items: [{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard }],
+  },
+  {
+    title: "Master",
+    items: [
+      // {
+      //   label: "Company Setup",
+      //   icon: Settings2,
+      //   children: [
+      //     { label: "Company", to: "/company", icon: Building2 },
+      //     { label: "Department", to: "/department", icon: Building },
+      //   ],
+      // },
+      {
+        label: "General Setup",
+        icon: SlidersHorizontal,
+        children: [
+          { label: "State", to: "/state", icon: MapPinned },
+          { label: "District", to: "/district", icon: Map },
+          { label: "Assets", to: "/assets", icon: Boxes },
+        ],
+      },
+    ],
   },
 ];
 

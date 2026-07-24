@@ -177,18 +177,20 @@ export function AuthLayout() {
                     glow,
                   )}
                 />
-                <span
-                  className={cn(
-                    'relative grid size-9 place-items-center rounded-lg transition-transform duration-300 group-hover:scale-110 xl:size-10',
-                    tile,
-                    icon,
-                  )}
-                >
-                  <Icon className="size-4.5 xl:size-5" />
-                </span>
-                <p className="relative mt-2 text-sm font-semibold text-foreground xl:mt-3">
-                  {label}
-                </p>
+                <div className="relative flex items-center gap-2.5">
+                  <span
+                    className={cn(
+                      'grid size-9 place-items-center rounded-lg transition-transform duration-300 group-hover:scale-110 xl:size-10',
+                      tile,
+                      icon,
+                    )}
+                  >
+                    <Icon className="size-4.5 xl:size-5" />
+                  </span>
+                  <p className="text-sm font-semibold text-foreground">
+                    {label}
+                  </p>
+                </div>
                 {/* Animated accent bar */}
                 <span
                   className={cn(
