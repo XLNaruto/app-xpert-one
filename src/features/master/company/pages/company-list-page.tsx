@@ -1,50 +1,91 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { Building2, Plus } from 'lucide-react'
-import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/data-table'
-import { useCompanies } from '../api/use-companies'
-import { useDeleteCompany } from '../api/use-company-mutations'
-import { companyColumns } from '../components/company-columns'
+import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { useCompanyList } from '../hooks/use-company-list'
 import type { Company } from '../types'
 
 /** Company master — the list screen with view/edit/delete row actions. */
 export function CompanyListPage() {
-  const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useCompanies()
-  const deleteCompany = useDeleteCompany()
-  const [pendingDelete, setPendingDelete] = useState<Company | null>(null)
+  const {
+    rows,
+    isLoading,
+    isError,
+    error,
+    goToCreate,
+    goToDetail,
+    goToEdit,
+    pendingDelete,
+    setPendingDelete,
+    confirmDelete,
+    isDeleting,
+  } = useCompanyList()
 
-  const columns = useMemo(
-    () =>
-      companyColumns({
-        onView: (company) =>
-          navigate({ to: '/company/$companyId', params: { companyId: String(company.id) } }),
-        onEdit: (company) =>
-          navigate({
-            to: '/company/$companyId/edit',
-            params: { companyId: String(company.id) },
-          }),
-        onDelete: (company) => setPendingDelete(company),
-      }),
-    [navigate],
-  )
-
-  const confirmDelete = () => {
-    if (!pendingDelete) return
-    deleteCompany.mutate(pendingDelete.id, {
-      onSuccess: () => {
-        toast.success('Company deleted')
-        setPendingDelete(null)
+  const columns = useMemo<ColumnDef<Company>[]>(
+    () => [
+      {
+        id: 'serial',
+        header: '#',
+        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.index + 1}</span>
+        ),
       },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete company'),
-    })
-  }
+      {
+        id: 'actions',
+        header: () => <span className="text-xs font-medium uppercase">Actions</span>,
+        meta: { className: 'w-px whitespace-nowrap' },
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => goToEdit(row.original.id)}
+            onView={() => goToDetail(row.original.id)}
+            onDelete={() => setPendingDelete(row.original)}
+          />
+        ),
+      },
+      {
+        accessorKey: 'companyName',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Company Name" />
+        ),
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="font-medium text-foreground">{row.original.companyName}</span>
+            <span className="text-xs text-muted-foreground">{row.original.email}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'companyCode',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
+        cell: ({ row }) => (
+          <span className="font-mono text-sm">{row.original.companyCode}</span>
+        ),
+      },
+      {
+        accessorKey: 'establishYear',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Est. Year" />,
+      },
+      {
+        accessorKey: 'state',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
+        cell: ({ row }) => (
+          <span>{[row.original.city, row.original.state].filter(Boolean).join(', ')}</span>
+        ),
+      },
+      {
+        accessorKey: 'mobile1',
+        header: 'Mobile',
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return (
     <div>
@@ -52,7 +93,7 @@ export function CompanyListPage() {
         title="Company"
         description="Manage your company master records."
         actions={
-          <Button onClick={() => navigate({ to: '/company/new' })}>
+          <Button onClick={goToCreate}>
             <Plus className="size-4" />
             Add New Company
           </Button>
@@ -66,7 +107,7 @@ export function CompanyListPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={rows}
           isLoading={isLoading}
           searchColumn="companyName"
           searchPlaceholder="Search companies…"
@@ -79,7 +120,7 @@ export function CompanyListPage() {
               title="No companies yet"
               description="Create your first company to get started."
               action={
-                <Button onClick={() => navigate({ to: '/company/new' })}>
+                <Button onClick={goToCreate}>
                   <Plus className="size-4" />
                   Add New Company
                 </Button>
@@ -102,7 +143,7 @@ export function CompanyListPage() {
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        loading={deleteCompany.isPending}
+        loading={isDeleting}
         keepOpenOnConfirm
         onConfirm={confirmDelete}
       />

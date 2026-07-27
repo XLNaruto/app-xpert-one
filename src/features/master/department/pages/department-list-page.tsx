@@ -1,48 +1,79 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { Building, Plus } from 'lucide-react'
-import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/data-table'
-import { useDepartments } from '../api/use-departments'
-import { useDeleteDepartment } from '../api/use-department-mutations'
-import { departmentColumns } from '../components/department-columns'
+import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { useDepartmentList } from '../hooks/use-department-list'
 import type { Department } from '../types'
 
 /** Department master — list with add/edit/delete. */
 export function DepartmentListPage() {
-  const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useDepartments()
-  const deleteDepartment = useDeleteDepartment()
-  const [pendingDelete, setPendingDelete] = useState<Department | null>(null)
+  const {
+    rows,
+    isLoading,
+    isError,
+    error,
+    goToCreate,
+    goToEdit,
+    pendingDelete,
+    setPendingDelete,
+    confirmDelete,
+    isDeleting,
+  } = useDepartmentList()
 
-  const columns = useMemo(
-    () =>
-      departmentColumns({
-        onEdit: (record) =>
-          navigate({
-            to: '/department/$departmentId/edit',
-            params: { departmentId: String(record.id) },
-          }),
-        onDelete: (record) => setPendingDelete(record),
-      }),
-    [navigate],
-  )
-
-  const confirmDelete = () => {
-    if (!pendingDelete) return
-    deleteDepartment.mutate(pendingDelete.id, {
-      onSuccess: () => {
-        toast.success('Department deleted')
-        setPendingDelete(null)
+  const columns = useMemo<ColumnDef<Department>[]>(
+    () => [
+      {
+        id: 'serial',
+        header: '#',
+        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.index + 1}</span>
+        ),
       },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete department'),
-    })
-  }
+      {
+        id: 'actions',
+        header: () => <span className="text-xs font-medium uppercase">Actions</span>,
+        meta: { className: 'w-px whitespace-nowrap' },
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => goToEdit(row.original.id)}
+            onDelete={() => setPendingDelete(row.original)}
+          />
+        ),
+      },
+      {
+        accessorKey: 'departmentName',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Department Name" />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.original.departmentName}</span>
+        ),
+      },
+      {
+        accessorKey: 'departmentCode',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
+        cell: ({ row }) => (
+          <span className="font-mono text-sm">{row.original.departmentCode}</span>
+        ),
+      },
+      {
+        accessorKey: 'branch',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Branch" />,
+      },
+      {
+        accessorKey: 'monthStartDate',
+        header: 'Month Start Date',
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return (
     <div>
@@ -50,7 +81,7 @@ export function DepartmentListPage() {
         title="Department"
         description="Manage your department master records."
         actions={
-          <Button onClick={() => navigate({ to: '/department/new' })}>
+          <Button onClick={goToCreate}>
             <Plus className="size-4" />
             Add New Department
           </Button>
@@ -64,7 +95,7 @@ export function DepartmentListPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={rows}
           isLoading={isLoading}
           searchColumn="departmentName"
           searchPlaceholder="Search departments…"
@@ -77,7 +108,7 @@ export function DepartmentListPage() {
               title="No departments yet"
               description="Create your first department to get started."
               action={
-                <Button onClick={() => navigate({ to: '/department/new' })}>
+                <Button onClick={goToCreate}>
                   <Plus className="size-4" />
                   Add New Department
                 </Button>
@@ -100,7 +131,7 @@ export function DepartmentListPage() {
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        loading={deleteDepartment.isPending}
+        loading={isDeleting}
         keepOpenOnConfirm
         onConfirm={confirmDelete}
       />

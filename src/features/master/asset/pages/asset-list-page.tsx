@@ -1,53 +1,66 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { Boxes, Plus } from 'lucide-react'
-import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/data-table'
-import { useAssets } from '../api/use-assets'
-import { useDeleteAsset } from '../api/use-asset-mutations'
-import { assetColumns } from '../components/asset-columns'
+import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { useAssetList } from '../hooks/use-asset-list'
 import { AssetFormDialog } from '../components/asset-form-dialog'
 import type { AssetRecord } from '../types'
 
 /** Asset master — list with add/edit/delete. */
 export function AssetListPage() {
-  const { data, isLoading, isError, error } = useAssets()
-  const deleteAsset = useDeleteAsset()
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<AssetRecord | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<AssetRecord | null>(null)
+  const {
+    rows,
+    isLoading,
+    isError,
+    error,
+    formOpen,
+    setFormOpen,
+    editing,
+    openCreate,
+    openEdit,
+    pendingDelete,
+    setPendingDelete,
+    confirmDelete,
+    isDeleting,
+  } = useAssetList()
 
-  const openCreate = () => {
-    setEditing(null)
-    setFormOpen(true)
-  }
-
-  const columns = useMemo(
-    () =>
-      assetColumns({
-        onEdit: (record) => {
-          setEditing(record)
-          setFormOpen(true)
-        },
-        onDelete: (record) => setPendingDelete(record),
-      }),
+  const columns = useMemo<ColumnDef<AssetRecord>[]>(
+    () => [
+      {
+        id: 'serial',
+        header: '#',
+        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.index + 1}</span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <span className="text-xs font-medium uppercase">Actions</span>,
+        meta: { className: 'w-px whitespace-nowrap w-40 min-w-40 max-w-40' },
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => openEdit(row.original)}
+            onDelete={() => setPendingDelete(row.original)}
+          />
+        ),
+      },
+      {
+        accessorKey: 'assetName',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Asset Name" />,
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.original.assetName}</span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
-
-  const confirmDelete = () => {
-    if (!pendingDelete) return
-    deleteAsset.mutate(pendingDelete.id, {
-      onSuccess: () => {
-        toast.success('Asset deleted')
-        setPendingDelete(null)
-      },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete asset'),
-    })
-  }
 
   return (
     <div>
@@ -69,7 +82,7 @@ export function AssetListPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={rows}
           isLoading={isLoading}
           searchColumn="assetName"
           searchPlaceholder="Search assets…"
@@ -105,7 +118,7 @@ export function AssetListPage() {
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        loading={deleteAsset.isPending}
+        loading={isDeleting}
         keepOpenOnConfirm
         onConfirm={confirmDelete}
       />

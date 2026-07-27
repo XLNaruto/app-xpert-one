@@ -13,6 +13,10 @@
 
 @import "leaflet/dist/leaflet.css";
 
+/* Base layout for react-date-picker; the theme overrides live further down. */
+@import "react-date-picker/dist/DatePicker.css";
+@import "react-calendar/dist/Calendar.css";
+
 @custom-variant dark (&:is(.dark *));
 
 /* ------------------------------------------------------------------ */
@@ -674,6 +678,14 @@
 .sa-datepicker .react-date-picker__wrapper:focus-within {
   outline: none;
   box-shadow: 0 0 0 1px var(--ring);
+}
+
+/* The calendar is portalled into a host that <DatePicker> positions itself, so
+   the panel just fills that host instead of sizing/placing itself. */
+.sa-datepicker-portal .react-date-picker__calendar {
+  width: auto;
+  position: static;
+  inset: auto;
 }
 
 /* Calendar popup */

@@ -42,6 +42,31 @@ following the same self-contained folder shape.
 7. **One generic `<DataTable>`** powers every list screen.
 8. **Zustand stores stay small and single-concern**; select narrowly.
 9. **External integrations and calculations stay behind a service/pure-function boundary** — never leak SDKs or calc logic into components.
+10. **Table columns are defined inline in the list page** with `useMemo<ColumnDef<T>[]>`. Never a separate `<thing>-columns.tsx` file.
+11. **Screen logic lives in `features/<name>/hooks/`** — `use-<thing>-list.ts` (query, filters, dialog/nav state, delete flow), `use-<thing>-form.ts` (react-hook-form + create/update). Pages and components only lay out markup.
+12. **`features/<name>/lib/`** holds pure helpers (mappers, derivations) — no React, no hooks.
+
+## Feature folder shape
+
+Every feature mirrors this (see `features/master/*` and the reference
+`sales-incharge` module):
+
+```
+<feature>/
+├── api/            query + mutation hooks and the raw <thing>-api.ts calls
+├── components/     presentational pieces only (dialogs, toolbars, form layout)
+├── hooks/          use-<thing>-list.ts · use-<thing>-form.ts · use-<thing>-detail.ts
+├── lib/            pure helpers: <thing>-mappers.ts, calculations
+├── pages/          screens — inline columns + layout, driven by the hooks
+├── types/          UI-facing record types
+├── constants.ts    dropdown options, EMPTY_<THING>_FORM
+├── schemas.ts      zod form schema + inferred FormValues
+└── index.ts        the feature's public surface
+```
+
+Shared form/detail primitives live in `components/common/` — `Field`
+(`form-field.tsx`), `DetailItem`, `FormSection`, `TableRowActions`. Don't
+re-declare a local `Field` inside a feature.
 
 ## Folder structure
 

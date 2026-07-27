@@ -1,5 +1,5 @@
-import type { CompanyFormValues } from './schemas'
-import type { Company } from './types'
+import type { CompanyFormValues } from '../schemas'
+import type { Company } from '../types'
 
 /** Hydrate the edit form from a stored company (nulls → empty strings). */
 export function companyToFormValues(company: Company): CompanyFormValues {

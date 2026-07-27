@@ -1,9 +1,12 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Boxes,
+  Building,
+  Building2,
   LayoutDashboard,
   Map,
   MapPinned,
+  Settings2,
   SlidersHorizontal,
 } from "lucide-react";
 
@@ -32,14 +35,15 @@ export const navGroups: NavGroup[] = [
   {
     title: "Master",
     items: [
-      // {
-      //   label: "Company Setup",
-      //   icon: Settings2,
-      //   children: [
-      //     { label: "Company", to: "/company", icon: Building2 },
-      //     { label: "Department", to: "/department", icon: Building },
-      //   ],
-      // },
+      {
+        label: "Company Setup",
+        icon: Settings2,
+        children: [
+          { label: "Company", to: "/company", icon: Building2 },
+          { label: "Branch", to: "/branch", icon: Building },
+          { label: "Department", to: "/department", icon: Building },
+        ],
+      },
       {
         label: "General Setup",
         icon: SlidersHorizontal,

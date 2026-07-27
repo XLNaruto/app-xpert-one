@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from 'clsx'
+import { format, parseISO } from 'date-fns'
 import { twMerge } from 'tailwind-merge'
 
 /** Merge conditional class names, de-duplicating Tailwind utilities. */
@@ -22,6 +23,15 @@ export function formatCompact(value: number) {
 
 export function formatPercent(value: number, digits = 1) {
   return `${value.toFixed(digits)}%`
+}
+
+/** Format an ISO date-time as 'dd MMM yyyy' (falls back to the raw value). */
+export function formatDate(value: string, pattern = 'dd MMM yyyy') {
+  try {
+    return format(parseISO(value), pattern)
+  } catch {
+    return value
+  }
 }
 
 /** Simulate network latency for the in-memory mock API layer. */

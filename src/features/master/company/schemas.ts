@@ -19,7 +19,8 @@ const optionalMatch = (re: RegExp, message: string) =>
 export const companySchema = z.object({
   // Company information
   companyName: z.string().trim().min(1, 'Company name is required'),
-  companyCode: z.string().trim().min(1, 'Company code is required'),
+  /** Kept on the record, but no longer captured on the create/edit form. */
+  companyCode: z.string().trim(),
   establishYear: z.string().trim().min(1, 'Establish year is required'),
   registrationNumber: z.string().trim(),
   panNumber: z

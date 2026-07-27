@@ -13,6 +13,11 @@ export const queryKeys = {
     list: () => [...queryKeys.company.all, 'list'] as const,
     detail: (id: number) => [...queryKeys.company.all, 'detail', id] as const,
   },
+  branch: {
+    all: ['branch'] as const,
+    list: () => [...queryKeys.branch.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.branch.all, 'detail', id] as const,
+  },
   department: {
     all: ['department'] as const,
     list: () => [...queryKeys.department.all, 'list'] as const,

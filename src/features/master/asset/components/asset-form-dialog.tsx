@@ -1,10 +1,6 @@
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Field } from '@/components/common/form-field'
 import {
   Dialog,
   DialogContent,
@@ -12,8 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { assetSchema, type AssetFormValues } from '../schemas'
-import { useCreateAsset, useUpdateAsset } from '../api/use-asset-mutations'
+import { useAssetForm } from '../hooks/use-asset-form'
 import type { AssetRecord } from '../types'
 
 interface AssetFormDialogProps {
@@ -23,42 +18,12 @@ interface AssetFormDialogProps {
   record: AssetRecord | null
 }
 
-const EMPTY: AssetFormValues = { assetName: '' }
-
-/** Add/edit dialog for an asset master record. */
+/** Add/edit dialog for an asset master record — layout only. */
 export function AssetFormDialog({ open, onOpenChange, record }: AssetFormDialogProps) {
-  const isEdit = record !== null
-  const createAsset = useCreateAsset()
-  const updateAsset = useUpdateAsset()
-  const isPending = createAsset.isPending || updateAsset.isPending
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<AssetFormValues>({
-    resolver: zodResolver(assetSchema),
-    defaultValues: EMPTY,
-  })
-
-  useEffect(() => {
-    if (!open) return
-    reset(record ? { assetName: record.assetName } : EMPTY)
-  }, [open, record, reset])
-
-  const onSubmit = handleSubmit((values) => {
-    const mutation = isEdit
-      ? updateAsset.mutateAsync({ id: record.id, values })
-      : createAsset.mutateAsync(values)
-    mutation
-      .then(() => {
-        toast.success(isEdit ? 'Asset updated' : 'Asset added')
-        onOpenChange(false)
-      })
-      .catch((err) =>
-        toast.error(err instanceof Error ? err.message : 'Something went wrong'),
-      )
+  const { register, errors, onSubmit, isEdit, isPending } = useAssetForm({
+    open,
+    record,
+    onSaved: () => onOpenChange(false),
   })
 
   return (
@@ -69,15 +34,9 @@ export function AssetFormDialog({ open, onOpenChange, record }: AssetFormDialogP
         </DialogHeader>
 
         <form onSubmit={onSubmit} noValidate className="mt-5 space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="assetName">
-              Asset Name<span className="ml-0.5 text-destructive">*</span>
-            </Label>
-            <Input id="assetName" placeholder="Asset Name" {...register('assetName')} />
-            {errors.assetName && (
-              <p className="text-xs text-destructive">{errors.assetName.message}</p>
-            )}
-          </div>
+          <Field label="Asset Name" required error={errors.assetName?.message}>
+            <Input placeholder="Asset Name" {...register('assetName')} />
+          </Field>
 
           <DialogFooter className="mt-6 gap-2">
             <Button

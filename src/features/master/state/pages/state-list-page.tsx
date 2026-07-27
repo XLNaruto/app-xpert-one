@@ -1,53 +1,66 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { MapPinned, Plus } from 'lucide-react'
-import { toast } from 'sonner'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable } from '@/components/data-table'
-import { useStates } from '../api/use-states'
-import { useDeleteState } from '../api/use-state-mutations'
-import { stateColumns } from '../components/state-columns'
+import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { useStateList } from '../hooks/use-state-list'
 import { StateFormDialog } from '../components/state-form-dialog'
 import type { StateRecord } from '../types'
 
 /** State master — list with add/edit/delete. */
 export function StateListPage() {
-  const { data, isLoading, isError, error } = useStates()
-  const deleteState = useDeleteState()
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<StateRecord | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<StateRecord | null>(null)
+  const {
+    rows,
+    isLoading,
+    isError,
+    error,
+    formOpen,
+    setFormOpen,
+    editing,
+    openCreate,
+    openEdit,
+    pendingDelete,
+    setPendingDelete,
+    confirmDelete,
+    isDeleting,
+  } = useStateList()
 
-  const openCreate = () => {
-    setEditing(null)
-    setFormOpen(true)
-  }
-
-  const columns = useMemo(
-    () =>
-      stateColumns({
-        onEdit: (record) => {
-          setEditing(record)
-          setFormOpen(true)
-        },
-        onDelete: (record) => setPendingDelete(record),
-      }),
+  const columns = useMemo<ColumnDef<StateRecord>[]>(
+    () => [
+      {
+        id: 'serial',
+        header: '#',
+        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.index + 1}</span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <span className="text-xs font-medium uppercase">Actions</span>,
+        meta: { className: 'w-px whitespace-nowrap w-40 min-w-40 max-w-40' },
+        cell: ({ row }) => (
+          <TableRowActions
+            onEdit={() => openEdit(row.original)}
+            onDelete={() => setPendingDelete(row.original)}
+          />
+        ),
+      },
+      {
+        accessorKey: 'stateName',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="State Name" />,
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.original.stateName}</span>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
-
-  const confirmDelete = () => {
-    if (!pendingDelete) return
-    deleteState.mutate(pendingDelete.id, {
-      onSuccess: () => {
-        toast.success('State deleted')
-        setPendingDelete(null)
-      },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete state'),
-    })
-  }
 
   return (
     <div>
@@ -69,7 +82,7 @@ export function StateListPage() {
       ) : (
         <DataTable
           columns={columns}
-          data={data ?? []}
+          data={rows}
           isLoading={isLoading}
           searchColumn="stateName"
           searchPlaceholder="Search states…"
@@ -105,7 +118,7 @@ export function StateListPage() {
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        loading={deleteState.isPending}
+        loading={isDeleting}
         keepOpenOnConfirm
         onConfirm={confirmDelete}
       />

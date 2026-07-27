@@ -1,5 +1,5 @@
-import type { DepartmentFormValues } from './schemas'
-import type { Department } from './types'
+import type { DepartmentFormValues } from '../schemas'
+import type { Department } from '../types'
 
 /** Hydrate the edit form from a stored department. */
 export function departmentToFormValues(department: Department): DepartmentFormValues {
