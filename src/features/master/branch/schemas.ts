@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-const MOBILE_RE = /^\d{10}$/
 const PIN_RE = /^\d{6}$/
 const DIGITS_RE = /^\d+$/
 
@@ -16,7 +15,7 @@ const text = z.string().trim()
 
 /**
  * Create/edit form for a branch master record. Covers both tabs of the screen:
- * the branch/address/contact details and every applicable act.
+ * the branch/address details and every applicable act.
  */
 export const branchSchema = z.object({
   // Branch information
@@ -26,14 +25,10 @@ export const branchSchema = z.object({
   addressLine1: z.string().trim().min(1, 'Address line 1 is required'),
   addressLine2: text,
   addressLine3: text,
-  country: text,
   state: text,
+  district: text,
   city: text,
   pinCode: optionalMatch(PIN_RE, 'Pin code must be 6 digits'),
-
-  // Contact details
-  headName: text,
-  headMobile: optionalMatch(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
 
   // PF act
   pfCode: text,
@@ -90,10 +85,8 @@ export const BRANCH_DETAIL_FIELDS = [
   'addressLine1',
   'addressLine2',
   'addressLine3',
-  'country',
   'state',
+  'district',
   'city',
   'pinCode',
-  'headName',
-  'headMobile',
 ] as const satisfies readonly (keyof BranchFormValues)[]

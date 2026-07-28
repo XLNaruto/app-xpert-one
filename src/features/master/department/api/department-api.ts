@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { DepartmentFormValues } from '../schemas'
 import type { Department } from '../types'
 
@@ -15,7 +16,10 @@ let departments: Department[] = [
     departmentName: 'Sales',
     departmentCode: 'SAL',
     monthStartDate: 1,
+    createdBy: 'Roman Rings',
     createdAt: '2025-01-14T09:00:00.000Z',
+    updatedBy: 'Roman Rings',
+    updatedAt: '2025-02-02T11:20:00.000Z',
   },
   {
     id: 2,
@@ -23,7 +27,10 @@ let departments: Department[] = [
     departmentName: 'Accounts',
     departmentCode: 'ACC',
     monthStartDate: 1,
+    createdBy: 'John Cena',
     createdAt: '2025-01-14T09:00:00.000Z',
+    updatedBy: null,
+    updatedAt: null,
   },
 ]
 
@@ -57,7 +64,7 @@ export async function createDepartment(
   const record: Department = {
     id: nextId(),
     ...applyForm(values),
-    createdAt: new Date().toISOString(),
+    ...createdStamp(),
   }
   departments = [record, ...departments]
   return mockDelay({ ...record })
@@ -69,7 +76,11 @@ export async function updateDepartment(
 ): Promise<Department> {
   const index = departments.findIndex((d) => d.id === id)
   if (index === -1) throw new Error('Department not found')
-  const updated: Department = { ...departments[index], ...applyForm(values) }
+  const updated: Department = {
+    ...departments[index],
+    ...applyForm(values),
+    ...updatedStamp(),
+  }
   departments = departments.map((d) => (d.id === id ? updated : d))
   return mockDelay({ ...updated })
 }

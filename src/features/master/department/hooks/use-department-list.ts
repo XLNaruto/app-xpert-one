@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { encryptId } from '@/lib/crypto'
 import { useDepartments } from '../api/use-departments'
 import { useDeleteDepartment } from '../api/use-department-mutations'
 import type { Department } from '../types'
@@ -17,12 +18,11 @@ export function useDepartmentList() {
 
   const [pendingDelete, setPendingDelete] = useState<Department | null>(null)
 
-  const goToCreate = () => navigate({ to: '/department/new' })
+  const goToCreate = () => navigate({ to: '/master/department/create' })
+  // Edit reuses the create screen; the raw id travels encrypted in `?data=` so
+  // it's never exposed in the address bar.
   const goToEdit = (id: number) =>
-    navigate({
-      to: '/department/$departmentId/edit',
-      params: { departmentId: String(id) },
-    })
+    navigate({ to: '/master/department/create', search: { data: encryptId(id) } })
 
   const confirmDelete = () => {
     if (!pendingDelete) return

@@ -41,7 +41,7 @@ export function useDepartmentForm(id?: number) {
     if (detail.data) reset(departmentToFormValues(detail.data))
   }, [detail.data, reset])
 
-  const goToList = () => navigate({ to: '/department' })
+  const goToList = () => navigate({ to: '/master/department' })
 
   const onSubmit = handleSubmit((values) => {
     const mutation = isEdit ? updateDepartment : createDepartment

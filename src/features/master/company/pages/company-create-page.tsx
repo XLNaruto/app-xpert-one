@@ -1,5 +1,6 @@
 import { Controller } from 'react-hook-form'
 import { ArrowLeft, Building2, MapPin, Phone } from 'lucide-react'
+import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
 import { Field } from '@/components/common/form-field'
@@ -11,16 +12,30 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { STATE_OPTIONS, YEAR_OPTIONS } from '../constants'
 import { useCompanyForm } from '../hooks/use-company-form'
 
+interface CompanyCreatePageProps {
+  /**
+   * Encrypted company id from the `?data=` search param. When present the page
+   * switches to edit mode (GET to seed, PUT to save); otherwise it's a fresh
+   * create. The same page and form handle both.
+   */
+  data?: string
+}
+
 /**
- * Create/edit a company record. One screen for both: pass `companyId` to edit an
- * existing record (hydrates the form + updates on submit), or omit it to create
- * a new one.
+ * Create/edit a company record. One screen for both: a `?data=` token edits the
+ * record it carries (hydrates the form + updates on submit), no token creates a
+ * new one.
  */
-export function CompanyManagePage({ companyId }: { companyId?: number }) {
+export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
+  // Decrypt the params from the URL; missing/malformed → create mode.
+  const companyId = decryptId(data)
+
   const {
     register,
     control,
     errors,
+    districtOptions,
+    changeState,
     onSubmit,
     isEdit,
     isPending,
@@ -98,18 +113,18 @@ export function CompanyManagePage({ companyId }: { companyId?: number }) {
                   {...register('registrationNumber')}
                 />
               </Field>
-              <Field label="PAN Number" required error={errors.panNumber?.message}>
-                <Input
-                  placeholder="PAN Number"
-                  className="uppercase placeholder:normal-case"
-                  {...register('panNumber')}
-                />
-              </Field>
               <Field label="GST Number" error={errors.gstNumber?.message}>
                 <Input
                   placeholder="GST Number"
                   className="uppercase placeholder:normal-case"
                   {...register('gstNumber')}
+                />
+              </Field>
+              <Field label="PAN Number" required error={errors.panNumber?.message}>
+                <Input
+                  placeholder="PAN Number"
+                  className="uppercase placeholder:normal-case"
+                  {...register('panNumber')}
                 />
               </Field>
 
@@ -141,10 +156,26 @@ export function CompanyManagePage({ companyId }: { companyId?: number }) {
                     <Combobox
                       className="w-full"
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(value) => changeState(value, field.onChange)}
                       options={STATE_OPTIONS}
                       placeholder="Select State"
                       searchPlaceholder="Search state"
+                    />
+                  )}
+                />
+              </Field>
+              <Field label="District" error={errors.district?.message}>
+                <Controller
+                  control={control}
+                  name="district"
+                  render={({ field }) => (
+                    <Combobox
+                      className="w-full"
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={districtOptions}
+                      placeholder="Select District"
+                      searchPlaceholder="Search district"
                     />
                   )}
                 />
@@ -170,19 +201,19 @@ export function CompanyManagePage({ companyId }: { companyId?: number }) {
               <Field label="Phone" error={errors.phone?.message}>
                 <Input placeholder="Phone" {...register('phone')} />
               </Field>
-              <Field label="Mobile Number 1" required error={errors.mobile1?.message}>
+              <Field label="Primary Mobile Number" required error={errors.mobile1?.message}>
                 <Input
                   inputMode="numeric"
                   maxLength={10}
-                  placeholder="Mobile Number 1"
+                  placeholder="Primary Mobile Number"
                   {...register('mobile1')}
                 />
               </Field>
-              <Field label="Mobile Number 2" error={errors.mobile2?.message}>
+              <Field label="Secondary Mobile Number" error={errors.mobile2?.message}>
                 <Input
                   inputMode="numeric"
                   maxLength={10}
-                  placeholder="Mobile Number 2"
+                  placeholder="Secondary Mobile Number"
                   {...register('mobile2')}
                 />
               </Field>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { encryptId } from '@/lib/crypto'
 import { useBranches } from '../api/use-branches'
 import { useDeleteBranch } from '../api/use-branch-mutations'
 import type { Branch } from '../types'
@@ -17,11 +18,13 @@ export function useBranchList() {
 
   const [pendingDelete, setPendingDelete] = useState<Branch | null>(null)
 
-  const goToCreate = () => navigate({ to: '/branch/new' })
+  const goToCreate = () => navigate({ to: '/master/branch/create' })
+  // Detail and edit reuse the same screens as create; the raw id travels
+  // encrypted in `?data=` so it's never exposed in the address bar.
   const goToDetail = (id: number) =>
-    navigate({ to: '/branch/$branchId', params: { branchId: String(id) } })
+    navigate({ to: '/master/branch/detail', search: { data: encryptId(id) } })
   const goToEdit = (id: number) =>
-    navigate({ to: '/branch/$branchId/edit', params: { branchId: String(id) } })
+    navigate({ to: '/master/branch/create', search: { data: encryptId(id) } })
 
   const confirmDelete = () => {
     if (!pendingDelete) return

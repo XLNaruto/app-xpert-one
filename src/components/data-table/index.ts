@@ -1,5 +1,6 @@
 export { DataTable } from './data-table'
 export { DataTableColumnHeader } from './data-table-column-header'
+export { auditColumns } from './audit-columns'
 export {
   DataTablePagination,
   ALL_PAGE_SIZE,

@@ -1,3 +1,3 @@
-export { StateListPage } from './pages/state-list-page'
 export { useStates } from './api/use-states'
+export { fetchStates } from './api/state-api'
 export type { StateRecord } from './types'

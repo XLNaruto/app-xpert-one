@@ -36,6 +36,7 @@ export const companySchema = z.object({
   addressLine2: z.string().trim(),
   addressLine3: z.string().trim(),
   state: z.string().trim().min(1, 'State is required'),
+  district: z.string().trim(),
   city: z.string().trim(),
   pinCode: optionalMatch(PIN_RE, 'Pin code must be 6 digits'),
 

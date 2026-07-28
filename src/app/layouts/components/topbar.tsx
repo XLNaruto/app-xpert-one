@@ -6,6 +6,7 @@ import { Breadcrumbs } from './breadcrumbs'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
   DropdownItem,
@@ -15,7 +16,6 @@ import { useUiStore } from '@/stores/ui-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useLogout } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
-import { asset } from '@/lib/asset'
 import { cn } from '@/lib/utils'
 
 export function Topbar() {
@@ -44,28 +44,23 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
       <div className="flex min-w-0 items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          title="Open menu"
-          onClick={toggleMobileSidebar}
-        >
-          <Menu className="size-5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              aria-label="Open menu"
+              onClick={toggleMobileSidebar}
+            >
+              <Menu className="size-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Open menu</TooltipContent>
+        </Tooltip>
         <div className="hidden lg:block">
           <Breadcrumbs />
         </div>
-      </div>
-
-      {/* Centered logo — mobile only. Absolutely centered so the uneven left/right
-          group widths can't offset it; pointer-events-none keeps it click-through. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden">
-        <img
-          src={asset('media/logos/sidebar-logo.png')}
-          alt="XpertOne"
-          className="h-9 w-auto object-contain"
-        />
       </div>
 
       <div className="flex items-center gap-1">

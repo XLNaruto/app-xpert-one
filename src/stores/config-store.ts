@@ -9,6 +9,15 @@ interface ConfigState {
    */
   mediaBaseUrl: string
   setMediaBaseUrl: (url: string) => void
+  /**
+   * Currency the whole app renders amounts in. The single source of truth for
+   * the symbol — no screen hard-codes `₹`; labels and formatters read it
+   * through the `currency()` / `amountLabel()` helpers in `lib/currency`.
+   */
+  currencySymbol: string
+  /** ISO 4217 code used by `Intl.NumberFormat` (must match the symbol). */
+  currencyCode: string
+  setCurrency: (currency: { symbol: string; code: string }) => void
 }
 
 /**
@@ -22,6 +31,10 @@ export const useConfigStore = create<ConfigState>()(
     (set) => ({
       mediaBaseUrl: '',
       setMediaBaseUrl: (mediaBaseUrl) => set({ mediaBaseUrl }),
+      currencySymbol: '₹',
+      currencyCode: 'INR',
+      setCurrency: ({ symbol, code }) =>
+        set({ currencySymbol: symbol, currencyCode: code }),
     }),
     { name: 'xpertone-config' },
   ),

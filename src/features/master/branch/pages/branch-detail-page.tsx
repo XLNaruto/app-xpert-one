@@ -9,9 +9,7 @@ import {
   IndianRupee,
   MapPin,
   Pencil,
-  Phone,
   ShieldCheck,
-  Smartphone,
   UserRound,
   UserRoundSearch,
 } from 'lucide-react'
@@ -22,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
+import { decryptId } from '@/lib/crypto'
 import { ActCard } from '../components/act-card'
 import { useBranchDetail } from '../hooks/use-branch-detail'
 
@@ -30,10 +29,14 @@ const asDate = (value: string | null) => (value ? formatDate(value) : null)
 /** Never surface a stored credential — just say whether one is on file. */
 const asSecret = (value: string | null) => (value ? '••••••••' : null)
 
-/** Read-only view of a single branch record, including every applicable act. */
-export function BranchDetailPage({ branchId }: { branchId: number }) {
-  const { branch, isLoading, isError, error, goToList, goToEdit } =
-    useBranchDetail(branchId)
+/**
+ * Read-only view of a single branch record, including every applicable act.
+ * The record id arrives encrypted in the `?data=` search param.
+ */
+export function BranchDetailPage({ data }: { data?: string }) {
+  const { branch, isLoading, isError, error, goToList, goToEdit } = useBranchDetail(
+    decryptId(data),
+  )
 
   return (
     <div>
@@ -93,18 +96,10 @@ export function BranchDetailPage({ branchId }: { branchId: number }) {
                   .join(', ')}
                 className="sm:col-span-2"
               />
-              <DetailItem icon={MapPin} label="Country" value={branch.country} />
               <DetailItem icon={MapPin} label="State" value={branch.state} />
+              <DetailItem icon={MapPin} label="District" value={branch.district} />
               <DetailItem icon={MapPin} label="City" value={branch.city} />
               <DetailItem icon={MapPin} label="Pin Code" value={branch.pinCode} />
-
-              <FormSection icon={Phone} title="Contact Details" />
-              <DetailItem icon={UserRound} label="Head Name" value={branch.headName} />
-              <DetailItem
-                icon={Smartphone}
-                label="Head Mobile Number"
-                value={branch.headMobile}
-              />
             </CardContent>
           </Card>
 

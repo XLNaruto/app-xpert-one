@@ -14,6 +14,7 @@ export function companyToFormValues(company: Company): CompanyFormValues {
     addressLine2: company.addressLine2 ?? '',
     addressLine3: company.addressLine3 ?? '',
     state: company.state,
+    district: company.district ?? '',
     city: company.city ?? '',
     pinCode: company.pinCode ?? '',
     phone: company.phone ?? '',

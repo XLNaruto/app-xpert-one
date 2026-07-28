@@ -1,13 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, PanelLeft, PanelLeftClose, X } from 'lucide-react'
 import { navGroups, type NavItem } from '@/config/navigation'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 
 function isActivePath(to: string | undefined, pathname: string) {
   if (!to) return false
   return to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`)
+}
+
+/**
+ * Wraps a rail control in the shared <Tooltip>. When `enabled` is false the
+ * child renders untouched — expanded nav rows already show their own label.
+ */
+function SidebarTooltip({
+  label,
+  enabled = true,
+  children,
+}: {
+  label: string
+  enabled?: boolean
+  children: ReactElement
+}) {
+  if (!enabled) return children
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 /** Tracks a CSS media query in React state. */
@@ -72,31 +95,47 @@ export function Sidebar() {
           )}
         >
           {/* Desktop collapse toggle */}
-          <button
-            onClick={toggle}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="hidden size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:grid"
-          >
-            {collapsed ? (
-              <PanelLeft className="size-[18px]" />
-            ) : (
-              <PanelLeftClose className="size-[18px]" />
-            )}
-          </button>
+          <SidebarTooltip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            <button
+              onClick={toggle}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="hidden size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:grid"
+            >
+              {collapsed ? (
+                <PanelLeft className="size-[18px]" />
+              ) : (
+                <PanelLeftClose className="size-[18px]" />
+              )}
+            </button>
+          </SidebarTooltip>
           {/* Mobile close button */}
-          <button
-            onClick={closeMobile}
-            title="Close menu"
-            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
-          >
-            <X className="size-[18px]" />
-          </button>
+          <SidebarTooltip label="Close menu">
+            <button
+              onClick={closeMobile}
+              aria-label="Close menu"
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
+            >
+              <X className="size-[18px]" />
+            </button>
+          </SidebarTooltip>
         </div>
 
         {/* Navigation: section labels → main menu → submenu */}
-        <nav className="sidebar-scroll flex-1 space-y-4 overflow-y-auto px-2 py-2">
+        {/* `overflow-x-hidden` hides the rows that are still wider than the rail
+            mid-transition instead of showing a horizontal scrollbar. */}
+        <nav className="sidebar-scroll flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2 py-2">
           {navGroups.map((group) => (
-            <div key={group.title} className="space-y-0.5">
+            <div
+              key={group.title}
+              className={cn(
+                'space-y-0.5',
+                // Expanded rows are laid out at their final width (18rem panel
+                // minus the nav's px-2) from the first frame, so labels are
+                // revealed by the widening panel instead of re-wrapping from
+                // three lines down to one as it animates.
+                !collapsed && 'w-68',
+              )}
+            >
               <p
                 className={cn(
                   'px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40',
@@ -152,16 +191,17 @@ function NavLeaf({
   const Icon = item.icon
   if (!item.to) return null
   return (
-    <Link
-      to={item.to}
-      activeOptions={{ exact: item.exact ?? item.to === '/' }}
-      title={collapsed ? item.label : undefined}
-      onClick={onNavigate}
-      className={leafClasses(collapsed)}
-    >
-      <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
-      {!collapsed && <span className="truncate">{item.label}</span>}
-    </Link>
+    <SidebarTooltip label={item.label} enabled={collapsed}>
+      <Link
+        to={item.to}
+        activeOptions={{ exact: item.exact ?? item.to === '/' }}
+        onClick={onNavigate}
+        className={leafClasses(collapsed)}
+      >
+        <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    </SidebarTooltip>
   )
 }
 
@@ -192,14 +232,15 @@ function NavParent({
     const target = children.find((c) => c.to)?.to
     if (!target) return null
     return (
-      <Link
-        to={target}
-        title={item.label}
-        onClick={onNavigate}
-        className={cn(leafClasses(true), childActive && 'active')}
-      >
-        <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
-      </Link>
+      <SidebarTooltip label={item.label}>
+        <Link
+          to={target}
+          onClick={onNavigate}
+          className={cn(leafClasses(true), childActive && 'active')}
+        >
+          <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
+        </Link>
+      </SidebarTooltip>
     )
   }
 
@@ -235,10 +276,11 @@ function NavParent({
                     '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',
                   )}
                 >
-                  <span className="grid size-[18px] shrink-0 place-items-center">
+                  <span className="mt-0.75 grid size-4.5 shrink-0 place-items-center self-start">
                     <span className="size-1.5 rounded-full bg-current opacity-60 transition-opacity group-[.active]:bg-sidebar-primary group-[.active]:opacity-100" />
                   </span>
-                  <span className="truncate">{c.label}</span>
+                  {/* Long labels wrap onto a second line instead of being clipped. */}
+                  <span className="min-w-0 leading-snug text-pretty">{c.label}</span>
                 </Link>
               </li>
             ) : null,

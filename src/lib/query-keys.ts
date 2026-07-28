@@ -23,6 +23,54 @@ export const queryKeys = {
     list: () => [...queryKeys.department.all, 'list'] as const,
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
   },
+  pfRate: {
+    all: ['pf-rate'] as const,
+    list: () => [...queryKeys.pfRate.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.pfRate.all, 'detail', id] as const,
+  },
+  esicRate: {
+    all: ['esic-rate'] as const,
+    list: () => [...queryKeys.esicRate.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.esicRate.all, 'detail', id] as const,
+  },
+  ptRate: {
+    all: ['pt-rate'] as const,
+    list: () => [...queryKeys.ptRate.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.ptRate.all, 'detail', id] as const,
+  },
+  lwfRate: {
+    all: ['lwf-rate'] as const,
+    list: () => [...queryKeys.lwfRate.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.lwfRate.all, 'detail', id] as const,
+  },
+  pfOfficeAddress: {
+    all: ['pf-office-address'] as const,
+    list: () => [...queryKeys.pfOfficeAddress.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.pfOfficeAddress.all, 'detail', id] as const,
+  },
+  esicOfficeAddress: {
+    all: ['esic-office-address'] as const,
+    list: () => [...queryKeys.esicOfficeAddress.all, 'list'] as const,
+    detail: (id: number) =>
+      [...queryKeys.esicOfficeAddress.all, 'detail', id] as const,
+  },
+  lwfOfficeAddress: {
+    all: ['lwf-office-address'] as const,
+    list: () => [...queryKeys.lwfOfficeAddress.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.lwfOfficeAddress.all, 'detail', id] as const,
+  },
+  factoryOfficeAddress: {
+    all: ['factory-office-address'] as const,
+    list: () => [...queryKeys.factoryOfficeAddress.all, 'list'] as const,
+    detail: (id: number) =>
+      [...queryKeys.factoryOfficeAddress.all, 'detail', id] as const,
+  },
+  employmentExchangeOfficeAddress: {
+    all: ['employment-exchange-office-address'] as const,
+    list: () => [...queryKeys.employmentExchangeOfficeAddress.all, 'list'] as const,
+    detail: (id: number) =>
+      [...queryKeys.employmentExchangeOfficeAddress.all, 'detail', id] as const,
+  },
   state: {
     all: ['state'] as const,
     list: () => [...queryKeys.state.all, 'list'] as const,

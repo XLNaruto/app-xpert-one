@@ -1,4 +1,6 @@
 import { mockDelay } from '@/lib/utils'
+import { createdStamp, updatedStamp } from '@/lib/audit'
+import type { AuditFields } from '@/types/audit'
 import type { BranchFormValues } from '../schemas'
 import type { Branch } from '../types'
 
@@ -10,15 +12,16 @@ import type { Branch } from '../types'
  */
 
 /** Blank stored fields — every optional column starts out `null`. */
-const EMPTY_RECORD: Omit<Branch, 'id' | 'createdAt' | 'branchName' | 'addressLine1'> = {
+const EMPTY_RECORD: Omit<
+  Branch,
+  'id' | 'branchName' | 'addressLine1' | keyof AuditFields
+> = {
   addressLine2: null,
   addressLine3: null,
-  country: null,
   state: null,
+  district: null,
   city: null,
   pinCode: null,
-  headName: null,
-  headMobile: null,
   pfCode: null,
   epfActDate: null,
   fpfActDate: null,
@@ -62,12 +65,10 @@ let branches: Branch[] = [
     branchName: 'Surat — Head Office',
     addressLine1: '4th Floor, Silver Business Point',
     addressLine2: 'VIP Circle, Uttran',
-    country: 'INDIA',
     state: 'Gujarat',
+    district: 'Surat',
     city: 'Surat',
     pinCode: '394105',
-    headName: 'Roman Patel',
-    headMobile: '9876543210',
     pfCode: 'GJSRT0012345',
     epfActDate: '2016-04-01',
     pfState: 'Gujarat',
@@ -77,23 +78,27 @@ let branches: Branch[] = [
     esicRegistrationDate: '2016-06-15',
     esicState: 'Gujarat',
     esicDistrict: 'Surat',
+    createdBy: 'Roman Rings',
     createdAt: '2016-04-01T09:30:00.000Z',
+    updatedBy: 'John Cena',
+    updatedAt: '2024-11-19T08:55:00.000Z',
   },
   {
     ...EMPTY_RECORD,
     id: 2,
     branchName: 'Mumbai — Regional',
     addressLine1: '12 MG Road',
-    country: 'INDIA',
     state: 'Maharashtra',
+    district: 'Mumbai',
     city: 'Mumbai',
     pinCode: '400001',
-    headName: 'Asha Rao',
-    headMobile: '9820011223',
     factoryActDate: '2019-02-11',
     factoryLicenseNumber: 'MH/FAC/2019/8821',
     employeeCount: '46',
+    createdBy: 'John Cena',
     createdAt: '2019-02-11T09:30:00.000Z',
+    updatedBy: null,
+    updatedAt: null,
   },
 ]
 
@@ -113,12 +118,12 @@ function nullIfBlank(value: string): string | null {
  * The form's keys mirror the record's, so everything but the two mandatory
  * fields is trimmed and nulled when blank.
  */
-function applyForm(values: BranchFormValues): Omit<Branch, 'id' | 'createdAt'> {
+function applyForm(values: BranchFormValues): Omit<Branch, 'id' | keyof AuditFields> {
   const optional = Object.fromEntries(
     Object.entries(values).map(([key, value]) => [key, nullIfBlank(value)]),
   )
   return {
-    ...(optional as Omit<Branch, 'id' | 'createdAt'>),
+    ...(optional as Omit<Branch, 'id' | keyof AuditFields>),
     branchName: values.branchName.trim(),
     addressLine1: values.addressLine1.trim(),
   }
@@ -138,7 +143,7 @@ export async function createBranch(values: BranchFormValues): Promise<Branch> {
   const branch: Branch = {
     id: nextId(),
     ...applyForm(values),
-    createdAt: new Date().toISOString(),
+    ...createdStamp(),
   }
   branches = [branch, ...branches]
   return mockDelay({ ...branch })
@@ -150,7 +155,11 @@ export async function updateBranch(
 ): Promise<Branch> {
   const index = branches.findIndex((b) => b.id === id)
   if (index === -1) throw new Error('Branch not found')
-  const updated: Branch = { ...branches[index], ...applyForm(values) }
+  const updated: Branch = {
+    ...branches[index],
+    ...applyForm(values),
+    ...updatedStamp(),
+  }
   branches = branches.map((b) => (b.id === id ? updated : b))
   return mockDelay({ ...updated })
 }

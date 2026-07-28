@@ -1,3 +1,3 @@
-export { DistrictListPage } from './pages/district-list-page'
 export { useDistricts } from './api/use-districts'
+export { fetchDistricts } from './api/district-api'
 export type { DistrictRecord } from './types'

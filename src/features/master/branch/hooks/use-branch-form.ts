@@ -64,8 +64,14 @@ export function useBranchForm(id?: number) {
       .filter((d) => d.state === state)
       .map((d) => ({ label: d.districtName, value: d.districtName }))
 
+  const addressState = watch('state')
   const pfState = watch('pfState')
   const esicState = watch('esicState')
+  const districtOptions = useMemo(
+    () => districtsIn(addressState),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [districts, addressState],
+  )
   const pfDistrictOptions = useMemo(
     () => districtsIn(pfState),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,6 +83,12 @@ export function useBranchForm(id?: number) {
     [districts, esicState],
   )
 
+  /** Pick the address state and clear its district — it may not exist under the new state. */
+  const changeState = (value: string, onChange: (value: string) => void) => {
+    onChange(value)
+    setValue('district', '')
+  }
+
   /** Pick an act's state and clear its district — it may not exist under the new state. */
   const changePfState = (value: string, onChange: (value: string) => void) => {
     onChange(value)
@@ -87,7 +99,7 @@ export function useBranchForm(id?: number) {
     setValue('esicDistrict', '')
   }
 
-  const goToList = () => navigate({ to: '/branch' })
+  const goToList = () => navigate({ to: '/master/branch' })
 
   const onSubmit = handleSubmit(
     (values) => {
@@ -123,8 +135,10 @@ export function useBranchForm(id?: number) {
     tab,
     setTab,
     stateOptions,
+    districtOptions,
     pfDistrictOptions,
     esicDistrictOptions,
+    changeState,
     changePfState,
     changeEsicState,
     onSubmit,

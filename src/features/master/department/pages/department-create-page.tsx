@@ -1,5 +1,6 @@
 import { Controller } from 'react-hook-form'
 import { ArrowLeft, Building } from 'lucide-react'
+import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
 import { Field } from '@/components/common/form-field'
@@ -11,11 +12,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { BRANCH_OPTIONS, MONTH_DAY_OPTIONS } from '../constants'
 import { useDepartmentForm } from '../hooks/use-department-form'
 
+interface DepartmentCreatePageProps {
+  /**
+   * Encrypted department id from the `?data=` search param. When present the
+   * page switches to edit mode; otherwise it's a fresh create.
+   */
+  data?: string
+}
+
 /**
- * Create/edit a department record. One screen for both: pass `departmentId` to
- * edit an existing record, or omit it to create a new one.
+ * Create/edit a department record. One screen for both: a `?data=` token edits
+ * the record it carries, no token creates a new one.
  */
-export function DepartmentManagePage({ departmentId }: { departmentId?: number }) {
+export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
+  // Decrypt the params from the URL; missing/malformed → create mode.
+  const departmentId = decryptId(data)
+
   const {
     register,
     control,
@@ -93,13 +105,6 @@ export function DepartmentManagePage({ departmentId }: { departmentId?: number }
                 error={errors.departmentName?.message}
               >
                 <Input placeholder="Department Name" {...register('departmentName')} />
-              </Field>
-              <Field
-                label="Department Code"
-                required
-                error={errors.departmentCode?.message}
-              >
-                <Input placeholder="Department Code" {...register('departmentCode')} />
               </Field>
               <Field
                 label="Month Start Date"

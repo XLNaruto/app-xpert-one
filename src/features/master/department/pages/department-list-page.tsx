@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { useDepartmentList } from '../hooks/use-department-list'
 import type { Department } from '../types'
 
@@ -29,8 +29,8 @@ export function DepartmentListPage() {
     () => [
       {
         id: 'serial',
-        header: '#',
-        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        header: 'Sr No.',
+        meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">{row.index + 1}</span>
         ),
@@ -70,6 +70,7 @@ export function DepartmentListPage() {
         accessorKey: 'monthStartDate',
         header: 'Month Start Date',
       },
+      ...auditColumns<Department>(),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

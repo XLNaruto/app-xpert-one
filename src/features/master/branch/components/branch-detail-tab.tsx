@@ -1,11 +1,10 @@
 import { Controller } from 'react-hook-form'
 import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form'
-import { Building2, MapPin, Phone } from 'lucide-react'
+import { Building2, MapPin } from 'lucide-react'
 import { FormSection } from '@/components/common/form-section'
 import { Field } from '@/components/common/form-field'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
-import { COUNTRY_OPTIONS } from '../constants'
 import type { BranchFormValues } from '../schemas'
 
 interface BranchDetailTabProps {
@@ -13,14 +12,18 @@ interface BranchDetailTabProps {
   control: Control<BranchFormValues>
   errors: FieldErrors<BranchFormValues>
   stateOptions: ComboboxOption[]
+  districtOptions: ComboboxOption[]
+  changeState: (value: string, onChange: (value: string) => void) => void
 }
 
-/** "Branch Detail" tab — branch identity, address and contact fields. */
+/** "Branch Detail" tab — branch identity and address fields. */
 export function BranchDetailTab({
   register,
   control,
   errors,
   stateOptions,
+  districtOptions,
+  changeState,
 }: BranchDetailTabProps) {
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -48,22 +51,6 @@ export function BranchDetailTab({
       <Field label="Address Line 3" error={errors.addressLine3?.message}>
         <Input placeholder="Address Line 3" {...register('addressLine3')} />
       </Field>
-      <Field label="Country" error={errors.country?.message}>
-        <Controller
-          control={control}
-          name="country"
-          render={({ field }) => (
-            <Combobox
-              className="w-full"
-              value={field.value}
-              onChange={field.onChange}
-              options={COUNTRY_OPTIONS}
-              placeholder="Select Country"
-              searchPlaceholder="Search country"
-            />
-          )}
-        />
-      </Field>
       <Field label="State" error={errors.state?.message}>
         <Controller
           control={control}
@@ -72,10 +59,26 @@ export function BranchDetailTab({
             <Combobox
               className="w-full"
               value={field.value}
-              onChange={field.onChange}
+              onChange={(value) => changeState(value, field.onChange)}
               options={stateOptions}
               placeholder="Select State"
               searchPlaceholder="Search state"
+            />
+          )}
+        />
+      </Field>
+      <Field label="District" error={errors.district?.message}>
+        <Controller
+          control={control}
+          name="district"
+          render={({ field }) => (
+            <Combobox
+              className="w-full"
+              value={field.value}
+              onChange={field.onChange}
+              options={districtOptions}
+              placeholder="Select District"
+              searchPlaceholder="Search district"
             />
           )}
         />
@@ -89,23 +92,6 @@ export function BranchDetailTab({
           maxLength={6}
           placeholder="Pin Code"
           {...register('pinCode')}
-        />
-      </Field>
-
-      <FormSection
-        icon={Phone}
-        title="Contact Details"
-        description="Who heads this branch"
-      />
-      <Field label="Head Name" error={errors.headName?.message}>
-        <Input placeholder="Head Name" {...register('headName')} />
-      </Field>
-      <Field label="Head Mobile Number" error={errors.headMobile?.message}>
-        <Input
-          inputMode="numeric"
-          maxLength={10}
-          placeholder="Head Mobile Number"
-          {...register('headMobile')}
         />
       </Field>
     </div>

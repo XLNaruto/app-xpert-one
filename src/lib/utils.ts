@@ -1,17 +1,18 @@
 import { clsx, type ClassValue } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { twMerge } from 'tailwind-merge'
+import { currencyCode } from './currency'
 
 /** Merge conditional class names, de-duplicating Tailwind utilities. */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Format a number as Indian-locale currency (₹). */
+/** Format a number as currency, in the code configured in `config-store`. */
 export function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'INR',
+    currency: currencyCode(),
     maximumFractionDigits: 0,
   }).format(value)
 }
@@ -29,6 +30,16 @@ export function formatPercent(value: number, digits = 1) {
 export function formatDate(value: string, pattern = 'dd MMM yyyy') {
   try {
     return format(parseISO(value), pattern)
+  } catch {
+    return value
+  }
+}
+
+/** Format an ISO date-time as '27-07-2026 11:23 AM'; missing value → dash. */
+export function formatDateTime(value: string | null | undefined) {
+  if (!value) return '—'
+  try {
+    return format(parseISO(value), 'dd-MM-yyyy hh:mm a')
   } catch {
     return value
   }

@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
-import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { useAssetList } from '../hooks/use-asset-list'
 import { AssetFormDialog } from '../components/asset-form-dialog'
 import type { AssetRecord } from '../types'
@@ -33,8 +33,8 @@ export function AssetListPage() {
     () => [
       {
         id: 'serial',
-        header: '#',
-        meta: { className: 'w-px whitespace-nowrap text-muted-foreground' },
+        header: 'Sr No.',
+        meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">{row.index + 1}</span>
         ),
@@ -57,6 +57,7 @@ export function AssetListPage() {
           <span className="font-medium text-foreground">{row.original.assetName}</span>
         ),
       },
+      ...auditColumns<AssetRecord>(),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],

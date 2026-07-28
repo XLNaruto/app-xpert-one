@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { CompanyFormValues } from '../schemas'
 import type { Company } from '../types'
 
@@ -22,13 +23,17 @@ let companies: Company[] = [
     addressLine2: 'VIP Circle, Uttran',
     addressLine3: null,
     state:'Gujarat',
+    district: 'Surat',
     city: 'Surat',
     pinCode: '394105',
     phone: '02612345678',
     mobile1: '9876543210',
     mobile2: null,
     email: 'contact@xpertlab.com',
+    createdBy: 'Roman Rings',
     createdAt: '2015-06-12T09:30:00.000Z',
+    updatedBy: 'Roman Rings',
+    updatedAt: '2025-01-01T05:35:00.000Z',
   },
   {
     id: 2,
@@ -42,13 +47,17 @@ let companies: Company[] = [
     addressLine2: null,
     addressLine3: null,
     state:'Maharashtra',
+    district: 'Mumbai',
     city: 'Mumbai',
     pinCode: '400001',
     phone: null,
     mobile1: '9820011223',
     mobile2: '9820044556',
     email: 'info@rajanigroup.com',
+    createdBy: 'John Cena',
     createdAt: '2008-03-01T09:30:00.000Z',
+    updatedBy: null,
+    updatedAt: null,
   },
 ]
 
@@ -76,6 +85,7 @@ function applyForm(values: CompanyFormValues) {
     addressLine2: nullIfBlank(values.addressLine2),
     addressLine3: nullIfBlank(values.addressLine3),
     state: values.state.trim(),
+    district: nullIfBlank(values.district),
     city: nullIfBlank(values.city),
     pinCode: nullIfBlank(values.pinCode),
     phone: nullIfBlank(values.phone),
@@ -99,7 +109,7 @@ export async function createCompany(values: CompanyFormValues): Promise<Company>
   const company: Company = {
     id: nextId(),
     ...applyForm(values),
-    createdAt: new Date().toISOString(),
+    ...createdStamp(),
   }
   companies = [company, ...companies]
   return mockDelay({ ...company })
@@ -111,7 +121,11 @@ export async function updateCompany(
 ): Promise<Company> {
   const index = companies.findIndex((c) => c.id === id)
   if (index === -1) throw new Error('Company not found')
-  const updated: Company = { ...companies[index], ...applyForm(values) }
+  const updated: Company = {
+    ...companies[index],
+    ...applyForm(values),
+    ...updatedStamp(),
+  }
   companies = companies.map((c) => (c.id === id ? updated : c))
   return mockDelay({ ...updated })
 }

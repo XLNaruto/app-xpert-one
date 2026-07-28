@@ -17,12 +17,17 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
+import { decryptId } from '@/lib/crypto'
 import { useCompanyDetail } from '../hooks/use-company-detail'
 
-/** Read-only view of a single company record. */
-export function CompanyDetailPage({ companyId }: { companyId: number }) {
-  const { company, isLoading, isError, error, goToList, goToEdit } =
-    useCompanyDetail(companyId)
+/**
+ * Read-only view of a single company record. The record id arrives encrypted in
+ * the `?data=` search param.
+ */
+export function CompanyDetailPage({ data }: { data?: string }) {
+  const { company, isLoading, isError, error, goToList, goToEdit } = useCompanyDetail(
+    decryptId(data),
+  )
 
   return (
     <div>
@@ -90,13 +95,14 @@ export function CompanyDetailPage({ companyId }: { companyId: number }) {
               className="sm:col-span-2"
             />
             <DetailItem icon={MapPin} label="State" value={company.state} />
+            <DetailItem icon={MapPin} label="District" value={company.district} />
             <DetailItem icon={MapPin} label="City" value={company.city} />
             <DetailItem icon={MapPin} label="Pin Code" value={company.pinCode} />
 
             <FormSection icon={Phone} title="Contact Details" />
             <DetailItem icon={Phone} label="Phone" value={company.phone} />
-            <DetailItem icon={Smartphone} label="Mobile Number 1" value={company.mobile1} />
-            <DetailItem icon={Smartphone} label="Mobile Number 2" value={company.mobile2} />
+            <DetailItem icon={Smartphone} label="Primary Mobile Number" value={company.mobile1} />
+            <DetailItem icon={Smartphone} label="Secondary Mobile Number" value={company.mobile2} />
             <DetailItem icon={Mail} label="Email" value={company.email} />
             <DetailItem
               icon={CalendarDays}

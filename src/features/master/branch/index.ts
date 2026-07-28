@@ -1,5 +1,5 @@
 export { BranchListPage } from './pages/branch-list-page'
-export { BranchManagePage } from './pages/branch-manage-page'
+export { BranchCreatePage } from './pages/branch-create-page'
 export { BranchDetailPage } from './pages/branch-detail-page'
 export { useBranches } from './api/use-branches'
 export { useBranch } from './api/use-branch'

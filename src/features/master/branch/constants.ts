@@ -1,11 +1,6 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
 import type { BranchFormValues } from './schemas'
 
-/** Countries available on the address block (India-only for now). */
-export const COUNTRY_OPTIONS: ComboboxOption[] = [
-  { label: 'INDIA', value: 'INDIA' },
-]
-
 /** What the ESIC contribution is calculated on. */
 export const ESIC_DEDUCTS_ON_OPTIONS: ComboboxOption[] = [
   { label: 'Gross Salary', value: 'Gross Salary' },
@@ -20,13 +15,10 @@ export const EMPTY_BRANCH_FORM: BranchFormValues = {
   addressLine1: '',
   addressLine2: '',
   addressLine3: '',
-  country: 'INDIA',
   state: '',
+  district: '',
   city: '',
   pinCode: '',
-
-  headName: '',
-  headMobile: '',
 
   pfCode: '',
   epfActDate: '',

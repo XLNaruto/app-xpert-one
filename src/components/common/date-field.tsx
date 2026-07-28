@@ -9,6 +9,8 @@ interface DateFieldProps<T extends FieldValues> {
   name: FieldPath<T>
   label: string
   required?: boolean
+  /** Help text shown behind an info icon beside the label. */
+  hint?: string
   error?: string
   minDate?: Date
   maxDate?: Date
@@ -25,13 +27,20 @@ export function DateField<T extends FieldValues>({
   name,
   label,
   required = false,
+  hint,
   error,
   minDate,
   maxDate,
   className,
 }: DateFieldProps<T>) {
   return (
-    <Field label={label} required={required} error={error} className={className}>
+    <Field
+      label={label}
+      required={required}
+      hint={hint}
+      error={error}
+      className={className}
+    >
       <Controller
         control={control}
         name={name}

@@ -131,6 +131,25 @@ export function decryptParams<T = Record<string, unknown>>(token: string): T | n
 }
 
 /**
+ * Convenience wrapper for the ubiquitous single-record case: turn a record id
+ * into the `?data=` token every create/detail screen reads.
+ */
+export function encryptId(id: number | string): string {
+  return encryptParams({ id })
+}
+
+/**
+ * Read a record id back out of a `?data=` token. Returns `undefined` when the
+ * token is absent or malformed — which the create screens treat as "create
+ * mode" and the detail screens as "record not found".
+ */
+export function decryptId(token?: string): number | undefined {
+  if (!token) return undefined
+  const id = Number(decryptParams<{ id?: number | string }>(token)?.id)
+  return Number.isFinite(id) ? id : undefined
+}
+
+/**
  * Deterministically obfuscate a name (store / key) with FNV-1a. Synchronous so
  * it can be used where a storage key is needed up front.
  */

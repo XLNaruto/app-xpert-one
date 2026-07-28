@@ -1,8 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { ComboboxOption } from '@/components/ui/combobox'
+import { useDistricts } from '@/features/master/district'
 import { companySchema, type CompanyFormValues } from '../schemas'
 import { EMPTY_COMPANY_FORM } from '../constants'
 import { useCompany } from '../api/use-company'
@@ -27,6 +29,8 @@ export function useCompanyForm(id?: number) {
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -38,7 +42,24 @@ export function useCompanyForm(id?: number) {
     if (detail.data) reset(companyToFormValues(detail.data))
   }, [detail.data, reset])
 
-  const goToList = () => navigate({ to: '/company' })
+  // District choices come from the district master, narrowed to the chosen state.
+  const { data: districts } = useDistricts()
+  const state = watch('state')
+  const districtOptions = useMemo<ComboboxOption[]>(
+    () =>
+      (districts ?? [])
+        .filter((d) => d.state === state)
+        .map((d) => ({ label: d.districtName, value: d.districtName })),
+    [districts, state],
+  )
+
+  /** Pick a state and clear the district — it may not exist under the new state. */
+  const changeState = (value: string, onChange: (value: string) => void) => {
+    onChange(value)
+    setValue('district', '')
+  }
+
+  const goToList = () => navigate({ to: '/master/company' })
 
   const onSubmit = handleSubmit((values) => {
     const mutation = isEdit ? updateCompany : createCompany
@@ -60,6 +81,8 @@ export function useCompanyForm(id?: number) {
     register,
     control,
     errors,
+    districtOptions,
+    changeState,
     onSubmit,
     isEdit,
     isPending: isEdit ? updateCompany.isPending : createCompany.isPending,

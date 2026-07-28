@@ -4,7 +4,8 @@ import { z } from 'zod'
 export const departmentSchema = z.object({
   branch: z.string().trim().min(1, 'Branch is required'),
   departmentName: z.string().trim().min(1, 'Department name is required'),
-  departmentCode: z.string().trim().min(1, 'Department code is required'),
+  /** Kept on the record, but no longer captured on the create/edit form. */
+  departmentCode: z.string().trim(),
   monthStartDate: z.string().trim().min(1, 'Month start date is required'),
 })
 

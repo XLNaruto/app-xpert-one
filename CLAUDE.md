@@ -73,7 +73,7 @@ re-declare a local `Field` inside a feature.
 ```
 src/
 ├── app/            providers, router, layouts (sidebar/topbar shell)
-├── routes/         file-based route tree (TanStack Router)
+├── routes/         file-based route tree — mirrors features/ (TanStack Router)
 ├── features/       the modules — each self-contained
 │   ├── auth/         email/password sign-in (mock until the API lands)
 │   ├── dashboard/    KPI hub (placeholder for now)
@@ -88,6 +88,25 @@ src/
 ## Conventions
 
 - Files kebab-case; Components PascalCase; hooks `useX`; stores `useXStore`.
+- Page files are named `<module>-<kind>-page.tsx` — `<module>-list-page.tsx`,
+  `<module>-create-page.tsx`, `<module>-detail-page.tsx`. Never `-manage-page`
+  or `-form-page`: **one `create` page serves both create and edit** (it takes
+  an optional `data` prop), and its component is `<Module>CreatePage`.
+- **`src/routes/` mirrors `src/features/`.** A feature at
+  `features/master/branch/` gets routes at `routes/_authenticated/master/branch/`
+  — one folder per module holding `index.tsx` (list), `create.tsx` (create +
+  edit) and `detail.tsx`. Never flat dot-notation files, never a route folder
+  that doesn't match a feature folder.
+- **Never put a record id in the path.** No `/master/pf-rate/1/edit`, no
+  `/master/branch/$branchId`. Routes are static — `/master/branch/create`,
+  `/master/branch/detail` — and the id (or any other param) rides along in a
+  single encrypted `?data=` token: `/master/branch/create?data=CEMFAVEXWBk`.
+  - Navigate with `encryptId(id)` / `encryptParams({ id, … })` from `lib/crypto`:
+    `navigate({ to: '/master/branch/create', search: { data: encryptId(id) } })`.
+  - The route file uses `validateSearch: validateDataSearch` (`lib/route-search`)
+    and passes `data` straight to the page.
+  - The page decrypts with `decryptId(data)` — `undefined` means create mode on a
+    create page, "not found" on a detail page. Never decrypt inside a hook.
 - Query hooks in `features/<name>/api/`: `use<Thing>` (queries), `use<Action>` (mutations).
 - Forms: react-hook-form + Zod resolver, inline field errors.
 - Env only through `config/env.ts` (zod-parsed).

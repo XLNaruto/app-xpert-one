@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { AssetFormValues } from '../schemas'
 import type { AssetRecord } from '../types'
 
@@ -9,9 +10,30 @@ import type { AssetRecord } from '../types'
  */
 
 let assets: AssetRecord[] = [
-  { id: 1, assetName: 'Laptop', createdAt: '2025-01-12T09:00:00.000Z' },
-  { id: 2, assetName: 'Vehicle', createdAt: '2025-01-12T09:00:00.000Z' },
-  { id: 3, assetName: 'Furniture', createdAt: '2025-01-12T09:00:00.000Z' },
+  {
+    id: 1,
+    assetName: 'Laptop',
+    createdBy: 'Roman Rings',
+    createdAt: '2025-01-12T09:00:00.000Z',
+    updatedBy: 'John Cena',
+    updatedAt: '2025-03-04T06:45:00.000Z',
+  },
+  {
+    id: 2,
+    assetName: 'Vehicle',
+    createdBy: 'Roman Rings',
+    createdAt: '2025-01-12T09:00:00.000Z',
+    updatedBy: null,
+    updatedAt: null,
+  },
+  {
+    id: 3,
+    assetName: 'Furniture',
+    createdBy: 'John Cena',
+    createdAt: '2025-01-12T09:00:00.000Z',
+    updatedBy: null,
+    updatedAt: null,
+  },
 ]
 
 function nextId(): number {
@@ -26,7 +48,7 @@ export async function createAsset(values: AssetFormValues): Promise<AssetRecord>
   const record: AssetRecord = {
     id: nextId(),
     assetName: values.assetName.trim(),
-    createdAt: new Date().toISOString(),
+    ...createdStamp(),
   }
   assets = [record, ...assets]
   return mockDelay({ ...record })
@@ -38,7 +60,11 @@ export async function updateAsset(
 ): Promise<AssetRecord> {
   const index = assets.findIndex((a) => a.id === id)
   if (index === -1) throw new Error('Asset not found')
-  const updated: AssetRecord = { ...assets[index], assetName: values.assetName.trim() }
+  const updated: AssetRecord = {
+    ...assets[index],
+    assetName: values.assetName.trim(),
+    ...updatedStamp(),
+  }
   assets = assets.map((a) => (a.id === id ? updated : a))
   return mockDelay({ ...updated })
 }

@@ -67,6 +67,7 @@ export const EMPTY_COMPANY_FORM: CompanyFormValues = {
   addressLine2: "",
   addressLine3: "",
   state: "",
+  district: "",
   city: "",
   pinCode: "",
   phone: "",

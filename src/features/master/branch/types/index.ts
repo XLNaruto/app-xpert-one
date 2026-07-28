@@ -1,9 +1,11 @@
+import type { AuditFields } from '@/types/audit'
+
 /**
  * A branch master record as consumed by the UI (camelCase). Only the branch
  * name and first address line are mandatory; every other field is `null` when
  * not recorded. Dates are ISO `yyyy-MM-dd` strings.
  */
-export interface Branch {
+export interface Branch extends AuditFields {
   id: number
 
   // Branch information
@@ -13,14 +15,11 @@ export interface Branch {
   addressLine1: string
   addressLine2: string | null
   addressLine3: string | null
-  country: string | null
   state: string | null
+  /** Parent district name (from the district master). */
+  district: string | null
   city: string | null
   pinCode: string | null
-
-  // Contact details
-  headName: string | null
-  headMobile: string | null
 
   // PF act
   pfCode: string | null
@@ -68,6 +67,4 @@ export interface Branch {
   eeRegistrationDate: string | null
   eeRegistrationNumber: string | null
 
-  /** ISO date-time the record was created. */
-  createdAt: string
 }

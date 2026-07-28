@@ -1,5 +1,5 @@
 export { CompanyListPage } from './pages/company-list-page'
-export { CompanyManagePage } from './pages/company-create-page'
+export { CompanyCreatePage } from './pages/company-create-page'
 export { CompanyDetailPage } from './pages/company-detail-page'
 export { useCompanies } from './api/use-companies'
 export { useCompany } from './api/use-company'

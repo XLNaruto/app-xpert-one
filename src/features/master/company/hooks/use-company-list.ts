@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { encryptId } from '@/lib/crypto'
 import { useCompanies } from '../api/use-companies'
 import { useDeleteCompany } from '../api/use-company-mutations'
 import type { Company } from '../types'
@@ -17,11 +18,13 @@ export function useCompanyList() {
 
   const [pendingDelete, setPendingDelete] = useState<Company | null>(null)
 
-  const goToCreate = () => navigate({ to: '/company/new' })
+  const goToCreate = () => navigate({ to: '/master/company/create' })
+  // Detail and edit reuse the same screens as create; the raw id travels
+  // encrypted in `?data=` so it's never exposed in the address bar.
   const goToDetail = (id: number) =>
-    navigate({ to: '/company/$companyId', params: { companyId: String(id) } })
+    navigate({ to: '/master/company/detail', search: { data: encryptId(id) } })
   const goToEdit = (id: number) =>
-    navigate({ to: '/company/$companyId/edit', params: { companyId: String(id) } })
+    navigate({ to: '/master/company/create', search: { data: encryptId(id) } })
 
   const confirmDelete = () => {
     if (!pendingDelete) return
