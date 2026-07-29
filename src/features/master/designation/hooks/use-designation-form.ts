@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -21,6 +21,12 @@ export interface HeadRow {
 }
 
 /**
+ * The two tabs of the edit screen. Creating a designation has no wage history to
+ * show yet, so the tabs only appear once the record exists.
+ */
+export type DesignationFormTab = 'basic' | 'wage'
+
+/**
  * Owns the designation form for both create and edit: the record load, the
  * allowance and deduction head rows, the derived wage per day and the save. The
  * page consumes this and only lays out fields.
@@ -34,6 +40,8 @@ export function useDesignationForm(id?: number) {
   const updateDesignation = useUpdateDesignation(id ?? Number.NaN)
 
   const components = useAllowanceDeductions()
+
+  const [tab, setTab] = useState<DesignationFormTab>('basic')
 
   const {
     register,
@@ -132,6 +140,9 @@ export function useDesignationForm(id?: number) {
     register,
     control,
     errors,
+
+    tab,
+    setTab,
 
     allowanceHeads,
     deductionHeads,

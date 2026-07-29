@@ -83,3 +83,91 @@ export interface Designation extends AuditFields {
   /** Ids of the deduction records in the allowance / deduction master. */
   deductions: number[]
 }
+
+/* ── Wage structure history ─────────────────────────────────────────────── */
+
+/** Whether the wage is quoted per day or per month. */
+export type WageSalaryType = 'Daily' | 'Monthly'
+
+/** Whether the overtime rate is derived from the wage or entered by hand. */
+export type WageOvertimeCalculationType = 'Auto' | 'Manual'
+
+/** What the ESIC contribution is worked out on. */
+export type WageEsicDeductionBasis = 'Wage Ceiling' | 'Gross Salary' | 'As Per ACT'
+
+/** One allowance head as valued in a wage structure row. */
+export interface WageAllowance {
+  /** Short code of the head — one of `WAGE_ALLOWANCE_HEADS`. */
+  head: string
+  valueType: AllowanceValueType
+  /** Percent of basic pay, or a flat amount — read per `valueType`. */
+  amount: number | null
+  pfApplicable: boolean
+  esicApplicable: boolean
+  ptApplicable: boolean
+}
+
+/** One deduction head as valued in a wage structure row. */
+export interface WageDeduction {
+  /** Short code of the head — one of `WAGE_DEDUCTION_HEADS`. */
+  head: string
+  valueType: AllowanceValueType
+  amount: number | null
+}
+
+/**
+ * One effective-dated wage structure for a designation. History is append-only:
+ * a row applies from its effective month onward until a later row supersedes it,
+ * so existing rows are never edited — a change means a new row.
+ */
+export interface DesignationWageStructure extends AuditFields {
+  id: number
+  designationId: number
+  /** Month the structure takes effect from, as `yyyy-MM`. */
+  effectiveFrom: string
+
+  // Working days & salary
+  workingDayCalculationType: WorkingDayCalculationType | null
+  /** `null` reads as "no weekly off". */
+  weeklyOff: string | null
+  /** Set only when `workingDayCalculationType` is "Fixed". */
+  workingDays: number | null
+  salaryType: WageSalaryType
+  /** Captured for a monthly wage, derived from the daily wage otherwise. */
+  basicPay: number | null
+  /** Captured for a daily wage, derived from the monthly basic otherwise. */
+  wagePerDay: number | null
+  extraDayAmountPerDay: number | null
+
+  allowances: WageAllowance[]
+  deductions: WageDeduction[]
+
+  // Overtime
+  overtimeApplicable: boolean
+  overtimeCalculationType: WageOvertimeCalculationType | null
+  /** Set only when `overtimeCalculationType` is "Manual". */
+  overtimeRatePerHour: number | null
+
+  // PF act
+  pfActApplicable: boolean
+  employeePfContributionOnWageLimit: boolean
+  employerPfContributionOnWageLimit: boolean
+  pfValueType: AllowanceValueType
+  pfValue: number | null
+
+  // ESIC act
+  esicActApplicable: boolean
+  esicDeductionBasis: WageEsicDeductionBasis | null
+
+  // Professional tax act
+  ptActApplicable: boolean
+  ptActType: ActAmountType | null
+  /** Set only when `ptActType` is "Manual". */
+  ptAmount: number | null
+
+  // Labour welfare fund act
+  lwfActApplicable: boolean
+  lwfActType: ActAmountType | null
+  /** Set only when `lwfActType` is "Manual". */
+  lwfAmount: number | null
+}

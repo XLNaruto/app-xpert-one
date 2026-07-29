@@ -8,6 +8,15 @@ export const queryKeys = {
     all: ['profile'] as const,
     me: () => [...queryKeys.profile.all, 'me'] as const,
   },
+  /**
+   * The signed-in user's own companies (tenants) + active selection —
+   * `features/company`. Kept separate from the `company` master list below so a
+   * tenant switch can invalidate everything *except* this key.
+   */
+  myCompany: {
+    all: ['my-company'] as const,
+    list: () => [...queryKeys.myCompany.all, 'list'] as const,
+  },
   company: {
     all: ['company'] as const,
     list: () => [...queryKeys.company.all, 'list'] as const,
@@ -27,6 +36,9 @@ export const queryKeys = {
     all: ['designation'] as const,
     list: () => [...queryKeys.designation.all, 'list'] as const,
     detail: (id: number) => [...queryKeys.designation.all, 'detail', id] as const,
+    /** Effective-dated wage structure history for one designation. */
+    wageStructures: (designationId: number) =>
+      [...queryKeys.designation.all, 'wage-structures', designationId] as const,
   },
   pfRate: {
     all: ['pf-rate'] as const,

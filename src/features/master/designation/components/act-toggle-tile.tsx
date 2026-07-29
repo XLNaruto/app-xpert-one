@@ -16,7 +16,9 @@ interface ActToggleTileProps {
 
 /**
  * One applicable-act switch — a bordered tile that tints itself when the act is
- * turned on, so which acts apply to a designation reads at a glance.
+ * turned on, so which acts apply to a designation reads at a glance. The whole
+ * tile is the control; the switch inside it is only the visual state, so a click
+ * anywhere on the card flips the act.
  */
 export function ActToggleTile({
   icon: Icon,
@@ -28,10 +30,16 @@ export function ActToggleTile({
   iconTone,
 }: ActToggleTileProps) {
   return (
-    <div
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={title}
+      onClick={() => onCheckedChange(!checked)}
       className={cn(
-        'flex items-start gap-3 rounded-xl border p-3.5 transition-colors',
-        checked ? cn(tone, 'dark:bg-transparent') : 'border-border bg-muted/30',
+        'flex w-full cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-left transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        checked ? cn(tone, 'dark:bg-transparent') : 'border-border bg-muted/30 hover:bg-muted/60',
       )}
     >
       <span
@@ -46,12 +54,8 @@ export function ActToggleTile({
         <p className="text-sm font-medium text-foreground">{title}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
       </div>
-      <Switch
-        checked={checked}
-        onCheckedChange={onCheckedChange}
-        aria-label={title}
-        className="mt-0.5"
-      />
-    </div>
+      {/* Presentational only — the tile itself carries the click and the role. */}
+      <Switch checked={checked} presentational className="mt-0.5" />
+    </button>
   )
 }

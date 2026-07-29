@@ -13,7 +13,7 @@ let documentTypes: DocumentType[] = [
   {
     id: 1,
     typeName: 'Identity Proof',
-    createdBy: 'Minesh Solanki',
+    createdBy: 'Roman Rings',
     createdAt: '2026-03-04T09:12:33.104Z',
     updatedBy: null,
     updatedAt: null,

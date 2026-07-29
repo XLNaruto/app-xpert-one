@@ -163,12 +163,12 @@ export function AuthLayout() {
           <p className="mt-6 text-sm font-semibold text-foreground xl:mt-8">
             Built for every team
           </p>
-          <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4 xl:gap-3">
+          <div className="mt-3 grid grid-cols-2 gap-2.5 xl:grid-cols-4 xl:gap-3">
             {MODULES.map(({ Icon, label, icon, tile, glow, bar }, i) => (
               <div
                 key={label}
                 style={{ animationDelay: `${0.15 + i * 0.08}s` }}
-                className="animate-auth-rise group relative overflow-hidden rounded-xl border border-white/50 bg-card/60 p-3 shadow-sm ring-1 ring-black/5 backdrop-blur-md transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg xl:p-4 dark:border-white/10 dark:bg-white/5 dark:ring-white/5"
+                className="animate-auth-rise group relative overflow-hidden rounded-xl border border-white/50 bg-card/60 p-2.5 shadow-sm ring-1 ring-black/5 backdrop-blur-md transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-lg xl:p-4 dark:border-white/10 dark:bg-white/5 dark:ring-white/5"
               >
                 {/* Colored corner glow */}
                 <span
@@ -177,17 +177,17 @@ export function AuthLayout() {
                     glow,
                   )}
                 />
-                <div className="relative flex items-center gap-2.5">
+                <div className="relative flex min-w-0 items-center gap-2">
                   <span
                     className={cn(
-                      'grid size-9 place-items-center rounded-lg transition-transform duration-300 group-hover:scale-110 xl:size-10',
+                      'grid size-8 shrink-0 place-items-center rounded-lg transition-transform duration-300 group-hover:scale-110 xl:size-9',
                       tile,
                       icon,
                     )}
                   >
-                    <Icon className="size-4.5 xl:size-5" />
+                    <Icon className="size-4 xl:size-4.5" />
                   </span>
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="min-w-0 text-xs font-semibold leading-tight text-foreground">
                     {label}
                   </p>
                 </div>
@@ -203,7 +203,7 @@ export function AuthLayout() {
           </div>
 
           {/* Highlights */}
-          <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 sm:grid-cols-4 xl:mt-8 xl:pt-6">
+          <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-border pt-5 xl:mt-8 xl:grid-cols-4 xl:pt-6">
             {HIGHLIGHTS.map(({ Icon, title, body }) => (
               <div key={title} className="flex gap-2.5">
                 <Icon className="mt-0.5 size-4 shrink-0 text-primary" />

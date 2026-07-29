@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { createIdbStorage } from '@/lib/idb-storage'
 
 type Theme = 'light' | 'dark'
 
@@ -33,6 +34,10 @@ export const useUiStore = create<UiState>()(
     }),
     {
       name: 'xpertone-ui',
+      // Local data always lives in IndexedDB (never localStorage). It's async,
+      // so hydration is explicit in main.tsx — before the first paint.
+      storage: createJSONStorage(createIdbStorage),
+      skipHydration: true,
       // Don't persist the transient mobile drawer state.
       partialize: (s) => ({ sidebarCollapsed: s.sidebarCollapsed, theme: s.theme }),
     },

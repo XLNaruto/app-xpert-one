@@ -47,7 +47,7 @@ export function AllowanceDeductionSection({
   ptActApplicable,
 }: AllowanceDeductionSectionProps) {
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       {/* ── Allowances ── */}
       <HeadColumn
         icon={CirclePlus}
@@ -249,19 +249,12 @@ function HeadColumn({
 }: HeadColumnProps) {
   return (
     <section className="rounded-xl border border-border p-4">
-      <header className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-2.5">
-          <Icon className={cn('mt-0.5 size-5 shrink-0', iconTone)} />
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            <p className="text-xs text-muted-foreground">{description}</p>
-          </div>
+      <header className="flex items-start gap-2.5">
+        <Icon className={cn('mt-0.5 size-5 shrink-0', iconTone)} />
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
-        {!loading && count > 0 && (
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {count} {count === 1 ? 'head' : 'heads'}
-          </span>
-        )}
       </header>
 
       {loading ? (

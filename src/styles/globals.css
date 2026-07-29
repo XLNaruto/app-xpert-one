@@ -680,6 +680,41 @@
   box-shadow: 0 0 0 1px var(--ring);
 }
 
+/* Invalid state — drawn on the control's own border so it hugs the field. A ring
+   on a wrapper sits outside the picker's border and reads as a second, offset
+   outline. */
+.sa-datepicker--error .react-date-picker__wrapper {
+  border-color: var(--destructive);
+}
+/* No focus ring while invalid — the red border is the one thing to say, and a
+   ring on top of it reads as a second, competing outline. */
+.sa-datepicker--error.react-date-picker--open .react-date-picker__wrapper,
+.sa-datepicker--error .react-date-picker__wrapper:focus-within {
+  box-shadow: none;
+}
+
+/* Compact variant, for the dense wage-structure grid where a 36px control
+   would blow the row height out. */
+.sa-datepicker--sm .react-date-picker__wrapper {
+  height: 1.75rem;
+  padding: 0 0.25rem 0 0.5rem;
+}
+.sa-datepicker--sm .react-date-picker__inputGroup {
+  font-size: 0.75rem;
+}
+.sa-datepicker--sm .react-date-picker__button {
+  padding: 2px;
+}
+
+/* Month view of the year-only picker (<MonthPicker>) — three tiles a row, so
+   the panel can be narrower than the day calendar's. */
+.react-calendar__year-view {
+  width: 15rem;
+}
+.react-calendar__year-view__months__month {
+  padding: 0.6rem 0;
+}
+
 /* The calendar is portalled into a host that <DatePicker> positions itself, so
    the panel just fills that host instead of sizing/placing itself. */
 .sa-datepicker-portal .react-date-picker__calendar {
@@ -768,6 +803,27 @@
 }
 .react-calendar__navigation__label {
   font-weight: 600;
+}
+
+/* ── Wage-structure grid row surfaces ──────────────────────────
+   Opaque, single-paint backgrounds. The grid pins both its header and its first
+   column, and a translucent background on a sticky element has to be re-blended
+   against whatever is scrolling underneath it on every frame — which is what
+   makes a wide sticky table stutter. These resolve the tint up front with
+   color-mix so each surface is one flat colour.                                */
+.wage-row-draft,
+.wage-row-draft > .wage-sticky {
+  background: color-mix(in oklab, var(--primary) 4%, var(--card));
+}
+.wage-sticky {
+  background: var(--card);
+}
+.wage-row-saved:hover,
+.wage-row-saved:hover > .wage-sticky {
+  background: color-mix(in oklab, var(--muted) 45%, var(--card));
+}
+.wage-head-cell {
+  background: color-mix(in oklab, var(--muted) 60%, var(--card));
 }
 
 /* ── Org-chart hierarchy tree ──────────────────────────────────

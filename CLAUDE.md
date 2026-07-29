@@ -45,6 +45,12 @@ following the same self-contained folder shape.
 10. **Table columns are defined inline in the list page** with `useMemo<ColumnDef<T>[]>`. Never a separate `<thing>-columns.tsx` file.
 11. **Screen logic lives in `features/<name>/hooks/`** — `use-<thing>-list.ts` (query, filters, dialog/nav state, delete flow), `use-<thing>-form.ts` (react-hook-form + create/update). Pages and components only lay out markup.
 12. **`features/<name>/lib/`** holds pure helpers (mappers, derivations) — no React, no hooks.
+13. **Anything stored locally goes in IndexedDB — never `localStorage`/`sessionStorage`.**
+    Persisted Zustand stores use `createJSONStorage(createIdbStorage)` from
+    `lib/idb-storage` (auth uses `createIdbSessionStorage`, which adds encryption
+    + expiry). IndexedDB is async, so those stores set `skipHydration: true` and
+    are rehydrated in `main.tsx` before the app mounts — add any new persisted
+    store to that `Promise.all`.
 
 ## Feature folder shape
 

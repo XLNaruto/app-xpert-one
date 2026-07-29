@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useAuthStore, type AuthUser } from '@/stores/auth-store'
+import { useCompanyStore } from '@/stores/company-store'
 import { mockDelay } from '@/lib/utils'
 import type { LoginValues } from '../schemas'
 
@@ -33,11 +34,16 @@ export function useLogin() {
 /** Sign out — clears the local session. (Backend revoke added with the API.) */
 export function useLogout() {
   const logout = useAuthStore((s) => s.logout)
+  const clearCompany = useCompanyStore((s) => s.clear)
 
   return useMutation<void, Error, void>({
     mutationFn: async () => {
       await mockDelay(undefined, 150)
     },
-    onSettled: () => logout(),
+    onSettled: () => {
+      logout()
+      // Drop the mirrored tenant so the next user doesn't inherit it.
+      clearCompany()
+    },
   })
 }

@@ -15,7 +15,7 @@ let records: AllowanceDeduction[] = [
     type: 'ALLOWANCE',
     name: 'House Rent Allowance',
     shortName: 'HRA',
-    createdBy: 'Minesh Solanki',
+    createdBy: 'Roman Rings',
     createdAt: '2026-03-11T10:12:04.221Z',
     updatedBy: null,
     updatedAt: null,

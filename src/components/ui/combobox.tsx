@@ -35,6 +35,17 @@ interface ComboboxProps {
   /** Width utility for the trigger (e.g. "lg:w-44"). */
   className?: string
   /**
+   * Overrides on the trigger button itself — for the tighter sizing a dense
+   * grid cell needs, where the default 36px control is too tall.
+   */
+  triggerClassName?: string
+  /**
+   * Floor for the option panel's width, in px. The panel matches the trigger by
+   * default, which truncates long labels behind a narrow control — a grid cell,
+   * typically. Set this to let the panel open wider than the field it belongs to.
+   */
+  panelMinWidth?: number
+  /**
    * Called when the option list is scrolled near its end — use to fetch the
    * next page for lazy-loaded / infinite dropdowns.
    */
@@ -78,6 +89,8 @@ export function Combobox({
   searchPlaceholder = 'Search',
   align = 'start',
   className,
+  triggerClassName,
+  panelMinWidth = 0,
   onScrollEnd,
   loading = false,
   onSearchChange,
@@ -99,7 +112,11 @@ export function Combobox({
       const rect = wrap.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
       const dropUp = spaceBelow < PANEL_MAX && rect.top > spaceBelow
-      const width = rect.width
+      // The panel may outgrow the trigger, but never the viewport.
+      const width = Math.min(
+        Math.max(rect.width, panelMinWidth),
+        window.innerWidth - VIEWPORT_PADDING * 2,
+      )
       let left = rect.left
       if (align === 'end') left = rect.right - width
       else if (align === 'center') left = rect.left + rect.width / 2 - width / 2
@@ -116,7 +133,7 @@ export function Combobox({
       window.removeEventListener('scroll', reposition, true)
       window.removeEventListener('resize', reposition)
     }
-  }, [open, align])
+  }, [open, align, panelMinWidth])
 
   useEffect(() => {
     if (!open) return
@@ -178,6 +195,7 @@ export function Combobox({
         className={cn(
           'flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:border-ring/40',
           open && 'ring-1 ring-ring',
+          triggerClassName,
         )}
       >
         {Icon ? <Icon className="size-4 shrink-0 text-muted-foreground" /> : null}

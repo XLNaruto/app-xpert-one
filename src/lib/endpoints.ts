@@ -15,5 +15,9 @@ export const endpoints = {
   /** The authenticated user's own profile, resolved from the access token. */
   ME: {
     GET: '/me',
+    /** Companies (tenants) the caller belongs to + the active selection. */
+    COMPANIES: '/me/companies',
+    /** Switch the active company for the session. */
+    SELECT_COMPANY: '/me/company/select',
   },
 } as const

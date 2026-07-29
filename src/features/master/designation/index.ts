@@ -2,5 +2,10 @@ export { DesignationListPage } from './pages/designation-list-page'
 export { DesignationCreatePage } from './pages/designation-create-page'
 export { useDesignations } from './api/use-designations'
 export { useDesignation } from './api/use-designation'
-export type { Designation, DesignationAllowance } from './types'
-export type { DesignationFormValues } from './schemas'
+export { useDesignationWageStructures } from './api/use-designation-wage-structures'
+export type {
+  Designation,
+  DesignationAllowance,
+  DesignationWageStructure,
+} from './types'
+export type { DesignationFormValues, WageStructureRow } from './schemas'

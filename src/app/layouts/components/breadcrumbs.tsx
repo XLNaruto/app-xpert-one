@@ -2,6 +2,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 
 import { breadcrumbsForPath } from '@/config/navigation'
+import { cn } from '@/lib/utils'
 
 /** Derives a breadcrumb trail from the sidebar structure for the current path. */
 export function Breadcrumbs() {
@@ -9,21 +10,34 @@ export function Breadcrumbs() {
   const crumbs = breadcrumbsForPath(pathname)
 
   return (
-    <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Link to="/dashboard" className="transition-colors hover:text-foreground">
+    <nav className="flex min-w-0 items-center gap-1 text-sm whitespace-nowrap text-muted-foreground">
+      <Link
+        to="/dashboard"
+        className="shrink-0 transition-colors hover:text-foreground"
+      >
         Home
       </Link>
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1
         return (
-          <span key={`${crumb.label}-${i}`} className="flex items-center gap-1">
-            <ChevronRight className="size-3.5" />
+          <span key={`${crumb.label}-${i}`} className="flex min-w-0 items-center gap-1">
+            <ChevronRight className="size-3.5 shrink-0" />
             {isLast || !crumb.to ? (
-              <span className={isLast ? 'font-medium text-foreground' : undefined}>
+              <span
+                title={crumb.label}
+                className={cn(
+                  'max-w-32 truncate',
+                  isLast && 'font-medium text-foreground',
+                )}
+              >
                 {crumb.label}
               </span>
             ) : (
-              <Link to={crumb.to} className="transition-colors hover:text-foreground">
+              <Link
+                to={crumb.to}
+                title={crumb.label}
+                className="max-w-32 truncate transition-colors hover:text-foreground"
+              >
                 {crumb.label}
               </Link>
             )}

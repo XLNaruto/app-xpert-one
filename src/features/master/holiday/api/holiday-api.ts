@@ -15,9 +15,9 @@ let holidays: Holiday[] = [
     holidayName: 'TEST HOLIDAY123',
     fromDate: '2026-04-30',
     toDate: '2026-04-20',
-    createdBy: 'Minesh Solanki',
+    createdBy: 'Roman Rings',
     createdAt: '2026-04-28T09:24:55.098Z',
-    updatedBy: 'Minesh Solanki',
+    updatedBy: 'Roman Rings',
     updatedAt: '2026-04-28T11:26:49.275Z',
   },
   {
@@ -27,7 +27,7 @@ let holidays: Holiday[] = [
     toDate: '2026-03-01',
     createdBy: 'Rohan Sanghani',
     createdAt: '2026-03-02T10:08:15.415Z',
-    updatedBy: 'Minesh Solanki',
+    updatedBy: 'Roman Rings',
     updatedAt: '2026-04-21T06:39:16.596Z',
   },
 ]

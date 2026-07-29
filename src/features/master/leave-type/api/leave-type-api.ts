@@ -15,7 +15,7 @@ let leaveTypes: LeaveType[] = [
     leaveName: 'Testing Leave',
     shortName: 'TL',
     payType: 'UNPAID',
-    createdBy: 'Minesh Solanki',
+    createdBy: 'Roman Rings',
     createdAt: '2026-04-28T10:50:59.382Z',
     updatedBy: null,
     updatedAt: null,

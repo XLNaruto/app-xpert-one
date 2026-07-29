@@ -1,8 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Boxes,
+  Briefcase,
   Building,
   Building2,
+  CalendarDays,
+  CalendarHeart,
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
   // CalendarHeart,
@@ -17,6 +20,8 @@ import {
   ReceiptIndianRupee,
   Settings2,
   SlidersHorizontal,
+  UsersRound,
+  Wallet,
   // UsersRound,
   // Wallet,
 } from "lucide-react";
@@ -53,7 +58,7 @@ export const navGroups: NavGroup[] = [
           { label: "Company", to: "/master/company", icon: Building2 },
           { label: "Branch", to: "/master/branch", icon: Building },
           { label: "Department", to: "/master/department", icon: Building },
-          // { label: "Designation", to: "/master/designation", icon: Briefcase },
+          { label: "Designation", to: "/master/designation", icon: Briefcase },
         ],
       },
       {
@@ -91,19 +96,19 @@ export const navGroups: NavGroup[] = [
           },
         ],
       },
-      // {
-      //   label: "HR Setup",
-      //   icon: UsersRound,
-      //   children: [
-      //     { label: "Leave Types", to: "/master/leave-type", icon: CalendarDays },
-      //     { label: "Holidays", to: "/master/holiday", icon: CalendarHeart },
-      //     {
-      //       label: "Allowance & Deduction",
-      //       to: "/master/allowance-deduction",
-      //       icon: Wallet,
-      //     },
-      //   ],
-      // },
+      {
+        label: "HR Setup",
+        icon: UsersRound,
+        children: [
+          { label: "Leave Types", to: "/master/leave-type", icon: CalendarDays },
+          { label: "Holidays", to: "/master/holiday", icon: CalendarHeart },
+          {
+            label: "Allowance & Deduction",
+            to: "/master/allowance-deduction",
+            icon: Wallet,
+          },
+        ],
+      },
       {
         label: "General Setup",
         icon: SlidersHorizontal,

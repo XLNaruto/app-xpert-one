@@ -1,11 +1,14 @@
 import { Outlet } from '@tanstack/react-router'
 import { asset } from '@/lib/asset'
+import { CompanySelectGate } from '@/features/company'
 import { Sidebar } from './components/sidebar'
 import { Topbar } from './components/topbar'
 
 export function DashboardLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* Blocks the shell until a multi-company user picks an active company */}
+      <CompanySelectGate />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />

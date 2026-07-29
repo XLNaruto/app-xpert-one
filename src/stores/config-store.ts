@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { createIdbStorage } from '@/lib/idb-storage'
 
 interface ConfigState {
   /**
@@ -36,6 +37,13 @@ export const useConfigStore = create<ConfigState>()(
       setCurrency: ({ symbol, code }) =>
         set({ currencySymbol: symbol, currencyCode: code }),
     }),
-    { name: 'xpertone-config' },
+    {
+      name: 'xpertone-config',
+      // Local data always lives in IndexedDB (never localStorage). It's async,
+      // so hydration is explicit in main.tsx — before the first paint, which is
+      // what lets `mediaUrl()` resolve synchronously after a reload.
+      storage: createJSONStorage(createIdbStorage),
+      skipHydration: true,
+    },
   ),
 )

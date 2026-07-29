@@ -16,6 +16,7 @@ import { useUiStore } from '@/stores/ui-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useLogout } from '@/features/auth'
 import { useMyProfile } from '@/features/profile'
+import { CompanySwitcher } from '@/features/company'
 import { cn } from '@/lib/utils'
 
 export function Topbar() {
@@ -58,7 +59,7 @@ export function Topbar() {
           </TooltipTrigger>
           <TooltipContent side="bottom">Open menu</TooltipContent>
         </Tooltip>
-        <div className="hidden lg:block">
+        <div className="hidden min-w-0 lg:block">
           <Breadcrumbs />
         </div>
       </div>
@@ -70,6 +71,9 @@ export function Topbar() {
           <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive" />
         </Button>
         */}
+        {/* Active-company selector — sits before the profile menu */}
+        <CompanySwitcher />
+
         <DropdownMenu
           className="min-w-64 p-0"
           trigger={

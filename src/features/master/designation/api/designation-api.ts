@@ -56,7 +56,7 @@ let designations: Designation[] = [
       },
     ],
     deductions: [3],
-    createdBy: 'Minesh Solanki',
+    createdBy: 'Roman Rings',
     createdAt: '2026-04-08T06:24:11.004Z',
     updatedBy: null,
     updatedAt: null,

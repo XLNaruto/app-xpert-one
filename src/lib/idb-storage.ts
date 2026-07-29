@@ -83,6 +83,44 @@ function readMeta(value: string): { rememberMe: boolean; expiresAt: number | nul
   }
 }
 
+/**
+ * Plain (unencrypted) IndexedDB-backed storage for zustand `persist`.
+ *
+ * **Anything this app keeps locally lives in IndexedDB — never `localStorage`.**
+ * Use this adapter for every persisted store; sensitive session state uses
+ * `createIdbSessionStorage` above instead (encrypted + expiry/liveness rules).
+ *
+ * IndexedDB is async, so stores using this adapter set `skipHydration: true`
+ * and are rehydrated in `main.tsx` before the app mounts — that way the first
+ * paint already reflects the persisted values (no theme flash, no missing
+ * company name in the topbar).
+ */
+export function createIdbStorage(): StateStorage {
+  return {
+    async getItem(name) {
+      const key = obfuscateName(name)
+      const stored = await get<string>(key, idbStore)
+      if (stored != null) return stored
+
+      // One-time migration: adopt anything left behind by the earlier
+      // localStorage persistence, then clear it so IndexedDB is the only copy.
+      const legacy = typeof localStorage === 'undefined' ? null : localStorage.getItem(name)
+      if (legacy == null) return null
+      await set(key, legacy, idbStore)
+      localStorage.removeItem(name)
+      return legacy
+    },
+
+    async setItem(name, value) {
+      await set(obfuscateName(name), value, idbStore)
+    },
+
+    async removeItem(name) {
+      await del(obfuscateName(name), idbStore)
+    },
+  }
+}
+
 export function createIdbSessionStorage(): StateStorage {
   return {
     async getItem(name) {
