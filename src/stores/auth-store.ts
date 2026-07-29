@@ -5,7 +5,7 @@ import { createIdbSessionStorage } from '@/lib/idb-storage'
 export interface AuthUser {
   id: string
   name: string
-  email: string
+  username: string
   role: 'admin' | 'sales-manager' | 'sales-incharge'
   phone?: string
   avatarUrl?: string

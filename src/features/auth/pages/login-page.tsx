@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Link } from '@tanstack/react-router'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -11,7 +10,7 @@ import { useLogin } from '../hooks/use-login'
 const fieldClasses =
   'h-11 border border-border bg-white/80 pl-10 text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 dark:border-white/15 dark:bg-white/5 dark:focus-visible:border-primary'
 
-/** Role · email · password sign-in. */
+/** Username · password sign-in. */
 export function LoginPage() {
   const { register, errors, onSubmit, isPending, isError, error } = useLogin()
   const [showPassword, setShowPassword] = useState(false)
@@ -45,30 +44,30 @@ export function LoginPage() {
           </p>
         )}
 
-        {/* Email */}
+        {/* Username */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="block text-foreground/90">
-            Email
+          <Label htmlFor="username" className="block text-foreground/90">
+            Username
           </Label>
           <div className="group relative">
-            <Mail
+            <User
               strokeWidth={2.25}
               className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
             />
             <Input
-              id="email"
+              id="username"
               type="text"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              placeholder="Enter your email address"
+              placeholder="Enter your username"
               className={fieldClasses}
-              {...register('email')}
+              {...register('username')}
             />
           </div>
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
+          {errors.username && (
+            <p className="text-xs text-destructive">{errors.username.message}</p>
           )}
         </div>
 
@@ -108,27 +107,19 @@ export function LoginPage() {
           )}
         </div>
 
-        {/* Remember + forgot */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="remember"
-              className="border-border shadow-none"
-              {...register('remember')}
-            />
-            <Label
-              htmlFor="remember"
-              className="cursor-pointer select-none font-normal text-muted-foreground"
-            >
-              Remember me
-            </Label>
-          </div>
-          <Link
-            to="/forgot-password"
-            className="font-medium text-primary transition-opacity hover:opacity-80"
+        {/* Remember */}
+        <div className="flex items-center gap-2.5 text-sm">
+          <Checkbox
+            id="remember"
+            className="border-border shadow-none"
+            {...register('remember')}
+          />
+          <Label
+            htmlFor="remember"
+            className="cursor-pointer select-none font-normal text-muted-foreground"
           >
-            Forgot password?
-          </Link>
+            Remember me
+          </Label>
         </div>
 
         {/* Sign in */}

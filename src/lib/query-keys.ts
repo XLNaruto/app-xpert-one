@@ -23,6 +23,11 @@ export const queryKeys = {
     list: () => [...queryKeys.department.all, 'list'] as const,
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
   },
+  designation: {
+    all: ['designation'] as const,
+    list: () => [...queryKeys.designation.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.designation.all, 'detail', id] as const,
+  },
   pfRate: {
     all: ['pf-rate'] as const,
     list: () => [...queryKeys.pfRate.all, 'list'] as const,
@@ -78,6 +83,32 @@ export const queryKeys = {
   district: {
     all: ['district'] as const,
     list: () => [...queryKeys.district.all, 'list'] as const,
+  },
+  leaveType: {
+    all: ['leave-type'] as const,
+    list: () => [...queryKeys.leaveType.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.leaveType.all, 'detail', id] as const,
+  },
+  holiday: {
+    all: ['holiday'] as const,
+    list: () => [...queryKeys.holiday.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.holiday.all, 'detail', id] as const,
+  },
+  allowanceDeduction: {
+    all: ['allowance-deduction'] as const,
+    list: () => [...queryKeys.allowanceDeduction.all, 'list'] as const,
+    detail: (id: number) =>
+      [...queryKeys.allowanceDeduction.all, 'detail', id] as const,
+  },
+  documentType: {
+    all: ['document-type'] as const,
+    list: () => [...queryKeys.documentType.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.documentType.all, 'detail', id] as const,
+  },
+  document: {
+    all: ['document'] as const,
+    list: () => [...queryKeys.document.all, 'list'] as const,
+    detail: (id: number) => [...queryKeys.document.all, 'detail', id] as const,
   },
   asset: {
     all: ['asset'] as const,

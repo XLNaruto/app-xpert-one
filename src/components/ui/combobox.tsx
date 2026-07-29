@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ChevronDown, Loader2, Search, type LucideIcon } from 'lucide-react'
+import { Check, ChevronDown, Loader2, Search, X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /** Rough panel height used to decide whether to open upward. */
@@ -23,6 +23,12 @@ interface ComboboxProps {
   placeholder?: string
   /** Show the in-panel search box (default true). */
   searchable?: boolean
+  /**
+   * Offer a clear (×) control once something is selected, resetting the value
+   * to `''`. Only for genuinely optional fields — a required dropdown has
+   * nothing meaningful to clear to.
+   */
+  clearable?: boolean
   searchPlaceholder?: string
   /** How the panel aligns to the trigger. */
   align?: 'start' | 'center' | 'end'
@@ -68,6 +74,7 @@ export function Combobox({
   icon: Icon,
   placeholder,
   searchable = true,
+  clearable = false,
   searchPlaceholder = 'Search',
   align = 'start',
   className,
@@ -157,6 +164,10 @@ export function Combobox({
     }
   }
 
+  // The trigger is a <button>, so the clear control can't nest inside it — it
+  // rides as an overlay sibling, with the trigger padded to make room.
+  const showClear = clearable && value !== ''
+
   return (
     <div ref={wrapRef} className={cn('relative', className)}>
       <button
@@ -178,6 +189,8 @@ export function Combobox({
         >
           {selected?.label ?? placeholder ?? ''}
         </span>
+        {/* Reserves the slot the clear overlay occupies, left of the chevron. */}
+        {showClear ? <span aria-hidden className="size-5 shrink-0" /> : null}
         <ChevronDown
           className={cn(
             'size-4 shrink-0 text-muted-foreground transition-transform',
@@ -185,6 +198,21 @@ export function Combobox({
           )}
         />
       </button>
+
+      {showClear ? (
+        <button
+          type="button"
+          aria-label="Clear selection"
+          title="Clear"
+          onClick={() => {
+            onChange('')
+            setOpen(false)
+          }}
+          className="absolute right-7 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      ) : null}
 
       {open && coords
         ? createPortal(

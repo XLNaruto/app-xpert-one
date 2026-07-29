@@ -3,6 +3,11 @@ import {
   Boxes,
   Building,
   Building2,
+  // Used by the commented-out "HR Setup" menu below — uncomment together.
+  // CalendarDays,
+  // CalendarHeart,
+  FileText,
+  FileType2,
   HandCoins,
   HeartPulse,
   Landmark,
@@ -12,6 +17,8 @@ import {
   ReceiptIndianRupee,
   Settings2,
   SlidersHorizontal,
+  // UsersRound,
+  // Wallet,
 } from "lucide-react";
 
 export interface NavItem {
@@ -46,6 +53,7 @@ export const navGroups: NavGroup[] = [
           { label: "Company", to: "/master/company", icon: Building2 },
           { label: "Branch", to: "/master/branch", icon: Building },
           { label: "Department", to: "/master/department", icon: Building },
+          // { label: "Designation", to: "/master/designation", icon: Briefcase },
         ],
       },
       {
@@ -66,28 +74,43 @@ export const navGroups: NavGroup[] = [
             to: "/master/esic-office-address",
             icon: MapPinned,
           },
-          // {
-          //   label: "LWF Office Address",
-          //   to: "/master/lwf-office-address",
-          //   icon: MapPinned,
-          // },
-          // {
-          //   label: "Factory / Statutory Office Address",
-          //   to: "/master/factory-office-address",
-          //   icon: MapPinned,
-          // },
-          // {
-          //   label: "Employment Exchange Office Address",
-          //   to: "/master/employment-exchange-office-address",
-          //   icon: MapPinned,
-          // },
+          {
+            label: "LWF Office Address",
+            to: "/master/lwf-office-address",
+            icon: MapPinned,
+          },
+          {
+            label: "Factory / Statutory Office Address",
+            to: "/master/factory-office-address",
+            icon: MapPinned,
+          },
+          {
+            label: "Employment Exchange Office Address",
+            to: "/master/employment-exchange-office-address",
+            icon: MapPinned,
+          },
         ],
       },
+      // {
+      //   label: "HR Setup",
+      //   icon: UsersRound,
+      //   children: [
+      //     { label: "Leave Types", to: "/master/leave-type", icon: CalendarDays },
+      //     { label: "Holidays", to: "/master/holiday", icon: CalendarHeart },
+      //     {
+      //       label: "Allowance & Deduction",
+      //       to: "/master/allowance-deduction",
+      //       icon: Wallet,
+      //     },
+      //   ],
+      // },
       {
         label: "General Setup",
         icon: SlidersHorizontal,
         children: [
           { label: "Assets", to: "/master/asset", icon: Boxes },
+          { label: "Document Type", to: "/master/document-type", icon: FileType2 },
+          { label: "Documents", to: "/master/document", icon: FileText },
         ],
       },
     ],
