@@ -143,6 +143,9 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          # Default is 12 attempts with backoff — a trust-policy mismatch then
+          # takes ~2.5 min to surface. A real STS failure will not fix itself.
+          retry-max-attempts: 3
 
       - name: Resolve bucket and distribution
         id: target
