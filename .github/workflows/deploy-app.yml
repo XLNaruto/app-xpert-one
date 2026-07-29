@@ -77,9 +77,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Node 24 -> npm 11, which is what package-lock.json was generated with.
+      # On Node 22 (npm 10) `npm ci` fails EUSAGE: npm 10 resolves tsconfck's
+      # optional `typescript@^5` peer differently and expects a nested
+      # typescript@5.9.3 entry the lockfile doesn't have.
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
 
       - run: npm ci
