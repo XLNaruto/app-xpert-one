@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { Forbidden } from '@/features/error'
 import { PF_RATE_VALUE_FIELDS } from '../constants'
 import { formatEffectiveDate, formatPfRateValue } from '../lib/pf-rate-mappers'
 import { usePfRateList } from '../hooks/use-pf-rate-list'
@@ -25,6 +26,8 @@ export function PfRateListPage() {
     setPendingDelete,
     confirmDelete,
     isDeleting,
+    isForbidden,
+    forbiddenMessage,
   } = usePfRateList()
 
   const columns = useMemo<ColumnDef<PfRate>[]>(
@@ -75,6 +78,12 @@ export function PfRateListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
+
+  // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
+  // screen with the server's reason instead of the table and its Add button.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>

@@ -1,10 +1,62 @@
 import { format, isValid, parseISO } from 'date-fns'
 import type { AuditFields } from '@/types/audit'
 import { PF_RATE_VALUE_FIELDS } from '../constants'
-import type { PfRateFormValues } from '../schemas'
+import type { PfRateFormValues, PfRatePayload, PfRateResponse } from '../schemas'
 import type { PfRate, PfRateValueField, PfRateValueKey } from '../types'
 
 const VALUE_KEYS: PfRateValueKey[] = PF_RATE_VALUE_FIELDS.map((f) => f.key)
+
+/**
+ * The API's snake_case field for each camelCase slab value — the single place
+ * the two namings meet, read in both directions by the mappers below.
+ */
+const API_FIELD: Record<PfRateValueKey, keyof PfRateResponse> = {
+  wageCeilingLimit: 'wage_ceiling_limit',
+  edliWageCeilingLimit: 'edli_wage_ceiling_limit',
+  employeePfContribution: 'employee_pf_contribution',
+  employerPfContribution: 'employer_pf_contribution',
+  employerFpfContribution: 'employer_fpf_contribution',
+  deduction: 'deduction',
+  adminCharges: 'admin_charges',
+  edliCharges: 'edli_charges',
+  edliAdminCharges: 'edli_admin_charges',
+  minimumAdminCharges: 'minimum_admin_charges',
+  maximumEdliCharges: 'maximum_edli_charges',
+  minimumClosedAdminCharges: 'minimum_closed_admin_charges',
+  minimumEdliClosedCharges: 'minimum_edli_closed_charges',
+  pensionFundAgeLimit: 'pension_fund_age_limit',
+}
+
+/**
+ * API record → the UI slab. Nullable values read as 0, and since the API only
+ * tracks `created_at` the rest of the audit trail stays empty (the audit
+ * columns render a dash for it).
+ */
+export function toPfRate(response: PfRateResponse): PfRate {
+  const numbers = Object.fromEntries(
+    VALUE_KEYS.map((key) => [key, Number(response[API_FIELD[key]] ?? 0)]),
+  ) as Record<PfRateValueKey, number>
+
+  return {
+    id: response.id,
+    wef: response.effective_date ?? '',
+    ...numbers,
+    createdBy: '',
+    createdAt: response.created_at,
+    updatedBy: null,
+    updatedAt: null,
+  }
+}
+
+/** Validated form values → the create/update request body. */
+export function pfRateToPayload(values: PfRateFormValues): PfRatePayload {
+  const stored = pfRateFromFormValues(values)
+  const numbers = Object.fromEntries(
+    VALUE_KEYS.map((key) => [API_FIELD[key], stored[key]]),
+  ) as Omit<PfRatePayload, 'effective_date'>
+
+  return { effective_date: stored.wef, ...numbers }
+}
 
 /** Parse validated form values into the stored numeric shape. */
 export function pfRateFromFormValues(

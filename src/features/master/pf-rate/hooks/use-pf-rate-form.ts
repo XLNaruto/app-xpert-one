@@ -3,6 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { pfRateSchema, type PfRateFormValues } from '../schemas'
 import { EMPTY_PF_RATE_FORM } from '../constants'
 import { usePfRate } from '../api/use-pf-rate'
@@ -71,6 +72,10 @@ export function usePfRateForm(id?: number) {
     })
   })
 
+  // Reading this slab was refused — not a broken screen, so the page shows the
+  // 403 screen with the server's reason rather than the form.
+  const isForbidden = isEdit && isForbiddenError(detail.error)
+
   return {
     register,
     control,
@@ -81,9 +86,13 @@ export function usePfRateForm(id?: number) {
     isLoading: isEdit && detail.isLoading,
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
     /** Previously saved slabs, rendered as the history table under the form. */
     historyRows: history.data ?? [],
     isHistoryLoading: history.isLoading,
+    /** History is hidden outright when the user isn't allowed to read slabs. */
+    isHistoryForbidden: isForbiddenError(history.error),
   }
 }

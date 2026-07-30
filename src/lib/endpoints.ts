@@ -1,23 +1,27 @@
 /**
  * Centralised REST endpoint paths. Feature `api/` layers reference these
  * instead of hard-coding URL strings, so a path only ever changes in one place.
- * Paths are relative to `apiClient`'s baseURL (see `env.VITE_APP_API_URL`).
+ * Paths are relative to `apiClient`'s baseURL (see `env.VITE_APP_API_URL`), and
+ * every route on this API is namespaced under `/user`.
  *
- * The auth/profile backend is not wired yet — these are the paths the app will
- * call once the API is available.
+ * Request/response shapes and flow notes live in `endpoints.reference.ts`.
  */
 export const endpoints = {
   AUTH: {
-    LOGIN: '/auth/login',
-    REFRESH_TOKEN: '/auth/refresh',
-    LOGOUT: '/auth/logout',
+    LOGIN: '/user/auth/login',
+    REFRESH_TOKEN: '/user/auth/refresh',
+    LOGOUT: '/user/auth/logout',
+    SELECT_COMPANY: '/user/auth/select-company',
   },
-  /** The authenticated user's own profile, resolved from the access token. */
   ME: {
-    GET: '/me',
-    /** Companies (tenants) the caller belongs to + the active selection. */
-    COMPANIES: '/me/companies',
-    /** Switch the active company for the session. */
-    SELECT_COMPANY: '/me/company/select',
+    GET: '/user/me',
+    COMPANIES: '/user/my/companies',
+  },
+  PF_RATES: {
+    LIST: '/user/pf-rates',
+    POST: '/user/pf-rates',
+    GET: (id: number) => `/user/pf-rates/${id}`,
+    PATCH: (id: number) => `/user/pf-rates/${id}`,
+    DELETE: (id: number) => `/user/pf-rates/${id}`,
   },
 } as const

@@ -1,5 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
-import { env } from '@/config/env'
+import { apiBaseUrl } from '@/config/env'
 import { useAuthStore } from '@/stores/auth-store'
 import { refreshAccessToken } from './auth-refresh'
 
@@ -10,7 +10,7 @@ import { refreshAccessToken } from './auth-refresh'
 type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
 export const apiClient = axios.create({
-  baseURL: env.VITE_APP_API_URL,
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
   timeout: 20_000,
 })

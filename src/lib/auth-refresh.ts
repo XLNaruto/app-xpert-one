@@ -1,31 +1,39 @@
 import axios from 'axios'
-import { env } from '@/config/env'
+import { apiBaseUrl } from '@/config/env'
 import { endpoints } from '@/lib/endpoints'
 import { useAuthStore } from '@/stores/auth-store'
 
-/** Proactively refresh a bit before the ~15-min access token expires. */
-export const REFRESH_INTERVAL_MS = 25 * 60 * 1000
+/** How often the scheduler checks whether the access token is close to expiry. */
+export const REFRESH_CHECK_INTERVAL_MS = 60 * 1000
 
-export const REFRESH_URL = `${env.VITE_APP_API_URL}${endpoints.AUTH.REFRESH_TOKEN}`
+/** Renew this far ahead of expiry, so an in-flight request can't race it. */
+export const REFRESH_SKEW_MS = 2 * 60 * 1000
 
+/**
+ * `POST /user/auth/refresh` response. The server always rotates — the old
+ * refresh token is revoked and a new one comes back — but `refresh_token` is
+ * typed optional so a non-rotating response keeps the current one instead of
+ * clearing it.
+ */
 interface RefreshResponse {
   access_token: string
   refresh_token?: string
+  expires_in?: number
 }
 
 // Bare client (no interceptors) so refreshing can't recurse through the 401
 // handler that calls it.
 const refreshClient = axios.create({
-  baseURL: env.VITE_APP_API_URL,
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
 })
 
 let inFlight: Promise<string> | null = null
 
 /**
- * Exchange the refresh token for a fresh access token, rotating the refresh
- * token when the server returns one. Single-flight: concurrent callers share
- * one in-flight request so we only hit /auth/refresh once.
+ * Exchange the refresh token for a fresh token pair. Single-flight: concurrent
+ * callers (the 401 interceptor and the scheduler below) share one in-flight
+ * request so we only hit /user/auth/refresh once.
  */
 export function refreshAccessToken(): Promise<string> {
   if (inFlight) return inFlight
@@ -40,8 +48,8 @@ export function refreshAccessToken(): Promise<string> {
       refresh_token: refreshToken,
     })
     .then((res) => {
-      const { access_token, refresh_token: rotated } = res.data
-      useAuthStore.getState().setTokens(access_token, rotated)
+      const { access_token, refresh_token: rotated, expires_in } = res.data
+      useAuthStore.getState().setTokens(access_token, rotated, expires_in)
       return access_token
     })
     .finally(() => {
@@ -53,17 +61,23 @@ export function refreshAccessToken(): Promise<string> {
 
 let timer: ReturnType<typeof setInterval> | null = null
 
-/** Start a background timer that keeps the access token fresh while signed in. */
+/**
+ * Start a background timer that keeps the access token fresh while signed in.
+ * Driven by the token's own `expires_in` (stored as `accessTokenExpiresAt`) —
+ * when the lifetime is unknown we leave it alone and let the 401 interceptor
+ * refresh reactively instead.
+ */
 export function startTokenRefreshScheduler(): () => void {
   stopTokenRefreshScheduler()
 
   timer = setInterval(() => {
-    const { token, refreshToken } = useAuthStore.getState()
-    if (!token || !refreshToken) return
+    const { token, refreshToken, accessTokenExpiresAt } = useAuthStore.getState()
+    if (!token || !refreshToken || accessTokenExpiresAt == null) return
+    if (Date.now() < accessTokenExpiresAt - REFRESH_SKEW_MS) return
     refreshAccessToken().catch(() => {
       useAuthStore.getState().logout()
     })
-  }, REFRESH_INTERVAL_MS)
+  }, REFRESH_CHECK_INTERVAL_MS)
 
   return stopTokenRefreshScheduler
 }

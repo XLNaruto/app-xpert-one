@@ -2,11 +2,19 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createIdbSessionStorage } from '@/lib/idb-storage'
 
+/**
+ * The signed-in user, as returned by `POST /user/auth/login` (camelCased).
+ * `roleId` / `companyId` are null until a role is assigned / a company is
+ * selected for the session.
+ */
 export interface AuthUser {
-  id: string
-  name: string
+  id: number
+  accountId: number
+  email: string
   username: string
-  role: 'admin' | 'sales-manager' | 'sales-incharge'
+  name: string
+  roleId: number | null
+  companyId: number | null
   phone?: string
   avatarUrl?: string
 }
@@ -16,6 +24,13 @@ const REMEMBER_MS = 365 * 24 * 60 * 60 * 1000
 
 interface SetSessionOptions {
   remember?: boolean
+  /** Access-token lifetime in seconds, from the login/refresh response. */
+  expiresIn?: number
+}
+
+/** Absolute access-token expiry from a lifetime in seconds (null if unknown). */
+function accessExpiryFrom(expiresIn?: number): number | null {
+  return expiresIn && expiresIn > 0 ? Date.now() + expiresIn * 1000 : null
 }
 
 interface AuthState {
@@ -27,8 +42,14 @@ interface AuthState {
   isAuthenticated: boolean
   /** Whether the session should survive a browser restart (persist storage). */
   rememberMe: boolean
-  /** Absolute expiry (epoch ms) when remembered; null for session-only. */
+  /** Absolute session expiry (epoch ms) when remembered; null session-only. */
   expiresAt: number | null
+  /**
+   * Absolute expiry (epoch ms) of the *access* token — distinct from
+   * `expiresAt`, which governs how long the persisted session survives. Drives
+   * the proactive refresh in `lib/auth-refresh.ts`; null when unknown.
+   */
+  accessTokenExpiresAt: number | null
   /** Establish a full session after sign-in. */
   setSession: (
     user: AuthUser,
@@ -37,11 +58,17 @@ interface AuthState {
     options?: SetSessionOptions,
   ) => void
   /**
-   * Rotate the access token (used by the refresh flow). A refresh token is
-   * only replaced when the server returns a rotated one; otherwise the current
-   * one is kept.
+   * Rotate the token pair (used by the refresh flow). A refresh token is only
+   * replaced when the server returns a rotated one; otherwise the current one
+   * is kept.
    */
-  setTokens: (token: string, refreshToken?: string | null) => void
+  setTokens: (token: string, refreshToken?: string | null, expiresIn?: number) => void
+  /**
+   * Record the company that `POST /user/auth/select-company` just made active.
+   * The server owns this (it's re-read from the database on every token
+   * refresh); the local copy is what the company gate and switcher read.
+   */
+  setActiveCompany: (companyId: number | null) => void
   /** Clear the session locally (backend logout is handled by `useLogout`). */
   logout: () => void
 }
@@ -60,6 +87,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       rememberMe: false,
       expiresAt: null,
+      accessTokenExpiresAt: null,
       setSession: (user, token, refreshToken, options) => {
         const remember = options?.remember ?? false
         set({
@@ -69,10 +97,17 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           rememberMe: remember,
           expiresAt: remember ? Date.now() + REMEMBER_MS : null,
+          accessTokenExpiresAt: accessExpiryFrom(options?.expiresIn),
         })
       },
-      setTokens: (token, refreshToken) =>
-        set((s) => ({ token, refreshToken: refreshToken ?? s.refreshToken })),
+      setTokens: (token, refreshToken, expiresIn) =>
+        set((s) => ({
+          token,
+          refreshToken: refreshToken ?? s.refreshToken,
+          accessTokenExpiresAt: accessExpiryFrom(expiresIn),
+        })),
+      setActiveCompany: (companyId) =>
+        set((s) => (s.user ? { user: { ...s.user, companyId } } : {})),
       logout: () =>
         set({
           user: null,
@@ -81,6 +116,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           rememberMe: false,
           expiresAt: null,
+          accessTokenExpiresAt: null,
         }),
     }),
     {

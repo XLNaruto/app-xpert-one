@@ -1,113 +1,94 @@
-import { mockDelay } from '@/lib/utils'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import { pfRateFromFormValues, sortByEffectiveDateDesc } from '../lib/pf-rate-mappers'
-import type { PfRateFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { pfRateResponseSchema, pfRatesResponseSchema } from '../schemas'
+import { pfRateToPayload, sortByEffectiveDateDesc, toPfRate } from '../lib/pf-rate-mappers'
+import type { PfRateFormValues, PfRatePayload } from '../schemas'
 import type { PfRate } from '../types'
 
 /**
- * In-memory PF rate store. No backend yet — records live here for the session.
- * Swap each function's body for the matching REST call when the API lands; the
- * signatures stay the same.
+ * PF rate slabs — `/user/pf-rates`. The API is offset-paginated at a hard cap of
+ * 100 per page while the list screen sorts and pages client-side, so the fetch
+ * below walks the pages and hands back the whole master.
  */
 
-let pfRates: PfRate[] = [
-  {
-    id: 1,
-    wef: '2026-05-23',
-    wageCeilingLimit: 15000,
-    edliWageCeilingLimit: 15000,
-    employeePfContribution: 12,
-    employerPfContribution: 8.33,
-    employerFpfContribution: 3.67,
-    deduction: 12,
-    adminCharges: 0.5,
-    edliCharges: 0.5,
-    edliAdminCharges: 0.01,
-    minimumAdminCharges: 500,
-    maximumEdliCharges: 75,
-    minimumClosedAdminCharges: 75,
-    minimumEdliClosedCharges: 25,
-    pensionFundAgeLimit: 58,
-    createdBy: 'Roman Rings',
-    createdAt: '2026-05-23T09:00:00.000Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2026-06-14T10:05:00.000Z',
-  },
-  {
-    id: 2,
-    wef: '2025-12-05',
-    wageCeilingLimit: 15000,
-    edliWageCeilingLimit: 15000,
-    employeePfContribution: 12,
-    employerPfContribution: 8.33,
-    employerFpfContribution: 3.67,
-    deduction: 12,
-    adminCharges: 0.5,
-    edliCharges: 0.5,
-    edliAdminCharges: 0.01,
-    minimumAdminCharges: 500,
-    maximumEdliCharges: 75,
-    minimumClosedAdminCharges: 75,
-    minimumEdliClosedCharges: 25,
-    pensionFundAgeLimit: 58,
-    createdBy: 'John Cena',
-    createdAt: '2025-12-05T09:00:00.000Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit`. */
+const PAGE_SIZE = 100
 
-function nextId(): number {
-  return pfRates.reduce((max, r) => Math.max(max, r.id), 0) + 1
+/** Stop after this many pages so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
+
+/**
+ * GET /user/pf-rates — every slab, newest effective date first. Pages are
+ * fetched until `total` is covered; the master is small enough that this is one
+ * request in practice.
+ */
+export async function fetchPfRates(): Promise<PfRate[]> {
+  try {
+    const rates: PfRate[] = []
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.PF_RATES.LIST, {
+        params: { limit: PAGE_SIZE, offset: page * PAGE_SIZE },
+      })
+      const { items, total } = pfRatesResponseSchema.parse(raw)
+      rates.push(...items.map(toPfRate))
+      if (items.length === 0 || rates.length >= total) break
+    }
+
+    return sortByEffectiveDateDesc(rates)
+  } catch (error) {
+    throw toApiError(error, "Couldn't load PF rates.")
+  }
+}
+
+/** GET /user/pf-rates/:id — one slab, for the edit form. */
+export async function fetchPfRate(id: number): Promise<PfRate> {
+  try {
+    const raw = await http.get<unknown>(endpoints.PF_RATES.GET(id))
+    return toPfRate(pfRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'PF rate not found')
+  }
+}
+
+/** POST /user/pf-rates — add a slab effective from its W.E.F date. */
+export async function createPfRate(values: PfRateFormValues): Promise<PfRate> {
+  try {
+    const raw = await http.post<unknown, PfRatePayload>(
+      endpoints.PF_RATES.POST,
+      pfRateToPayload(values),
+    )
+    return toPfRate(pfRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the PF rate.")
+  }
 }
 
 /**
- * Two slabs sharing an effective date would make the rate for that day
- * ambiguous, so the date is the master's natural key.
+ * PATCH /user/pf-rates/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the full slab.
  */
-function assertEffectiveDateFree(wef: string, ignoreId?: number) {
-  const clash = pfRates.some((r) => r.wef === wef && r.id !== ignoreId)
-  if (clash) throw new Error('A PF rate already exists for this effective date')
-}
-
-export async function fetchPfRates(): Promise<PfRate[]> {
-  return mockDelay(sortByEffectiveDateDesc(pfRates))
-}
-
-export async function fetchPfRate(id: number): Promise<PfRate> {
-  const found = pfRates.find((r) => r.id === id)
-  if (!found) throw new Error('PF rate not found')
-  return mockDelay({ ...found })
-}
-
-export async function createPfRate(values: PfRateFormValues): Promise<PfRate> {
-  assertEffectiveDateFree(values.wef)
-  const record: PfRate = {
-    id: nextId(),
-    ...pfRateFromFormValues(values),
-    ...createdStamp(),
-  }
-  pfRates = [record, ...pfRates]
-  return mockDelay({ ...record })
-}
-
 export async function updatePfRate(
   id: number,
   values: PfRateFormValues,
 ): Promise<PfRate> {
-  const index = pfRates.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error('PF rate not found')
-  assertEffectiveDateFree(values.wef, id)
-  const updated: PfRate = {
-    ...pfRates[index],
-    ...pfRateFromFormValues(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, PfRatePayload>(
+      endpoints.PF_RATES.PATCH(id),
+      pfRateToPayload(values),
+    )
+    return toPfRate(pfRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the PF rate.")
   }
-  pfRates = pfRates.map((r) => (r.id === id ? updated : r))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/pf-rates/:id */
 export async function deletePfRate(id: number): Promise<void> {
-  pfRates = pfRates.filter((r) => r.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.PF_RATES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the PF rate.")
+  }
 }

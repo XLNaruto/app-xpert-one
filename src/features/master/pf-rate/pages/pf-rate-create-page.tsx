@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Forbidden } from '@/features/error'
 import { PfRateFormFields } from '../components/pf-rate-form-fields'
 import { PfRateHistoryTable } from '../components/pf-rate-history-table'
 import { usePfRateForm } from '../hooks/use-pf-rate-form'
@@ -35,10 +36,18 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
     historyRows,
     isHistoryLoading,
+    isHistoryForbidden,
   } = usePfRateForm(pfRateId)
+
+  // Not allowed to read this slab — the form would have nothing to show.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -94,13 +103,17 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
         </CardContent>
       </Card>
 
-      <section className="mt-6">
-        <div className="mb-3 flex items-center gap-2">
-          <History className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">PF Rate History</h2>
-        </div>
-        <PfRateHistoryTable rows={historyRows} isLoading={isHistoryLoading} />
-      </section>
+      {/* Hidden outright when reading slabs is forbidden — an empty history
+          table would read as "no history" rather than "not allowed". */}
+      {!isHistoryForbidden && (
+        <section className="mt-6">
+          <div className="mb-3 flex items-center gap-2">
+            <History className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">PF Rate History</h2>
+          </div>
+          <PfRateHistoryTable rows={historyRows} isLoading={isHistoryLoading} />
+        </section>
+      )}
     </div>
   )
 }

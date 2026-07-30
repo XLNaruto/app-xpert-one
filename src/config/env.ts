@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { API_PROXY_PREFIX } from './api-proxy'
 
 /** All environment access flows through here (zod-parsed, fail-fast). */
 const envSchema = z.object({
@@ -8,6 +9,9 @@ const envSchema = z.object({
     .string()
     .default('http://localhost:3000')
     .transform((v) => v || 'http://localhost:3000'),
+  // Dev-only reverse-proxy target. When set, `vite.config.ts` forwards
+  // `/api/*` to it and requests go same-origin (see `apiBaseUrl` below).
+  VITE_APP_API_TARGET: z.string().default(''),
   VITE_USE_MOCK_API: z
     .string()
     .default('true')
@@ -36,3 +40,17 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data
+
+/**
+ * Base URL every axios instance should use.
+ *
+ * With `VITE_APP_API_TARGET` set during `npm run dev`, this is the same-origin
+ * `/api` prefix that the Vite dev server reverse-proxies to that target — no
+ * CORS preflights, and cookies/headers behave as if the API were local.
+ * In a production build (or with no target configured) it is the real
+ * `VITE_APP_API_URL` origin, so nothing about the deployed app changes.
+ */
+export const apiBaseUrl =
+  import.meta.env.DEV && env.VITE_APP_API_TARGET
+    ? API_PROXY_PREFIX
+    : env.VITE_APP_API_URL

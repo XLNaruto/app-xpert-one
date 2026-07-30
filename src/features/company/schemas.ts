@@ -1,20 +1,24 @@
 import { z } from 'zod'
 
-/** One company (tenant) entry. `code` is tolerated if the server sends it. */
+/**
+ * One company (tenant) the caller belongs to — the shape returned by both
+ * `GET /user/my/companies` (inside `items`) and `POST /user/auth/select-company`.
+ */
 export const myCompanySchema = z.object({
   id: z.number(),
-  name: z.string(),
-  code: z.string().nullish(),
+  company_name: z.string(),
+  company_code: z.string(),
+  /** Logo storage path — resolve for rendering with `lib/media.mediaUrl`. */
+  logo: z.string().nullish(),
 })
 
-/**
- * Response shape shared by `GET /me/companies` and `POST /me/company/select`.
- * Validated then mapped to the camelCase `MyCompaniesState` client shape.
- */
+/** `GET /user/my/companies` — the caller's tenants. */
 export const myCompaniesResponseSchema = z.object({
-  companies: z.array(myCompanySchema),
-  selected_company_id: z.number().nullable(),
-  requires_selection: z.boolean(),
+  items: z.array(myCompanySchema),
 })
 
+/** `POST /user/auth/select-company` — the company now active on the session. */
+export const selectCompanyResponseSchema = myCompanySchema
+
+export type MyCompanyResponse = z.infer<typeof myCompanySchema>
 export type MyCompaniesResponse = z.infer<typeof myCompaniesResponseSchema>

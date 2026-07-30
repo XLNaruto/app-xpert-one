@@ -16,11 +16,11 @@ const chip =
 /**
  * Active-company selector for the topbar (sits before the profile menu). Lists
  * the tenants the user belongs to and switches the active one via
- * `POST /me/company/select`. Always renders a visible affordance while
+ * `POST /user/auth/select-company`. Always renders a visible affordance while
  * authenticated — a loading chip, an error chip, or the company dropdown.
  */
 export function CompanySwitcher() {
-  const { data, isLoading, isError, error } = useMyCompanies()
+  const { companies, selectedCompanyId, isLoading, isError, error } = useMyCompanies()
   const selectCompany = useSelectCompany()
 
   if (isLoading) {
@@ -48,10 +48,9 @@ export function CompanySwitcher() {
     )
   }
 
-  const companies = data?.companies ?? []
   if (companies.length === 0) return null
 
-  const activeId = data?.selectedCompanyId ?? null
+  const activeId = selectedCompanyId
   const active = companies.find((c) => c.id === activeId)
   const label = active?.name ?? 'Select company'
 

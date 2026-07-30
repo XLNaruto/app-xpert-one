@@ -83,3 +83,56 @@ export const pfRateSchema = z
   )
 
 export type PfRateFormValues = z.infer<typeof pfRateSchema>
+
+/**
+ * One PF rate slab as the API returns it (`POST/GET/PATCH /user/pf-rates`).
+ * Every value column is nullable server-side — the mapper substitutes 0 — and
+ * the only audit field is `created_at`.
+ */
+export const pfRateResponseSchema = z.object({
+  id: z.number(),
+  effective_date: z.string().nullable(),
+  wage_ceiling_limit: z.number().nullable(),
+  edli_wage_ceiling_limit: z.number().nullable(),
+  employee_pf_contribution: z.number().nullable(),
+  employer_pf_contribution: z.number().nullable(),
+  employer_fpf_contribution: z.number().nullable(),
+  deduction: z.number().nullable(),
+  admin_charges: z.number().nullable(),
+  edli_charges: z.number().nullable(),
+  edli_admin_charges: z.number().nullable(),
+  minimum_admin_charges: z.number().nullable(),
+  maximum_edli_charges: z.number().nullable(),
+  minimum_closed_admin_charges: z.number().nullable(),
+  minimum_edli_closed_charges: z.number().nullable(),
+  pension_fund_age_limit: z.number().nullable(),
+  created_at: z.string(),
+})
+
+/** `GET /user/pf-rates` — one page of slabs plus the unpaged total. */
+export const pfRatesResponseSchema = z.object({
+  items: z.array(pfRateResponseSchema),
+  total: z.number(),
+})
+
+export type PfRateResponse = z.infer<typeof pfRateResponseSchema>
+export type PfRatesResponse = z.infer<typeof pfRatesResponseSchema>
+
+/** The create/update request body — snake_case, numbers not strings. */
+export type PfRatePayload = {
+  effective_date: string
+  wage_ceiling_limit: number
+  edli_wage_ceiling_limit: number
+  employee_pf_contribution: number
+  employer_pf_contribution: number
+  employer_fpf_contribution: number
+  deduction: number
+  admin_charges: number
+  edli_charges: number
+  edli_admin_charges: number
+  minimum_admin_charges: number
+  maximum_edli_charges: number
+  minimum_closed_admin_charges: number
+  minimum_edli_closed_charges: number
+  pension_fund_age_limit: number
+}
