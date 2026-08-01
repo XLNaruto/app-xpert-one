@@ -7,7 +7,6 @@ import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { pfRateSchema, type PfRateFormValues } from '../schemas'
 import { EMPTY_PF_RATE_FORM } from '../constants'
 import { usePfRate } from '../api/use-pf-rate'
-import { usePfRates } from '../api/use-pf-rates'
 import { useCreatePfRate, useUpdatePfRate } from '../api/use-pf-rate-mutations'
 import {
   pfRateToFormValues,
@@ -15,8 +14,7 @@ import {
 } from '../lib/pf-rate-mappers'
 
 /**
- * Owns the PF rate form for both create and edit, plus the history rows shown
- * under it. In edit mode (`id` set) it loads the slab, seeds the form and saves
+ * Owns the PF rate form for both create and edit. In edit mode (`id` set) it loads the slab, seeds the form and saves
  * via PUT; create mode POSTs a fresh slab. The page only lays out fields.
  */
 export function usePfRateForm(id?: number) {
@@ -24,7 +22,6 @@ export function usePfRateForm(id?: number) {
   const navigate = useNavigate()
 
   const detail = usePfRate(id ?? Number.NaN)
-  const history = usePfRates()
   const createPfRate = useCreatePfRate()
   const updatePfRate = useUpdatePfRate(id ?? Number.NaN)
 
@@ -89,10 +86,5 @@ export function usePfRateForm(id?: number) {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
-    /** Previously saved slabs, rendered as the history table under the form. */
-    historyRows: history.data ?? [],
-    isHistoryLoading: history.isLoading,
-    /** History is hidden outright when the user isn't allowed to read slabs. */
-    isHistoryForbidden: isForbiddenError(history.error),
   }
 }

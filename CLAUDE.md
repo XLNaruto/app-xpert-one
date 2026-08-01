@@ -40,6 +40,15 @@ following the same self-contained folder shape.
 5. **Cross-feature imports go through the feature's `index.ts`**, never deep paths.
 6. **`@/` alias**, never long relative chains.
 7. **One generic `<DataTable>`** powers every list screen.
+7b. **Lists page server-side with `limit`/`offset`** — never fetch-all + client
+   paging. `lib/pagination.ts` holds the `PageParams` / `Paginated<T>` contract;
+   the list hook owns `usePagination()`, the api fn takes `PageParams` and
+   returns `{ items, total }`, the query key carries the params, and the page
+   passes `serverPagination limit offset total onPaginationChange` (plus
+   `searchValue`/`onSearchChange` where the endpoint supports a search term).
+   Masters still on a mock store use `paginate()` so they behave identically.
+   Call the query hook with no params to get the whole master (dropdowns,
+   history panels).
 8. **Zustand stores stay small and single-concern**; select narrowly.
 9. **External integrations and calculations stay behind a service/pure-function boundary** — never leak SDKs or calc logic into components.
 10. **Table columns are defined inline in the list page** with `useMemo<ColumnDef<T>[]>`. Never a separate `<thing>-columns.tsx` file.

@@ -15,6 +15,12 @@ import type { AssetRecord } from '../types'
 export function AssetListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -85,11 +91,16 @@ export function AssetListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="assetName"
           searchPlaceholder="Search assets…"
           itemName="assets"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Boxes}

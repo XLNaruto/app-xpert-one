@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { HolidayFormValues } from '../schemas'
 import type { Holiday } from '../types'
@@ -45,8 +46,11 @@ function applyForm(values: HolidayFormValues) {
   }
 }
 
-export async function fetchHolidays(): Promise<Holiday[]> {
-  return mockDelay([...holidays])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Holiday)[] = ['holidayName']
+
+export async function fetchHolidays(params: PageParams = ALL_ROWS): Promise<Paginated<Holiday>> {
+  return mockDelay(paginate([...holidays], params, SEARCH_FIELDS))
 }
 
 export async function fetchHoliday(id: number): Promise<Holiday> {

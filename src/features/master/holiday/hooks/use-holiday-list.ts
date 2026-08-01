@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useHolidays } from '../api/use-holidays'
@@ -13,7 +14,9 @@ import type { Holiday } from '../types'
  */
 export function useHolidayList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useHolidays()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useHolidays(params)
   const deleteHoliday = useDeleteHoliday()
 
   const [pendingDelete, setPendingDelete] = useState<Holiday | null>(null)
@@ -37,7 +40,14 @@ export function useHolidayList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

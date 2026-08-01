@@ -15,6 +15,12 @@ import type { LeaveType } from '../types'
 export function LeaveTypeListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -98,11 +104,16 @@ export function LeaveTypeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="leaveName"
           searchPlaceholder="Search name…"
           itemName="leave types"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={CalendarDays}

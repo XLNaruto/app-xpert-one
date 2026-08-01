@@ -1,42 +1,57 @@
 import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { pfRateResponseSchema, pfRatesResponseSchema } from '../schemas'
 import { pfRateToPayload, sortByEffectiveDateDesc, toPfRate } from '../lib/pf-rate-mappers'
 import type { PfRateFormValues, PfRatePayload } from '../schemas'
 import type { PfRate } from '../types'
 
 /**
- * PF rate slabs — `/user/pf-rates`. The API is offset-paginated at a hard cap of
- * 100 per page while the list screen sorts and pages client-side, so the fetch
- * below walks the pages and hands back the whole master.
+ * PF rate slabs — `/user/pf-rates`. The endpoint is offset-paginated
+ * (`?limit=&offset=`, limit capped at 100) and answers `{ items, total }`,
+ * which is exactly the shape the list screen pages in.
  */
 
-/** The API's maximum `limit`. */
-const PAGE_SIZE = 100
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-/** Stop after this many pages so a bad `total` can't spin forever. */
+/** Stop after this many batches so a bad `total` can't spin forever. */
 const MAX_PAGES = 20
 
 /**
- * GET /user/pf-rates — every slab, newest effective date first. Pages are
- * fetched until `total` is covered; the master is small enough that this is one
- * request in practice.
+ * GET /user/pf-rates — one page of slabs, newest effective date first.
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a
+ * request at 100, so that case walks the pages until `total` is covered. The
+ * endpoint has no search parameter, so `params.search` is ignored.
  */
-export async function fetchPfRates(): Promise<PfRate[]> {
+export async function fetchPfRates(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<PfRate>> {
   try {
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.PF_RATES.LIST, {
+        params: { limit: Math.min(params.limit, MAX_LIMIT), offset: params.offset },
+      })
+      const { items, total } = pfRatesResponseSchema.parse(raw)
+      return { items: sortByEffectiveDateDesc(items.map(toPfRate)), total }
+    }
+
     const rates: PfRate[] = []
+    let total = 0
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const raw = await http.get<unknown>(endpoints.PF_RATES.LIST, {
-        params: { limit: PAGE_SIZE, offset: page * PAGE_SIZE },
+        params: { limit: MAX_LIMIT, offset: params.offset + page * MAX_LIMIT },
       })
-      const { items, total } = pfRatesResponseSchema.parse(raw)
-      rates.push(...items.map(toPfRate))
-      if (items.length === 0 || rates.length >= total) break
+      const parsed = pfRatesResponseSchema.parse(raw)
+      total = parsed.total
+      rates.push(...parsed.items.map(toPfRate))
+      if (parsed.items.length === 0 || rates.length >= total) break
     }
 
-    return sortByEffectiveDateDesc(rates)
+    return { items: sortByEffectiveDateDesc(rates), total }
   } catch (error) {
     throw toApiError(error, "Couldn't load PF rates.")
   }

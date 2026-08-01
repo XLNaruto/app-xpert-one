@@ -14,6 +14,12 @@ import type { Branch } from '../types'
 export function BranchListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -111,11 +117,16 @@ export function BranchListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="branchName"
           searchPlaceholder="Search branches…"
           itemName="branches"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Building}

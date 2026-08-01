@@ -16,6 +16,12 @@ import type { Holiday } from '../types'
 export function HolidayListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -99,11 +105,16 @@ export function HolidayListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="holidayName"
           searchPlaceholder="Search holiday…"
           itemName="holidays"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={CalendarHeart}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 import {
   type ColumnDef,
@@ -64,17 +64,26 @@ interface DataTableProps<TData, TValue> {
   maxHeight?: string
   className?: string
   /**
-   * Server-side pagination. When true, `data` is treated as the current page
-   * (not sliced client-side); supply `pagination` + `onPaginationChange` and
-   * `rowCount` (total rows across all pages) to drive the footer.
+   * Server-side pagination, expressed the way the API pages: `limit` + `offset`.
+   * When true, `data` is the current page (not sliced client-side) — supply
+   * `limit`, `offset`, `total`, and `onPaginationChange`. Pair it with
+   * `usePagination()` in the feature's list hook.
    */
-  manualPagination?: boolean
-  /** Controlled pagination state (required when `manualPagination`). */
-  pagination?: PaginationState
-  /** Pagination change handler (required when `manualPagination`). */
-  onPaginationChange?: OnChangeFn<PaginationState>
-  /** Total rows across all pages — powers the summary + page count when manual. */
-  rowCount?: number
+  serverPagination?: boolean
+  /** Rows per page — the `limit` sent to the API (required when server-paged). */
+  limit?: number
+  /** Rows skipped — the `offset` sent to the API (required when server-paged). */
+  offset?: number
+  /** Total rows matching the query across all pages — drives the pager. */
+  total?: number
+  /** Called with the next `{ limit, offset }` when the user pages or resizes. */
+  onPaginationChange?: (params: { limit: number; offset: number }) => void
+  /**
+   * Controlled search text. Supply both to filter server-side (the term is sent
+   * with the page request); omit to let the toolbar filter loaded rows itself.
+   */
+  searchValue?: string
+  onSearchChange?: (value: string) => void
   /**
    * Server-side sorting. When true, `data` is shown in server order; supply
    * `sorting` + `onSortingChange` so header clicks re-query rather than sort
@@ -119,10 +128,13 @@ export function DataTable<TData, TValue>({
   itemName,
   maxHeight,
   className,
-  manualPagination = false,
-  pagination: paginationProp,
+  serverPagination = false,
+  limit,
+  offset = 0,
+  total,
   onPaginationChange,
-  rowCount,
+  searchValue,
+  onSearchChange,
   manualSorting = false,
   sorting: sortingProp,
   onSortingChange,
@@ -141,29 +153,65 @@ export function DataTable<TData, TValue>({
   })
 
   const sorting = sortingProp ?? internalSorting
-  const pagination = paginationProp ?? internalPagination
+
+  // TanStack pages by index; the API pages by offset. Convert at this boundary
+  // so features only ever deal in limit/offset.
+  const serverPaginationState = useMemo<PaginationState>(() => {
+    const size = limit ?? pageSize
+    return {
+      pageIndex: size > 0 ? Math.floor(offset / size) : 0,
+      pageSize: size,
+    }
+  }, [limit, offset, pageSize])
+
+  const pagination = serverPagination ? serverPaginationState : internalPagination
+
+  const handlePaginationChange: OnChangeFn<PaginationState> = (updater) => {
+    if (!serverPagination) {
+      setInternalPagination(updater)
+      return
+    }
+    const next = typeof updater === 'function' ? updater(pagination) : updater
+    onPaginationChange?.({
+      limit: next.pageSize,
+      offset: next.pageSize > 0 ? next.pageIndex * next.pageSize : 0,
+    })
+  }
+
+  // Deleting the last row of the last page (or a search narrowing the result
+  // set) can leave the offset past the end — step back to the final page
+  // instead of showing an empty table with a pager that says otherwise.
+  useEffect(() => {
+    if (!serverPagination || total == null || total === 0) return
+    const size = limit ?? pageSize
+    if (size > 0 && offset >= total) {
+      onPaginationChange?.({ limit: size, offset: Math.floor((total - 1) / size) * size })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverPagination, total, offset, limit])
 
   const table = useReactTable({
     data,
     columns,
     state: { sorting, columnFilters, globalFilter, pagination },
-    manualPagination,
+    manualPagination: serverPagination,
     manualSorting,
-    rowCount: manualPagination ? rowCount : undefined,
+    rowCount: serverPagination ? total : undefined,
     onSortingChange: onSortingChange ?? setInternalSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: onPaginationChange ?? setInternalPagination,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel:
-      hidePagination || manualPagination ? undefined : getPaginationRowModel(),
+      hidePagination || serverPagination ? undefined : getPaginationRowModel(),
   })
 
   const showSearch = searchColumn != null || searchPlaceholder != null
   // Hide the pagination footer when there's nothing to page through.
   const hasRows = table.getRowModel().rows.length > 0
+  const isEmpty = !isLoading && !hasRows
 
   // Infinite ("All") mode: active only when the caller wires up `onLoadMore`
   // AND the current page size is the "All" sentinel.
@@ -194,6 +242,18 @@ export function DataTable<TData, TValue>({
     return () => el.removeEventListener('scroll', maybeLoadMore)
   }, [isInfinite, maybeLoadMore])
 
+  // Visible width of the scroll container, tracked so the empty state can be
+  // as wide as what the user actually sees (see the empty row below).
+  const [viewportWidth, setViewportWidth] = useState<number>()
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || !isEmpty) return
+    const observer = new ResizeObserver(() => setViewportWidth(el.clientWidth))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isEmpty])
+
   return (
     <div className={cn('w-full space-y-4', className)}>
       {toolbar ??
@@ -202,6 +262,8 @@ export function DataTable<TData, TValue>({
             table={table}
             searchColumn={searchColumn}
             searchPlaceholder={searchPlaceholder}
+            value={searchValue}
+            onChange={onSearchChange}
           />
         ))}
 
@@ -273,14 +335,25 @@ export function DataTable<TData, TValue>({
               </>
             ) : (
               <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={columns.length}
-                  className={cn(
-                    'border-0 text-center text-muted-foreground',
-                    emptyState ? 'p-0' : 'h-28',
-                  )}
-                >
-                  {emptyState ?? emptyMessage}
+                <TableCell colSpan={columns.length} className="border-0 p-0">
+                  {/*
+                    A spanning <td> is as wide as the widest row, so on a
+                    horizontally scrollable table centred content lands
+                    off-screen. Pinning the block to the scroll container's
+                    left edge at its visible width keeps it centred on screen.
+                  */}
+                  <div
+                    className={cn(
+                      'sticky left-0',
+                      viewportWidth == null && 'w-full',
+                      emptyState
+                        ? undefined
+                        : 'flex h-28 items-center justify-center text-sm text-muted-foreground',
+                    )}
+                    style={viewportWidth != null ? { width: viewportWidth } : undefined}
+                  >
+                    {emptyState ?? emptyMessage}
+                  </div>
                 </TableCell>
               </TableRow>
             )}

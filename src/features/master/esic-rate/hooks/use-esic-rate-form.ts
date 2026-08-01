@@ -6,21 +6,19 @@ import { toast } from 'sonner'
 import { esicRateSchema, type EsicRateFormValues } from '../schemas'
 import { EMPTY_ESIC_RATE_FORM } from '../constants'
 import { useEsicRate } from '../api/use-esic-rate'
-import { useEsicRates } from '../api/use-esic-rates'
 import { useCreateEsicRate, useUpdateEsicRate } from '../api/use-esic-rate-mutations'
 import { esicRateToFormValues } from '../lib/esic-rate-mappers'
 
 /**
- * Owns the ESIC rate form for both create and edit, plus the history rows shown
- * under it. In edit mode (`id` set) it loads the slab, seeds the form and saves
- * via PUT; create mode POSTs a fresh slab. The page only lays out fields.
+ * Owns the ESIC rate form for both create and edit. In edit mode (`id` set) it
+ * loads the slab, seeds the form and saves via PATCH; create mode POSTs a fresh
+ * slab. The page only lays out fields.
  */
 export function useEsicRateForm(id?: number) {
   const isEdit = id !== undefined
   const navigate = useNavigate()
 
   const detail = useEsicRate(id ?? Number.NaN)
-  const history = useEsicRates()
   const createEsicRate = useCreateEsicRate()
   const updateEsicRate = useUpdateEsicRate(id ?? Number.NaN)
 
@@ -69,8 +67,5 @@ export function useEsicRateForm(id?: number) {
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
     goToList,
-    /** Previously saved slabs, rendered as the history table under the form. */
-    historyRows: history.data ?? [],
-    isHistoryLoading: history.isLoading,
   }
 }

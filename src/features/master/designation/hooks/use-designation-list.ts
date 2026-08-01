@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useDesignations } from '../api/use-designations'
@@ -13,7 +14,9 @@ import type { Designation } from '../types'
  */
 export function useDesignationList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useDesignations()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useDesignations(params)
   const deleteDesignation = useDeleteDesignation()
 
   const [pendingDelete, setPendingDelete] = useState<Designation | null>(null)
@@ -37,7 +40,14 @@ export function useDesignationList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

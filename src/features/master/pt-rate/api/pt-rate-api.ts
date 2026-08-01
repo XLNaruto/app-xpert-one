@@ -1,158 +1,156 @@
-import { mockDelay } from '@/lib/utils'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import { fetchStates } from '@/features/master/state'
-import { ptRateFromFormValues, sortByEffectiveDateDesc } from '../lib/pt-rate-mappers'
-import type { PtRateFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { ensureStates } from '@/features/master/state'
+import { ptRateResponseSchema, ptRatesResponseSchema } from '../schemas'
+import { ptRateToPayload, sortByEffectiveDateDesc, toPtRate } from '../lib/pt-rate-mappers'
+import type { PtRateFormValues, PtRatePayload } from '../schemas'
 import type { PtRate } from '../types'
 
 /**
- * In-memory PT rate store. No backend yet — records live here for the session.
- * Swap each function's body for the matching REST call when the API lands; the
- * signatures stay the same.
+ * PT rates — `/user/pt-rates`. The endpoint is offset-paginated
+ * (`?limit=&offset=`, limit capped at 100) and answers `{ items, total }`,
+ * which is exactly the shape the list screen pages in.
+ *
+ * Salary slabs are part of the rate, not a resource of their own: they come back
+ * in `details` on every read and are written back in `details` on POST/PATCH, so
+ * one save creates, updates and drops slabs in a single call.
+ *
+ * A rate references its state by id only, so every read joins in the state
+ * master to fill the `stateName` the list rows and history header display.
  */
 
-let ptRates: PtRate[] = [
-  {
-    id: 1,
-    wef: '2026-04-01',
-    stateId: 1,
-    stateName: 'Gujarat',
-    detail: 'Revised Gujarat PT slabs',
-    slabs: [
-      {
-        minSalary: 0,
-        maxSalary: 11999,
-        amount: 0,
-        month: '0',
-        gender: 'Both',
-        minAge: null,
-      },
-      {
-        minSalary: 12000,
-        maxSalary: null,
-        amount: 200,
-        month: '0',
-        gender: 'Both',
-        minAge: null,
-      },
-    ],
-    createdBy: 'Roman Rings',
-    createdAt: '2026-04-01T09:00:00.000Z',
-    updatedBy: 'John Cena',
-    updatedAt: '2026-04-28T11:25:32.772Z',
-  },
-  {
-    id: 2,
-    wef: '2025-04-01',
-    stateId: 2,
-    stateName: 'Maharashtra',
-    detail: 'Maharashtra PT — February carries the annual balance',
-    slabs: [
-      {
-        minSalary: 0,
-        maxSalary: 7500,
-        amount: 0,
-        month: '0',
-        gender: 'Male',
-        minAge: null,
-      },
-      {
-        minSalary: 7501,
-        maxSalary: 10000,
-        amount: 175,
-        month: '0',
-        gender: 'Male',
-        minAge: null,
-      },
-      {
-        minSalary: 10001,
-        maxSalary: null,
-        amount: 200,
-        month: '01',
-        gender: 'Male',
-        minAge: null,
-      },
-      {
-        minSalary: 10001,
-        maxSalary: null,
-        amount: 300,
-        month: '02',
-        gender: 'Male',
-        minAge: null,
-      },
-    ],
-    createdBy: 'John Cena',
-    createdAt: '2025-04-01T09:00:00.000Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-function nextId(): number {
-  return ptRates.reduce((max, r) => Math.max(max, r.id), 0) + 1
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
+
+/**
+ * State id → name, for denormalising `state_id` onto a rate.
+ *
+ * A failed state lookup shouldn't take the rate list down with it — the rates
+ * are the screen's subject, and an unresolved state just renders as a dash — so
+ * this degrades to an empty map instead of throwing.
+ */
+async function stateNamesById(): Promise<Map<number, string>> {
+  try {
+    const states = await ensureStates()
+    return new Map(states.map((state) => [state.id, state.stateName]))
+  } catch {
+    return new Map()
+  }
 }
 
 /**
- * A state can't have two rates starting the same day — the rate for that date
- * would be ambiguous — so (state, effective date) is the master's natural key.
+ * GET /user/pt-rates — one page of rates with their slabs, newest effective
+ * date first.
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a request
+ * at 100, so that case walks the pages until `total` is covered. `search` is
+ * matched server-side against the detail and the effective date.
  */
-function assertEffectiveDateFree(stateId: number, wef: string, ignoreId?: number) {
-  const clash = ptRates.some(
-    (r) => r.stateId === stateId && r.wef === wef && r.id !== ignoreId,
-  )
-  if (clash) {
-    throw new Error('A PT rate already exists for this state and effective date')
+export async function fetchPtRates(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<PtRate>> {
+  try {
+    const names = await stateNamesById()
+    const search = params.search?.trim() ? { search: params.search.trim() } : {}
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.PT_RATES.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...search,
+        },
+      })
+      const { items, total } = ptRatesResponseSchema.parse(raw)
+      return {
+        items: sortByEffectiveDateDesc(
+          items.map((item) => toPtRate(item, names.get(item.state_id ?? 0))),
+        ),
+        total,
+      }
+    }
+
+    const rates: PtRate[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.PT_RATES.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...search,
+        },
+      })
+      const parsed = ptRatesResponseSchema.parse(raw)
+      total = parsed.total
+      rates.push(
+        ...parsed.items.map((item) => toPtRate(item, names.get(item.state_id ?? 0))),
+      )
+      if (parsed.items.length === 0 || rates.length >= total) break
+    }
+
+    return { items: sortByEffectiveDateDesc(rates), total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load PT rates.")
   }
 }
 
-/** The stored record keeps the state's name, so resolve it from the master. */
-async function resolveStateName(stateId: string): Promise<string> {
-  const states = await fetchStates()
-  const match = states.find((s) => s.id === Number(stateId))
-  if (!match) throw new Error('Selected state no longer exists')
-  return match.stateName
-}
-
-export async function fetchPtRates(): Promise<PtRate[]> {
-  return mockDelay(sortByEffectiveDateDesc(ptRates))
-}
-
+/** GET /user/pt-rates/:id — one rate with its slabs, for the edit form. */
 export async function fetchPtRate(id: number): Promise<PtRate> {
-  const found = ptRates.find((r) => r.id === id)
-  if (!found) throw new Error('PT rate not found')
-  return mockDelay({ ...found })
-}
-
-export async function createPtRate(values: PtRateFormValues): Promise<PtRate> {
-  const stateName = await resolveStateName(values.stateId)
-  assertEffectiveDateFree(Number(values.stateId), values.wef)
-  const record: PtRate = {
-    id: nextId(),
-    ...ptRateFromFormValues(values, stateName),
-    ...createdStamp(),
+  try {
+    const raw = await http.get<unknown>(endpoints.PT_RATES.GET(id))
+    const response = ptRateResponseSchema.parse(raw)
+    const names = await stateNamesById()
+    return toPtRate(response, names.get(response.state_id ?? 0))
+  } catch (error) {
+    throw toApiError(error, 'PT rate not found')
   }
-  ptRates = [record, ...ptRates]
-  return mockDelay({ ...record })
 }
 
+/** POST /user/pt-rates — add a rate and its slabs, effective from its W.E.F date. */
+export async function createPtRate(values: PtRateFormValues): Promise<PtRate> {
+  try {
+    const raw = await http.post<unknown, PtRatePayload>(
+      endpoints.PT_RATES.POST,
+      ptRateToPayload(values),
+    )
+    return toPtRate(ptRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the PT rate.")
+  }
+}
+
+/**
+ * PATCH /user/pt-rates/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the full rate. `details` carries the
+ * slab set as it stands on the form, which is what replaces the stored slabs —
+ * a row the user removed is simply absent from it.
+ */
 export async function updatePtRate(
   id: number,
   values: PtRateFormValues,
 ): Promise<PtRate> {
-  const index = ptRates.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error('PT rate not found')
-  const stateName = await resolveStateName(values.stateId)
-  assertEffectiveDateFree(Number(values.stateId), values.wef, id)
-  const updated: PtRate = {
-    ...ptRates[index],
-    ...ptRateFromFormValues(values, stateName),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, PtRatePayload>(
+      endpoints.PT_RATES.PATCH(id),
+      ptRateToPayload(values),
+    )
+    return toPtRate(ptRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the PT rate.")
   }
-  ptRates = ptRates.map((r) => (r.id === id ? updated : r))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/pt-rates/:id — removes the rate along with its slabs. */
 export async function deletePtRate(id: number): Promise<void> {
-  ptRates = ptRates.filter((r) => r.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.PT_RATES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the PT rate.")
+  }
 }

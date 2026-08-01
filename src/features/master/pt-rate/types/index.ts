@@ -37,11 +37,3 @@ export interface PtRate extends AuditFields {
   detail: string
   slabs: PtRateSlab[]
 }
-
-/** A history row — one slab, carrying the effective date of the rate it belongs to. */
-export interface PtRateSlabRow extends PtRateSlab {
-  /** Row identity for the table: `<rateId>-<slabIndex>`. */
-  rowId: string
-  rateId: number
-  wef: string
-}

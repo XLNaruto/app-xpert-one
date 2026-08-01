@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
@@ -14,7 +15,8 @@ import type { PfRate } from '../types'
  */
 export function usePfRateList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = usePfRates()
+  const { params, limit, offset, onPaginationChange } = usePagination()
+  const { data, isLoading, isError, error } = usePfRates(params)
   const deletePfRate = useDeletePfRate()
 
   const [pendingDelete, setPendingDelete] = useState<PfRate | null>(null)
@@ -42,7 +44,12 @@ export function usePfRateList() {
   const isForbidden = isForbiddenError(error)
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,

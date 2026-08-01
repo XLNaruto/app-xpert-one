@@ -1,41 +1,75 @@
 import { format, isValid, parseISO } from 'date-fns'
-import { MONTH_OPTIONS } from '../constants'
-import type { PtRateFormValues, PtSlabFormValues } from '../schemas'
-import type { PtRate, PtRateSlab, PtRateSlabRow } from '../types'
+import type {
+  PtRateFormValues,
+  PtRatePayload,
+  PtRateResponse,
+  PtSlabFormValues,
+  PtSlabPayload,
+  PtSlabResponse,
+} from '../schemas'
+import type { PtRate, PtRateSlab } from '../types'
 
-/** Parse a validated slab row into the stored numeric shape. */
-function slabFromFormValues(slab: PtSlabFormValues): PtRateSlab {
+/** Parse a validated slab row into the slab half of the request body. */
+function slabToPayload(slab: PtSlabFormValues): PtSlabPayload {
   return {
-    minSalary: Number(slab.minSalary),
+    min_salary: Number(slab.minSalary),
     // Blank stays blank: `null` is the open-ended "and above" band.
-    maxSalary: slab.maxSalary.trim() === '' ? null : Number(slab.maxSalary),
+    max_salary: slab.maxSalary.trim() === '' ? null : Number(slab.maxSalary),
     amount: Number(slab.amount),
     month: slab.month,
     gender: slab.gender,
-    minAge: slab.minAge.trim() === '' ? null : Number(slab.minAge),
+    // The API takes the age as a string; blank means age doesn't matter.
+    min_age: slab.minAge.trim() === '' ? null : slab.minAge.trim(),
   }
 }
 
-/** The user-editable half of a rate — identity and audit fields are the API's. */
-export type PtRateEditableFields = Pick<
-  PtRate,
-  'wef' | 'stateId' | 'stateName' | 'detail' | 'slabs'
->
+/** API slab → the UI slab. Nullable values read as 0 / `null`. */
+function toPtRateSlab(slab: PtSlabResponse): PtRateSlab {
+  return {
+    minSalary: Number(slab.min_salary ?? 0),
+    maxSalary: slab.max_salary === null ? null : Number(slab.max_salary),
+    amount: Number(slab.amount ?? 0),
+    month: slab.month ?? '0',
+    gender: slab.gender ?? 'Both',
+    minAge:
+      slab.min_age === null || slab.min_age.trim() === '' ? null : Number(slab.min_age),
+  }
+}
 
 /**
- * Parse validated form values into the stored record. The state name is looked
- * up by the caller (the API layer owns the state master) and passed in.
+ * API record → the UI rate, slabs and all. Since the API only tracks
+ * `created_at` the rest of the audit trail stays empty (the audit columns render
+ * a dash for it).
+ *
+ * The record only carries `state_id`, so the state's name is looked up by the
+ * caller (the API layer owns the state master) and passed in — a state the
+ * lookup can't resolve reads as a dash rather than a blank cell.
  */
-export function ptRateFromFormValues(
-  values: PtRateFormValues,
-  stateName: string,
-): PtRateEditableFields {
+export function toPtRate(response: PtRateResponse, stateName?: string): PtRate {
   return {
-    wef: values.wef,
-    stateId: Number(values.stateId),
-    stateName,
+    id: response.id,
+    wef: response.effective_date ?? '',
+    stateId: response.state_id ?? 0,
+    stateName: stateName ?? '—',
+    detail: response.detail ?? '',
+    slabs: response.details.map(toPtRateSlab),
+    createdBy: '',
+    createdAt: response.created_at,
+    updatedBy: null,
+    updatedAt: null,
+  }
+}
+
+/**
+ * Validated form values → the create/update request body. The slabs go along as
+ * `details`, so one save writes the rate and its whole slab set together.
+ */
+export function ptRateToPayload(values: PtRateFormValues): PtRatePayload {
+  return {
+    effective_date: values.wef,
+    state_id: Number(values.stateId),
     detail: values.detail.trim(),
-    slabs: values.slabs.map(slabFromFormValues),
+    details: values.slabs.map(slabToPayload),
   }
 }
 
@@ -62,46 +96,7 @@ export function formatEffectiveDate(wef: string): string {
   return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
 }
 
-/** An audit timestamp as `23 May 2026, 14:30`; missing/unparseable → dash. */
-export function formatTimestamp(value: string | null): string {
-  const parsed = value ? parseISO(value) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy, HH:mm') : '—'
-}
-
-/** `12` → `December`, `0` → `Every Month`. */
-export function formatMonth(month: string): string {
-  return MONTH_OPTIONS.find((option) => option.value === month)?.label ?? '—'
-}
-
-/** Group-separated amount, e.g. `1,50,000`. */
-export function formatAmount(value: number): string {
-  return value.toLocaleString('en-IN')
-}
-
-/** The band as one readable range — an open-ended band reads as "… & Above". */
-export function formatSalaryRange(slab: Pick<PtRateSlab, 'minSalary' | 'maxSalary'>): string {
-  const from = formatAmount(slab.minSalary)
-  return slab.maxSalary === null
-    ? `${from} & Above`
-    : `${from} – ${formatAmount(slab.maxSalary)}`
-}
-
-/** Newest effective date first — the order the list and history both read in. */
+/** Newest effective date first — the order the list screen reads in. */
 export function sortByEffectiveDateDesc(rates: PtRate[]): PtRate[] {
   return [...rates].sort((a, b) => b.wef.localeCompare(a.wef))
-}
-
-/**
- * Flatten rates into one row per slab for the history table, so a reviewer sees
- * every superseded band next to the date it applied from.
- */
-export function toSlabRows(rates: PtRate[]): PtRateSlabRow[] {
-  return sortByEffectiveDateDesc(rates).flatMap((rate) =>
-    rate.slabs.map((slab, index) => ({
-      ...slab,
-      rowId: `${rate.id}-${index}`,
-      rateId: rate.id,
-      wef: rate.wef,
-    })),
-  )
 }

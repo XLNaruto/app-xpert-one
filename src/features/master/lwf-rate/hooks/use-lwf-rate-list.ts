@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useLwfRates } from '../api/use-lwf-rates'
 import { useDeleteLwfRate } from '../api/use-lwf-rate-mutations'
 import type { LwfRate } from '../types'
@@ -13,7 +15,8 @@ import type { LwfRate } from '../types'
  */
 export function useLwfRateList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useLwfRates()
+  const { params, limit, offset, onPaginationChange } = usePagination()
+  const { data, isLoading, isError, error } = useLwfRates(params)
   const deleteLwfRate = useDeleteLwfRate()
 
   const [pendingDelete, setPendingDelete] = useState<LwfRate | null>(null)
@@ -36,11 +39,22 @@ export function useLwfRateList() {
     })
   }
 
+  // A 403 isn't a broken screen, it's a missing permission — the page shows the
+  // 403 screen with the server's reason instead of an inline error line.
+  const isForbidden = isForbiddenError(error)
+
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
     goToCreate,
     goToEdit,
     pendingDelete,

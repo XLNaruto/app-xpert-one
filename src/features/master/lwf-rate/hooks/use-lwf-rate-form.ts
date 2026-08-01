@@ -3,6 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useStates } from '@/features/master/state'
 import { lwfRateSchema, type LwfRateFormValues } from '../schemas'
 import { EMPTY_LWF_RATE_FORM } from '../constants'
@@ -55,7 +56,7 @@ export function useLwfRateForm(id?: number) {
   const selectedStateId = useWatch({ control, name: 'stateId' })
   const historyRows = useMemo(() => {
     if (!selectedStateId) return []
-    const forState = (history.data ?? []).filter(
+    const forState = (history.data?.items ?? []).filter(
       (rate) => rate.stateId === Number(selectedStateId) && rate.id !== id,
     )
     return sortByEffectiveDateDesc(forState)
@@ -84,6 +85,10 @@ export function useLwfRateForm(id?: number) {
     })
   })
 
+  // Reading this rate was refused — not a broken screen, so the page shows the
+  // 403 screen with the server's reason rather than the form.
+  const isForbidden = isEdit && isForbiddenError(detail.error)
+
   return {
     register,
     control,
@@ -94,6 +99,8 @@ export function useLwfRateForm(id?: number) {
     isLoading: isEdit && detail.isLoading,
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
     stateOptions,
     isStatesLoading,

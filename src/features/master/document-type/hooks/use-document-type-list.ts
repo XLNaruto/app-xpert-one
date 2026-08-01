@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useDocumentTypes } from '../api/use-document-types'
@@ -13,7 +14,9 @@ import type { DocumentType } from '../types'
  */
 export function useDocumentTypeList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useDocumentTypes()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useDocumentTypes(params)
   const deleteDocumentType = useDeleteDocumentType()
 
   const [pendingDelete, setPendingDelete] = useState<DocumentType | null>(null)
@@ -39,7 +42,14 @@ export function useDocumentTypeList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

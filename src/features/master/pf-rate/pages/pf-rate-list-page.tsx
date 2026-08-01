@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Percent, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
-import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
@@ -17,6 +16,10 @@ import type { PfRate } from '../types'
 export function PfRateListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,
@@ -98,34 +101,48 @@ export function PfRateListPage() {
         }
       />
 
-      {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load PF rates."}
-        </p>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={rows}
-          isLoading={isLoading}
-          searchPlaceholder="Search PF rate…"
-          itemName="PF rates"
-          pageSize={10}
-          pageSizeOptions={[10, 25, 50]}
-          emptyState={
-            <EmptyState
-              icon={Percent}
-              title="No PF rates yet"
-              description="Add your first PF rate slab to get started."
-              action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add PF Rate
-                </Button>
-              }
-            />
-          }
-        />
-      )}
+      {/*
+        No search box: `/user/pf-rates` takes only `limit`/`offset`, and with
+        the list server-paged a client-side box would filter the current page
+        alone. It comes back when the endpoint accepts a search term.
+      */}
+      <DataTable
+        columns={columns}
+        data={rows}
+        isLoading={isLoading}
+        itemName="PF rates"
+        pageSizeOptions={[5,10, 25, 50]}
+        serverPagination
+        limit={limit}
+        offset={offset}
+        total={total}
+        onPaginationChange={onPaginationChange}
+        emptyState={
+          <div className="flex flex-col items-center gap-3 py-14 text-center">
+            <span className="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+              <Percent className="size-6" />
+            </span>
+            <div>
+              <p className="font-medium text-foreground">
+                {isError ? "Couldn't load PF rates" : 'No PF rates yet'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {isError
+                  ? error instanceof Error
+                    ? error.message
+                    : 'Something went wrong. Please try again.'
+                  : 'Add your first PF rate slab to get started.'}
+              </p>
+            </div>
+            {!isError && (
+              <Button onClick={goToCreate}>
+                <Plus className="size-4" />
+                Add PF Rate
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       <ConfirmDialog
         open={pendingDelete !== null}

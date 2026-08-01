@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Forbidden } from '@/features/error'
 import { LwfRateFormFields } from '../components/lwf-rate-form-fields'
 import { LwfRateHistoryTable } from '../components/lwf-rate-history-table'
 import { useLwfRateForm } from '../hooks/use-lwf-rate-form'
@@ -41,7 +42,14 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
     historyRows,
     isHistoryLoading,
     selectedStateName,
+    isForbidden,
+    forbiddenMessage,
   } = useLwfRateForm(lwfRateId)
+
+  // Reading this rate was refused — show the 403 screen, not an empty form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>

@@ -1,106 +1,120 @@
-import { mockDelay } from '@/lib/utils'
-import { createdStamp, updatedStamp } from '@/lib/audit'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { esicRateResponseSchema, esicRatesResponseSchema } from '../schemas'
 import {
-  esicRateFromFormValues,
+  esicRateToCreatePayload,
+  esicRateToUpdatePayload,
   sortByEffectiveDateDesc,
+  toEsicRate,
 } from '../lib/esic-rate-mappers'
-import type { EsicRateFormValues } from '../schemas'
+import type {
+  EsicRateCreatePayload,
+  EsicRateFormValues,
+  EsicRateUpdatePayload,
+} from '../schemas'
 import type { EsicRate } from '../types'
 
 /**
- * In-memory ESIC rate store. No backend yet — records live here for the session.
- * Swap each function's body for the matching REST call when the API lands; the
- * signatures stay the same.
+ * ESIC rate slabs — `/user/esic-rates`. The endpoint is offset-paginated
+ * (`?limit=&offset=`, limit capped at 100) and answers `{ items, total }`,
+ * which is exactly the shape the list screen pages in.
  */
 
-let esicRates: EsicRate[] = [
-  {
-    id: 1,
-    wef: '2026-04-01',
-    wageCeilingLimit: 21000,
-    minimumRate: 176,
-    employeeEsiContribution: 0.75,
-    employerEsiContribution: 3.25,
-    disabilityDuration: 2,
-    disabilityWageLimit: 21000,
-    contributionEndPeriod1: '09',
-    contributionEndPeriod2: '03',
-    createdBy: 'Roman Rings',
-    createdAt: '2026-04-01T09:00:00.000Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2026-05-09T07:15:00.000Z',
-  },
-  {
-    id: 2,
-    wef: '2025-04-01',
-    wageCeilingLimit: 21000,
-    minimumRate: 137,
-    employeeEsiContribution: 0.75,
-    employerEsiContribution: 3.25,
-    disabilityDuration: 2,
-    disabilityWageLimit: 21000,
-    contributionEndPeriod1: '09',
-    contributionEndPeriod2: '03',
-    createdBy: 'John Cena',
-    createdAt: '2025-04-01T09:00:00.000Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-function nextId(): number {
-  return esicRates.reduce((max, r) => Math.max(max, r.id), 0) + 1
-}
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
 /**
- * Two slabs sharing an effective date would make the rate for that day
- * ambiguous, so the date is the master's natural key.
+ * GET /user/esic-rates — one page of slabs, newest effective date first.
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a
+ * request at 100, so that case walks the pages until `total` is covered. The
+ * endpoint has no search parameter, so `params.search` is ignored.
  */
-function assertEffectiveDateFree(wef: string, ignoreId?: number) {
-  const clash = esicRates.some((r) => r.wef === wef && r.id !== ignoreId)
-  if (clash) throw new Error('An ESIC rate already exists for this effective date')
+export async function fetchEsicRates(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<EsicRate>> {
+  try {
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.ESIC_RATES.LIST, {
+        params: { limit: Math.min(params.limit, MAX_LIMIT), offset: params.offset },
+      })
+      const { items, total } = esicRatesResponseSchema.parse(raw)
+      return { items: sortByEffectiveDateDesc(items.map(toEsicRate)), total }
+    }
+
+    const rates: EsicRate[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.ESIC_RATES.LIST, {
+        params: { limit: MAX_LIMIT, offset: params.offset + page * MAX_LIMIT },
+      })
+      const parsed = esicRatesResponseSchema.parse(raw)
+      total = parsed.total
+      rates.push(...parsed.items.map(toEsicRate))
+      if (parsed.items.length === 0 || rates.length >= total) break
+    }
+
+    return { items: sortByEffectiveDateDesc(rates), total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load ESIC rates.")
+  }
 }
 
-export async function fetchEsicRates(): Promise<EsicRate[]> {
-  return mockDelay(sortByEffectiveDateDesc(esicRates))
-}
-
+/** GET /user/esic-rates/:id — one slab, for the edit form. */
 export async function fetchEsicRate(id: number): Promise<EsicRate> {
-  const found = esicRates.find((r) => r.id === id)
-  if (!found) throw new Error('ESIC rate not found')
-  return mockDelay({ ...found })
+  try {
+    const raw = await http.get<unknown>(endpoints.ESIC_RATES.GET(id))
+    return toEsicRate(esicRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'ESIC rate not found')
+  }
 }
 
+/** POST /user/esic-rates — add a slab effective from its W.E.F date. */
 export async function createEsicRate(
   values: EsicRateFormValues,
 ): Promise<EsicRate> {
-  assertEffectiveDateFree(values.wef)
-  const record: EsicRate = {
-    id: nextId(),
-    ...esicRateFromFormValues(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.post<unknown, EsicRateCreatePayload>(
+      endpoints.ESIC_RATES.POST,
+      esicRateToCreatePayload(values),
+    )
+    return toEsicRate(esicRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the ESIC rate.")
   }
-  esicRates = [record, ...esicRates]
-  return mockDelay({ ...record })
 }
 
+/**
+ * PATCH /user/esic-rates/:id — the endpoint accepts a partial body, but the
+ * form always submits every field, so we send the full slab.
+ */
 export async function updateEsicRate(
   id: number,
   values: EsicRateFormValues,
 ): Promise<EsicRate> {
-  const index = esicRates.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error('ESIC rate not found')
-  assertEffectiveDateFree(values.wef, id)
-  const updated: EsicRate = {
-    ...esicRates[index],
-    ...esicRateFromFormValues(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, EsicRateUpdatePayload>(
+      endpoints.ESIC_RATES.PATCH(id),
+      esicRateToUpdatePayload(values),
+    )
+    return toEsicRate(esicRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the ESIC rate.")
   }
-  esicRates = esicRates.map((r) => (r.id === id ? updated : r))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/esic-rates/:id */
 export async function deleteEsicRate(id: number): Promise<void> {
-  esicRates = esicRates.filter((r) => r.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.ESIC_RATES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the ESIC rate.")
+  }
 }

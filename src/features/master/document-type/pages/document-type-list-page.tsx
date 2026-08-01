@@ -15,6 +15,12 @@ import type { DocumentType } from '../types'
 export function DocumentTypeListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -84,11 +90,16 @@ export function DocumentTypeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="typeName"
           searchPlaceholder="Search document type…"
           itemName="document types"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={FileType2}

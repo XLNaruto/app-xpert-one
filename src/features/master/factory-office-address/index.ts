@@ -1,5 +1,3 @@
 export { FactoryOfficeAddressListPage } from './pages/factory-office-address-list-page'
 export { FactoryOfficeAddressCreatePage } from './pages/factory-office-address-create-page'
-export { useFactoryOfficeAddresses } from './api/use-factory-office-addresses'
-export { useFactoryOfficeAddress } from './api/use-factory-office-address'
-export type { FactoryOfficeAddress } from './types'
+export { FACTORY_OFFICE_ADDRESS_SCREEN } from './constants'

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useAllowanceDeductions } from '../api/use-allowance-deductions'
@@ -13,7 +14,9 @@ import type { AllowanceDeduction } from '../types'
  */
 export function useAllowanceDeductionList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useAllowanceDeductions()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useAllowanceDeductions(params)
   const deleteRecord = useDeleteAllowanceDeduction()
 
   const [pendingDelete, setPendingDelete] = useState<AllowanceDeduction | null>(null)
@@ -40,7 +43,14 @@ export function useAllowanceDeductionList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

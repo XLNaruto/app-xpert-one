@@ -14,6 +14,12 @@ import type { Department } from '../types'
 export function DepartmentListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -98,11 +104,16 @@ export function DepartmentListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="departmentName"
           searchPlaceholder="Search departments…"
           itemName="departments"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Building}

@@ -1,7 +1,14 @@
+import type { PageParams } from '@/lib/pagination'
+
 /**
  * Centralized query-key factory. Every TanStack Query key in the app is
  * defined here — no feature declares keys inline. Keys are `as const` so
  * they infer as readonly tuples for stable cache identity.
+ *
+ * A server-paged `list(params)` appends its `{ limit, offset, search }` so each
+ * page caches separately; `list()` with no params is the prefix that matches
+ * every page of that master — which is why mutations can keep invalidating
+ * `all` and pick up all of them.
  */
 export const queryKeys = {
   profile: {
@@ -19,22 +26,34 @@ export const queryKeys = {
   },
   company: {
     all: ['company'] as const,
-    list: () => [...queryKeys.company.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.company.all, 'list', params] as const)
+        : ([...queryKeys.company.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.company.all, 'detail', id] as const,
   },
   branch: {
     all: ['branch'] as const,
-    list: () => [...queryKeys.branch.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.branch.all, 'list', params] as const)
+        : ([...queryKeys.branch.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.branch.all, 'detail', id] as const,
   },
   department: {
     all: ['department'] as const,
-    list: () => [...queryKeys.department.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.department.all, 'list', params] as const)
+        : ([...queryKeys.department.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
   },
   designation: {
     all: ['designation'] as const,
-    list: () => [...queryKeys.designation.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.designation.all, 'list', params] as const)
+        : ([...queryKeys.designation.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.designation.all, 'detail', id] as const,
     /** Effective-dated wage structure history for one designation. */
     wageStructures: (designationId: number) =>
@@ -42,89 +61,116 @@ export const queryKeys = {
   },
   pfRate: {
     all: ['pf-rate'] as const,
-    list: () => [...queryKeys.pfRate.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.pfRate.all, 'list', params] as const)
+        : ([...queryKeys.pfRate.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.pfRate.all, 'detail', id] as const,
   },
   esicRate: {
     all: ['esic-rate'] as const,
-    list: () => [...queryKeys.esicRate.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.esicRate.all, 'list', params] as const)
+        : ([...queryKeys.esicRate.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.esicRate.all, 'detail', id] as const,
   },
   ptRate: {
     all: ['pt-rate'] as const,
-    list: () => [...queryKeys.ptRate.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.ptRate.all, 'list', params] as const)
+        : ([...queryKeys.ptRate.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.ptRate.all, 'detail', id] as const,
   },
   lwfRate: {
     all: ['lwf-rate'] as const,
-    list: () => [...queryKeys.lwfRate.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.lwfRate.all, 'list', params] as const)
+        : ([...queryKeys.lwfRate.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.lwfRate.all, 'detail', id] as const,
   },
-  pfOfficeAddress: {
-    all: ['pf-office-address'] as const,
-    list: () => [...queryKeys.pfOfficeAddress.all, 'list'] as const,
-    detail: (id: number) => [...queryKeys.pfOfficeAddress.all, 'detail', id] as const,
-  },
-  esicOfficeAddress: {
-    all: ['esic-office-address'] as const,
-    list: () => [...queryKeys.esicOfficeAddress.all, 'list'] as const,
-    detail: (id: number) =>
-      [...queryKeys.esicOfficeAddress.all, 'detail', id] as const,
-  },
-  lwfOfficeAddress: {
-    all: ['lwf-office-address'] as const,
-    list: () => [...queryKeys.lwfOfficeAddress.all, 'list'] as const,
-    detail: (id: number) => [...queryKeys.lwfOfficeAddress.all, 'detail', id] as const,
-  },
-  factoryOfficeAddress: {
-    all: ['factory-office-address'] as const,
-    list: () => [...queryKeys.factoryOfficeAddress.all, 'list'] as const,
-    detail: (id: number) =>
-      [...queryKeys.factoryOfficeAddress.all, 'detail', id] as const,
-  },
-  employmentExchangeOfficeAddress: {
-    all: ['employment-exchange-office-address'] as const,
-    list: () => [...queryKeys.employmentExchangeOfficeAddress.all, 'list'] as const,
-    detail: (id: number) =>
-      [...queryKeys.employmentExchangeOfficeAddress.all, 'detail', id] as const,
+  /**
+   * All five office-address screens share `/user/office-addresses`, so they
+   * share one key too — `officeFor` scopes a list to the screen reading it,
+   * while `all` still invalidates every screen (a record's `office_for` can be
+   * edited, which moves it between them).
+   */
+  officeAddress: {
+    all: ['office-address'] as const,
+    list: (officeFor: string, params?: PageParams) =>
+      params
+        ? ([...queryKeys.officeAddress.all, 'list', officeFor, params] as const)
+        : ([...queryKeys.officeAddress.all, 'list', officeFor] as const),
+    detail: (id: number) => [...queryKeys.officeAddress.all, 'detail', id] as const,
   },
   state: {
     all: ['state'] as const,
+    /** The whole master — for resolving `state_id` to a name on a list screen. */
     list: () => [...queryKeys.state.all, 'list'] as const,
+    /** Paged, server-searched — backs the scroll-lazy state dropdowns. */
+    infinite: (search?: string) =>
+      [...queryKeys.state.all, 'infinite', search ?? ''] as const,
   },
   district: {
     all: ['district'] as const,
-    list: () => [...queryKeys.district.all, 'list'] as const,
+    /** `stateId` scopes the list to one state's districts (the cascade case). */
+    list: (stateId?: number) =>
+      stateId
+        ? ([...queryKeys.district.all, 'list', stateId] as const)
+        : ([...queryKeys.district.all, 'list'] as const),
+    /** Paged, server-searched — backs the scroll-lazy district dropdowns. */
+    infinite: (stateId?: number, search?: string) =>
+      [...queryKeys.district.all, 'infinite', stateId ?? 0, search ?? ''] as const,
   },
   leaveType: {
     all: ['leave-type'] as const,
-    list: () => [...queryKeys.leaveType.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.leaveType.all, 'list', params] as const)
+        : ([...queryKeys.leaveType.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.leaveType.all, 'detail', id] as const,
   },
   holiday: {
     all: ['holiday'] as const,
-    list: () => [...queryKeys.holiday.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.holiday.all, 'list', params] as const)
+        : ([...queryKeys.holiday.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.holiday.all, 'detail', id] as const,
   },
   allowanceDeduction: {
     all: ['allowance-deduction'] as const,
-    list: () => [...queryKeys.allowanceDeduction.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.allowanceDeduction.all, 'list', params] as const)
+        : ([...queryKeys.allowanceDeduction.all, 'list'] as const),
     detail: (id: number) =>
       [...queryKeys.allowanceDeduction.all, 'detail', id] as const,
   },
   documentType: {
     all: ['document-type'] as const,
-    list: () => [...queryKeys.documentType.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.documentType.all, 'list', params] as const)
+        : ([...queryKeys.documentType.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.documentType.all, 'detail', id] as const,
   },
   document: {
     all: ['document'] as const,
-    list: () => [...queryKeys.document.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.document.all, 'list', params] as const)
+        : ([...queryKeys.document.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.document.all, 'detail', id] as const,
   },
   asset: {
     all: ['asset'] as const,
-    list: () => [...queryKeys.asset.all, 'list'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.asset.all, 'list', params] as const)
+        : ([...queryKeys.asset.all, 'list'] as const),
   },
   dashboard: {
     all: ['dashboard'] as const,

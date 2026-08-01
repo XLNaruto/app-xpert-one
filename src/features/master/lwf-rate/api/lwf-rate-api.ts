@@ -1,132 +1,144 @@
-import { mockDelay } from '@/lib/utils'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import { fetchStates } from '@/features/master/state'
-import { lwfRateFromFormValues, sortByEffectiveDateDesc } from '../lib/lwf-rate-mappers'
-import type { LwfRateFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { ensureStates } from '@/features/master/state'
+import { lwfRateResponseSchema, lwfRatesResponseSchema } from '../schemas'
+import {
+  lwfRateToPayload,
+  sortByEffectiveDateDesc,
+  toLwfRate,
+} from '../lib/lwf-rate-mappers'
+import type { LwfRateFormValues, LwfRatePayload } from '../schemas'
 import type { LwfRate } from '../types'
 
 /**
- * In-memory LWF rate store. No backend yet — records live here for the session.
- * Swap each function's body for the matching REST call when the API lands; the
- * signatures stay the same.
+ * LWF rates — `/user/lwf-rates`. The endpoint is offset-paginated
+ * (`?limit=&offset=`, limit capped at 100) and answers `{ items, total }`,
+ * which is exactly the shape the list screen pages in.
+ *
+ * A rate references its state by id only, so every read joins in the state
+ * master to fill the `stateName` the list rows and history header display.
  */
 
-let lwfRates: LwfRate[] = [
-  {
-    id: 1,
-    wef: '2026-04-23',
-    stateId: 1,
-    stateName: 'Gujarat',
-    month: '06',
-    employeeContribution: 6,
-    employerContribution: 12,
-    createdBy: 'Roman Rings',
-    createdAt: '2026-03-24T12:18:27.071Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2026-04-28T11:25:32.772Z',
-  },
-  {
-    id: 2,
-    wef: '2026-02-04',
-    stateId: 2,
-    stateName: 'Maharashtra',
-    month: '06',
-    employeeContribution: 12,
-    employerContribution: 36,
-    createdBy: 'John Cena',
-    createdAt: '2026-02-20T13:09:12.929Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-  {
-    id: 3,
-    wef: '2026-02-11',
-    stateId: 3,
-    stateName: 'Rajasthan',
-    month: '12',
-    employeeContribution: 2,
-    employerContribution: 4,
-    createdBy: 'John Cena',
-    createdAt: '2026-02-18T10:40:55.860Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-function nextId(): number {
-  return lwfRates.reduce((max, r) => Math.max(max, r.id), 0) + 1
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
+
+/**
+ * State id → name, for denormalising `state_id` onto a rate.
+ *
+ * A failed state lookup shouldn't take the rate list down with it — the rates
+ * are the screen's subject, and an unresolved state just renders as a dash — so
+ * this degrades to an empty map instead of throwing.
+ */
+async function stateNamesById(): Promise<Map<number, string>> {
+  try {
+    const states = await ensureStates()
+    return new Map(states.map((state) => [state.id, state.stateName]))
+  } catch {
+    return new Map()
+  }
 }
 
 /**
- * A state can't have two rates starting the same day for the same collection
- * month — the contribution for that month would be ambiguous — so
- * (state, effective date, month) is the master's natural key.
+ * GET /user/lwf-rates — one page of rates, newest effective date first.
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a
+ * request at 100, so that case walks the pages until `total` is covered. The
+ * endpoint has no search parameter, so `params.search` is ignored.
  */
-function assertRateSlotFree(
-  stateId: number,
-  wef: string,
-  month: string,
-  ignoreId?: number,
-) {
-  const clash = lwfRates.some(
-    (r) =>
-      r.stateId === stateId && r.wef === wef && r.month === month && r.id !== ignoreId,
-  )
-  if (clash) {
-    throw new Error(
-      'An LWF rate already exists for this state, effective date and month',
-    )
+export async function fetchLwfRates(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<LwfRate>> {
+  try {
+    const names = await stateNamesById()
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.LWF_RATES.LIST, {
+        params: { limit: Math.min(params.limit, MAX_LIMIT), offset: params.offset },
+      })
+      const { items, total } = lwfRatesResponseSchema.parse(raw)
+      return {
+        items: sortByEffectiveDateDesc(
+          items.map((item) => toLwfRate(item, names.get(item.state_id ?? 0))),
+        ),
+        total,
+      }
+    }
+
+    const rates: LwfRate[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.LWF_RATES.LIST, {
+        params: { limit: MAX_LIMIT, offset: params.offset + page * MAX_LIMIT },
+      })
+      const parsed = lwfRatesResponseSchema.parse(raw)
+      total = parsed.total
+      rates.push(
+        ...parsed.items.map((item) => toLwfRate(item, names.get(item.state_id ?? 0))),
+      )
+      if (parsed.items.length === 0 || rates.length >= total) break
+    }
+
+    return { items: sortByEffectiveDateDesc(rates), total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load LWF rates.")
   }
 }
 
-/** The stored record keeps the state's name, so resolve it from the master. */
-async function resolveStateName(stateId: string): Promise<string> {
-  const states = await fetchStates()
-  const match = states.find((s) => s.id === Number(stateId))
-  if (!match) throw new Error('Selected state no longer exists')
-  return match.stateName
-}
-
-export async function fetchLwfRates(): Promise<LwfRate[]> {
-  return mockDelay(sortByEffectiveDateDesc(lwfRates))
-}
-
+/** GET /user/lwf-rates/:id — one rate, for the edit form. */
 export async function fetchLwfRate(id: number): Promise<LwfRate> {
-  const found = lwfRates.find((r) => r.id === id)
-  if (!found) throw new Error('LWF rate not found')
-  return mockDelay({ ...found })
-}
-
-export async function createLwfRate(values: LwfRateFormValues): Promise<LwfRate> {
-  const stateName = await resolveStateName(values.stateId)
-  assertRateSlotFree(Number(values.stateId), values.wef, values.month)
-  const record: LwfRate = {
-    id: nextId(),
-    ...lwfRateFromFormValues(values, stateName),
-    ...createdStamp(),
+  try {
+    const raw = await http.get<unknown>(endpoints.LWF_RATES.GET(id))
+    const response = lwfRateResponseSchema.parse(raw)
+    const names = await stateNamesById()
+    return toLwfRate(response, names.get(response.state_id ?? 0))
+  } catch (error) {
+    throw toApiError(error, 'LWF rate not found')
   }
-  lwfRates = [record, ...lwfRates]
-  return mockDelay({ ...record })
 }
 
+/** POST /user/lwf-rates — add a rate effective from its W.E.F date. */
+export async function createLwfRate(values: LwfRateFormValues): Promise<LwfRate> {
+  try {
+    const raw = await http.post<unknown, LwfRatePayload>(
+      endpoints.LWF_RATES.POST,
+      lwfRateToPayload(values),
+    )
+    return toLwfRate(lwfRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the LWF rate.")
+  }
+}
+
+/**
+ * PATCH /user/lwf-rates/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the full rate.
+ */
 export async function updateLwfRate(
   id: number,
   values: LwfRateFormValues,
 ): Promise<LwfRate> {
-  const index = lwfRates.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error('LWF rate not found')
-  const stateName = await resolveStateName(values.stateId)
-  assertRateSlotFree(Number(values.stateId), values.wef, values.month, id)
-  const updated: LwfRate = {
-    ...lwfRates[index],
-    ...lwfRateFromFormValues(values, stateName),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, LwfRatePayload>(
+      endpoints.LWF_RATES.PATCH(id),
+      lwfRateToPayload(values),
+    )
+    return toLwfRate(lwfRateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the LWF rate.")
   }
-  lwfRates = lwfRates.map((r) => (r.id === id ? updated : r))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/lwf-rates/:id */
 export async function deleteLwfRate(id: number): Promise<void> {
-  lwfRates = lwfRates.filter((r) => r.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.LWF_RATES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the LWF rate.")
+  }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useEsicRates } from '../api/use-esic-rates'
@@ -13,7 +14,10 @@ import type { EsicRate } from '../types'
  */
 export function useEsicRateList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useEsicRates()
+  // No `search` — `/user/esic-rates` takes only limit/offset, so the list has
+  // no search box to feed one.
+  const { params, limit, offset, onPaginationChange } = usePagination()
+  const { data, isLoading, isError, error } = useEsicRates(params)
   const deleteEsicRate = useDeleteEsicRate()
 
   const [pendingDelete, setPendingDelete] = useState<EsicRate | null>(null)
@@ -39,7 +43,12 @@ export function useEsicRateList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,

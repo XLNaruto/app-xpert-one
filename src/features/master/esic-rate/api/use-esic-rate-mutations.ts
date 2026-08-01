@@ -14,7 +14,7 @@ export function useCreateEsicRate() {
   })
 }
 
-/** PUT /esic-rates/:id — update a rate slab, then refresh the list + detail. */
+/** PATCH /esic-rates/:id — update a rate slab, then refresh the list + detail. */
 export function useUpdateEsicRate(id: number) {
   const queryClient = useQueryClient()
   return useMutation({

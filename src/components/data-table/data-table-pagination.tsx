@@ -56,11 +56,15 @@ export function DataTablePagination<TData>({
   // and falls back to the filtered client row count otherwise.
   const total = table.getRowCount()
   // In infinite mode the numeric pager is meaningless — collapse to one page.
-  const pageCount = infinite ? 1 : table.getPageCount() || 1
-  const from = total === 0 ? 0 : infinite ? 1 : pageIndex * pageSize + 1
+  // "All" (a negative page size) is one page holding everything.
+  const showsEverything = pageSize < 0
+  const pageCount = infinite || showsEverything ? 1 : table.getPageCount() || 1
+  const from = total === 0 ? 0 : infinite || showsEverything ? 1 : pageIndex * pageSize + 1
   const to = infinite
     ? loadedCount
-    : Math.min(total, (pageIndex + 1) * pageSize)
+    : showsEverything
+      ? total
+      : Math.min(total, (pageIndex + 1) * pageSize)
 
   return (
     <div className="flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:items-center">

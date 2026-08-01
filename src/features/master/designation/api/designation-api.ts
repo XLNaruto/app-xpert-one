@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { DesignationFormValues } from '../schemas'
 import type { Designation } from '../types'
@@ -109,8 +110,11 @@ function nextId(): number {
   return designations.reduce((max, d) => Math.max(max, d.id), 0) + 1
 }
 
-export async function fetchDesignations(): Promise<Designation[]> {
-  return mockDelay([...designations])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Designation)[] = ['designationName']
+
+export async function fetchDesignations(params: PageParams = ALL_ROWS): Promise<Paginated<Designation>> {
+  return mockDelay(paginate([...designations], params, SEARCH_FIELDS))
 }
 
 export async function fetchDesignation(id: number): Promise<Designation> {

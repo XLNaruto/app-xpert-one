@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { DepartmentFormValues } from '../schemas'
 import type { Department } from '../types'
@@ -48,8 +49,11 @@ function applyForm(values: DepartmentFormValues) {
   }
 }
 
-export async function fetchDepartments(): Promise<Department[]> {
-  return mockDelay([...departments])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Department)[] = ['departmentName', 'departmentCode', 'branch']
+
+export async function fetchDepartments(params: PageParams = ALL_ROWS): Promise<Paginated<Department>> {
+  return mockDelay(paginate([...departments], params, SEARCH_FIELDS))
 }
 
 export async function fetchDepartment(id: number): Promise<Department> {

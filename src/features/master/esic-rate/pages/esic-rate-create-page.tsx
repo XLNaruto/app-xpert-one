@@ -1,11 +1,10 @@
-import { ArrowLeft, History, Save } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EsicRateFormFields } from '../components/esic-rate-form-fields'
-import { EsicRateHistoryTable } from '../components/esic-rate-history-table'
 import { useEsicRateForm } from '../hooks/use-esic-rate-form'
 
 interface EsicRateCreatePageProps {
@@ -17,9 +16,9 @@ interface EsicRateCreatePageProps {
 }
 
 /**
- * Create/edit an ESIC rate slab, with the rate history below the form. One
- * screen for both: a `?data=` token edits the slab it carries, no token adds a
- * new one that takes effect from its W.E.F date.
+ * Create/edit an ESIC rate slab. One screen for both: a `?data=` token edits
+ * the slab it carries, no token adds a new one that takes effect from its
+ * W.E.F date.
  */
 export function EsicRateCreatePage({ data }: EsicRateCreatePageProps) {
   // Decrypt the params from the URL; missing/malformed → create mode.
@@ -36,8 +35,6 @@ export function EsicRateCreatePage({ data }: EsicRateCreatePageProps) {
     isError,
     loadError,
     goToList,
-    historyRows,
-    isHistoryLoading,
   } = useEsicRateForm(esicRateId)
 
   return (
@@ -97,14 +94,6 @@ export function EsicRateCreatePage({ data }: EsicRateCreatePageProps) {
           )}
         </CardContent>
       </Card>
-
-      <section className="mt-6">
-        <div className="mb-3 flex items-center gap-2">
-          <History className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">ESIC Rate History</h2>
-        </div>
-        <EsicRateHistoryTable rows={historyRows} isLoading={isHistoryLoading} />
-      </section>
     </div>
   )
 }

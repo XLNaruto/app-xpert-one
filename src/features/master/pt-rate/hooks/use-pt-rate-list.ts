@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { usePtRates } from '../api/use-pt-rates'
@@ -13,7 +14,9 @@ import type { PtRate } from '../types'
  */
 export function usePtRateList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = usePtRates()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = usePtRates(params)
   const deletePtRate = useDeletePtRate()
 
   const [pendingDelete, setPendingDelete] = useState<PtRate | null>(null)
@@ -37,7 +40,14 @@ export function usePtRateList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

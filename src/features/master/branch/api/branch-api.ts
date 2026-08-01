@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { AuditFields } from '@/types/audit'
 import type { BranchFormValues } from '../schemas'
@@ -129,8 +130,11 @@ function applyForm(values: BranchFormValues): Omit<Branch, 'id' | keyof AuditFie
   }
 }
 
-export async function fetchBranches(): Promise<Branch[]> {
-  return mockDelay([...branches])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Branch)[] = ['branchName', 'city', 'district']
+
+export async function fetchBranches(params: PageParams = ALL_ROWS): Promise<Paginated<Branch>> {
+  return mockDelay(paginate([...branches], params, SEARCH_FIELDS))
 }
 
 export async function fetchBranch(id: number): Promise<Branch> {

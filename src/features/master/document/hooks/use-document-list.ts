@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useDocuments } from '../api/use-documents'
@@ -13,7 +14,9 @@ import type { Document } from '../types'
  */
 export function useDocumentList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useDocuments()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useDocuments(params)
   const deleteDocument = useDeleteDocument()
 
   const [pendingDelete, setPendingDelete] = useState<Document | null>(null)
@@ -37,7 +40,14 @@ export function useDocumentList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

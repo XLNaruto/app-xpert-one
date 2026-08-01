@@ -14,6 +14,12 @@ import type { Company } from '../types'
 export function CompanyListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -110,11 +116,16 @@ export function CompanyListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="companyName"
           searchPlaceholder="Search companies…"
           itemName="companies"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Building2}

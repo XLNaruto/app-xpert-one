@@ -28,6 +28,12 @@ function applicableActs(designation: Designation): string[] {
 export function DesignationListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -153,11 +159,16 @@ export function DesignationListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="designationName"
           searchPlaceholder="Search designations…"
           itemName="designations"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Briefcase}

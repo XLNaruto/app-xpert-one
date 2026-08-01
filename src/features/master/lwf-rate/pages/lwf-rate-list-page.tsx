@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { Forbidden } from '@/features/error'
 import { LWF_LABELS } from '../constants'
 import { formatAmount, formatEffectiveDate, formatMonth } from '../lib/lwf-rate-mappers'
 import { useLwfRateList } from '../hooks/use-lwf-rate-list'
@@ -16,6 +17,10 @@ import type { LwfRate } from '../types'
 export function LwfRateListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,
@@ -25,6 +30,8 @@ export function LwfRateListPage() {
     setPendingDelete,
     confirmDelete,
     isDeleting,
+    isForbidden,
+    forbiddenMessage,
   } = useLwfRateList()
 
   const columns = useMemo<ColumnDef<LwfRate>[]>(
@@ -93,6 +100,12 @@ export function LwfRateListPage() {
     [],
   )
 
+  // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
+  // screen with the server's reason instead of the table and its Add button.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
+
   return (
     <div>
       <PageHeader
@@ -111,14 +124,22 @@ export function LwfRateListPage() {
           {error instanceof Error ? error.message : "Couldn't load LWF rates."}
         </p>
       ) : (
+        /*
+          No search box: `/user/lwf-rates` takes only `limit`/`offset`, and with
+          the list server-paged a client-side box would filter the current page
+          alone. It comes back when the endpoint accepts a search term.
+        */
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search LWF rate…"
           itemName="LWF rates"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
           emptyState={
             <EmptyState
               icon={HandCoins}

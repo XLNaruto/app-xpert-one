@@ -42,7 +42,7 @@ export function useDocumentForm(id?: number) {
   }, [detail.data, reset])
 
   const typeOptions = useMemo(
-    () => documentTypeOptions(documentTypes.data ?? []),
+    () => documentTypeOptions(documentTypes.data?.items ?? []),
     [documentTypes.data],
   )
 

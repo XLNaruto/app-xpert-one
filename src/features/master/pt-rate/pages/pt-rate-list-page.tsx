@@ -15,6 +15,12 @@ import type { PtRate } from '../types'
 export function PtRateListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -99,8 +105,14 @@ export function PtRateListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search PT rate…"
           itemName="PT rates"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Landmark}

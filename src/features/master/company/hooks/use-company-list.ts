@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useCompanies } from '../api/use-companies'
@@ -13,7 +14,9 @@ import type { Company } from '../types'
  */
 export function useCompanyList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useCompanies()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useCompanies(params)
   const deleteCompany = useDeleteCompany()
 
   const [pendingDelete, setPendingDelete] = useState<Company | null>(null)
@@ -39,7 +42,14 @@ export function useCompanyList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

@@ -1,10 +1,98 @@
 import { format, isValid, parseISO } from 'date-fns'
 import type { AuditFields } from '@/types/audit'
 import { ESIC_RATE_VALUE_FIELDS, MONTH_OPTIONS } from '../constants'
-import type { EsicRateFormValues } from '../schemas'
+import type {
+  EsicRateCreatePayload,
+  EsicRateFormValues,
+  EsicRateResponse,
+  EsicRateUpdatePayload,
+} from '../schemas'
 import type { EsicRate, EsicRateValueField, EsicRateValueKey } from '../types'
 
 const VALUE_KEYS: EsicRateValueKey[] = ESIC_RATE_VALUE_FIELDS.map((f) => f.key)
+
+/**
+ * The API's snake_case field for each camelCase slab value — the single place
+ * the two namings meet, read in both directions by the mappers below. The
+ * contribution pair uses the response spelling; `POST` wants it without the
+ * "c", which `esicRateToCreatePayload` handles on its own.
+ */
+const API_FIELD: Record<EsicRateValueKey, keyof EsicRateResponse> = {
+  wageCeilingLimit: 'wage_ceiling_limit',
+  minimumRate: 'minimum_rate',
+  employeeEsiContribution: 'employee_esic_contribution',
+  employerEsiContribution: 'employer_esic_contribution',
+  disabilityDuration: 'disability_duration',
+  disabilityWageLimit: 'disability_wage_limit',
+}
+
+/**
+ * API record → the UI slab. Nullable values read as 0, month numbers become the
+ * zero-padded strings the dropdowns use, and since the API only tracks
+ * `created_at` the rest of the audit trail stays empty (the audit columns
+ * render a dash for it).
+ */
+export function toEsicRate(response: EsicRateResponse): EsicRate {
+  const numbers = Object.fromEntries(
+    VALUE_KEYS.map((key) => [key, Number(response[API_FIELD[key]] ?? 0)]),
+  ) as Record<EsicRateValueKey, number>
+
+  return {
+    id: response.id,
+    wef: response.effective_date ?? '',
+    ...numbers,
+    contributionEndPeriod1: monthToOption(response.contribution_end_period1),
+    contributionEndPeriod2: monthToOption(response.contribution_end_period2),
+    createdBy: '',
+    createdAt: response.created_at,
+    updatedBy: null,
+    updatedAt: null,
+  }
+}
+
+/** Validated form values → the `POST` body. */
+export function esicRateToCreatePayload(
+  values: EsicRateFormValues,
+): EsicRateCreatePayload {
+  const { employee_esic_contribution, employer_esic_contribution, ...shared } =
+    esicRateToUpdatePayload(values)
+
+  return {
+    ...shared,
+    employee_esi_contribution: employee_esic_contribution,
+    employer_esi_contribution: employer_esic_contribution,
+  }
+}
+
+/** Validated form values → the `PATCH` body. */
+export function esicRateToUpdatePayload(
+  values: EsicRateFormValues,
+): EsicRateUpdatePayload {
+  const stored = esicRateFromFormValues(values)
+  const numbers = Object.fromEntries(
+    VALUE_KEYS.map((key) => [API_FIELD[key], stored[key]]),
+  ) as Pick<
+    EsicRateUpdatePayload,
+    | 'wage_ceiling_limit'
+    | 'minimum_rate'
+    | 'employee_esic_contribution'
+    | 'employer_esic_contribution'
+    | 'disability_duration'
+    | 'disability_wage_limit'
+  >
+
+  return {
+    effective_date: stored.wef,
+    ...numbers,
+    contribution_end_period1: Number(stored.contributionEndPeriod1),
+    contribution_end_period2: Number(stored.contributionEndPeriod2),
+  }
+}
+
+/** `9` → `'09'`; a missing month stays blank so the dropdown reads unselected. */
+function monthToOption(month: number | null): string {
+  return month === null ? '' : padMonth(String(month))
+}
 
 /** Parse validated form values into the stored numeric shape. */
 export function esicRateFromFormValues(

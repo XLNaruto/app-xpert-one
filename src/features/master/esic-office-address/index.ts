@@ -1,5 +1,3 @@
 export { EsicOfficeAddressListPage } from './pages/esic-office-address-list-page'
 export { EsicOfficeAddressCreatePage } from './pages/esic-office-address-create-page'
-export { useEsicOfficeAddresses } from './api/use-esic-office-addresses'
-export { useEsicOfficeAddress } from './api/use-esic-office-address'
-export type { EsicOfficeAddress } from './types'
+export { ESIC_OFFICE_ADDRESS_SCREEN } from './constants'

@@ -60,8 +60,8 @@ export function useDesignationForm(id?: number) {
    * The row order here is the order the form fields are registered in, so the
    * seeding effect below and the rendered rows stay index-aligned.
    */
-  const allowanceHeads = useMemo<HeadRow[]>(() => headRows(components.data, 'ALLOWANCE'), [components.data])
-  const deductionHeads = useMemo<HeadRow[]>(() => headRows(components.data, 'DEDUCTION'), [components.data])
+  const allowanceHeads = useMemo<HeadRow[]>(() => headRows(components.data?.items, 'ALLOWANCE'), [components.data])
+  const deductionHeads = useMemo<HeadRow[]>(() => headRows(components.data?.items, 'DEDUCTION'), [components.data])
 
   /*
    * Seed the form once the heads (and, in edit mode, the record) have loaded —

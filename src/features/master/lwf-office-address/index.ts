@@ -1,5 +1,3 @@
 export { LwfOfficeAddressListPage } from './pages/lwf-office-address-list-page'
 export { LwfOfficeAddressCreatePage } from './pages/lwf-office-address-create-page'
-export { useLwfOfficeAddresses } from './api/use-lwf-office-addresses'
-export { useLwfOfficeAddress } from './api/use-lwf-office-address'
-export type { LwfOfficeAddress } from './types'
+export { LWF_OFFICE_ADDRESS_SCREEN } from './constants'

@@ -63,3 +63,59 @@ export const esicRateSchema = z
   })
 
 export type EsicRateFormValues = z.infer<typeof esicRateSchema>
+
+/**
+ * One ESIC rate slab as the API returns it (`POST/GET/PATCH /user/esic-rates`).
+ * Every value column is nullable server-side — the mapper substitutes 0 — the
+ * contribution periods come back as month numbers, and the only audit field is
+ * `created_at`.
+ */
+export const esicRateResponseSchema = z.object({
+  id: z.number(),
+  effective_date: z.string().nullable(),
+  wage_ceiling_limit: z.number().nullable(),
+  minimum_rate: z.number().nullable(),
+  employee_esic_contribution: z.number().nullable(),
+  employer_esic_contribution: z.number().nullable(),
+  disability_duration: z.number().nullable(),
+  disability_wage_limit: z.number().nullable(),
+  contribution_end_period1: z.number().nullable(),
+  contribution_end_period2: z.number().nullable(),
+  created_at: z.string(),
+})
+
+/** `GET /user/esic-rates` — one page of slabs plus the unpaged total. */
+export const esicRatesResponseSchema = z.object({
+  items: z.array(esicRateResponseSchema),
+  total: z.number(),
+})
+
+export type EsicRateResponse = z.infer<typeof esicRateResponseSchema>
+export type EsicRatesResponse = z.infer<typeof esicRatesResponseSchema>
+
+/** The fields both request bodies agree on — snake_case, numbers not strings. */
+type EsicRateBasePayload = {
+  effective_date: string
+  wage_ceiling_limit: number
+  minimum_rate: number
+  disability_duration: number
+  disability_wage_limit: number
+  contribution_end_period1: number
+  contribution_end_period2: number
+}
+
+/**
+ * `POST /user/esic-rates` spells the contribution pair without the "c", unlike
+ * the response and the PATCH body. Both bodies reject unknown keys, so the two
+ * verbs get their own payload type until the backend settles on one spelling.
+ */
+export type EsicRateCreatePayload = EsicRateBasePayload & {
+  employee_esi_contribution: number
+  employer_esi_contribution: number
+}
+
+/** `PATCH /user/esic-rates/:id` — the response's spelling. */
+export type EsicRateUpdatePayload = EsicRateBasePayload & {
+  employee_esic_contribution: number
+  employer_esic_contribution: number
+}

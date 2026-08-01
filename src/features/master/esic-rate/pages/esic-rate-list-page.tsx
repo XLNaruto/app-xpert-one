@@ -20,6 +20,10 @@ import type { EsicRate } from '../types'
 export function EsicRateListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
     isLoading,
     isError,
     error,
@@ -65,7 +69,7 @@ export function EsicRateListPage() {
         ),
       },
       // Every rate/limit column, generated from the one field descriptor the
-      // form and the history table also read.
+      // form also reads.
       ...ESIC_RATE_VALUE_FIELDS.map<ColumnDef<EsicRate>>((field) => ({
         accessorKey: field.key,
         header: ({ column }) => (
@@ -118,10 +122,13 @@ export function EsicRateListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search ESIC rate…"
           itemName="ESIC rates"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
           emptyState={
             <EmptyState
               icon={HeartPulse}

@@ -1,29 +1,41 @@
 import { format, isValid, parseISO } from 'date-fns'
 import { MONTH_OPTIONS } from '../constants'
-import type { LwfRateFormValues } from '../schemas'
+import type { LwfRateFormValues, LwfRatePayload, LwfRateResponse } from '../schemas'
 import type { LwfRate } from '../types'
 
-/** The user-editable half of a rate — identity and audit fields are the API's. */
-export type LwfRateEditableFields = Pick<
-  LwfRate,
-  'wef' | 'stateId' | 'stateName' | 'month' | 'employeeContribution' | 'employerContribution'
->
-
 /**
- * Parse validated form values into the stored record. The state name is looked
- * up by the caller (the API layer owns the state master) and passed in.
+ * API record → the UI rate. Nullable values read as 0 / an empty string, and
+ * since the API only tracks `created_at` the rest of the audit trail stays empty
+ * (the audit columns render a dash for it).
+ *
+ * The record only carries `state_id`, so the state's name is looked up by the
+ * caller (the API layer owns the state master) and passed in — a state the
+ * lookup can't resolve reads as a dash rather than a blank cell.
  */
-export function lwfRateFromFormValues(
-  values: LwfRateFormValues,
-  stateName: string,
-): LwfRateEditableFields {
+export function toLwfRate(response: LwfRateResponse, stateName?: string): LwfRate {
   return {
-    wef: values.wef,
-    stateId: Number(values.stateId),
-    stateName,
+    id: response.id,
+    wef: response.effective_date ?? '',
+    stateId: response.state_id ?? 0,
+    stateName: stateName ?? '—',
+    month: response.month ?? '',
+    employeeContribution: Number(response.employee_contribution ?? 0),
+    employerContribution: Number(response.employer_contribution ?? 0),
+    createdBy: '',
+    createdAt: response.created_at,
+    updatedBy: null,
+    updatedAt: null,
+  }
+}
+
+/** Validated form values → the create/update request body. */
+export function lwfRateToPayload(values: LwfRateFormValues): LwfRatePayload {
+  return {
+    effective_date: values.wef,
+    state_id: Number(values.stateId),
     month: values.month,
-    employeeContribution: Number(values.employeeContribution),
-    employerContribution: Number(values.employerContribution),
+    employee_contribution: Number(values.employeeContribution),
+    employer_contribution: Number(values.employerContribution),
   }
 }
 

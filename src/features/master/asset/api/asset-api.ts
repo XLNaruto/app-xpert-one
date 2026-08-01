@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { AssetFormValues } from '../schemas'
 import type { AssetRecord } from '../types'
@@ -40,8 +41,11 @@ function nextId(): number {
   return assets.reduce((max, a) => Math.max(max, a.id), 0) + 1
 }
 
-export async function fetchAssets(): Promise<AssetRecord[]> {
-  return mockDelay([...assets])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof AssetRecord)[] = ['assetName']
+
+export async function fetchAssets(params: PageParams = ALL_ROWS): Promise<Paginated<AssetRecord>> {
+  return mockDelay(paginate([...assets], params, SEARCH_FIELDS))
 }
 
 export async function createAsset(values: AssetFormValues): Promise<AssetRecord> {

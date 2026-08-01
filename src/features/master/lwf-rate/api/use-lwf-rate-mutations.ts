@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { LwfRateFormValues } from '../schemas'
 import { createLwfRate, deleteLwfRate, updateLwfRate } from './lwf-rate-api'
 
-/** POST /lwf-rates — create a rate, then refresh the list. */
+/** POST /user/lwf-rates — create a rate, then refresh the list. */
 export function useCreateLwfRate() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -14,7 +14,7 @@ export function useCreateLwfRate() {
   })
 }
 
-/** PUT /lwf-rates/:id — update a rate, then refresh the list + detail. */
+/** PATCH /user/lwf-rates/:id — update a rate, then refresh the list + detail. */
 export function useUpdateLwfRate(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -25,7 +25,7 @@ export function useUpdateLwfRate(id: number) {
   })
 }
 
-/** DELETE /lwf-rates/:id — remove a rate, then refresh the list. */
+/** DELETE /user/lwf-rates/:id — remove a rate, then refresh the list. */
 export function useDeleteLwfRate() {
   const queryClient = useQueryClient()
   return useMutation({

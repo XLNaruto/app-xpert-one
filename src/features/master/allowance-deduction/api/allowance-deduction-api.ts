@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { AllowanceDeductionFormValues } from '../schemas'
 import type { AllowanceDeduction } from '../types'
@@ -55,8 +56,11 @@ function applyForm(values: AllowanceDeductionFormValues) {
   }
 }
 
-export async function fetchAllowanceDeductions(): Promise<AllowanceDeduction[]> {
-  return mockDelay([...records])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof AllowanceDeduction)[] = ['name', 'shortName']
+
+export async function fetchAllowanceDeductions(params: PageParams = ALL_ROWS): Promise<Paginated<AllowanceDeduction>> {
+  return mockDelay(paginate([...records], params, SEARCH_FIELDS))
 }
 
 export async function fetchAllowanceDeduction(

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { useBranches } from '../api/use-branches'
@@ -13,7 +14,9 @@ import type { Branch } from '../types'
  */
 export function useBranchList() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useBranches()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useBranches(params)
   const deleteBranch = useDeleteBranch()
 
   const [pendingDelete, setPendingDelete] = useState<Branch | null>(null)
@@ -39,7 +42,14 @@ export function useBranchList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

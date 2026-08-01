@@ -33,9 +33,9 @@ export const MONTH_OPTIONS: ComboboxOption[] = [
 ]
 
 /**
- * Every numeric field on the slab, in the order the form and both tables show
- * them. One descriptor drives the form fields, the list columns and the history
- * columns, so a new value never has to be added in three places.
+ * Every numeric field on the slab, in the order the form and the list show
+ * them. One descriptor drives both the form fields and the list columns, so a
+ * new value never has to be added in two places.
  */
 export const ESIC_RATE_VALUE_FIELDS: EsicRateValueField[] = [
   {

@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { DocumentFormValues } from '../schemas'
 import type { Document } from '../types'
@@ -51,8 +52,11 @@ function applyForm(values: DocumentFormValues) {
   }
 }
 
-export async function fetchDocuments(): Promise<Document[]> {
-  return mockDelay([...documents])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Document)[] = ['documentName', 'documentType']
+
+export async function fetchDocuments(params: PageParams = ALL_ROWS): Promise<Paginated<Document>> {
+  return mockDelay(paginate([...documents], params, SEARCH_FIELDS))
 }
 
 export async function fetchDocument(id: number): Promise<Document> {

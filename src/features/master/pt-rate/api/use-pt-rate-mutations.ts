@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { PtRateFormValues } from '../schemas'
 import { createPtRate, deletePtRate, updatePtRate } from './pt-rate-api'
 
-/** POST /pt-rates — create a rate with its slabs, then refresh the list. */
+/** POST /user/pt-rates — create a rate with its slabs, then refresh the list. */
 export function useCreatePtRate() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -14,7 +14,10 @@ export function useCreatePtRate() {
   })
 }
 
-/** PUT /pt-rates/:id — update a rate, then refresh the list + detail. */
+/**
+ * PATCH /user/pt-rates/:id — update a rate and its slabs, then refresh the list
+ * + detail.
+ */
 export function useUpdatePtRate(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -25,7 +28,7 @@ export function useUpdatePtRate(id: number) {
   })
 }
 
-/** DELETE /pt-rates/:id — remove a rate, then refresh the list. */
+/** DELETE /user/pt-rates/:id — remove a rate, then refresh the list. */
 export function useDeletePtRate() {
   const queryClient = useQueryClient()
   return useMutation({

@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { LeaveTypeFormValues } from '../schemas'
 import type { LeaveType } from '../types'
@@ -55,8 +56,11 @@ function applyForm(values: LeaveTypeFormValues) {
   }
 }
 
-export async function fetchLeaveTypes(): Promise<LeaveType[]> {
-  return mockDelay([...leaveTypes])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof LeaveType)[] = ['leaveName', 'shortName']
+
+export async function fetchLeaveTypes(params: PageParams = ALL_ROWS): Promise<Paginated<LeaveType>> {
+  return mockDelay(paginate([...leaveTypes], params, SEARCH_FIELDS))
 }
 
 export async function fetchLeaveType(id: number): Promise<LeaveType> {

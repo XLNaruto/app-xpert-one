@@ -109,6 +109,38 @@
  * Schema: `pfRateResponseSchema`, `pfRatesResponseSchema`
  *
  * ───────────────────────────────────────────────────────────────────────────
+ * ESIC_RATES — /user/esic-rates                             (bearer)
+ * Master → Statutory Setup → ESIC Rate Setting. Same shape as PF_RATES —
+ * slabs versioned by `effective_date`, offset pagination, one `created_at`.
+ * ───────────────────────────────────────────────────────────────────────────
+ * GET    /user/esic-rates?limit=20&offset=0   limit 1–100 (default 20)
+ * ←  { "items": [ <slab> ], "total": 4 }
+ *
+ * POST   /user/esic-rates                     → 201 <slab>
+ * GET    /user/esic-rates/{id}                → 200 <slab>
+ * PATCH  /user/esic-rates/{id}                → 200 <slab>   (partial body ok)
+ * DELETE /user/esic-rates/{id}                → 200
+ *
+ * <slab> — every value is `number|null`; `effective_date` is `yyyy-MM-dd` and
+ * the two contribution periods are month numbers (1–12), not strings:
+ *   { "id": 1, "effective_date": "2026-04-01",
+ *     "wage_ceiling_limit": 21000, "minimum_rate": 176,
+ *     "employee_esic_contribution": 0.75, "employer_esic_contribution": 3.25,
+ *     "disability_duration": 2, "disability_wage_limit": 21000,
+ *     "contribution_end_period1": 9, "contribution_end_period2": 3,
+ *     "created_at": "…" }
+ * Notes: the POST body spells the two contribution fields
+ * `employee_esi_contribution` / `employer_esi_contribution` (no "c") while the
+ * response and the PATCH body use `..._esic_...`. Both bodies are declared
+ * `additionalProperties: false`, so the two verbs really do need different
+ * keys — `esicRateToCreatePayload` / `esicRateToUpdatePayload` in
+ * `lib/esic-rate-mappers.ts` are the only place that asymmetry lives. Collapse
+ * them once the backend settles on one spelling.
+ * `created_at` is the only audit field, so the Updated column reads as a dash.
+ * Code: `features/master/esic-rate/api/esic-rate-api.ts`
+ * Schema: `esicRateResponseSchema`, `esicRatesResponseSchema`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
  * TYPICAL SIGN-IN FLOW
  * ───────────────────────────────────────────────────────────────────────────
  * 1. LOGIN                        → store tokens + user

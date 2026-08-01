@@ -1,4 +1,4 @@
-import { ArrowLeft, History, Save } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden } from '@/features/error'
 import { PfRateFormFields } from '../components/pf-rate-form-fields'
-import { PfRateHistoryTable } from '../components/pf-rate-history-table'
 import { usePfRateForm } from '../hooks/use-pf-rate-form'
 
 interface PfRateCreatePageProps {
@@ -39,9 +38,6 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
     isForbidden,
     forbiddenMessage,
     goToList,
-    historyRows,
-    isHistoryLoading,
-    isHistoryForbidden,
   } = usePfRateForm(pfRateId)
 
   // Not allowed to read this slab — the form would have nothing to show.
@@ -102,18 +98,6 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* Hidden outright when reading slabs is forbidden — an empty history
-          table would read as "no history" rather than "not allowed". */}
-      {!isHistoryForbidden && (
-        <section className="mt-6">
-          <div className="mb-3 flex items-center gap-2">
-            <History className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">PF Rate History</h2>
-          </div>
-          <PfRateHistoryTable rows={historyRows} isLoading={isHistoryLoading} />
-        </section>
-      )}
     </div>
   )
 }

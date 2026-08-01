@@ -108,3 +108,66 @@ export const ptRateSchema = z
   })
 
 export type PtRateFormValues = z.infer<typeof ptRateSchema>
+
+/**
+ * One salary slab as the API returns it, inside a rate's `details`. Every value
+ * column is nullable server-side (the mapper substitutes 0 / `null`) and
+ * `min_age` crosses the wire as a string.
+ */
+export const ptSlabResponseSchema = z.object({
+  id: z.number(),
+  pt_rate_id: z.number(),
+  min_salary: z.number().nullable(),
+  max_salary: z.number().nullable(),
+  month: z.string().nullable(),
+  gender: z.enum(['Male', 'Female', 'Both']).nullable(),
+  min_age: z.string().nullable(),
+  amount: z.number().nullable(),
+  created_at: z.string(),
+})
+
+/**
+ * One PT rate as the API returns it (`POST/GET/PATCH /user/pt-rates`). The
+ * state arrives as a bare `state_id` — its name is joined in from the state
+ * master — the slabs ride along in `details`, and the only audit field is
+ * `created_at`.
+ */
+export const ptRateResponseSchema = z.object({
+  id: z.number(),
+  effective_date: z.string().nullable(),
+  state_id: z.number().nullable(),
+  detail: z.string().nullable(),
+  details: z.array(ptSlabResponseSchema),
+  created_at: z.string(),
+})
+
+/** `GET /user/pt-rates` — an offset-paginated page of rates. */
+export const ptRatesResponseSchema = z.object({
+  items: z.array(ptRateResponseSchema),
+  total: z.number(),
+})
+
+export type PtSlabResponse = z.infer<typeof ptSlabResponseSchema>
+export type PtRateResponse = z.infer<typeof ptRateResponseSchema>
+
+/** One slab inside the request body — `null` maximum means the open-ended band. */
+export interface PtSlabPayload {
+  min_salary: number
+  max_salary: number | null
+  month: string
+  gender: PtSlabFormValues['gender']
+  min_age: string | null
+  amount: number
+}
+
+/**
+ * The create/update request body. The endpoint rejects unknown keys
+ * (`additionalProperties: false`), so this is exactly what may be sent — and
+ * `details` is the full slab set, which is how slabs are saved and replaced.
+ */
+export interface PtRatePayload {
+  effective_date: string
+  state_id: number
+  detail: string
+  details: PtSlabPayload[]
+}

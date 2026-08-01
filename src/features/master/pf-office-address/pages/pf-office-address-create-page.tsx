@@ -1,106 +1,15 @@
-import { ArrowLeft, Save } from 'lucide-react'
-import { decryptId } from '@/lib/crypto'
-import { PageHeader } from '@/components/common/page-header'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { PfOfficeAddressFormFields } from '../components/pf-office-address-form-fields'
-import { usePfOfficeAddressForm } from '../hooks/use-pf-office-address-form'
+import { OfficeAddressCreatePage } from '@/features/master/office-address'
+import { PF_OFFICE_ADDRESS_SCREEN } from '../constants'
 
 interface PfOfficeAddressCreatePageProps {
   /**
-   * Encrypted PF office address id from the `?data=` search param. When present
-   * the page switches to edit mode; otherwise it's a fresh create.
+   * Encrypted office address id from the `?data=` search param. When present the
+   * page switches to edit mode; otherwise it's a fresh create.
    */
   data?: string
 }
 
-/**
- * Create/edit a PF office address. One screen for both: a `?data=` token edits
- * the record it carries, no token adds a new office.
- */
+/** Create/edit a PF office address. */
 export function PfOfficeAddressCreatePage({ data }: PfOfficeAddressCreatePageProps) {
-  // Decrypt the params from the URL; missing/malformed → create mode.
-  const addressId = decryptId(data)
-
-  const {
-    register,
-    control,
-    errors,
-    onSubmit,
-    isEdit,
-    isPending,
-    isLoading,
-    isError,
-    loadError,
-    goToList,
-    stateOptions,
-    isStatesLoading,
-    districtOptions,
-    isDistrictsLoading,
-    hasState,
-    changeState,
-  } = usePfOfficeAddressForm(addressId)
-
-  return (
-    <div>
-      <PageHeader
-        title={isEdit ? 'Edit PF Address' : 'Add PF Address'}
-        description="Configure PF office address details."
-        actions={
-          <Button variant="outline" onClick={goToList}>
-            <ArrowLeft className="size-4" />
-            Back
-          </Button>
-        }
-      />
-
-      <Card>
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : isError ? (
-            <p className="text-sm text-destructive">
-              {loadError instanceof Error
-                ? loadError.message
-                : "Couldn't load this PF office address."}
-            </p>
-          ) : (
-            <form onSubmit={onSubmit} noValidate>
-              <PfOfficeAddressFormFields
-                register={register}
-                control={control}
-                errors={errors}
-                stateOptions={stateOptions}
-                isStatesLoading={isStatesLoading}
-                districtOptions={districtOptions}
-                isDistrictsLoading={isDistrictsLoading}
-                hasState={hasState}
-                changeState={changeState}
-              />
-
-              <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goToList}
-                  disabled={isPending}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  <Save className="size-4" />
-                  {isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Save'}
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  )
+  return <OfficeAddressCreatePage screen={PF_OFFICE_ADDRESS_SCREEN} data={data} />
 }

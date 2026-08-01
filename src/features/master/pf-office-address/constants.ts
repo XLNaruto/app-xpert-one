@@ -1,25 +1,21 @@
-import type { ComboboxOption } from '@/components/ui/combobox'
-import type { PfOfficeAddressFormValues } from './schemas'
+import { Building2 } from 'lucide-react'
+import type { OfficeAddressScreen } from '@/features/master/office-address'
 
-/** How EPFO classifies the office. */
-export const OFFICE_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Regional Office', value: 'Regional Office' },
-  { label: 'Sub Regional Office', value: 'Sub Regional Office' },
-]
-
-/** Blank form values for a new PF office address. */
-export const EMPTY_PF_OFFICE_ADDRESS_FORM: PfOfficeAddressFormValues = {
-  officeName: '',
-  officeCode: '',
-  officeType: '',
-  mobile: '',
-  phone: '',
-  email: '',
-  addressLine1: '',
-  addressLine2: '',
-  addressLine3: '',
-  state: '',
-  district: '',
-  city: '',
-  pinCode: '',
+/**
+ * What makes this one of the five office-address screens: the `office_for` it
+ * reads from `/user/office-addresses`, its routes and its copy. The screens
+ * themselves are the shared pages in `features/master/office-address`.
+ */
+export const PF_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
+  officeFor: 'PF',
+  listPath: '/master/pf-office-address',
+  createPath: '/master/pf-office-address/create',
+  title: 'PF Office Address',
+  description: 'Manage the EPFO regional and sub-regional offices branches register with.',
+  shortLabel: 'PF Address',
+  recordsLabel: 'PF addresses',
+  emptyTitle: 'No PF office addresses yet',
+  emptyDescription: 'Add your first EPFO office to get started.',
+  icon: Building2,
+  hasOfficeType: true,
 }

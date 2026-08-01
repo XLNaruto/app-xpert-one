@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { usePagination } from '@/hooks/use-pagination'
 import { useAssets } from '../api/use-assets'
 import { useDeleteAsset } from '../api/use-asset-mutations'
 import type { AssetRecord } from '../types'
@@ -9,7 +10,9 @@ import type { AssetRecord } from '../types'
  * dialog and the delete flow. The page consumes this and only renders.
  */
 export function useAssetList() {
-  const { data, isLoading, isError, error } = useAssets()
+  const { params, limit, offset, search, setSearch, onPaginationChange } =
+    usePagination()
+  const { data, isLoading, isError, error } = useAssets(params)
   const deleteAsset = useDeleteAsset()
 
   const [formOpen, setFormOpen] = useState(false)
@@ -41,7 +44,14 @@ export function useAssetList() {
   }
 
   return {
-    rows: data ?? [],
+    rows: data?.items ?? [],
+    // Server pagination — the table reports pages back as limit/offset.
+    total: data?.total ?? 0,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

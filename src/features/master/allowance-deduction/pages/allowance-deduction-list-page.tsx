@@ -15,6 +15,12 @@ import type { AllowanceDeduction } from '../types'
 export function AllowanceDeductionListPage() {
   const {
     rows,
+    total,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -109,11 +115,16 @@ export function AllowanceDeductionListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchColumn="name"
           searchPlaceholder="Search name…"
           itemName="records"
-          pageSize={10}
           pageSizeOptions={[10, 25, 50]}
+          serverPagination
+          limit={limit}
+          offset={offset}
+          total={total}
+          onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
           emptyState={
             <EmptyState
               icon={Wallet}

@@ -1,4 +1,5 @@
 import { mockDelay } from '@/lib/utils'
+import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { createdStamp, updatedStamp } from '@/lib/audit'
 import type { CompanyFormValues } from '../schemas'
 import type { Company } from '../types'
@@ -95,8 +96,11 @@ function applyForm(values: CompanyFormValues) {
   }
 }
 
-export async function fetchCompanies(): Promise<Company[]> {
-  return mockDelay([...companies])
+/** Record fields the list screen's search box matches against. */
+const SEARCH_FIELDS: readonly (keyof Company)[] = ['companyName', 'companyCode']
+
+export async function fetchCompanies(params: PageParams = ALL_ROWS): Promise<Paginated<Company>> {
+  return mockDelay(paginate([...companies], params, SEARCH_FIELDS))
 }
 
 export async function fetchCompany(id: number): Promise<Company> {
