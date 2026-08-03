@@ -4,10 +4,13 @@ import type { DesignationFormValues } from '../schemas'
 import {
   createDesignation,
   deleteDesignation,
-  updateDesignation,
+  updateDesignationName,
 } from './designation-api'
 
-/** POST /designations — create a designation, then refresh the list. */
+/**
+ * POST /user/designations — create a designation together with its opening wage
+ * structure, then refresh the list.
+ */
 export function useCreateDesignation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -18,18 +21,22 @@ export function useCreateDesignation() {
   })
 }
 
-/** PUT /designations/:id — update a designation, then refresh the list + detail. */
-export function useUpdateDesignation(id: number) {
+/**
+ * PATCH /user/designations/:id — rename a designation, then refresh the list +
+ * detail. The endpoint owns the name and nothing else: a pay revision is a new
+ * wage structure version, saved through `useSaveDesignationWageStructures`.
+ */
+export function useUpdateDesignationName(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (values: DesignationFormValues) => updateDesignation(id, values),
+    mutationFn: (name: string) => updateDesignationName(id, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.designation.all })
     },
   })
 }
 
-/** DELETE /designations/:id — remove a designation, then refresh the list. */
+/** DELETE /user/designations/:id — remove a designation, then refresh the list. */
 export function useDeleteDesignation() {
   const queryClient = useQueryClient()
   return useMutation({

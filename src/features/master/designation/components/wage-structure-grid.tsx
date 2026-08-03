@@ -7,7 +7,7 @@ import {
   type UseFormRegister,
 } from 'react-hook-form'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CalendarDays, Trash2, UserPen } from 'lucide-react'
+import { CalendarDays, Pencil, Trash2, UserPen } from 'lucide-react'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { amountLabel } from '@/lib/currency'
 import { cn } from '@/lib/utils'
@@ -392,6 +392,7 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
             <DraftRow
               key={field.id}
               index={index}
+              isCorrection={field.wageStructureId !== undefined}
               control={form.control}
               register={form.register}
               monthBounds={form.monthBounds}
@@ -416,6 +417,7 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
             <SavedRow
               key={form.existing[item.index].id}
               row={form.existing[item.index]}
+              onEdit={form.editRow}
             />
           ))}
           {paddingBottom > 0 && <SpacerRow height={paddingBottom} />}
@@ -541,6 +543,11 @@ interface DraftRowProps {
   index: number
   control: Ctl
   register: Reg
+  /**
+   * Whether this row was opened from the history rather than drafted — a PATCH of
+   * that stored version, not a new one on top of it.
+   */
+  isCorrection: boolean
   monthBounds: WageForm['monthBounds']
   takenMonths: Set<string>
   onRemove: (index: number) => void
@@ -597,10 +604,23 @@ function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn })
                 minDate={props.monthBounds.minDate}
                 maxDate={props.monthBounds.maxDate}
               />
-              {field.value && props.takenMonths.has(field.value) && (
-                <p className="text-[10px] leading-tight text-amber-600 dark:text-amber-400">
-                  Supersedes the existing row for this month
+              {/*
+                A row opened from the history saves back over that same version,
+                so it doesn't supersede anything — say which of the two is about
+                to happen, since the difference is what past months are read as.
+              */}
+              {props.isCorrection ? (
+                <p className="flex items-center gap-1 text-[10px] leading-tight text-primary">
+                  <Pencil className="size-2.5 shrink-0" />
+                  Correcting the saved version
                 </p>
+              ) : (
+                field.value &&
+                props.takenMonths.has(field.value) && (
+                  <p className="text-[10px] leading-tight text-amber-600 dark:text-amber-400">
+                    Supersedes the existing row for this month
+                  </p>
+                )
               )}
             </div>
           )}
@@ -1220,15 +1240,18 @@ function round2(value: number): number {
  * One saved row. Memoised on the record, which the query keeps referentially
  * stable — so scrolling renders only the rows entering the window.
  */
-const SavedRow = memo(function SavedRow({ row }: { row: DesignationWageStructure }) {
+const SavedRow = memo(function SavedRow({
+  row,
+  onEdit,
+}: {
+  row: DesignationWageStructure
+  onEdit: (row: DesignationWageStructure) => void
+}) {
   return (
     <tr className="wage-row-saved" style={{ height: SAVED_ROW_HEIGHT }}>
       {COLUMNS.map((column, columnIndex) => (
-        <td
-          key={column.key}
-          className={cn(CELL, columnIndex === 0 && STICKY)}
-        >
-          <SavedCell column={column} row={row} />
+        <td key={column.key} className={cn(CELL, columnIndex === 0 && STICKY)}>
+          <SavedCell column={column} row={row} onEdit={onEdit} />
         </td>
       ))}
     </tr>
@@ -1239,9 +1262,11 @@ const SavedRow = memo(function SavedRow({ row }: { row: DesignationWageStructure
 function SavedCell({
   column,
   row,
+  onEdit,
 }: {
   column: WageColumn
   row: DesignationWageStructure
+  onEdit: (row: DesignationWageStructure) => void
 }) {
   if (column.head) {
     const { kind, at } = column.head
@@ -1367,8 +1392,25 @@ function SavedCell({
       return <ReadText value={row.lwfAmount} />
 
     case 'delete':
-      /* Saved rows are never removed — history is the audit trail. */
-      return <span className="text-muted-foreground/40">—</span>
+      /*
+       * A saved version is never removed — the history is the audit trail — but
+       * it can be corrected. This pulls it onto the grid as an editable row that
+       * saves back over the same version, for fixing a row that was entered
+       * wrong. A *revision* is a new row instead, so that the months already paid
+       * on the old figures keep them.
+       */
+      return (
+        <CellTooltip label="Correct this version in place">
+          <button
+            type="button"
+            onClick={() => onEdit(row)}
+            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            aria-label={`Correct the wage structure effective ${formatMonth(row.effectiveFrom)}`}
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        </CellTooltip>
+      )
 
     default:
       return null

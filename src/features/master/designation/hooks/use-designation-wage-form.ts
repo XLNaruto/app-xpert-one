@@ -5,9 +5,10 @@ import { toast } from 'sonner'
 import { wageStructureFormSchema, type WageStructureFormValues } from '../schemas'
 import { EMPTY_WAGE_STRUCTURE_ROW } from '../constants'
 import { useDesignationWageStructures } from '../api/use-designation-wage-structures'
-import { useCreateDesignationWageStructures } from '../api/use-designation-wage-mutations'
+import { useSaveDesignationWageStructures } from '../api/use-designation-wage-mutations'
 import { effectiveMonthBounds } from '../lib/effective-month'
-import { wageRowToStructure } from '../lib/wage-structure-mappers'
+import { wageStructureToRow } from '../lib/wage-structure-mappers'
+import type { DesignationWageStructure } from '../types'
 
 /** A fresh draft row — cloned so rows never share the head arrays. */
 function blankRow() {
@@ -15,9 +16,18 @@ function blankRow() {
 }
 
 /**
- * Owns the wage structure tab: the stored history, the draft rows being added
- * and the save. History is append-only, so the form only ever holds new rows —
- * everything already saved is rendered read-only from the query.
+ * Owns the wage structure tab: the stored version history, the rows being saved
+ * this visit and the save itself.
+ *
+ * A row on the grid is one of two things, and which one decides the request:
+ *
+ * - **drafted** — a new version, `POST`ed to take effect from its month. The
+ *   earlier months keep what they were paid on, which is what makes the history
+ *   an audit trail rather than a mutable record.
+ * - **opened for correction** — a stored version pulled onto the grid by
+ *   `editRow`, carrying its id, and `PATCH`ed in place. No version is created;
+ *   what a past month is read as changes. It's for fixing a mistake, not for a
+ *   revision, so the grid marks the row as an edit while it's open.
  *
  * Nothing here subscribes to field values or to `formState`. That's deliberate:
  * a subscription at this level re-renders the whole grid on every keystroke, and
@@ -26,7 +36,7 @@ function blankRow() {
  */
 export function useDesignationWageForm(designationId: number) {
   const history = useDesignationWageStructures(designationId)
-  const createStructures = useCreateDesignationWageStructures(designationId)
+  const saveStructures = useSaveDesignationWageStructures(designationId)
 
   const { register, control, handleSubmit, reset, setValue, getValues } =
     useForm<WageStructureFormValues>({
@@ -45,6 +55,25 @@ export function useDesignationWageForm(designationId: number) {
   )
 
   const addRow = useCallback(() => append(blankRow()), [append])
+
+  /**
+   * Pull a stored version onto the grid to correct it. The row carries the
+   * version's id, which is what turns its save into a `PATCH` of that row rather
+   * than a new version stacked on top of it.
+   *
+   * Opening the same version twice would send two conflicting patches for one
+   * row, so the second click is ignored.
+   */
+  const editRow = useCallback(
+    (structure: DesignationWageStructure) => {
+      const open = getValues('rows').some(
+        (row) => row.wageStructureId === structure.id,
+      )
+      if (open) return
+      append(wageStructureToRow(structure))
+    },
+    [append, getValues],
+  )
 
   /**
    * Never leave the grid with nothing to fill in — the last row resets instead.
@@ -95,13 +124,9 @@ export function useDesignationWageForm(designationId: number) {
 
   const onSubmit = handleSubmit(
     (values) => {
-      createStructures.mutate(values.rows.map(wageRowToStructure), {
+      saveStructures.mutate(values.rows, {
         onSuccess: () => {
-          toast.success(
-            values.rows.length === 1
-              ? 'Wage structure added'
-              : `${values.rows.length} wage structures added`,
-          )
+          toast.success(savedMessage(values.rows))
           // The saved rows now come back from the history query — start clean.
           reset({ rows: [blankRow()] })
         },
@@ -122,14 +147,15 @@ export function useDesignationWageForm(designationId: number) {
     register,
     control,
 
-    /** Draft rows, as field-array entries — the editable half of the grid. */
+    /** Rows on the grid, as field-array entries — the editable half. */
     fields,
     addRow,
+    editRow,
     removeRow,
     changeSalaryType,
     changeWorkingDayCalculationType,
 
-    /** Saved rows, most recent first — rendered read-only. */
+    /** Saved versions, most recent first — rendered read-only. */
     existing: history.data ?? [],
     historyLoading: history.isLoading,
     historyError: history.isError,
@@ -138,6 +164,19 @@ export function useDesignationWageForm(designationId: number) {
     takenMonths,
 
     onSubmit,
-    isPending: createStructures.isPending,
+    isPending: saveStructures.isPending,
   }
+}
+
+/** What the save reports back, counting corrections apart from new versions. */
+function savedMessage(rows: WageStructureFormValues['rows']): string {
+  const edited = rows.filter((row) => row.wageStructureId !== undefined).length
+  const added = rows.length - edited
+
+  const parts = [
+    added > 0 && `${added} added`,
+    edited > 0 && `${edited} corrected`,
+  ].filter(Boolean)
+
+  return `Wage structure saved — ${parts.join(', ')}`
 }

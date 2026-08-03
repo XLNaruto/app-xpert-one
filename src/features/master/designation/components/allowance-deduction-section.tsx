@@ -30,10 +30,13 @@ type AllowanceDeductionSectionProps = Pick<
 
 /**
  * Bottom half of the designation form — every allowance and deduction head in
- * the master, listed as fixed rows. Nothing is picked, added or removed here:
- * an allowance row takes a value (a share of basic pay or a flat amount) and the
- * acts it counts towards, and leaving the value blank means it doesn't apply.
- * Deduction heads are informational — payroll sets their amounts.
+ * the master, listed as fixed rows. Nothing is picked, added or removed here: a
+ * row takes a value (a share of basic pay or a flat amount) and the acts it
+ * counts towards, and leaving the value blank means the head doesn't apply.
+ *
+ * Both sides take the same row, because the API takes both in one
+ * `salary_components` array with one shape — a head's `type` in the master
+ * decides which side it lands on, and the request never says which.
  */
 export function AllowanceDeductionSection({
   register,
@@ -59,74 +62,20 @@ export function AllowanceDeductionSection({
         emptyLabel="No allowance heads in the master yet."
       >
         {allowanceHeads.map((head, index) => (
-          <HeadRowShell
+          <ComponentRow
             key={head.id}
+            side="allowances"
             index={index}
             label={head.label}
             tone="border-emerald-500/20 bg-emerald-500/5"
             indexTone="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
             error={errors.allowances?.[index]?.amount?.message}
-          >
-            {/* Value — the unit button flips the row between percentage and flat amount. */}
-            <Controller
-              control={control}
-              name={`allowances.${index}.valueType`}
-              render={({ field }) => (
-                <div className="flex h-9 shrink-0 items-stretch overflow-hidden rounded-md border border-input bg-background">
-                  <ValueTypeButton value={field.value} onChange={field.onChange} />
-                  <Input
-                    inputMode="decimal"
-                    placeholder="0"
-                    className="h-full w-20 rounded-none border-0 focus-visible:ring-0"
-                    {...register(`allowances.${index}.amount`)}
-                  />
-                </div>
-              )}
-            />
-
-            {/* Which statutory wages this allowance counts towards. */}
-            <div className="flex shrink-0 items-center gap-2.5">
-              <Controller
-                control={control}
-                name={`allowances.${index}.pfApplicable`}
-                render={({ field }) => (
-                  <ActMarker
-                    label="PF"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={!pfActApplicable}
-                    activeTone="text-primary"
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name={`allowances.${index}.esicApplicable`}
-                render={({ field }) => (
-                  <ActMarker
-                    label="ESI"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={!esicActApplicable}
-                    activeTone="text-emerald-600 dark:text-emerald-400"
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name={`allowances.${index}.ptApplicable`}
-                render={({ field }) => (
-                  <ActMarker
-                    label="PT"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={!ptActApplicable}
-                    activeTone="text-violet-600 dark:text-violet-400"
-                  />
-                )}
-              />
-            </div>
-          </HeadRowShell>
+            register={register}
+            control={control}
+            pfActApplicable={pfActApplicable}
+            esicActApplicable={esicActApplicable}
+            ptActApplicable={ptActApplicable}
+          />
         ))}
       </HeadColumn>
 
@@ -134,7 +83,7 @@ export function AllowanceDeductionSection({
       <HeadColumn
         icon={CircleMinus}
         title="Deductions"
-        description="The deduction heads applied to this designation"
+        description="Set a value for the deduction heads that apply"
         iconTone="text-rose-600 dark:text-rose-400"
         count={deductionHeads.length}
         loading={componentsLoading}
@@ -142,12 +91,19 @@ export function AllowanceDeductionSection({
         footnote={statutoryNote({ pfActApplicable, esicActApplicable, ptActApplicable })}
       >
         {deductionHeads.map((head, index) => (
-          <HeadRowShell
+          <ComponentRow
             key={head.id}
+            side="deductions"
             index={index}
             label={head.label}
             tone="border-rose-500/20 bg-rose-500/5"
             indexTone="bg-rose-500/15 text-rose-700 dark:text-rose-400"
+            error={errors.deductions?.[index]?.amount?.message}
+            register={register}
+            control={control}
+            pfActApplicable={pfActApplicable}
+            esicActApplicable={esicActApplicable}
+            ptActApplicable={ptActApplicable}
           />
         ))}
       </HeadColumn>
@@ -191,6 +147,101 @@ interface HeadRowShellProps {
  * trailing controls the side needs. Wraps rather than squashing when the column
  * gets narrow.
  */
+/**
+ * One head's row — its value, the ₹/% toggle and the three act markers. The same
+ * row serves allowances and deductions; `side` picks which half of the form the
+ * fields register under, and nothing else differs between the two.
+ *
+ * A marker is disabled while its act is switched off on the designation: a head
+ * can't count towards an act the designation isn't covered by, and the payload
+ * drops it either way.
+ */
+function ComponentRow({
+  side,
+  index,
+  label,
+  tone,
+  indexTone,
+  error,
+  register,
+  control,
+  pfActApplicable,
+  esicActApplicable,
+  ptActApplicable,
+}: {
+  side: 'allowances' | 'deductions'
+  index: number
+  label: string
+  tone: string
+  indexTone: string
+  error?: string
+} & Pick<
+  AllowanceDeductionSectionProps,
+  'register' | 'control' | 'pfActApplicable' | 'esicActApplicable' | 'ptActApplicable'
+>) {
+  const markers = [
+    {
+      name: 'pfApplicable',
+      label: 'PF',
+      enabled: pfActApplicable,
+      activeTone: 'text-primary',
+    },
+    {
+      name: 'esicApplicable',
+      label: 'ESI',
+      enabled: esicActApplicable,
+      activeTone: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      name: 'ptApplicable',
+      label: 'PT',
+      enabled: ptActApplicable,
+      activeTone: 'text-violet-600 dark:text-violet-400',
+    },
+  ] as const
+
+  return (
+    <HeadRowShell index={index} label={label} tone={tone} indexTone={indexTone} error={error}>
+      {/* Value — the unit button flips the row between percentage and flat amount. */}
+      <Controller
+        control={control}
+        name={`${side}.${index}.valueType`}
+        render={({ field }) => (
+          <div className="flex h-9 shrink-0 items-stretch overflow-hidden rounded-md border border-input bg-background">
+            <ValueTypeButton value={field.value} onChange={field.onChange} />
+            <Input
+              inputMode="decimal"
+              placeholder="0"
+              className="h-full w-20 rounded-none border-0 focus-visible:ring-0"
+              {...register(`${side}.${index}.amount`)}
+            />
+          </div>
+        )}
+      />
+
+      {/* Which statutory wages this head counts towards. */}
+      <div className="flex shrink-0 items-center gap-2.5">
+        {markers.map((marker) => (
+          <Controller
+            key={marker.name}
+            control={control}
+            name={`${side}.${index}.${marker.name}`}
+            render={({ field }) => (
+              <ActMarker
+                label={marker.label}
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={!marker.enabled}
+                activeTone={marker.activeTone}
+              />
+            )}
+          />
+        ))}
+      </div>
+    </HeadRowShell>
+  )
+}
+
 function HeadRowShell({
   index,
   label,

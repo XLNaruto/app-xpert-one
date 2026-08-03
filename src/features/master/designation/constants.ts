@@ -4,17 +4,37 @@ import type { DesignationFormValues, WageStructureRow } from './schemas'
 /** Days a monthly salary is divided by to arrive at the wage per day. */
 export const WAGE_DAYS_PER_MONTH = 26
 
+/**
+ * The `sort` values `/user/designations` accepts — the endpoint orders by the
+ * title or the creation stamp and nothing else. Sorting is server-side, so a
+ * column is sortable only if it appears here: the list gives each of these the
+ * API's field name as its column id and marks the rest unsortable.
+ */
+export const DESIGNATION_SORT = {
+  designationName: 'name',
+  createdAt: 'created_at',
+} as const
+
+/**
+ * Newest designation first — the order the list opens in and reverts to. This is
+ * not the endpoint's own default (name A→Z), so it's always sent.
+ */
+export const DESIGNATION_DEFAULT_SORT = { id: DESIGNATION_SORT.createdAt, desc: true }
+
+/**
+ * The edit screen's tabs, in the order they're shown. The values double as the
+ * screen's `?tab=` search param, so the route can validate against this list and
+ * a refresh comes back to the tab that was open.
+ */
+export const DESIGNATION_FORM_TABS = ['basic', 'wage'] as const
+
+export type DesignationFormTab = (typeof DESIGNATION_FORM_TABS)[number]
+
 /** How the salary is quoted for the designation. */
 export const SALARY_TYPE_OPTIONS: ComboboxOption[] = [
   { label: 'Daily', value: 'Daily' },
   { label: 'Fix (Monthly)', value: 'Fix' },
 ]
-
-/** Display label for a stored salary type — "Fix" doesn't read on its own. */
-export const SALARY_TYPE_LABELS: Record<string, string> = {
-  Daily: 'Daily',
-  Fix: 'Fix (Monthly)',
-}
 
 /** How the month's paid working days are arrived at. */
 export const WORKING_DAY_CALCULATION_OPTIONS: ComboboxOption[] = [
@@ -22,7 +42,10 @@ export const WORKING_DAY_CALCULATION_OPTIONS: ComboboxOption[] = [
   { label: 'As Per Calculation', value: 'As Per Calculation' },
 ]
 
-/** Weekly off day — asked only when working days are calculated. */
+/**
+ * Weekly off day — asked only when working days are calculated. "Rotation" is
+ * one of the API's own answers, for a roster with no fixed off day.
+ */
 export const WEEKLY_OFF_OPTIONS: ComboboxOption[] = [
   'Sunday',
   'Monday',
@@ -31,6 +54,7 @@ export const WEEKLY_OFF_OPTIONS: ComboboxOption[] = [
   'Thursday',
   'Friday',
   'Saturday',
+  'Rotation',
 ].map((d) => ({ label: d, value: d }))
 
 /** How the employee's PF share is worked out. */
@@ -39,11 +63,14 @@ export const PF_DEDUCTION_TYPE_OPTIONS: ComboboxOption[] = [
   { label: 'Percentage', value: 'Percentage' },
 ]
 
-/** What the ESIC contribution is calculated on. */
+/**
+ * What the ESIC contribution is calculated on — the three answers the API's
+ * `esic_deduction_basis` accepts, spelled its way.
+ */
 export const ESIC_DEDUCTION_BASIS_OPTIONS: ComboboxOption[] = [
+  { label: 'Wage Ceiling', value: 'Wage Ceiling' },
   { label: 'Gross Salary', value: 'Gross Salary' },
-  { label: 'Earned Salary', value: 'Earned Salary' },
-  { label: 'Basic Salary', value: 'Basic Salary' },
+  { label: 'As Per Act', value: 'As Per Act' },
 ]
 
 /** Slab-driven or hand-entered — shared by PT and LWF. */
@@ -146,11 +173,8 @@ export const WAGE_OVERTIME_CALCULATION_OPTIONS: ComboboxOption[] = [
 ]
 
 /** What ESIC is deducted on. */
-export const WAGE_ESIC_DEDUCTION_BASIS_OPTIONS: ComboboxOption[] = [
-  { label: 'Wage Ceiling', value: 'Wage Ceiling' },
-  { label: 'Gross Salary', value: 'Gross Salary' },
-  { label: 'As Per ACT', value: 'As Per ACT' },
-]
+export const WAGE_ESIC_DEDUCTION_BASIS_OPTIONS: ComboboxOption[] =
+  ESIC_DEDUCTION_BASIS_OPTIONS
 
 /** Slab-driven or hand-entered, abbreviated to fit the grid's narrow columns. */
 export const WAGE_ACT_TYPE_OPTIONS: ComboboxOption[] = [

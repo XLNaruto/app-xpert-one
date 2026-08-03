@@ -19,6 +19,7 @@ async function mockLogin({ username }: LoginValues): Promise<AuthSession> {
       name: username.charAt(0).toUpperCase() + username.slice(1),
       roleId: null,
       companyId: null,
+      isOwner: true,
     },
     token: 'mock-access-token',
     // An empty refresh token keeps the refresh scheduler and the 401 retry

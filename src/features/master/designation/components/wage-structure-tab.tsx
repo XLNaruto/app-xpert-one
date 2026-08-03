@@ -8,13 +8,14 @@ interface WageStructureTabProps {
 }
 
 /**
- * The wage structure tab — an effective-dated history for the designation. Rows
- * are append-only: each one applies from its month onward until a later row
- * supersedes it, so the saved rows read as an audit trail and a change means
- * drafting a new row rather than editing an old one.
+ * The wage structure tab — an effective-dated history for the designation. Each
+ * saved row applies from its month onward until a later row supersedes it, so a
+ * revision is a new row: the months already paid on the old figures keep them.
+ * A saved row can still be corrected in place, from the pencil on its own row,
+ * for one entered wrong.
  *
  * The tab owns its own form and save, separate from the designation's basic
- * info, because the two are saved independently.
+ * info, because the API saves the two through different endpoints.
  */
 export function WageStructureTab({ designationId }: WageStructureTabProps) {
   const form = useDesignationWageForm(designationId)
@@ -37,7 +38,8 @@ export function WageStructureTab({ designationId }: WageStructureTabProps) {
               </h3>
               <p className="text-xs text-muted-foreground">
                 Each row is an effective date — the wage structure applies from that
-                month onward
+                month onward. Add a row to revise it; use the pencil to correct a
+                saved one.
               </p>
             </div>
           </div>

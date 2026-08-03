@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { DESIGNATION_DEFAULT_SORT } from '../constants'
 import { useDesignations } from '../api/use-designations'
 import { useDeleteDesignation } from '../api/use-designation-mutations'
 import type { Designation } from '../types'
@@ -14,8 +16,16 @@ import type { Designation } from '../types'
  */
 export function useDesignationList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, DESIGNATION_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useDesignations(params)
   const deleteDesignation = useDeleteDesignation()
 
@@ -48,6 +58,10 @@ export function useDesignationList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page already on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

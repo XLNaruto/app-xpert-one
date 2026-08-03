@@ -112,6 +112,29 @@ export const endpoints = {
     DELETE: (id: number) => `/user/departments/${id}`,
   },
   /**
+   * The company's designations — a title plus an effective-dated wage structure
+   * behind it. The two are separate resources on purpose:
+   *
+   * - `LIST` answers titles only (name + audit), so the list screen shows no pay.
+   * - `POST` establishes the title *and* its opening wage structure in one body.
+   * - `PATCH` takes the `name` and nothing else — pay is never edited in place.
+   * - `WAGE_STRUCTURES` is the version history: POST appends one version from a
+   *   `YYYY-MM` month, and `WAGE_STRUCTURE` patches one existing version in
+   *   place (correcting a row rather than superseding it).
+   *
+   * Tenant-scoped: a required `company_id` on reads and in the create body.
+   */
+  DESIGNATIONS: {
+    LIST: '/user/designations',
+    POST: '/user/designations',
+    GET: (id: number) => `/user/designations/${id}`,
+    PATCH: (id: number) => `/user/designations/${id}`,
+    DELETE: (id: number) => `/user/designations/${id}`,
+    WAGE_STRUCTURES: (id: number) => `/user/designations/${id}/wage-structures`,
+    WAGE_STRUCTURE: (id: number, wageStructureId: number) =>
+      `/user/designations/${id}/wage-structures/${wageStructureId}`,
+  },
+  /**
    * The company's leave catalog. Every read is scoped by a required
    * `company_id`, and a new leave type carries the same id in its body.
    */

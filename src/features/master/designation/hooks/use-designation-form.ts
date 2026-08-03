@@ -1,17 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAllowanceDeductions } from '@/features/master/allowance-deduction'
-import { designationSchema, type DesignationFormValues } from '../schemas'
-import { EMPTY_DESIGNATION_FORM } from '../constants'
-import { useDesignation } from '../api/use-designation'
 import {
-  useCreateDesignation,
-  useUpdateDesignation,
-} from '../api/use-designation-mutations'
-import { designationToFormValues } from '../lib/designation-mappers'
+  designationSchema,
+  type DesignationComponentRow,
+  type DesignationFormValues,
+} from '../schemas'
+import { EMPTY_DESIGNATION_FORM } from '../constants'
+import { useCreateDesignation } from '../api/use-designation-mutations'
 import { calculateWagePerDay } from '../lib/designation-calculations'
 
 /** One allowance / deduction head as listed on the form. */
@@ -21,27 +20,20 @@ export interface HeadRow {
 }
 
 /**
- * The two tabs of the edit screen. Creating a designation has no wage history to
- * show yet, so the tabs only appear once the record exists.
+ * Owns the create form: the allowance and deduction head rows, the derived wage
+ * per day and the save. The page consumes this and only lays out fields.
+ *
+ * Create is the one call that takes the whole screen — `POST /user/designations`
+ * establishes the title *and* its opening wage structure in one body. After that
+ * the two come apart: the title is renamed through the Basic Info tab (see
+ * `useDesignationBasicInfoForm`) and pay is revised version by version on the
+ * Wage Structure tab, so nothing here is reused for editing.
  */
-export type DesignationFormTab = 'basic' | 'wage'
-
-/**
- * Owns the designation form for both create and edit: the record load, the
- * allowance and deduction head rows, the derived wage per day and the save. The
- * page consumes this and only lays out fields.
- */
-export function useDesignationForm(id?: number) {
-  const isEdit = id !== undefined
+export function useDesignationForm() {
   const navigate = useNavigate()
 
-  const detail = useDesignation(id ?? Number.NaN)
   const createDesignation = useCreateDesignation()
-  const updateDesignation = useUpdateDesignation(id ?? Number.NaN)
-
   const components = useAllowanceDeductions()
-
-  const [tab, setTab] = useState<DesignationFormTab>('basic')
 
   const {
     register,
@@ -60,38 +52,31 @@ export function useDesignationForm(id?: number) {
    * The row order here is the order the form fields are registered in, so the
    * seeding effect below and the rendered rows stay index-aligned.
    */
-  const allowanceHeads = useMemo<HeadRow[]>(() => headRows(components.data?.items, 'ALLOWANCE'), [components.data])
-  const deductionHeads = useMemo<HeadRow[]>(() => headRows(components.data?.items, 'DEDUCTION'), [components.data])
+  const allowanceHeads = useMemo<HeadRow[]>(
+    () => headRows(components.data?.items, 'ALLOWANCE'),
+    [components.data],
+  )
+  const deductionHeads = useMemo<HeadRow[]>(
+    () => headRows(components.data?.items, 'DEDUCTION'),
+    [components.data],
+  )
 
-  /*
-   * Seed the form once the heads (and, in edit mode, the record) have loaded —
-   * one row per head, carrying whatever the record already had for it.
-   */
+  /* Seed one blank row per head, once the master has loaded. */
   useEffect(() => {
     if (!components.data) return
-    if (isEdit && !detail.data) return
-    const saved = detail.data
-
     reset({
-      ...(saved ? designationToFormValues(saved) : EMPTY_DESIGNATION_FORM),
-      allowances: allowanceHeads.map((head) => {
-        const existing = saved?.allowances.find((a) => a.componentId === head.id)
-        return {
-          componentId: String(head.id),
-          valueType: existing?.valueType ?? 'Percentage',
-          amount: existing?.amount != null ? String(existing.amount) : '',
-          pfApplicable: existing?.pfApplicable ?? false,
-          esicApplicable: existing?.esicApplicable ?? false,
-          ptApplicable: existing?.ptApplicable ?? false,
-        }
-      }),
-      deductions: deductionHeads.map((head) => ({ componentId: String(head.id) })),
+      ...EMPTY_DESIGNATION_FORM,
+      allowances: allowanceHeads.map(blankComponentRow),
+      deductions: deductionHeads.map(blankComponentRow),
     })
-  }, [components.data, detail.data, isEdit, allowanceHeads, deductionHeads, reset])
+  }, [components.data, allowanceHeads, deductionHeads, reset])
 
   // Watched values that other fields read: derived wage, and which act settings show.
   const basicPay = useWatch({ control, name: 'basicPay' })
-  const workingDayCalculationType = useWatch({ control, name: 'workingDayCalculationType' })
+  const workingDayCalculationType = useWatch({
+    control,
+    name: 'workingDayCalculationType',
+  })
   const pfActApplicable = useWatch({ control, name: 'pfActApplicable' })
   const pfDeductionType = useWatch({ control, name: 'pfDeductionType' })
   const esicActApplicable = useWatch({ control, name: 'esicActApplicable' })
@@ -121,17 +106,14 @@ export function useDesignationForm(id?: number) {
   const goToList = () => navigate({ to: '/master/designation' })
 
   const onSubmit = handleSubmit((values) => {
-    const mutation = isEdit ? updateDesignation : createDesignation
-    mutation.mutate(values, {
+    createDesignation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Designation updated' : 'Designation created')
+        toast.success('Designation created')
         goToList()
       },
       onError: (err) =>
         toast.error(
-          err instanceof Error
-            ? err.message
-            : `Failed to ${isEdit ? 'update' : 'create'} designation`,
+          err instanceof Error ? err.message : 'Failed to create designation',
         ),
     })
   })
@@ -140,9 +122,6 @@ export function useDesignationForm(id?: number) {
     register,
     control,
     errors,
-
-    tab,
-    setTab,
 
     allowanceHeads,
     deductionHeads,
@@ -163,12 +142,24 @@ export function useDesignationForm(id?: number) {
     overtimeCalculationType,
 
     onSubmit,
-    isEdit,
-    isPending: isEdit ? updateDesignation.isPending : createDesignation.isPending,
-    isLoading: isEdit && detail.isLoading,
-    isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
-    loadError: detail.error,
+    isPending: createDesignation.isPending,
     goToList,
+  }
+}
+
+/**
+ * A blank row for one head. Both sides take the same shape — the API carries
+ * allowances and deductions in one `salary_components` array, each entry with a
+ * value, a ₹/% type and the three act markers.
+ */
+function blankComponentRow(head: HeadRow): DesignationComponentRow {
+  return {
+    componentId: String(head.id),
+    valueType: 'Percentage',
+    amount: '',
+    pfApplicable: false,
+    esicApplicable: false,
+    ptApplicable: false,
   }
 }
 

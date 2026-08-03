@@ -5,7 +5,7 @@ export { useDesignation } from './api/use-designation'
 export { useDesignationWageStructures } from './api/use-designation-wage-structures'
 export type {
   Designation,
-  DesignationAllowance,
+  DesignationSalaryComponent,
   DesignationWageStructure,
 } from './types'
 export type { DesignationFormValues, WageStructureRow } from './schemas'

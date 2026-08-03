@@ -5,7 +5,8 @@ import { createIdbSessionStorage } from '@/lib/idb-storage'
 /**
  * The signed-in user, as returned by `POST /user/auth/login` (camelCased).
  * `roleId` / `companyId` are null until a role is assigned / a company is
- * selected for the session.
+ * selected for the session — an owner logs in with no company at all and picks
+ * one, so `isOwner: true` normally means `companyId: null` on the first login.
  */
 export interface AuthUser {
   id: number
@@ -15,6 +16,7 @@ export interface AuthUser {
   name: string
   roleId: number | null
   companyId: number | null
+  isOwner: boolean
   phone?: string
   avatarUrl?: string
 }

@@ -5,26 +5,20 @@ import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { formatCurrency } from '@/lib/utils'
-import { SALARY_TYPE_LABELS } from '../constants'
+import { DESIGNATION_SORT } from '../constants'
 import { useDesignationList } from '../hooks/use-designation-list'
 import type { Designation } from '../types'
 
-/** The acts a designation is covered by, as list badges. */
-function applicableActs(designation: Designation): string[] {
-  return [
-    designation.pfActApplicable && 'PF',
-    designation.esicActApplicable && 'ESIC',
-    designation.ptActApplicable && 'PT',
-    designation.lwfActApplicable && 'LWF',
-    designation.overtimeApplicable && 'OT',
-  ].filter(Boolean) as string[]
-}
-
-/** Designation master — list with add/edit/delete. */
+/**
+ * Designation master — list with add/edit/delete.
+ *
+ * The titles and nothing else: `GET /user/designations` answers a name and its
+ * audit trail, because a designation's pay isn't a property of the record — it's
+ * an effective-dated wage structure behind it, which the edit screen's Wage
+ * Structure tab reads version by version.
+ */
 export function DesignationListPage() {
   const {
     rows,
@@ -34,6 +28,8 @@ export function DesignationListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -67,6 +63,9 @@ export function DesignationListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: DESIGNATION_SORT.designationName,
         accessorKey: 'designationName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Designation Name" />
@@ -77,61 +76,8 @@ export function DesignationListPage() {
           </span>
         ),
       },
-      {
-        accessorKey: 'salaryType',
-        header: 'Salary Type',
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => {
-          const salaryType = row.original.salaryType
-          if (!salaryType) return '—'
-          return SALARY_TYPE_LABELS[salaryType] ?? salaryType
-        },
-      },
-      {
-        accessorKey: 'basicPay',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Basic Pay" />
-        ),
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => formatCurrency(row.original.basicPay),
-      },
-      {
-        id: 'workingDays',
-        header: 'Working Days',
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) =>
-          row.original.workingDayCalculationType === 'Fixed'
-            ? (row.original.workingDays ?? '—')
-            : `Calculated · ${row.original.weeklyOff ?? '—'} off`,
-      },
-      {
-        id: 'acts',
-        header: 'Applicable Acts',
-        cell: ({ row }) => {
-          const acts = applicableActs(row.original)
-          if (acts.length === 0)
-            return <span className="text-sm text-muted-foreground">None</span>
-          return (
-            <span className="flex flex-wrap gap-1">
-              {acts.map((act) => (
-                <Badge key={act}>{act}</Badge>
-              ))}
-            </span>
-          )
-        },
-      },
-      {
-        id: 'heads',
-        header: 'Heads',
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {row.original.allowances.length} allowance ·{' '}
-            {row.original.deductions.length} deduction
-          </span>
-        ),
-      },
-      ...auditColumns<Designation>(),
+      // The endpoint sorts by the title or the creation stamp, nothing else.
+      ...auditColumns<Designation>({ createdAt: DESIGNATION_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -169,6 +115,9 @@ export function DesignationListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Briefcase}

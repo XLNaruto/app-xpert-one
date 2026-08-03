@@ -1,6 +1,210 @@
-import type { DesignationFormValues } from '../schemas'
-import type { Designation } from '../types'
-import { toOptionalAmount } from './designation-calculations'
+import type {
+  DesignationComponentRow,
+  DesignationDetailResponse,
+  DesignationFormValues,
+  DesignationPayload,
+  DesignationResponse,
+  DesignationUpdatePayload,
+  SalaryComponentPayload,
+  WageStructureResponse,
+} from '../schemas'
+import type { Designation, DesignationSalaryComponent } from '../types'
+import {
+  deriveDesignationOvertimeRate,
+  toOptionalAmount,
+} from './designation-calculations'
+import {
+  fromApiActAmountType,
+  fromApiEsicBasis,
+  fromApiSalaryType,
+  fromApiWorkingDayCalculationType,
+  toApiActAmountType,
+  toApiEsicBasis,
+  toApiSalaryType,
+  toApiWeeklyOff,
+  toApiWorkingDayCalculationType,
+  toValueType,
+} from './api-enums'
+
+/** Audit trail off a response — absent on the shapes that don't carry one. */
+function auditOf(response: {
+  created_at?: string
+  created_by_name?: string | null
+  updated_at?: string | null
+  updated_by_name?: string | null
+}) {
+  return {
+    createdBy: response.created_by_name ?? '',
+    createdAt: response.created_at ?? '',
+    updatedBy: response.updated_by_name ?? null,
+    updatedAt: response.updated_at ?? null,
+  }
+}
+
+/** Every pay field of a designation unset — a title with no wage structure. */
+const NO_WAGE_STRUCTURE = {
+  wageStructureId: null,
+  salaryType: null,
+  basicPay: null,
+  workingDayCalculationType: null,
+  workingDays: null,
+  weeklyOff: null,
+  extraDayAmountPerDay: null,
+
+  pfActApplicable: false,
+  pfDeductionType: null,
+  pfDeductionPercentage: null,
+  pfDeductionAmount: null,
+  employeePfContributionOnWageLimit: false,
+  employerPfContributionOnWageLimit: false,
+
+  esicActApplicable: false,
+  esicDeductionBasis: null,
+
+  ptActApplicable: false,
+  ptActType: null,
+  ptAmount: null,
+
+  lwfActApplicable: false,
+  lwfActType: null,
+  lwfAmount: null,
+
+  overtimeApplicable: false,
+  overtimeCalculationType: null,
+  overtimeRatePerHour: null,
+
+  allowances: [],
+  deductions: [],
+} as const satisfies Partial<Designation>
+
+/**
+ * A list row → the UI designation. `GET /user/designations` answers titles only,
+ * so every pay field reads unset — the list screen shows the name and the audit
+ * trail for that reason, and the salary configuration comes from the detail read.
+ */
+export function toDesignation(response: DesignationResponse): Designation {
+  return {
+    id: response.id,
+    companyId: response.company_id,
+    designationName: response.name,
+    ...NO_WAGE_STRUCTURE,
+    ...auditOf(response),
+  }
+}
+
+/**
+ * The detail read → the UI designation: the title flattened together with the
+ * wage structure **in force** and the heads that version was saved with. A
+ * designation never configured comes back with no structure, which reads exactly
+ * like a fresh form.
+ */
+export function toDesignationDetail(response: DesignationDetailResponse): Designation {
+  const base: Designation = {
+    id: response.id,
+    companyId: response.company_id,
+    designationName: response.name,
+    ...NO_WAGE_STRUCTURE,
+    ...auditOf(response),
+  }
+
+  const wage = response.wage_structure
+  if (!wage) return base
+
+  const { allowances, deductions } = splitHeads(response.salary_components)
+
+  return {
+    ...base,
+    wageStructureId: wage.id,
+    ...wageFieldsOf(wage),
+    allowances,
+    deductions,
+  }
+}
+
+/**
+ * The pay fields of one wage structure version, as the designation record holds
+ * them.
+ */
+function wageFieldsOf(wage: WageStructureResponse) {
+  const pfType = wage.pf_deduction_type ? toValueType(wage.pf_deduction_type) : null
+
+  return {
+    salaryType: fromApiSalaryType(wage.salary_type),
+    basicPay: wage.basic_pay,
+    workingDayCalculationType: fromApiWorkingDayCalculationType(
+      wage.working_day_calculation_type,
+    ),
+    workingDays: wage.working_days,
+    weeklyOff: wage.weekly_off,
+    extraDayAmountPerDay: wage.extra_day_amount_per_day,
+
+    pfActApplicable: wage.is_pf_act_applicable ?? false,
+    pfDeductionType: pfType,
+    /*
+     * The API keeps one `pf_deduction_amount` and reads it per its type; the
+     * record splits the two, so the stored figure lands on the side its type
+     * calls for and the other stays empty.
+     */
+    pfDeductionPercentage: pfType === 'Percentage' ? wage.pf_deduction_amount : null,
+    pfDeductionAmount: pfType === 'Fixed' ? wage.pf_deduction_amount : null,
+    employeePfContributionOnWageLimit:
+      wage.is_employee_pf_contribution_on_wage_limit ?? false,
+    employerPfContributionOnWageLimit:
+      wage.is_employer_pf_contribution_on_wage_limit ?? false,
+
+    esicActApplicable: wage.is_esic_act_applicable ?? false,
+    esicDeductionBasis: fromApiEsicBasis(wage.esic_deduction_basis),
+
+    ptActApplicable: wage.is_pt_act_applicable ?? false,
+    ptActType: fromApiActAmountType(wage.pt_act_type),
+    ptAmount: wage.pt_amount,
+
+    lwfActApplicable: wage.is_lwf_act_applicable ?? false,
+    lwfActType: fromApiActAmountType(wage.lwf_act_type),
+    lwfAmount: wage.lwf_amount,
+
+    overtimeApplicable: wage.is_overtime_applicable,
+    /*
+     * The API stores the hourly rate but not how it was arrived at, so a stored
+     * rate reads back as hand-entered — which is what it now is, whatever
+     * derived it in the first place.
+     */
+    overtimeCalculationType:
+      wage.overtime_rate_per_hour === null ? null : ('Manual' as const),
+    overtimeRatePerHour: wage.overtime_rate_per_hour,
+  }
+}
+
+/**
+ * Split the one `salary_components` array into the two sides the screens hold
+ * separately. The side comes from each head's `component_type` — the request
+ * never says which, and the response echoes the catalog's own answer.
+ *
+ * Both sides map identically: a deduction carries a value and act markers just as
+ * an allowance does.
+ */
+function splitHeads(components: DesignationDetailResponse['salary_components']): {
+  allowances: DesignationSalaryComponent[]
+  deductions: DesignationSalaryComponent[]
+} {
+  const allowances: DesignationSalaryComponent[] = []
+  const deductions: DesignationSalaryComponent[] = []
+
+  for (const component of components) {
+    const mapped: DesignationSalaryComponent = {
+      componentId: component.pay_component_id,
+      valueType: toValueType(component.amount_type),
+      amount: component.amount,
+      pfApplicable: component.pf_applicable ?? false,
+      esicApplicable: component.esic_applicable ?? false,
+      ptApplicable: component.pt_applicable ?? false,
+    }
+    if (component.component_type?.toUpperCase() === 'DEDUCTION') deductions.push(mapped)
+    else allowances.push(mapped)
+  }
+
+  return { allowances, deductions }
+}
 
 /** Hydrate the edit form from a stored designation. */
 export function designationToFormValues(
@@ -14,7 +218,7 @@ export function designationToFormValues(
     designationName: designation.designationName,
 
     salaryType: designation.salaryType ?? '',
-    basicPay: String(designation.basicPay),
+    basicPay: optional(designation.basicPay),
     workingDayCalculationType: chosen(designation.workingDayCalculationType),
     workingDays: optional(designation.workingDays),
     weeklyOff: designation.weeklyOff ?? '',
@@ -46,101 +250,127 @@ export function designationToFormValues(
     overtimeCalculationType: chosen(designation.overtimeCalculationType),
     overtimeRatePerHour: optional(designation.overtimeRatePerHour),
 
-    allowances: designation.allowances.map((allowance) => ({
-      componentId: String(allowance.componentId),
-      valueType: allowance.valueType,
-      amount: optional(allowance.amount),
-      pfApplicable: allowance.pfApplicable,
-      esicApplicable: allowance.esicApplicable,
-      ptApplicable: allowance.ptApplicable,
-    })),
-    deductions: designation.deductions.map((componentId) => ({
-      componentId: String(componentId),
-    })),
+    allowances: designation.allowances.map(toComponentRow),
+    deductions: designation.deductions.map(toComponentRow),
+  }
+}
+
+/** One stored head → its form row. The same shape on either side. */
+function toComponentRow(component: DesignationSalaryComponent) {
+  return {
+    componentId: String(component.componentId),
+    valueType: component.valueType,
+    amount: component.amount === null ? '' : String(component.amount),
+    pfApplicable: component.pfApplicable,
+    esicApplicable: component.esicApplicable,
+    ptApplicable: component.ptApplicable,
   }
 }
 
 /**
- * Map validated form values onto the stored record. Settings behind a switched
- * off act are dropped rather than kept as stale values, so a designation never
- * carries a PF percentage it doesn't use.
+ * Validated form values → the `POST /user/designations` body, which establishes
+ * the title and its opening wage structure together. The create call adds
+ * `company_id` on top.
+ *
+ * Settings behind a switched-off act are sent as `null` rather than as stale
+ * values, so a designation never carries a PF percentage it doesn't use.
  */
-export function formValuesToDesignation(values: DesignationFormValues) {
-  // Each mode owns exactly one field; with no mode chosen, neither is stored.
+export function designationToPayload(
+  values: DesignationFormValues,
+): Omit<DesignationPayload, 'company_id'> {
+  // Each mode owns exactly one field; with no mode chosen, neither is sent.
   const isFixedDays = values.workingDayCalculationType === 'Fixed'
   const isCalculatedDays = values.workingDayCalculationType === 'As Per Calculation'
 
   return {
-    designationName: values.designationName.trim(),
+    name: values.designationName.trim(),
 
-    salaryType: values.salaryType || null,
-    basicPay: Number(values.basicPay),
-    workingDayCalculationType: values.workingDayCalculationType || null,
-    workingDays: isFixedDays ? toOptionalAmount(values.workingDays) : null,
-    weeklyOff: isCalculatedDays ? values.weeklyOff || null : null,
-    extraDayAmountPerDay: toOptionalAmount(values.extraDayAmountPerDay),
+    salary_type: toApiSalaryType(values.salaryType),
+    basic_pay: toOptionalAmount(values.basicPay),
+    working_day_calculation_type: toApiWorkingDayCalculationType(
+      values.workingDayCalculationType,
+    ),
+    working_days: isFixedDays ? toOptionalAmount(values.workingDays) : null,
+    weekly_off: isCalculatedDays ? toApiWeeklyOff(values.weeklyOff) : null,
+    extra_day_amount_per_day: toOptionalAmount(values.extraDayAmountPerDay),
 
-    pfActApplicable: values.pfActApplicable,
-    pfDeductionType: values.pfActApplicable ? values.pfDeductionType || null : null,
-    // The single form input lands on the side its deduction type calls for.
-    pfDeductionPercentage:
-      values.pfActApplicable && values.pfDeductionType === 'Percentage'
-        ? toOptionalAmount(values.pfDeductionValue)
-        : null,
-    pfDeductionAmount:
-      values.pfActApplicable && values.pfDeductionType === 'Fixed'
-        ? toOptionalAmount(values.pfDeductionValue)
-        : null,
-    employeePfContributionOnWageLimit:
+    is_pf_act_applicable: values.pfActApplicable,
+    pf_deduction_type: values.pfActApplicable
+      ? toValueType(values.pfDeductionType)
+      : null,
+    pf_deduction_amount: values.pfActApplicable
+      ? toOptionalAmount(values.pfDeductionValue)
+      : null,
+    is_employee_pf_contribution_on_wage_limit:
       values.pfActApplicable && values.employeePfContributionOnWageLimit,
-    employerPfContributionOnWageLimit:
+    is_employer_pf_contribution_on_wage_limit:
       values.pfActApplicable && values.employerPfContributionOnWageLimit,
 
-    esicActApplicable: values.esicActApplicable,
-    esicDeductionBasis: values.esicActApplicable
-      ? values.esicDeductionBasis || null
+    is_esic_act_applicable: values.esicActApplicable,
+    esic_deduction_basis: values.esicActApplicable
+      ? toApiEsicBasis(values.esicDeductionBasis)
       : null,
 
-    ptActApplicable: values.ptActApplicable,
-    ptActType: values.ptActApplicable ? values.ptActType || null : null,
-    ptAmount:
+    is_pt_act_applicable: values.ptActApplicable,
+    pt_act_type: values.ptActApplicable ? toApiActAmountType(values.ptActType) : null,
+    pt_amount:
       values.ptActApplicable && values.ptActType === 'Manual'
         ? toOptionalAmount(values.ptAmount)
         : null,
 
-    lwfActApplicable: values.lwfActApplicable,
-    lwfActType: values.lwfActApplicable ? values.lwfActType || null : null,
-    lwfAmount:
+    is_lwf_act_applicable: values.lwfActApplicable,
+    lwf_act_type: values.lwfActApplicable ? toApiActAmountType(values.lwfActType) : null,
+    lwf_amount:
       values.lwfActApplicable && values.lwfActType === 'Manual'
         ? toOptionalAmount(values.lwfAmount)
         : null,
 
-    overtimeApplicable: values.overtimeApplicable,
-    overtimeCalculationType: values.overtimeApplicable
-      ? values.overtimeCalculationType || null
-      : null,
-    overtimeRatePerHour:
-      values.overtimeApplicable && values.overtimeCalculationType === 'Manual'
-        ? toOptionalAmount(values.overtimeRatePerHour)
-        : null,
-
+    is_overtime_applicable: values.overtimeApplicable,
     /*
-     * Every head in the master is on the form, but only the ones given a value
-     * actually apply — the rest are dropped rather than stored as empty rows.
-     * An allowance can only count towards an act the designation is covered by.
+     * The API takes the hourly rate alone — how it was arrived at is the form's
+     * business. On "As Per Calculation" the rate is derived here, so the stored
+     * structure is complete on its own.
      */
-    allowances: values.allowances
-      .filter((row) => row.componentId !== '' && row.amount !== '')
-      .map((row) => ({
-        componentId: Number(row.componentId),
-        valueType: row.valueType,
-        amount: toOptionalAmount(row.amount),
-        pfApplicable: values.pfActApplicable && row.pfApplicable,
-        esicApplicable: values.esicActApplicable && row.esicApplicable,
-        ptApplicable: values.ptActApplicable && row.ptApplicable,
-      })),
-    deductions: values.deductions
-      .filter((row) => row.componentId !== '')
-      .map((row) => Number(row.componentId)),
+    overtime_rate_per_hour: deriveDesignationOvertimeRate(values),
+
+    salary_components: headsToPayload(values),
   }
+}
+
+/**
+ * Both sides of the form as the API's single `salary_components` array — the side
+ * comes from each head's own `type` in the catalog, so the request never says
+ * which and the two are mapped the same way. Every head carries its value, its
+ * ₹/% type and the three act markers.
+ *
+ * Only the heads given a value actually apply, so the blank ones are left out
+ * rather than sent as zeros. A head can only count towards an act the designation
+ * is covered by.
+ */
+function headsToPayload(values: DesignationFormValues): SalaryComponentPayload[] {
+  const toPayload = (row: DesignationComponentRow): SalaryComponentPayload => ({
+    pay_component_id: Number(row.componentId),
+    amount_type: row.valueType,
+    amount: toOptionalAmount(row.amount) ?? 0,
+    pf_applicable: values.pfActApplicable && row.pfApplicable,
+    esic_applicable: values.esicActApplicable && row.esicApplicable,
+    pt_applicable: values.ptActApplicable && row.ptApplicable,
+  })
+
+  const applies = (row: DesignationComponentRow) =>
+    row.componentId !== '' && row.amount !== ''
+
+  return [
+    ...values.allowances.filter(applies).map(toPayload),
+    ...values.deductions.filter(applies).map(toPayload),
+  ]
+}
+
+/**
+ * The Basic Info tab's body. `PATCH /user/designations/:id` owns the title and
+ * nothing else — every pay setting is effective-dated and saved through the
+ * wage-structure endpoints instead.
+ */
+export function designationNameToPayload(name: string): DesignationUpdatePayload {
+  return { name: name.trim() }
 }

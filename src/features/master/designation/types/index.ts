@@ -15,9 +15,13 @@ export type OvertimeCalculationType = 'Manual' | 'As Per Calculation'
 /** Whether an allowance is a share of basic pay or a flat rupee amount. */
 export type AllowanceValueType = 'Percentage' | 'Fixed'
 
-/** One allowance head configured on a designation. */
-export interface DesignationAllowance {
-  /** Id of the allowance record in the allowance / deduction master. */
+/**
+ * One head configured on a designation — an allowance or a deduction. Both sides
+ * take the same shape: the API carries them in one `salary_components` array, and
+ * a head's own `type` in the pay-component master decides which side it's on.
+ */
+export interface DesignationSalaryComponent {
+  /** Id of the head's record in the allowance / deduction master. */
   componentId: number
   valueType: AllowanceValueType
   /** Percent of basic pay, or a flat amount — read per `valueType`. */
@@ -29,19 +33,31 @@ export interface DesignationAllowance {
 
 /**
  * A designation master record as consumed by the UI. Designations are held at
- * company level — they are not tied to a department. Only the designation name
- * and basic pay are mandatory; every other setting is `null` when not recorded,
- * or ignored while its act toggle is off.
+ * company level — they are not tied to a department.
+ *
+ * The API splits the record in two: the title, and an effective-dated wage
+ * structure behind it. This shape is the title flattened together with the
+ * version **in force**, which is what the detail read answers. A list row
+ * carries the title alone, so every pay field on it reads `null` — the list
+ * screen shows no pay for that reason.
  */
 export interface Designation extends AuditFields {
   id: number
+  /** The tenant the record belongs to — the company the session has active. */
+  companyId: number
 
   // Designation detail
   designationName: string
 
+  /**
+   * Id of the wage structure version the pay fields below came from — the one in
+   * force. `null` on a list row, and on a designation never configured.
+   */
+  wageStructureId: number | null
+
   // Salary configuration
   salaryType: string | null
-  basicPay: number
+  basicPay: number | null
   workingDayCalculationType: WorkingDayCalculationType | null
   /** Set only when `workingDayCalculationType` is "Fixed". */
   workingDays: number | null
@@ -79,9 +95,8 @@ export interface Designation extends AuditFields {
   overtimeRatePerHour: number | null
 
   // Allowance / deduction heads
-  allowances: DesignationAllowance[]
-  /** Ids of the deduction records in the allowance / deduction master. */
-  deductions: number[]
+  allowances: DesignationSalaryComponent[]
+  deductions: DesignationSalaryComponent[]
 }
 
 /* ── Wage structure history ─────────────────────────────────────────────── */
@@ -92,8 +107,8 @@ export type WageSalaryType = 'Daily' | 'Monthly'
 /** Whether the overtime rate is derived from the wage or entered by hand. */
 export type WageOvertimeCalculationType = 'Auto' | 'Manual'
 
-/** What the ESIC contribution is worked out on. */
-export type WageEsicDeductionBasis = 'Wage Ceiling' | 'Gross Salary' | 'As Per ACT'
+/** What the ESIC contribution is worked out on — the API's own three answers. */
+export type WageEsicDeductionBasis = 'Wage Ceiling' | 'Gross Salary' | 'As Per Act'
 
 /** One allowance head as valued in a wage structure row. */
 export interface WageAllowance {
@@ -123,7 +138,10 @@ export interface WageDeduction {
 export interface DesignationWageStructure extends AuditFields {
   id: number
   designationId: number
-  /** Month the structure takes effect from, as `yyyy-MM`. */
+  /**
+   * Month the structure takes effect from, as `yyyy-MM` — the month half of the
+   * API's `applicable_date`.
+   */
   effectiveFrom: string
 
   // Working days & salary

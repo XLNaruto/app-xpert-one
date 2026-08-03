@@ -17,7 +17,13 @@ export const authUserResponseSchema = z.object({
   username: z.string(),
   name: z.string(),
   role_id: z.number().nullable(),
-  company_id: z.number().nullable(),
+  /**
+   * The tenant the token was minted for. The API only sends it for non-owner
+   * accounts (`is_owner: false`); an owner signs in without a company and picks
+   * one, so a missing key means the same thing as "none selected yet".
+   */
+  company_id: z.number().nullable().optional().default(null),
+  is_owner: z.boolean().optional().default(false),
 })
 
 /** Shared by `POST /user/auth/login` and `POST /user/auth/refresh`. */

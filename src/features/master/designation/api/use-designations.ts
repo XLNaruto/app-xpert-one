@@ -4,7 +4,8 @@ import { ALL_ROWS, type PageParams } from '@/lib/pagination'
 import { fetchDesignations } from './designation-api'
 
 /**
- * GET /designations — the designation master list.
+ * GET /user/designations — the active company's designations, newest first.
+ * Titles only: a list row carries no pay, which comes from the detail read.
  *
  * One limit/offset page — pass the params from `usePagination()`. Called with
  * no argument it returns the whole master, for dropdowns and history panels.
