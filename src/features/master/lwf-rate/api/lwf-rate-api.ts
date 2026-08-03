@@ -3,12 +3,9 @@ import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { ensureStates } from '@/features/master/state'
+import { LWF_RATE_DEFAULT_SORT } from '../constants'
 import { lwfRateResponseSchema, lwfRatesResponseSchema } from '../schemas'
-import {
-  lwfRateToPayload,
-  sortByEffectiveDateDesc,
-  toLwfRate,
-} from '../lib/lwf-rate-mappers'
+import { lwfRateToPayload, toLwfRate } from '../lib/lwf-rate-mappers'
 import type { LwfRateFormValues, LwfRatePayload } from '../schemas'
 import type { LwfRate } from '../types'
 
@@ -44,27 +41,37 @@ async function stateNamesById(): Promise<Map<number, string>> {
 }
 
 /**
- * GET /user/lwf-rates — one page of rates, newest effective date first.
+ * GET /user/lwf-rates — one page of rates in the requested order (newest
+ * effective date first unless the screen says otherwise).
  *
  * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a
- * request at 100, so that case walks the pages until `total` is covered. The
- * endpoint has no search parameter, so `params.search` is ignored.
+ * request at 100, so that case walks the pages until `total` is covered.
+ *
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
  */
 export async function fetchLwfRates(
   params: PageParams = ALL_ROWS,
 ): Promise<Paginated<LwfRate>> {
   try {
     const names = await stateNamesById()
+    const query = {
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+      sort: params.sort ?? LWF_RATE_DEFAULT_SORT.id,
+      sort_by: params.sortBy ?? (LWF_RATE_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+    }
 
     if (params.limit > 0) {
       const raw = await http.get<unknown>(endpoints.LWF_RATES.LIST, {
-        params: { limit: Math.min(params.limit, MAX_LIMIT), offset: params.offset },
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
       })
       const { items, total } = lwfRatesResponseSchema.parse(raw)
       return {
-        items: sortByEffectiveDateDesc(
-          items.map((item) => toLwfRate(item, names.get(item.state_id ?? 0))),
-        ),
+        items: items.map((item) => toLwfRate(item, names.get(item.state_id ?? 0))),
         total,
       }
     }
@@ -74,7 +81,11 @@ export async function fetchLwfRates(
 
     for (let page = 0; page < MAX_PAGES; page += 1) {
       const raw = await http.get<unknown>(endpoints.LWF_RATES.LIST, {
-        params: { limit: MAX_LIMIT, offset: params.offset + page * MAX_LIMIT },
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
       })
       const parsed = lwfRatesResponseSchema.parse(raw)
       total = parsed.total
@@ -84,7 +95,7 @@ export async function fetchLwfRates(
       if (parsed.items.length === 0 || rates.length >= total) break
     }
 
-    return { items: sortByEffectiveDateDesc(rates), total }
+    return { items: rates, total }
   } catch (error) {
     throw toApiError(error, "Couldn't load LWF rates.")
   }

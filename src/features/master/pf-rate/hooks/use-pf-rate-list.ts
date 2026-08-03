@@ -4,6 +4,8 @@ import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { PF_RATE_DEFAULT_SORT } from '../constants'
 import { usePfRates } from '../api/use-pf-rates'
 import { useDeletePfRate } from '../api/use-pf-rate-mutations'
 import type { PfRate } from '../types'
@@ -15,7 +17,16 @@ import type { PfRate } from '../types'
  */
 export function usePfRateList() {
   const navigate = useNavigate()
-  const { params, limit, offset, onPaginationChange } = usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, PF_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = usePfRates(params)
   const deletePfRate = useDeletePfRate()
 
@@ -50,6 +61,12 @@ export function usePfRateList() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

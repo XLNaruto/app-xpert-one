@@ -3,8 +3,9 @@ import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { ensureStates } from '@/features/master/state'
+import { PT_RATE_DEFAULT_SORT } from '../constants'
 import { ptRateResponseSchema, ptRatesResponseSchema } from '../schemas'
-import { ptRateToPayload, sortByEffectiveDateDesc, toPtRate } from '../lib/pt-rate-mappers'
+import { ptRateToPayload, toPtRate } from '../lib/pt-rate-mappers'
 import type { PtRateFormValues, PtRatePayload } from '../schemas'
 import type { PtRate } from '../types'
 
@@ -44,33 +45,38 @@ async function stateNamesById(): Promise<Map<number, string>> {
 }
 
 /**
- * GET /user/pt-rates — one page of rates with their slabs, newest effective
- * date first.
+ * GET /user/pt-rates — one page of rates with their slabs, in the requested
+ * order (newest effective date first unless the screen says otherwise).
  *
  * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a request
  * at 100, so that case walks the pages until `total` is covered. `search` is
  * matched server-side against the detail and the effective date.
+ *
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
  */
 export async function fetchPtRates(
   params: PageParams = ALL_ROWS,
 ): Promise<Paginated<PtRate>> {
   try {
     const names = await stateNamesById()
-    const search = params.search?.trim() ? { search: params.search.trim() } : {}
+    const query = {
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+      sort: params.sort ?? PT_RATE_DEFAULT_SORT.id,
+      sort_by: params.sortBy ?? (PT_RATE_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+    }
 
     if (params.limit > 0) {
       const raw = await http.get<unknown>(endpoints.PT_RATES.LIST, {
         params: {
           limit: Math.min(params.limit, MAX_LIMIT),
           offset: params.offset,
-          ...search,
+          ...query,
         },
       })
       const { items, total } = ptRatesResponseSchema.parse(raw)
       return {
-        items: sortByEffectiveDateDesc(
-          items.map((item) => toPtRate(item, names.get(item.state_id ?? 0))),
-        ),
+        items: items.map((item) => toPtRate(item, names.get(item.state_id ?? 0))),
         total,
       }
     }
@@ -83,7 +89,7 @@ export async function fetchPtRates(
         params: {
           limit: MAX_LIMIT,
           offset: params.offset + page * MAX_LIMIT,
-          ...search,
+          ...query,
         },
       })
       const parsed = ptRatesResponseSchema.parse(raw)
@@ -94,7 +100,7 @@ export async function fetchPtRates(
       if (parsed.items.length === 0 || rates.length >= total) break
     }
 
-    return { items: sortByEffectiveDateDesc(rates), total }
+    return { items: rates, total }
   } catch (error) {
     throw toApiError(error, "Couldn't load PT rates.")
   }

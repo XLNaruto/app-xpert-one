@@ -49,6 +49,16 @@ following the same self-contained folder shape.
    Masters still on a mock store use `paginate()` so they behave identically.
    Call the query hook with no params to get the whole master (dropdowns,
    history panels).
+7c. **Search and sort are server-side too** — never client-filter a paged list.
+   `PageParams` carries `search`, `sort` and `sortBy`; `usePagination(limit,
+   defaultSort)` owns all three and the page passes `searchValue`/`onSearchChange`
+   plus `manualSorting sorting onSortingChange`. A sortable column's **id is the
+   API's own field name** (`effective_date`, `office_name`, …) so a header click
+   reaches `?sort=` untranslated — list the endpoint's sortable fields in the
+   feature's `constants.ts` and set `enableSorting: false` on every column that
+   isn't one, `auditColumns({ createdAt: 'created_at' })` included. The api fn
+   always sends an order, defaulting to the screen's, so paging can't repeat or
+   skip rows.
 8. **Zustand stores stay small and single-concern**; select narrowly.
 9. **External integrations and calculations stay behind a service/pure-function boundary** — never leak SDKs or calc logic into components.
 10. **Table columns are defined inline in the list page** with `useMemo<ColumnDef<T>[]>`. Never a separate `<thing>-columns.tsx` file.

@@ -9,7 +9,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { BRANCH_OPTIONS, MONTH_DAY_OPTIONS } from '../constants'
+import { Forbidden } from '@/features/error'
+import { MONTH_DAY_OPTIONS } from '../constants'
 import { useDepartmentForm } from '../hooks/use-department-form'
 
 interface DepartmentCreatePageProps {
@@ -32,14 +33,23 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
     register,
     control,
     errors,
+    branchOptions,
+    isBranchesLoading,
     onSubmit,
     isEdit,
     isPending,
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
   } = useDepartmentForm(departmentId)
+
+  // Reading this record was refused — show the 403 screen, not a broken form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -83,17 +93,17 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                 className="mt-0"
               />
 
-              <Field label="Branch" required error={errors.branch?.message}>
+              <Field label="Branch" required error={errors.branchId?.message}>
                 <Controller
                   control={control}
-                  name="branch"
+                  name="branchId"
                   render={({ field }) => (
                     <Combobox
                       className="w-full"
                       value={field.value}
                       onChange={field.onChange}
-                      options={BRANCH_OPTIONS}
-                      placeholder="Select Branch"
+                      options={branchOptions}
+                      placeholder={isBranchesLoading ? 'Loading…' : 'Select Branch'}
                       searchPlaceholder="Search branch"
                     />
                   )}
@@ -109,11 +119,11 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
               <Field
                 label="Month Start Date"
                 required
-                error={errors.monthStartDate?.message}
+                error={errors.monthStartDay?.message}
               >
                 <Controller
                   control={control}
-                  name="monthStartDate"
+                  name="monthStartDay"
                   render={({ field }) => (
                     <Combobox
                       className="w-full"

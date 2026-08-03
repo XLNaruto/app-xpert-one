@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { ALLOWANCE_DEDUCTION_DEFAULT_SORT } from '../constants'
 import { useAllowanceDeductions } from '../api/use-allowance-deductions'
 import { useDeleteAllowanceDeduction } from '../api/use-allowance-deduction-mutations'
 import type { AllowanceDeduction } from '../types'
@@ -14,8 +16,16 @@ import type { AllowanceDeduction } from '../types'
  */
 export function useAllowanceDeductionList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, ALLOWANCE_DEDUCTION_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useAllowanceDeductions(params)
   const deleteRecord = useDeleteAllowanceDeduction()
 
@@ -51,6 +61,10 @@ export function useAllowanceDeductionList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

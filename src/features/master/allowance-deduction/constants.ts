@@ -2,6 +2,26 @@ import type { ComboboxOption } from '@/components/ui/combobox'
 import type { AllowanceDeductionType } from './types'
 import type { AllowanceDeductionFormValues } from './schemas'
 
+/**
+ * The `sort` values `/user/pay-components` accepts. Sorting is server-side, so
+ * a column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ */
+export const ALLOWANCE_DEDUCTION_SORT = {
+  shortName: 'short_code',
+  name: 'name',
+  createdAt: 'created_at',
+} as const
+
+/**
+ * Newest record first — the order the list opens in and reverts to. This is not
+ * the endpoint's own default (short code A→Z), so it's always sent.
+ */
+export const ALLOWANCE_DEDUCTION_DEFAULT_SORT = {
+  id: ALLOWANCE_DEDUCTION_SORT.createdAt,
+  desc: true,
+}
+
 /** Field labels, shared by the form and the list header. */
 export const ALLOWANCE_DEDUCTION_LABELS = {
   type: 'Type',

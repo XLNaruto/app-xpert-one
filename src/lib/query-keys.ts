@@ -40,6 +40,17 @@ export const queryKeys = {
         : ([...queryKeys.branch.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.branch.all, 'detail', id] as const,
   },
+  /**
+   * A branch's applicable acts — one row per branch, so the branch id is the
+   * identity a screen reads by. `detail` is the row's own id, for the reads that
+   * go straight at it.
+   */
+  actRegistration: {
+    all: ['act-registration'] as const,
+    byBranch: (branchId: number) =>
+      [...queryKeys.actRegistration.all, 'branch', branchId] as const,
+    detail: (id: number) => [...queryKeys.actRegistration.all, 'detail', id] as const,
+  },
   department: {
     all: ['department'] as const,
     list: (params?: PageParams) =>
@@ -112,6 +123,8 @@ export const queryKeys = {
     /** Paged, server-searched — backs the scroll-lazy state dropdowns. */
     infinite: (search?: string) =>
       [...queryKeys.state.all, 'infinite', search ?? ''] as const,
+    /** One state — for labelling a selection the loaded pages don't cover. */
+    detail: (id: number) => [...queryKeys.state.all, 'detail', id] as const,
   },
   district: {
     all: ['district'] as const,
@@ -123,6 +136,8 @@ export const queryKeys = {
     /** Paged, server-searched — backs the scroll-lazy district dropdowns. */
     infinite: (stateId?: number, search?: string) =>
       [...queryKeys.district.all, 'infinite', stateId ?? 0, search ?? ''] as const,
+    /** One district — for labelling a selection the loaded pages don't cover. */
+    detail: (id: number) => [...queryKeys.district.all, 'detail', id] as const,
   },
   leaveType: {
     all: ['leave-type'] as const,
@@ -159,9 +174,14 @@ export const queryKeys = {
   },
   document: {
     all: ['document'] as const,
-    list: (params?: PageParams) =>
+    /**
+     * `documentTypeId` narrows the page to one category server-side, so it's
+     * part of the key — a filtered page is a different result set, not a slice
+     * of the unfiltered one.
+     */
+    list: (params?: PageParams, documentTypeId?: number) =>
       params
-        ? ([...queryKeys.document.all, 'list', params] as const)
+        ? ([...queryKeys.document.all, 'list', params, documentTypeId ?? 0] as const)
         : ([...queryKeys.document.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.document.all, 'detail', id] as const,
   },

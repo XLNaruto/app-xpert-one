@@ -17,27 +17,51 @@ import { ESIC_DEDUCTS_ON_OPTIONS } from '../constants'
 import type { BranchFormValues } from '../schemas'
 import { ActCard } from './act-card'
 
+/**
+ * The state/district pair an act carries, ready for its two comboboxes. Only
+ * Professional Tax has one — every other act records the office it's registered
+ * with and nothing more.
+ */
+interface ActGeography {
+  districtOptions: ComboboxOption[]
+  hasState: boolean
+  /** Pick the state and clear its district — it may not exist under the new one. */
+  changeState: (value: string, onChange: (value: string) => void) => void
+}
+
 interface BranchActsTabProps {
   register: UseFormRegister<BranchFormValues>
   control: Control<BranchFormValues>
   errors: FieldErrors<BranchFormValues>
+  /** The state master, keyed by id — for the Professional Tax card. */
   stateOptions: ComboboxOption[]
-  pfDistrictOptions: ComboboxOption[]
-  esicDistrictOptions: ComboboxOption[]
-  changePfState: (value: string, onChange: (value: string) => void) => void
-  changeEsicState: (value: string, onChange: (value: string) => void) => void
+  pt: ActGeography
+  /** Offices of one statutory body, keyed by id. */
+  pfOfficeOptions: ComboboxOption[]
+  esicOfficeOptions: ComboboxOption[]
+  factoryOfficeOptions: ComboboxOption[]
+  lwfOfficeOptions: ComboboxOption[]
+  exOfficeOptions: ComboboxOption[]
 }
 
-/** "Applicable Acts" tab — the statutory registrations recorded per branch. */
+/**
+ * "Applicable Acts" tab — the statutory registrations recorded per branch,
+ * saved to `/user/act-registrations` as one row.
+ *
+ * Offices are references: each dropdown lists only the offices of its own body,
+ * out of the office-address master.
+ */
 export function BranchActsTab({
   register,
   control,
   errors,
   stateOptions,
-  pfDistrictOptions,
-  esicDistrictOptions,
-  changePfState,
-  changeEsicState,
+  pt,
+  pfOfficeOptions,
+  esicOfficeOptions,
+  factoryOfficeOptions,
+  lwfOfficeOptions,
+  exOfficeOptions,
 }: BranchActsTabProps) {
   return (
     <div className="space-y-5">
@@ -63,40 +87,21 @@ export function BranchActsTab({
           label="FPF Act Date"
           error={errors.fpfActDate?.message}
         />
-        <Field label="PF State" error={errors.pfState?.message}>
+        <Field label="PF Office Address" error={errors.pfOfficeAddressId?.message}>
           <Controller
             control={control}
-            name="pfState"
-            render={({ field }) => (
-              <Combobox
-                className="w-full"
-                value={field.value}
-                onChange={(value) => changePfState(value, field.onChange)}
-                options={stateOptions}
-                placeholder="Select State"
-                searchPlaceholder="Search state"
-              />
-            )}
-          />
-        </Field>
-        <Field label="PF District" error={errors.pfDistrict?.message}>
-          <Controller
-            control={control}
-            name="pfDistrict"
+            name="pfOfficeAddressId"
             render={({ field }) => (
               <Combobox
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={pfDistrictOptions}
-                placeholder="Select District"
-                searchPlaceholder="Search district"
+                options={pfOfficeOptions}
+                placeholder="Select PF Office"
+                searchPlaceholder="Search office"
               />
             )}
           />
-        </Field>
-        <Field label="PF Office Address" error={errors.pfOfficeAddress?.message}>
-          <Input placeholder="PF Office Address" {...register('pfOfficeAddress')} />
         </Field>
         <Field label="PF Username" error={errors.pfUsername?.message}>
           <Input placeholder="PF Username" {...register('pfUsername')} />
@@ -142,40 +147,21 @@ export function BranchActsTab({
           label="ESIC Registration Date"
           error={errors.esicRegistrationDate?.message}
         />
-        <Field label="ESIC State" error={errors.esicState?.message}>
+        <Field label="ESIC Office Address" error={errors.esicOfficeAddressId?.message}>
           <Controller
             control={control}
-            name="esicState"
-            render={({ field }) => (
-              <Combobox
-                className="w-full"
-                value={field.value}
-                onChange={(value) => changeEsicState(value, field.onChange)}
-                options={stateOptions}
-                placeholder="Select State"
-                searchPlaceholder="Search state"
-              />
-            )}
-          />
-        </Field>
-        <Field label="ESIC District" error={errors.esicDistrict?.message}>
-          <Controller
-            control={control}
-            name="esicDistrict"
+            name="esicOfficeAddressId"
             render={({ field }) => (
               <Combobox
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={esicDistrictOptions}
-                placeholder="Select District"
-                searchPlaceholder="Search district"
+                options={esicOfficeOptions}
+                placeholder="Select ESIC Office"
+                searchPlaceholder="Search office"
               />
             )}
           />
-        </Field>
-        <Field label="ESIC Office Address" error={errors.esicOfficeAddress?.message}>
-          <Input placeholder="ESIC Office Address" {...register('esicOfficeAddress')} />
         </Field>
         <Field label="ESIC Username" error={errors.esicUsername?.message}>
           <Input placeholder="ESIC Username" {...register('esicUsername')} />
@@ -214,15 +200,16 @@ export function BranchActsTab({
         <Field label="Factory FIN Number" error={errors.factoryFinNumber?.message}>
           <Input placeholder="Factory FIN Number" {...register('factoryFinNumber')} />
         </Field>
-        <Field label="No. of Employees" error={errors.employeeCount?.message}>
+        <Field label="No. of Employees" error={errors.noOfEmployees?.message}>
           <Input
             inputMode="numeric"
             placeholder="No. of Employees"
-            {...register('employeeCount')}
+            {...register('noOfEmployees')}
           />
         </Field>
         <Field label="Electric Horse Power" error={errors.electricHorsePower?.message}>
           <Input
+            inputMode="numeric"
             placeholder="Electric Horse Power"
             {...register('electricHorsePower')}
           />
@@ -239,6 +226,25 @@ export function BranchActsTab({
           label="Stability Expiry Date"
           error={errors.stabilityExpiryDate?.message}
         />
+        <Field
+          label="Factory Office Address"
+          error={errors.factoryOfficeAddressId?.message}
+        >
+          <Controller
+            control={control}
+            name="factoryOfficeAddressId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={field.onChange}
+                options={factoryOfficeOptions}
+                placeholder="Select Factory Office"
+                searchPlaceholder="Search office"
+              />
+            )}
+          />
+        </Field>
       </ActCard>
 
       {/* Professional tax act */}
@@ -256,29 +262,61 @@ export function BranchActsTab({
         />
         <Field
           label="PEC Registration Number"
-          error={errors.pecRegistrationNumber?.message}
+          error={errors.ptPecRegistrationNumber?.message}
         >
           <Input
             placeholder="PEC Registration Number"
-            {...register('pecRegistrationNumber')}
+            {...register('ptPecRegistrationNumber')}
           />
         </Field>
         <Field
           label="PRC Registration Number"
-          error={errors.prcRegistrationNumber?.message}
+          error={errors.ptPrcRegistrationNumber?.message}
         >
           <Input
             placeholder="PRC Registration Number"
-            {...register('prcRegistrationNumber')}
+            {...register('ptPrcRegistrationNumber')}
           />
         </Field>
         <Field
           label="Corporation / Gram Panchayat Name"
-          error={errors.corporationName?.message}
+          error={errors.ptCorporationName?.message}
         >
           <Input
             placeholder="Corporation / Gram Panchayat Name"
-            {...register('corporationName')}
+            {...register('ptCorporationName')}
+          />
+        </Field>
+        <Field label="PT State" error={errors.ptStateId?.message}>
+          <Controller
+            control={control}
+            name="ptStateId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={(value) => pt.changeState(value, field.onChange)}
+                options={stateOptions}
+                placeholder="Select State"
+                searchPlaceholder="Search state"
+              />
+            )}
+          />
+        </Field>
+        <Field label="PT District" error={errors.ptDistrictId?.message}>
+          <Controller
+            control={control}
+            name="ptDistrictId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={field.onChange}
+                options={pt.districtOptions}
+                placeholder={pt.hasState ? 'Select District' : 'Select a state first'}
+                searchPlaceholder="Search district"
+              />
+            )}
           />
         </Field>
       </ActCard>
@@ -305,10 +343,20 @@ export function BranchActsTab({
             {...register('lwfRegistrationNumber')}
           />
         </Field>
-        <Field label="LWF Office Address ID" error={errors.lwfOfficeAddressId?.message}>
-          <Input
-            placeholder="LWF Office Address ID"
-            {...register('lwfOfficeAddressId')}
+        <Field label="LWF Office Address" error={errors.lwfOfficeAddressId?.message}>
+          <Controller
+            control={control}
+            name="lwfOfficeAddressId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={field.onChange}
+                options={lwfOfficeOptions}
+                placeholder="Select LWF Office"
+                searchPlaceholder="Search office"
+              />
+            )}
           />
         </Field>
         <Field label="LWF Username" error={errors.lwfUsername?.message}>
@@ -332,14 +380,30 @@ export function BranchActsTab({
       >
         <DateField
           control={control}
-          name="eeRegistrationDate"
+          name="exRegistrationDate"
           label="Registration Date"
-          error={errors.eeRegistrationDate?.message}
+          error={errors.exRegistrationDate?.message}
         />
-        <Field label="Registration Number" error={errors.eeRegistrationNumber?.message}>
+        <Field label="Registration Number" error={errors.exRegistrationNumber?.message}>
           <Input
             placeholder="Registration Number"
-            {...register('eeRegistrationNumber')}
+            {...register('exRegistrationNumber')}
+          />
+        </Field>
+        <Field label="Office Address" error={errors.exOfficeAddressId?.message}>
+          <Controller
+            control={control}
+            name="exOfficeAddressId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={field.onChange}
+                options={exOfficeOptions}
+                placeholder="Select Office"
+                searchPlaceholder="Search office"
+              />
+            )}
           />
         </Field>
       </ActCard>

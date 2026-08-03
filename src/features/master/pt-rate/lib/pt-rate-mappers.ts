@@ -95,8 +95,3 @@ export function formatEffectiveDate(wef: string): string {
   const parsed = wef ? parseISO(wef) : null
   return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
 }
-
-/** Newest effective date first — the order the list screen reads in. */
-export function sortByEffectiveDateDesc(rates: PtRate[]): PtRate[] {
-  return [...rates].sort((a, b) => b.wef.localeCompare(a.wef))
-}

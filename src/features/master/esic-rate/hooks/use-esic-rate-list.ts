@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { ESIC_RATE_DEFAULT_SORT } from '../constants'
 import { useEsicRates } from '../api/use-esic-rates'
 import { useDeleteEsicRate } from '../api/use-esic-rate-mutations'
 import type { EsicRate } from '../types'
@@ -14,9 +16,16 @@ import type { EsicRate } from '../types'
  */
 export function useEsicRateList() {
   const navigate = useNavigate()
-  // No `search` — `/user/esic-rates` takes only limit/offset, so the list has
-  // no search box to feed one.
-  const { params, limit, offset, onPaginationChange } = usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, ESIC_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useEsicRates(params)
   const deleteEsicRate = useDeleteEsicRate()
 
@@ -49,6 +58,12 @@ export function useEsicRateList() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

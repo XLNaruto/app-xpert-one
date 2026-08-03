@@ -7,9 +7,12 @@ import {
   FileText,
   HeartPulse,
   IndianRupee,
+  Mail,
   MapPin,
   Pencil,
+  Phone,
   ShieldCheck,
+  Smartphone,
   UserRound,
   UserRoundSearch,
 } from 'lucide-react'
@@ -21,22 +24,44 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
 import { decryptId } from '@/lib/crypto'
+import { Forbidden } from '@/features/error'
 import { ActCard } from '../components/act-card'
 import { useBranchDetail } from '../hooks/use-branch-detail'
 
 /** Show a stored date as 'dd MMM yyyy', or nothing when it isn't recorded. */
-const asDate = (value: string | null) => (value ? formatDate(value) : null)
+const asDate = (value: string | null | undefined) =>
+  value ? formatDate(value) : null
 /** Never surface a stored credential — just say whether one is on file. */
-const asSecret = (value: string | null) => (value ? '••••••••' : null)
+const asSecret = (value: string | null | undefined) => (value ? '••••••••' : null)
+/** A whole-number column as text, blank when the branch doesn't record it. */
+const asCount = (value: number | null | undefined) =>
+  value === null || value === undefined ? null : String(value)
 
 /**
- * Read-only view of a single branch record, including every applicable act.
- * The record id arrives encrypted in the `?data=` search param.
+ * Read-only view of a single branch record, including every applicable act. The
+ * record id arrives encrypted in the `?data=` search param.
  */
 export function BranchDetailPage({ data }: { data?: string }) {
-  const { branch, isLoading, isError, error, goToList, goToEdit } = useBranchDetail(
-    decryptId(data),
-  )
+  const {
+    branch,
+    acts,
+    isLoading,
+    isError,
+    error,
+    isForbidden,
+    forbiddenMessage,
+    stateName,
+    districtName,
+    officeName,
+    goToList,
+    goToEdit,
+  } = useBranchDetail(decryptId(data))
+
+  // Reading this record was refused — show the 403 screen with the server's
+  // reason instead of an inline error line.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -78,14 +103,16 @@ export function BranchDetailPage({ data }: { data?: string }) {
       ) : (
         <div className="space-y-5">
           <Card>
-            <CardContent className="grid grid-cols-1 gap-x-6 gap-y-5 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="grid grid-cols-1 gap-x-6 gap-y-5 pt-6 sm:grid-cols-2">
               <FormSection icon={Building} title="Branch Information" className="mt-0" />
               <DetailItem icon={Building} label="Branch Name" value={branch.branchName} />
               <DetailItem
-                icon={CalendarDays}
-                label="Created On"
-                value={formatDate(branch.createdAt)}
+                icon={FileText}
+                label="Registration Number"
+                value={branch.registrationNumber}
               />
+              <DetailItem icon={FileText} label="PAN Number" value={branch.panNumber} />
+              <DetailItem icon={FileText} label="GST Number" value={branch.gstNumber} />
 
               <FormSection icon={MapPin} title="Address Details" />
               <DetailItem
@@ -96,10 +123,29 @@ export function BranchDetailPage({ data }: { data?: string }) {
                   .join(', ')}
                 className="sm:col-span-2"
               />
-              <DetailItem icon={MapPin} label="State" value={branch.state} />
-              <DetailItem icon={MapPin} label="District" value={branch.district} />
+              <DetailItem icon={MapPin} label="State" value={branch.stateName} />
+              <DetailItem icon={MapPin} label="District" value={branch.districtName} />
               <DetailItem icon={MapPin} label="City" value={branch.city} />
               <DetailItem icon={MapPin} label="Pin Code" value={branch.pinCode} />
+
+              <FormSection icon={Phone} title="Contact Details" />
+              <DetailItem icon={Phone} label="Phone" value={branch.phone} />
+              <DetailItem
+                icon={Smartphone}
+                label="Primary Mobile Number"
+                value={branch.mobile1}
+              />
+              <DetailItem
+                icon={Smartphone}
+                label="Secondary Mobile Number"
+                value={branch.mobile2}
+              />
+              <DetailItem icon={Mail} label="Email" value={branch.email} />
+              <DetailItem
+                icon={CalendarDays}
+                label="Created On"
+                value={formatDate(branch.createdAt)}
+              />
             </CardContent>
           </Card>
 
@@ -109,29 +155,27 @@ export function BranchDetailPage({ data }: { data?: string }) {
             tone="border-primary/20 bg-primary/5"
             iconTone="text-primary"
           >
-            <DetailItem icon={FileText} label="PF Code" value={branch.pfCode} />
+            <DetailItem icon={FileText} label="PF Code" value={acts?.pfCode ?? null} />
             <DetailItem
               icon={CalendarDays}
               label="EPF Act Date"
-              value={asDate(branch.epfActDate)}
+              value={asDate(acts?.epfActDate)}
             />
             <DetailItem
               icon={CalendarDays}
               label="FPF Act Date"
-              value={asDate(branch.fpfActDate)}
+              value={asDate(acts?.fpfActDate)}
             />
-            <DetailItem icon={MapPin} label="PF State" value={branch.pfState} />
-            <DetailItem icon={MapPin} label="PF District" value={branch.pfDistrict} />
             <DetailItem
               icon={MapPin}
               label="PF Office Address"
-              value={branch.pfOfficeAddress}
+              value={officeName('PF', acts?.pfOfficeAddressId ?? null)}
             />
-            <DetailItem icon={UserRound} label="PF Username" value={branch.pfUsername} />
+            <DetailItem icon={UserRound} label="PF Username" value={acts?.pfUsername ?? null} />
             <DetailItem
               icon={ShieldCheck}
               label="PF Password"
-              value={asSecret(branch.pfPassword)}
+              value={asSecret(acts?.pfPassword)}
             />
           </ActCard>
 
@@ -141,33 +185,31 @@ export function BranchDetailPage({ data }: { data?: string }) {
             tone="border-emerald-500/20 bg-emerald-500/5"
             iconTone="text-emerald-600 dark:text-emerald-400"
           >
-            <DetailItem icon={FileText} label="ESIC Code" value={branch.esicCode} />
+            <DetailItem icon={FileText} label="ESIC Code" value={acts?.esicCode ?? null} />
             <DetailItem
               icon={IndianRupee}
               label="ESIC Deducts On"
-              value={branch.esicDeductsOn}
+              value={acts?.esicDeductsOn ?? null}
             />
             <DetailItem
               icon={CalendarDays}
               label="ESIC Registration Date"
-              value={asDate(branch.esicRegistrationDate)}
+              value={asDate(acts?.esicRegistrationDate)}
             />
-            <DetailItem icon={MapPin} label="ESIC State" value={branch.esicState} />
-            <DetailItem icon={MapPin} label="ESIC District" value={branch.esicDistrict} />
             <DetailItem
               icon={MapPin}
               label="ESIC Office Address"
-              value={branch.esicOfficeAddress}
+              value={officeName('ESIC', acts?.esicOfficeAddressId ?? null)}
             />
             <DetailItem
               icon={UserRound}
               label="ESIC Username"
-              value={branch.esicUsername}
+              value={acts?.esicUsername ?? null}
             />
             <DetailItem
               icon={ShieldCheck}
               label="ESIC Password"
-              value={asSecret(branch.esicPassword)}
+              value={asSecret(acts?.esicPassword)}
             />
           </ActCard>
 
@@ -180,37 +222,42 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={CalendarDays}
               label="Factory Act Date"
-              value={asDate(branch.factoryActDate)}
+              value={asDate(acts?.factoryActDate)}
             />
             <DetailItem
               icon={FileText}
               label="Factory License Number"
-              value={branch.factoryLicenseNumber}
+              value={acts?.factoryLicenseNumber ?? null}
             />
             <DetailItem
               icon={FileText}
               label="Factory FIN Number"
-              value={branch.factoryFinNumber}
+              value={acts?.factoryFinNumber ?? null}
             />
             <DetailItem
               icon={UserRound}
               label="No. of Employees"
-              value={branch.employeeCount}
+              value={asCount(acts?.noOfEmployees)}
             />
             <DetailItem
               icon={FileText}
               label="Electric Horse Power"
-              value={branch.electricHorsePower}
+              value={asCount(acts?.electricHorsePower)}
             />
             <DetailItem
               icon={CalendarDays}
               label="License Expiry Date"
-              value={asDate(branch.licenseExpiryDate)}
+              value={asDate(acts?.licenseExpiryDate)}
             />
             <DetailItem
               icon={CalendarDays}
               label="Stability Expiry Date"
-              value={asDate(branch.stabilityExpiryDate)}
+              value={asDate(acts?.stabilityExpiryDate)}
+            />
+            <DetailItem
+              icon={MapPin}
+              label="Factory Office Address"
+              value={officeName('FACTORY', acts?.factoryOfficeAddressId ?? null)}
             />
           </ActCard>
 
@@ -223,22 +270,32 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={CalendarDays}
               label="PT Registration Date"
-              value={asDate(branch.ptRegistrationDate)}
+              value={asDate(acts?.ptRegistrationDate)}
             />
             <DetailItem
               icon={FileText}
               label="PEC Registration Number"
-              value={branch.pecRegistrationNumber}
+              value={acts?.ptPecRegistrationNumber ?? null}
             />
             <DetailItem
               icon={FileText}
               label="PRC Registration Number"
-              value={branch.prcRegistrationNumber}
+              value={acts?.ptPrcRegistrationNumber ?? null}
             />
             <DetailItem
               icon={Building}
               label="Corporation / Gram Panchayat Name"
-              value={branch.corporationName}
+              value={acts?.ptCorporationName ?? null}
+            />
+            <DetailItem
+              icon={MapPin}
+              label="PT State"
+              value={stateName(acts?.ptStateId ?? null)}
+            />
+            <DetailItem
+              icon={MapPin}
+              label="PT District"
+              value={districtName(acts?.ptDistrictId ?? null)}
             />
           </ActCard>
 
@@ -251,23 +308,23 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={CalendarDays}
               label="LWF Registration Date"
-              value={asDate(branch.lwfRegistrationDate)}
+              value={asDate(acts?.lwfRegistrationDate)}
             />
             <DetailItem
               icon={FileText}
               label="LWF Registration Number"
-              value={branch.lwfRegistrationNumber}
+              value={acts?.lwfRegistrationNumber ?? null}
             />
             <DetailItem
               icon={MapPin}
-              label="LWF Office Address ID"
-              value={branch.lwfOfficeAddressId}
+              label="LWF Office Address"
+              value={officeName('LWF', acts?.lwfOfficeAddressId ?? null)}
             />
-            <DetailItem icon={UserRound} label="LWF Username" value={branch.lwfUsername} />
+            <DetailItem icon={UserRound} label="LWF Username" value={acts?.lwfUsername ?? null} />
             <DetailItem
               icon={ShieldCheck}
               label="LWF Password"
-              value={asSecret(branch.lwfPassword)}
+              value={asSecret(acts?.lwfPassword)}
             />
           </ActCard>
 
@@ -280,12 +337,17 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={CalendarDays}
               label="Registration Date"
-              value={asDate(branch.eeRegistrationDate)}
+              value={asDate(acts?.exRegistrationDate)}
             />
             <DetailItem
               icon={FileText}
               label="Registration Number"
-              value={branch.eeRegistrationNumber}
+              value={acts?.exRegistrationNumber ?? null}
+            />
+            <DetailItem
+              icon={MapPin}
+              label="Office Address"
+              value={officeName('EMPLOYMENT EXCHANGE', acts?.exOfficeAddressId ?? null)}
             />
           </ActCard>
         </div>

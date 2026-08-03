@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { usePagination } from '@/hooks/use-pagination'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { ASSET_DEFAULT_SORT } from '../constants'
 import { useAssets } from '../api/use-assets'
 import { useDeleteAsset } from '../api/use-asset-mutations'
 import type { AssetRecord } from '../types'
@@ -10,8 +12,16 @@ import type { AssetRecord } from '../types'
  * dialog and the delete flow. The page consumes this and only renders.
  */
 export function useAssetList() {
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, ASSET_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useAssets(params)
   const deleteAsset = useDeleteAsset()
 
@@ -52,6 +62,10 @@ export function useAssetList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

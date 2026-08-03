@@ -161,7 +161,7 @@ export function DesignationListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search designations…"
           itemName="designations"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}

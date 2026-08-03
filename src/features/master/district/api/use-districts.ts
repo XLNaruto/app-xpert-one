@@ -8,10 +8,17 @@ import { fetchDistricts } from './district-api'
  * Pass a `stateId` for a state→district cascade and the API narrows the list
  * server-side; call it with no argument for the whole master, which the screens
  * needing districts for several states at once read.
+ *
+ * `enabled` holds the request back until it's actually wanted — the unnarrowed
+ * master runs to hundreds of rows, so no screen should pull it just in case.
  */
-export function useDistricts(stateId?: number) {
+export function useDistricts(
+  stateId?: number,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: queryKeys.district.list(stateId),
     queryFn: () => fetchDistricts(stateId),
+    enabled,
   })
 }

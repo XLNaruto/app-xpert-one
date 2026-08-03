@@ -3,6 +3,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { DOCUMENT_TYPE_DEFAULT_SORT } from '../constants'
 import { useDocumentTypes } from '../api/use-document-types'
 import { useDeleteDocumentType } from '../api/use-document-type-mutations'
 import type { DocumentType } from '../types'
@@ -14,8 +17,16 @@ import type { DocumentType } from '../types'
  */
 export function useDocumentTypeList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, DOCUMENT_TYPE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useDocumentTypes(params)
   const deleteDocumentType = useDeleteDocumentType()
 
@@ -41,6 +52,10 @@ export function useDocumentTypeList() {
     })
   }
 
+  // A 403 isn't a broken screen, it's a missing permission — the page shows the
+  // 403 screen with the server's reason instead of an inline error line.
+  const isForbidden = isForbiddenError(error)
+
   return {
     rows: data?.items ?? [],
     // Server pagination — the table reports pages back as limit/offset.
@@ -50,9 +65,15 @@ export function useDocumentTypeList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
     goToCreate,
     goToEdit,
     pendingDelete,

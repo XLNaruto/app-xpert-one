@@ -1,10 +1,11 @@
-import { ArrowLeft, Building2, Scale } from 'lucide-react'
+import { ArrowLeft, Building2, Lock, Scale } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Forbidden } from '@/features/error'
 import { BranchDetailTab } from '../components/branch-detail-tab'
 import { BranchActsTab } from '../components/branch-acts-tab'
 import { useBranchForm, type BranchFormTab } from '../hooks/use-branch-form'
@@ -12,7 +13,7 @@ import { useBranchForm, type BranchFormTab } from '../hooks/use-branch-form'
 interface BranchCreatePageProps {
   /**
    * Encrypted branch id from the `?data=` search param. When present the page
-   * switches to edit mode (GET to seed, PUT to save); otherwise it's a fresh
+   * switches to edit mode (GET to seed, PATCH to save); otherwise it's a fresh
    * create. The same page and form handle both.
    */
   data?: string
@@ -21,8 +22,8 @@ interface BranchCreatePageProps {
 /**
  * Create/edit a branch record. One screen for both: a `?data=` token edits the
  * record it carries (hydrates the form + updates on submit), no token creates a
- * new one. Both tabs sit inside a single form, so one submit saves the branch
- * detail and every applicable act together.
+ * new one under the active company. Both tabs sit inside a single form, so one
+ * submit saves the branch detail and every applicable act together.
  */
 export function BranchCreatePage({ data }: BranchCreatePageProps) {
   // Decrypt the params from the URL; missing/malformed → create mode.
@@ -33,22 +34,34 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
     control,
     errors,
     tab,
-    setTab,
-    stateOptions,
-    districtOptions,
-    pfDistrictOptions,
-    esicDistrictOptions,
+    selectTab,
+    canEditActs,
+    state,
+    district,
+    hasState,
     changeState,
-    changePfState,
-    changeEsicState,
+    actStateOptions,
+    pt,
+    pfOfficeOptions,
+    esicOfficeOptions,
+    factoryOfficeOptions,
+    lwfOfficeOptions,
+    exOfficeOptions,
     onSubmit,
     isEdit,
     isPending,
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
   } = useBranchForm(branchId)
+
+  // Reading this record was refused — show the 403 screen, not a broken form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -73,19 +86,37 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
             </div>
           ) : isError ? (
             <p className="text-sm text-destructive">
-              {loadError instanceof Error ? loadError.message : "Couldn't load this branch."}
+              {loadError instanceof Error
+                ? loadError.message
+                : "Couldn't load this branch."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>
-              <Tabs value={tab} onValueChange={(value) => setTab(value as BranchFormTab)}>
+              <Tabs
+                value={tab}
+                onValueChange={(value) => selectTab(value as BranchFormTab)}
+              >
                 <TabsList>
                   <TabsTrigger value="detail">
                     <Building2 className="mr-1.5 size-4" />
-                    Branch Detail
+                    Step 1 · Branch Detail
                   </TabsTrigger>
-                  <TabsTrigger value="acts">
-                    <Scale className="mr-1.5 size-4" />
-                    Applicable Acts
+                  {/*
+                    Step two writes a row keyed by branch id, so it stays shut
+                    until step one has been saved. Locked rather than `disabled`:
+                    a disabled trigger swallows the click, and a click that says
+                    nothing is worse than one that says why.
+                  */}
+                  <TabsTrigger
+                    value="acts"
+                    className={canEditActs ? undefined : 'text-muted-foreground'}
+                  >
+                    {canEditActs ? (
+                      <Scale className="mr-1.5 size-4" />
+                    ) : (
+                      <Lock className="mr-1.5 size-4" />
+                    )}
+                    Step 2 · Applicable Acts
                   </TabsTrigger>
                 </TabsList>
 
@@ -94,8 +125,9 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
                     register={register}
                     control={control}
                     errors={errors}
-                    stateOptions={stateOptions}
-                    districtOptions={districtOptions}
+                    state={state}
+                    district={district}
+                    hasState={hasState}
                     changeState={changeState}
                   />
                 </TabsContent>
@@ -105,16 +137,22 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
                     register={register}
                     control={control}
                     errors={errors}
-                    stateOptions={stateOptions}
-                    pfDistrictOptions={pfDistrictOptions}
-                    esicDistrictOptions={esicDistrictOptions}
-                    changePfState={changePfState}
-                    changeEsicState={changeEsicState}
+                    stateOptions={actStateOptions}
+                    pt={pt}
+                    pfOfficeOptions={pfOfficeOptions}
+                    esicOfficeOptions={esicOfficeOptions}
+                    factoryOfficeOptions={factoryOfficeOptions}
+                    lwfOfficeOptions={lwfOfficeOptions}
+                    exOfficeOptions={exOfficeOptions}
                   />
                 </TabsContent>
               </Tabs>
 
-              {/* Actions — shared by both tabs; one submit saves everything. */}
+              {/*
+                Actions — shared by both tabs. Step one saves the branch and
+                opens step two; from then on one submit saves the branch and its
+                acts together.
+              */}
               <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-5">
                 <Button
                   type="button"
@@ -125,7 +163,11 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isPending}>
-                  {isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Branch'}
+                  {isPending
+                    ? 'Saving…'
+                    : isEdit
+                      ? 'Save Changes'
+                      : 'Save & Continue'}
                 </Button>
               </div>
             </form>

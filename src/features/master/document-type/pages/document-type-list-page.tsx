@@ -7,7 +7,8 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { DOCUMENT_TYPE_LABELS } from '../constants'
+import { Forbidden } from '@/features/error'
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_SORT } from '../constants'
 import { useDocumentTypeList } from '../hooks/use-document-type-list'
 import type { DocumentType } from '../types'
 
@@ -21,9 +22,13 @@ export function DocumentTypeListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage,
     goToCreate,
     goToEdit,
     pendingDelete,
@@ -54,19 +59,32 @@ export function DocumentTypeListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: DOCUMENT_TYPE_SORT.typeName,
         accessorKey: 'typeName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={DOCUMENT_TYPE_LABELS.typeName} />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="font-medium text-foreground">{row.original.typeName}</span>
         ),
       },
-      ...auditColumns<DocumentType>(),
+      ...auditColumns<DocumentType>({
+        createdAt: DOCUMENT_TYPE_SORT.createdAt,
+        updatedAt: DOCUMENT_TYPE_SORT.updatedAt,
+      }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
+
+  // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
+  // screen with the server's reason instead of the table and its Add button.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -92,7 +110,7 @@ export function DocumentTypeListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search document type…"
           itemName="document types"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -100,6 +118,9 @@ export function DocumentTypeListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={FileType2}

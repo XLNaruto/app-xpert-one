@@ -1,7 +1,7 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
 import { amountLabel } from '@/lib/currency'
 import type { EsicRateFormValues } from './schemas'
-import type { EsicRateValueField } from './types'
+import type { EsicRateValueField, EsicRateValueKey } from './types'
 
 /** Blank form values for a new ESIC rate slab. */
 export const EMPTY_ESIC_RATE_FORM: EsicRateFormValues = {
@@ -15,6 +15,27 @@ export const EMPTY_ESIC_RATE_FORM: EsicRateFormValues = {
   disabilityDuration: '',
   disabilityWageLimit: '',
 }
+
+/**
+ * The `sort` values `/user/esic-rates` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ */
+export const ESIC_RATE_SORT = {
+  effectiveDate: 'effective_date',
+  createdAt: 'created_at',
+} as const
+
+/** Which slab value columns the endpoint can order by, by their API name. */
+export const ESIC_RATE_VALUE_SORT_FIELDS: Partial<Record<EsicRateValueKey, string>> = {
+  wageCeilingLimit: 'wage_ceiling_limit',
+  minimumRate: 'minimum_rate',
+  employeeEsiContribution: 'employee_esic_contribution',
+  employerEsiContribution: 'employer_esic_contribution',
+}
+
+/** Newest record first — the order the list opens in and reverts to. */
+export const ESIC_RATE_DEFAULT_SORT = { id: ESIC_RATE_SORT.createdAt, desc: true }
 
 /** Month options for the two contribution-period dropdowns. */
 export const MONTH_OPTIONS: ComboboxOption[] = [

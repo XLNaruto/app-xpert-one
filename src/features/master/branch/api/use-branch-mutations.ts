@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { BranchFormValues } from '../schemas'
 import { createBranch, deleteBranch, updateBranch } from './branch-api'
 
-/** POST /branches — create a branch, then refresh the list. */
+/** POST /user/branches — create a branch, then refresh the list. */
 export function useCreateBranch() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -14,7 +14,7 @@ export function useCreateBranch() {
   })
 }
 
-/** PUT /branches/:id — update a branch, then refresh the list + detail. */
+/** PATCH /user/branches/:id — update a branch, then refresh the list + detail. */
 export function useUpdateBranch(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -25,7 +25,7 @@ export function useUpdateBranch(id: number) {
   })
 }
 
-/** DELETE /branches/:id — remove a branch, then refresh the list. */
+/** DELETE /user/branches/:id — remove a branch, then refresh the list. */
 export function useDeleteBranch() {
   const queryClient = useQueryClient()
   return useMutation({

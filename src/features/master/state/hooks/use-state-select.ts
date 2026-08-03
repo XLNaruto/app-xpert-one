@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useLazyOptions, type LazyOptionSource } from '@/hooks/use-lazy-options'
+import { queryKeys } from '@/lib/query-keys'
+import { fetchState } from '../api/state-api'
 import { useStatesInfinite } from '../api/use-states-infinite'
 
 /** Everything a lazy-loading `<Combobox>` needs, ready to spread onto it. */
@@ -13,12 +16,24 @@ export interface StateSelect {
 
 interface UseStateSelectOptions {
   /**
-   * The state already on the record, as `{ value, label }`. An edit form's saved
-   * state usually isn't in the first page, and `<Combobox>` reads the trigger's
-   * label out of `options` — so it's merged in to keep the selection visible
-   * until the page holding it loads.
+   * The state already on the record, as `{ value, label }` — the value being a
+   * state id as a string. An edit form's saved state usually isn't in the first
+   * page, and `<Combobox>` reads the trigger's label out of `options`, so the
+   * selection is merged in to stay visible until the page holding it loads.
+   *
+   * `label` is optional: without one the state is read by id in the background,
+   * so a caller that only has the id still gets a labelled trigger.
    */
-  selected?: { value: string; label: string }
+  selected?: { value: string; label?: string }
+}
+
+/** Reads the one state behind a selection the loaded pages don't cover. */
+const STATE_SOURCE: LazyOptionSource = {
+  key: (value) => queryKeys.state.detail(Number(value)),
+  fetch: async (value) => {
+    const state = await fetchState(Number(value))
+    return { value: String(state.id), label: state.stateName }
+  },
 }
 
 /**
@@ -32,20 +47,23 @@ export function useStateSelect({ selected }: UseStateSelectOptions = {}): StateS
   const debounced = useDebouncedValue(search, 300)
   const query = useStatesInfinite(debounced.trim() || undefined)
 
-  const selectedValue = selected?.value
-  const selectedLabel = selected?.label
+  const loaded = useMemo<ComboboxOption[]>(
+    () =>
+      (query.data?.pages ?? []).flatMap((page) =>
+        page.items.map((state) => ({
+          label: state.stateName,
+          value: String(state.id),
+        })),
+      ),
+    [query.data],
+  )
 
-  const options = useMemo<ComboboxOption[]>(() => {
-    const loaded = (query.data?.pages ?? []).flatMap((page) =>
-      page.items.map((state) => ({
-        label: state.stateName,
-        value: String(state.id),
-      })),
-    )
-    if (!selectedValue || !selectedLabel) return loaded
-    if (loaded.some((option) => option.value === selectedValue)) return loaded
-    return [{ value: selectedValue, label: selectedLabel }, ...loaded]
-  }, [query.data, selectedValue, selectedLabel])
+  const options = useLazyOptions({
+    loaded,
+    value: selected?.value,
+    label: selected?.label,
+    source: STATE_SOURCE,
+  })
 
   return {
     options,

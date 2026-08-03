@@ -6,6 +6,8 @@ export type AllowanceDeductionType = 'ALLOWANCE' | 'DEDUCTION'
 /** An allowance / deduction master record. */
 export interface AllowanceDeduction extends AuditFields {
   id: number
+  /** The tenant the record belongs to — set by the API from the active company. */
+  companyId: number
   type: AllowanceDeductionType
   name: string
   shortName: string

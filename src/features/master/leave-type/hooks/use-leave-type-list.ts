@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { LEAVE_TYPE_DEFAULT_SORT } from '../constants'
 import { useLeaveTypes } from '../api/use-leave-types'
 import { useDeleteLeaveType } from '../api/use-leave-type-mutations'
 import type { LeaveType } from '../types'
@@ -14,8 +16,16 @@ import type { LeaveType } from '../types'
  */
 export function useLeaveTypeList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, LEAVE_TYPE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useLeaveTypes(params)
   const deleteLeaveType = useDeleteLeaveType()
 
@@ -48,6 +58,10 @@ export function useLeaveTypeList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

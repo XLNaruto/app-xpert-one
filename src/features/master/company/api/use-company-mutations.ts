@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { CompanyFormValues } from '../schemas'
 import { createCompany, deleteCompany, updateCompany } from './company-api'
 
-/** POST /companies — create a company, then refresh the list. */
+/** POST /user/companies — create a company, then refresh the list. */
 export function useCreateCompany() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -14,7 +14,7 @@ export function useCreateCompany() {
   })
 }
 
-/** PUT /companies/:id — update a company, then refresh the list + detail. */
+/** PATCH /user/companies/:id — update a company, then refresh the list + detail. */
 export function useUpdateCompany(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -25,7 +25,7 @@ export function useUpdateCompany(id: number) {
   })
 }
 
-/** DELETE /companies/:id — remove a company, then refresh the list. */
+/** DELETE /user/companies/:id — remove a company, then refresh the list. */
 export function useDeleteCompany() {
   const queryClient = useQueryClient()
   return useMutation({

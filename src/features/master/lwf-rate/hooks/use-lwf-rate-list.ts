@@ -4,6 +4,8 @@ import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { LWF_RATE_DEFAULT_SORT } from '../constants'
 import { useLwfRates } from '../api/use-lwf-rates'
 import { useDeleteLwfRate } from '../api/use-lwf-rate-mutations'
 import type { LwfRate } from '../types'
@@ -15,7 +17,16 @@ import type { LwfRate } from '../types'
  */
 export function useLwfRateList() {
   const navigate = useNavigate()
-  const { params, limit, offset, onPaginationChange } = usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, LWF_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useLwfRates(params)
   const deleteLwfRate = useDeleteLwfRate()
 
@@ -50,6 +61,12 @@ export function useLwfRateList() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

@@ -7,7 +7,11 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
-import { PF_RATE_VALUE_FIELDS } from '../constants'
+import {
+  PF_RATE_SORT,
+  PF_RATE_VALUE_FIELDS,
+  PF_RATE_VALUE_SORT_FIELDS,
+} from '../constants'
 import { formatEffectiveDate, formatPfRateValue } from '../lib/pf-rate-mappers'
 import { usePfRateList } from '../hooks/use-pf-rate-list'
 import type { PfRate } from '../types'
@@ -20,6 +24,10 @@ export function PfRateListPage() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -55,6 +63,9 @@ export function PfRateListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: PF_RATE_SORT.effectiveDate,
         accessorKey: 'wef',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Effective Date" />
@@ -67,16 +78,22 @@ export function PfRateListPage() {
         ),
       },
       // Every rate/limit column, generated from the one field descriptor the
-      // form and the history table also read.
-      ...PF_RATE_VALUE_FIELDS.map<ColumnDef<PfRate>>((field) => ({
-        accessorKey: field.key,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={field.title} />
-        ),
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => formatPfRateValue(row.original[field.key], field.kind),
-      })),
-      ...auditColumns<PfRate>(),
+      // form and the history table also read. Only the four the endpoint can
+      // order by offer a sort control.
+      ...PF_RATE_VALUE_FIELDS.map<ColumnDef<PfRate>>((field) => {
+        const sortId = PF_RATE_VALUE_SORT_FIELDS[field.key]
+        return {
+          accessorKey: field.key,
+          ...(sortId ? { id: sortId } : { enableSorting: false }),
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={field.title} />
+          ),
+          meta: { className: 'whitespace-nowrap' },
+          cell: ({ row }) => formatPfRateValue(row.original[field.key], field.kind),
+        }
+      }),
+      // The API tracks no `updated_at`, and only `created_at` is sortable.
+      ...auditColumns<PfRate>({ createdAt: PF_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -101,22 +118,24 @@ export function PfRateListPage() {
         }
       />
 
-      {/*
-        No search box: `/user/pf-rates` takes only `limit`/`offset`, and with
-        the list server-paged a client-side box would filter the current page
-        alone. It comes back when the endpoint accepts a search term.
-      */}
+      {/* Search and sort are both server-side, so they span every page. */}
       <DataTable
         columns={columns}
         data={rows}
         isLoading={isLoading}
+        searchPlaceholder="Search PF rate…"
         itemName="PF rates"
-        pageSizeOptions={[5,10, 25, 50]}
+        pageSizeOptions={[5, 10, 25, 50]}
         serverPagination
         limit={limit}
         offset={offset}
         total={total}
         onPaginationChange={onPaginationChange}
+        searchValue={search}
+        onSearchChange={setSearch}
+        manualSorting
+        sorting={sorting}
+        onSortingChange={onSortingChange}
         emptyState={
           <div className="flex flex-col items-center gap-3 py-14 text-center">
             <span className="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
@@ -124,17 +143,23 @@ export function PfRateListPage() {
             </span>
             <div>
               <p className="font-medium text-foreground">
-                {isError ? "Couldn't load PF rates" : 'No PF rates yet'}
+                {isError
+                  ? "Couldn't load PF rates"
+                  : search
+                    ? 'No matching PF rates'
+                    : 'No PF rates yet'}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isError
                   ? error instanceof Error
                     ? error.message
                     : 'Something went wrong. Please try again.'
-                  : 'Add your first PF rate slab to get started.'}
+                  : search
+                    ? 'Try a different search term.'
+                    : 'Add your first PF rate slab to get started.'}
               </p>
             </div>
-            {!isError && (
+            {!isError && !search && (
               <Button onClick={goToCreate}>
                 <Plus className="size-4" />
                 Add PF Rate

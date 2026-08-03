@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { PAY_TYPE_LABELS } from '../constants'
+import { LEAVE_TYPE_SORT, PAY_TYPE_LABELS } from '../constants'
 import { useLeaveTypeList } from '../hooks/use-leave-type-list'
 import type { LeaveType } from '../types'
 
@@ -21,6 +21,8 @@ export function LeaveTypeListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -54,6 +56,9 @@ export function LeaveTypeListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: LEAVE_TYPE_SORT.leaveName,
         accessorKey: 'leaveName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Leave Name" />
@@ -63,6 +68,7 @@ export function LeaveTypeListPage() {
         ),
       },
       {
+        id: LEAVE_TYPE_SORT.shortName,
         accessorKey: 'shortName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Short Name" />
@@ -72,11 +78,14 @@ export function LeaveTypeListPage() {
         ),
       },
       {
+        // The endpoint can't order by pay type, so this header stays plain text.
         accessorKey: 'payType',
+        enableSorting: false,
         header: 'Pay Type',
         cell: ({ row }) => PAY_TYPE_LABELS[row.original.payType],
       },
-      ...auditColumns<LeaveType>(),
+      // Only `created_at` is sortable; "Updated" renders without the control.
+      ...auditColumns<LeaveType>({ createdAt: LEAVE_TYPE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -104,9 +113,9 @@ export function LeaveTypeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search name…"
+          searchPlaceholder="Search short code or name…"
           itemName="leave types"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -114,16 +123,25 @@ export function LeaveTypeListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={CalendarDays}
-              title="No leave types yet"
-              description="Create your first leave type to get started."
+              title={search ? 'No matching leave types' : 'No leave types yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Create your first leave type to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Leave Type
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Leave Type
+                  </Button>
+                )
               }
             />
           }

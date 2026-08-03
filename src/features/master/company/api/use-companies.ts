@@ -4,10 +4,10 @@ import { ALL_ROWS, type PageParams } from '@/lib/pagination'
 import { fetchCompanies } from './company-api'
 
 /**
- * GET /companies — the full company master list.
+ * GET /user/companies — the company master, newest first.
  *
  * One limit/offset page — pass the params from `usePagination()`. Called with
- * no argument it returns the whole master, for dropdowns and history panels.
+ * no argument it returns the whole master, for dropdowns and pickers.
  */
 export function useCompanies(params: PageParams = ALL_ROWS) {
   return useQuery({

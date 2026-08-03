@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PT_RATE_SORT } from '../constants'
 import { formatEffectiveDate } from '../lib/pt-rate-mappers'
 import { usePtRateList } from '../hooks/use-pt-rate-list'
 import type { PtRate } from '../types'
@@ -21,6 +22,8 @@ export function PtRateListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -54,6 +57,9 @@ export function PtRateListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: PT_RATE_SORT.effectiveDate,
         accessorKey: 'wef',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Effective Date" />
@@ -66,16 +72,19 @@ export function PtRateListPage() {
         ),
       },
       {
+        id: PT_RATE_SORT.state,
         accessorKey: 'stateName',
         header: ({ column }) => <DataTableColumnHeader column={column} title="State" />,
         meta: { className: 'whitespace-nowrap' },
       },
       {
+        id: PT_RATE_SORT.detail,
         accessorKey: 'detail',
-        header: 'Detail',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Detail" />,
         cell: ({ row }) => row.original.detail || '—',
       },
-      ...auditColumns<PtRate>(),
+      // The API tracks no `updated_at`, and only `created_at` is sortable.
+      ...auditColumns<PtRate>({ createdAt: PT_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -105,7 +114,7 @@ export function PtRateListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search PT rate…"
           itemName="PT rates"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -113,16 +122,25 @@ export function PtRateListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Landmark}
-              title="No PT rates yet"
-              description="Add your first Professional Tax slab set to get started."
+              title={search ? 'No matching PT rates' : 'No PT rates yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Add your first Professional Tax slab set to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add PT Rate
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add PT Rate
+                  </Button>
+                )
               }
             />
           }

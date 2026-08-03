@@ -7,7 +7,7 @@ import {
   updateDepartment,
 } from './department-api'
 
-/** POST /departments — create a department, then refresh the list. */
+/** POST /user/departments — create a department, then refresh the list. */
 export function useCreateDepartment() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -18,7 +18,7 @@ export function useCreateDepartment() {
   })
 }
 
-/** PUT /departments/:id — update a department, then refresh the list + detail. */
+/** PATCH /user/departments/:id — update a department, then refresh the list + detail. */
 export function useUpdateDepartment(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -29,7 +29,7 @@ export function useUpdateDepartment(id: number) {
   })
 }
 
-/** DELETE /departments/:id — remove a department, then refresh the list. */
+/** DELETE /user/departments/:id — remove a department, then refresh the list. */
 export function useDeleteDepartment() {
   const queryClient = useQueryClient()
   return useMutation({

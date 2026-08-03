@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { documentTypeOptions, useDocumentTypes } from '@/features/master/document-type'
 import { documentSchema, type DocumentFormValues } from '../schemas'
 import { EMPTY_DOCUMENT_FORM } from '../constants'
@@ -64,6 +65,10 @@ export function useDocumentForm(id?: number) {
     })
   })
 
+  // Reading this record was refused — not a broken screen, so the page shows the
+  // 403 screen with the server's reason rather than the form.
+  const isForbidden = isEdit && isForbiddenError(detail.error)
+
   return {
     register,
     control,
@@ -76,6 +81,8 @@ export function useDocumentForm(id?: number) {
     isLoading: isEdit && detail.isLoading,
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
   }
 }

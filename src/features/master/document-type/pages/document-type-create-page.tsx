@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Forbidden } from '@/features/error'
 import { DOCUMENT_TYPE_LABELS } from '../constants'
 import { useDocumentTypeForm } from '../hooks/use-document-type-form'
 
@@ -35,8 +36,15 @@ export function DocumentTypeCreatePage({ data }: DocumentTypeCreatePageProps) {
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
   } = useDocumentTypeForm(documentTypeId)
+
+  // Reading this record was refused — show the 403 screen, not a broken form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>

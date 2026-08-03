@@ -1,17 +1,20 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { FileText, Plus } from 'lucide-react'
+import { FileText, FileType2, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
+import { FilterBar } from '@/components/common/filter-bar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { DOCUMENT_LABELS } from '../constants'
+import { Forbidden } from '@/features/error'
+import { DOCUMENT_LABELS, DOCUMENT_SORT } from '../constants'
 import { useDocumentList } from '../hooks/use-document-list'
 import type { Document } from '../types'
 
-/** Document master — list with add/edit/delete. */
+/** Document master — list with add/edit/delete and a document type filter. */
 export function DocumentListPage() {
   const {
     rows,
@@ -21,9 +24,16 @@ export function DocumentListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
+    typeFilter,
+    changeTypeFilter,
+    typeOptions,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage,
     goToCreate,
     goToEdit,
     pendingDelete,
@@ -54,25 +64,53 @@ export function DocumentListPage() {
         ),
       },
       {
-        accessorKey: 'documentType',
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: DOCUMENT_SORT.documentType,
+        accessorKey: 'documentTypeName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={DOCUMENT_LABELS.documentType} />
         ),
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.documentTypeName || '—',
       },
       {
+        id: DOCUMENT_SORT.documentName,
         accessorKey: 'documentName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={DOCUMENT_LABELS.documentName} />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="font-medium text-foreground">{row.original.documentName}</span>
         ),
       },
-      ...auditColumns<Document>(),
+      {
+        accessorKey: 'isRequired',
+        enableSorting: false,
+        header: DOCUMENT_LABELS.isRequired,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) =>
+          row.original.isRequired ? (
+            <Badge>Required</Badge>
+          ) : (
+            <span className="text-muted-foreground">Optional</span>
+          ),
+      },
+      ...auditColumns<Document>({
+        createdAt: DOCUMENT_SORT.createdAt,
+        updatedAt: DOCUMENT_SORT.updatedAt,
+      }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
+
+  // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
+  // screen with the server's reason instead of the table and its Add button.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -96,16 +134,45 @@ export function DocumentListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search document…"
           itemName="documents"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
           total={total}
           onPaginationChange={onPaginationChange}
-          searchValue={search}
-          onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          // Search and the type filter both narrow the query server-side, so
+          // they span every page rather than the one on screen.
+          toolbar={
+            <FilterBar
+              search={{
+                value: search,
+                onChange: setSearch,
+                placeholder: 'Search document…',
+              }}
+              facets={[
+                {
+                  key: 'documentType',
+                  label: DOCUMENT_LABELS.documentType,
+                  icon: FileType2,
+                  value: typeFilter,
+                  onChange: changeTypeFilter,
+                  options: typeOptions,
+                  searchable: true,
+                  searchPlaceholder: 'Search document type',
+                  // '' is "every type" — the API simply gets no filter.
+                  clearValue: '',
+                },
+              ]}
+              onReset={() => {
+                setSearch('')
+                changeTypeFilter('')
+              }}
+            />
+          }
           emptyState={
             <EmptyState
               icon={FileText}

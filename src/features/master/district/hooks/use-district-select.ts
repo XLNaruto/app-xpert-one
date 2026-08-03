@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useLazyOptions, type LazyOptionSource } from '@/hooks/use-lazy-options'
+import { queryKeys } from '@/lib/query-keys'
+import { fetchDistrict } from '../api/district-api'
 import { useDistrictsInfinite } from '../api/use-districts-infinite'
 
 /** Everything a lazy-loading `<Combobox>` needs, ready to spread onto it. */
@@ -17,8 +20,21 @@ interface UseDistrictSelectOptions {
   /**
    * The district already on the record, as `{ value, label }`, merged in so an
    * edit form shows its saved selection before the page holding it loads.
+   *
+   * `label` is optional: without one the district is read by id in the
+   * background, which is the common case here — the master runs to ~800 rows, so
+   * a saved district is rarely on the first page.
    */
-  selected?: { value: string; label: string }
+  selected?: { value: string; label?: string }
+}
+
+/** Reads the one district behind a selection the loaded pages don't cover. */
+const DISTRICT_SOURCE: LazyOptionSource = {
+  key: (value) => queryKeys.district.detail(Number(value)),
+  fetch: async (value) => {
+    const district = await fetchDistrict(Number(value))
+    return { value: String(district.id), label: district.districtName }
+  },
 }
 
 /**
@@ -34,24 +50,26 @@ export function useDistrictSelect({
   const debounced = useDebouncedValue(search, 300)
   const query = useDistrictsInfinite(stateId, debounced.trim() || undefined)
 
-  const selectedValue = selected?.value
-  const selectedLabel = selected?.label
-
-  const options = useMemo<ComboboxOption[]>(() => {
+  const loaded = useMemo<ComboboxOption[]>(() => {
     // No state chosen yet — the field reads "Select a state first", not an
     // option list, so don't surface a stale page from the previous state.
     if (stateId == null) return []
 
-    const loaded = (query.data?.pages ?? []).flatMap((page) =>
+    return (query.data?.pages ?? []).flatMap((page) =>
       page.items.map((district) => ({
         label: district.districtName,
         value: String(district.id),
       })),
     )
-    if (!selectedValue || !selectedLabel) return loaded
-    if (loaded.some((option) => option.value === selectedValue)) return loaded
-    return [{ value: selectedValue, label: selectedLabel }, ...loaded]
-  }, [query.data, stateId, selectedValue, selectedLabel])
+  }, [query.data, stateId])
+
+  const options = useLazyOptions({
+    loaded,
+    // With no state there's no list to belong to, so nothing to resolve either.
+    value: stateId == null ? undefined : selected?.value,
+    label: selected?.label,
+    source: DISTRICT_SOURCE,
+  })
 
   return {
     options,

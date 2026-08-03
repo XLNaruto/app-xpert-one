@@ -5,7 +5,7 @@ import { queryClient } from '@/lib/query-client'
 import { queryKeys } from '@/lib/query-keys'
 import { LOOKUP_STALE_TIME } from '@/lib/lookup-cache'
 import type { PageParams, Paginated } from '@/lib/pagination'
-import { statesResponseSchema } from '../schemas'
+import { stateResponseSchema, statesResponseSchema } from '../schemas'
 import type { StateRecord } from '../types'
 
 /**
@@ -101,4 +101,20 @@ export function ensureStates(): Promise<StateRecord[]> {
     queryFn: fetchStates,
     staleTime: LOOKUP_STALE_TIME,
   })
+}
+
+/**
+ * GET /user/states/:id — one state.
+ *
+ * For labelling a dropdown selection the loaded pages don't reach: an edit form
+ * holds a `state_id` from the record, and the row carrying its name may be
+ * several pages down the master. One request beats paging until it shows up.
+ */
+export async function fetchState(id: number): Promise<StateRecord> {
+  try {
+    const raw = await http.get<unknown>(endpoints.STATES.GET(id))
+    return toStateRecord(stateResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'State not found')
+  }
 }

@@ -4,10 +4,11 @@ import { ALL_ROWS, type PageParams } from '@/lib/pagination'
 import { fetchDocumentTypes } from './document-type-api'
 
 /**
- * GET /document-types — the document type master list.
+ * GET /user/document-types — the company's document type master, name A→Z.
  *
  * One limit/offset page — pass the params from `usePagination()`. Called with
- * no argument it returns the whole master, for dropdowns and history panels.
+ * no argument it returns the whole master — what the Document form's type
+ * dropdown asks for.
  */
 export function useDocumentTypes(params: PageParams = ALL_ROWS) {
   return useQuery({

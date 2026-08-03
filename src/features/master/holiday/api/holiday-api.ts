@@ -1,90 +1,139 @@
-import { mockDelay } from '@/lib/utils'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import type { HolidayFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { activeCompanyId } from '@/lib/active-company'
+import { HOLIDAY_DEFAULT_SORT } from '../constants'
+import { holidayResponseSchema, holidaysResponseSchema } from '../schemas'
+import { holidayToPayload, toHoliday } from '../lib/holiday-mappers'
+import type {
+  HolidayFormValues,
+  HolidayPayload,
+  HolidayUpdatePayload,
+} from '../schemas'
 import type { Holiday } from '../types'
 
 /**
- * In-memory holiday master store. No backend yet — records live here for the
- * session. Swap each function's body for the matching REST call when the API
- * lands; the signatures stay the same.
+ * Holidays — `/user/holidays`. The endpoint is offset-paginated
+ * (`?limit=&offset=`, limit capped at 100) and answers `{ items, total }`,
+ * which is exactly the shape the list screen pages in. `search` is matched
+ * server-side against the holiday name, and `sort` accepts `name`, `from_date`,
+ * `to_date` or `created_at`.
+ *
+ * Like leave types, the calendar is explicitly tenant-scoped: reads take a
+ * required `company_id` and a create carries it in the body, both taken from
+ * the company the session has active.
  */
 
-let holidays: Holiday[] = [
-  {
-    id: 1,
-    holidayName: 'TEST HOLIDAY123',
-    fromDate: '2026-04-30',
-    toDate: '2026-04-20',
-    createdBy: 'Roman Rings',
-    createdAt: '2026-04-28T09:24:55.098Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2026-04-28T11:26:49.275Z',
-  },
-  {
-    id: 2,
-    holidayName: 'DHULETI',
-    fromDate: '2026-03-01',
-    toDate: '2026-03-01',
-    createdBy: 'Rohan Sanghani',
-    createdAt: '2026-03-02T10:08:15.415Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2026-04-21T06:39:16.596Z',
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-function nextId(): number {
-  return holidays.reduce((max, h) => Math.max(max, h.id), 0) + 1
-}
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
-/** Map validated form values onto the stored fields shared by create + update. */
-function applyForm(values: HolidayFormValues) {
-  return {
-    holidayName: values.holidayName.trim(),
-    fromDate: values.fromDate,
-    toDate: values.toDate,
+/**
+ * GET /user/holidays — one page of the company's holiday calendar, in the
+ * requested order (newest record first unless the screen says otherwise).
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a request
+ * at 100, so that case walks the pages until `total` is covered.
+ *
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
+ */
+export async function fetchHolidays(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<Holiday>> {
+  try {
+    const query = {
+      company_id: activeCompanyId('holidays'),
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+      sort: params.sort ?? HOLIDAY_DEFAULT_SORT.id,
+      sort_by: params.sortBy ?? (HOLIDAY_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+    }
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.HOLIDAYS.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = holidaysResponseSchema.parse(raw)
+      return { items: items.map(toHoliday), total }
+    }
+
+    const collected: Holiday[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.HOLIDAYS.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = holidaysResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map(toHoliday))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load holidays.")
   }
 }
 
-/** Record fields the list screen's search box matches against. */
-const SEARCH_FIELDS: readonly (keyof Holiday)[] = ['holidayName']
-
-export async function fetchHolidays(params: PageParams = ALL_ROWS): Promise<Paginated<Holiday>> {
-  return mockDelay(paginate([...holidays], params, SEARCH_FIELDS))
-}
-
+/** GET /user/holidays/:id — one holiday, for the edit form. */
 export async function fetchHoliday(id: number): Promise<Holiday> {
-  const found = holidays.find((h) => h.id === id)
-  if (!found) throw new Error('Holiday not found')
-  return mockDelay({ ...found })
-}
-
-export async function createHoliday(values: HolidayFormValues): Promise<Holiday> {
-  const record: Holiday = {
-    id: nextId(),
-    ...applyForm(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.get<unknown>(endpoints.HOLIDAYS.GET(id))
+    return toHoliday(holidayResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'Holiday not found')
   }
-  holidays = [record, ...holidays]
-  return mockDelay({ ...record })
 }
 
+/** POST /user/holidays — add a holiday to the active company's calendar. */
+export async function createHoliday(values: HolidayFormValues): Promise<Holiday> {
+  try {
+    const raw = await http.post<unknown, HolidayPayload>(endpoints.HOLIDAYS.POST, {
+      company_id: activeCompanyId('holidays'),
+      ...holidayToPayload(values),
+    })
+    return toHoliday(holidayResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the holiday.")
+  }
+}
+
+/**
+ * PATCH /user/holidays/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the whole record.
+ */
 export async function updateHoliday(
   id: number,
   values: HolidayFormValues,
 ): Promise<Holiday> {
-  const index = holidays.findIndex((h) => h.id === id)
-  if (index === -1) throw new Error('Holiday not found')
-  const updated: Holiday = {
-    ...holidays[index],
-    ...applyForm(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, HolidayUpdatePayload>(
+      endpoints.HOLIDAYS.PATCH(id),
+      holidayToPayload(values),
+    )
+    return toHoliday(holidayResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the holiday.")
   }
-  holidays = holidays.map((h) => (h.id === id ? updated : h))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/holidays/:id — remove a holiday from the calendar. */
 export async function deleteHoliday(id: number): Promise<void> {
-  holidays = holidays.filter((h) => h.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.HOLIDAYS.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the holiday.")
+  }
 }

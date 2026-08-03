@@ -52,35 +52,39 @@ export function useOfficeAddressForm(screen: OfficeAddressScreen, id?: number) {
   const selectedDistrictId = useWatch({ control, name: 'districtId' })
 
   /**
-   * The names already on the record, so an edit form's saved state and district
-   * stay readable in their triggers before the page holding them loads. Only
-   * meaningful while the form still holds what the record had — once the user
-   * picks something else, that option came from a loaded page anyway. A name the
-   * API couldn't resolve reads as a dash, which is no use as a label.
+   * What the form currently holds, plus the record's own name for it when there
+   * is one. The dropdowns page in from the server, and a saved selection is
+   * usually further down the master than the first page reaches — handed the
+   * value, the select keeps that option visible either way: labelled from the
+   * record when the API sent a name, or read by id in the background when it
+   * didn't. A name the API couldn't resolve reads as a dash, which is no use as
+   * a label, so it's dropped and the by-id read fills in instead.
    */
-  const savedName = (id: number | null, name: string, current: string) =>
-    id !== null && String(id) === current && name && name !== '—'
-      ? { value: current, label: name }
-      : undefined
+  const chosen = (value: string, recordId: number | null, name: string) => {
+    if (!value) return undefined
+    const isSaved = recordId !== null && String(recordId) === value
+    const label = isSaved && name && name !== '—' ? name : undefined
+    return { value, label }
+  }
 
   // Both dropdowns page in as they're scrolled and search server-side, so the
   // form never pulls all ~36 states or the district master's ~800 rows up front.
   const state = useStateSelect({
-    selected: detail.data
-      ? savedName(detail.data.stateId, detail.data.stateName, selectedStateId)
-      : undefined,
+    selected: chosen(
+      selectedStateId,
+      detail.data?.stateId ?? null,
+      detail.data?.stateName ?? '',
+    ),
   })
 
   // Districts cascade off the state, and the API narrows them by `state_id`.
   const district = useDistrictSelect({
     stateId: selectedStateId ? Number(selectedStateId) : undefined,
-    selected: detail.data
-      ? savedName(
-          detail.data.districtId,
-          detail.data.districtName,
-          selectedDistrictId,
-        )
-      : undefined,
+    selected: chosen(
+      selectedDistrictId,
+      detail.data?.districtId ?? null,
+      detail.data?.districtName ?? '',
+    ),
   })
 
   /** Pick a state and clear its district — it won't exist under the new state. */

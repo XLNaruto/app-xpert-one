@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { fetchDocumentType } from './document-type-api'
 
-/** GET /document-types/:id — a single document type record. */
+/** GET /user/document-types/:id — a single document type record. */
 export function useDocumentType(id: number) {
   return useQuery({
     queryKey: queryKeys.documentType.detail(id),

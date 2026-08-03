@@ -7,7 +7,11 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { ALLOWANCE_DEDUCTION_LABELS, TYPE_LABELS } from '../constants'
+import {
+  ALLOWANCE_DEDUCTION_LABELS,
+  ALLOWANCE_DEDUCTION_SORT,
+  TYPE_LABELS,
+} from '../constants'
 import { useAllowanceDeductionList } from '../hooks/use-allowance-deduction-list'
 import type { AllowanceDeduction } from '../types'
 
@@ -21,6 +25,8 @@ export function AllowanceDeductionListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -54,16 +60,16 @@ export function AllowanceDeductionListPage() {
         ),
       },
       {
+        // The endpoint can't order by type, so this header stays plain text.
         accessorKey: 'type',
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={ALLOWANCE_DEDUCTION_LABELS.type}
-          />
-        ),
+        enableSorting: false,
+        header: ALLOWANCE_DEDUCTION_LABELS.type,
         cell: ({ row }) => TYPE_LABELS[row.original.type],
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: ALLOWANCE_DEDUCTION_SORT.name,
         accessorKey: 'name',
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -76,6 +82,7 @@ export function AllowanceDeductionListPage() {
         ),
       },
       {
+        id: ALLOWANCE_DEDUCTION_SORT.shortName,
         accessorKey: 'shortName',
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -87,7 +94,10 @@ export function AllowanceDeductionListPage() {
           <span className="font-mono text-sm">{row.original.shortName}</span>
         ),
       },
-      ...auditColumns<AllowanceDeduction>(),
+      // Only `created_at` is sortable; "Updated" renders without the control.
+      ...auditColumns<AllowanceDeduction>({
+        createdAt: ALLOWANCE_DEDUCTION_SORT.createdAt,
+      }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -115,9 +125,9 @@ export function AllowanceDeductionListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search name…"
+          searchPlaceholder="Search short code or name…"
           itemName="records"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -125,16 +135,25 @@ export function AllowanceDeductionListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Wallet}
-              title="No records yet"
-              description="Create your first allowance or deduction to get started."
+              title={search ? 'No matching records' : 'No records yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Create your first allowance or deduction to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Allowance / Deduction
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Allowance / Deduction
+                  </Button>
+                )
               }
             />
           }

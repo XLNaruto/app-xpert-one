@@ -2,6 +2,22 @@ import { amountLabel } from '@/lib/currency'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import type { PtRateFormValues, PtSlabFormValues } from './schemas'
 
+/**
+ * The `sort` values `/user/pt-rates` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ * State orders by `state_id`, the only handle the endpoint offers on it.
+ */
+export const PT_RATE_SORT = {
+  effectiveDate: 'effective_date',
+  state: 'state_id',
+  detail: 'detail',
+  createdAt: 'created_at',
+} as const
+
+/** Newest record first — the order the list opens in and reverts to. */
+export const PT_RATE_DEFAULT_SORT = { id: PT_RATE_SORT.createdAt, desc: true }
+
 /** `'0'` covers every month; the rest are calendar months in payroll order. */
 export const MONTH_OPTIONS: ComboboxOption[] = [
   { label: 'Every Month', value: '0' },

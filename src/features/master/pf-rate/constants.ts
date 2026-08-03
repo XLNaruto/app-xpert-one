@@ -1,6 +1,6 @@
 import { amountLabel } from '@/lib/currency'
 import type { PfRateFormValues } from './schemas'
-import type { PfRateValueField } from './types'
+import type { PfRateValueField, PfRateValueKey } from './types'
 
 /** Blank form values for a new PF rate slab. */
 export const EMPTY_PF_RATE_FORM: PfRateFormValues = {
@@ -24,6 +24,27 @@ export const EMPTY_PF_RATE_FORM: PfRateFormValues = {
 /** Tooltip copy for the info icon beside the W.E.F date. */
 export const WEF_HINT =
   'The date from which a PF rule or rate becomes applicable.'
+
+/**
+ * The `sort` values `/user/pf-rates` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ */
+export const PF_RATE_SORT = {
+  effectiveDate: 'effective_date',
+  createdAt: 'created_at',
+} as const
+
+/** Which slab value columns the endpoint can order by, by their API name. */
+export const PF_RATE_VALUE_SORT_FIELDS: Partial<Record<PfRateValueKey, string>> = {
+  wageCeilingLimit: 'wage_ceiling_limit',
+  employeePfContribution: 'employee_pf_contribution',
+  employerPfContribution: 'employer_pf_contribution',
+  deduction: 'deduction',
+}
+
+/** Newest record first — the order the list opens in and reverts to. */
+export const PF_RATE_DEFAULT_SORT = { id: PF_RATE_SORT.createdAt, desc: true }
 
 /**
  * Every numeric field on the slab, in the order the form and both tables show

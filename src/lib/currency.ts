@@ -10,6 +10,14 @@ import { useConfigStore } from '@/stores/config-store'
  * use them too.
  */
 
+/**
+ * The rupee sign, re-exported from the store that seeds itself with it. Import
+ * it from here instead of retyping `₹` anywhere — a fixed label, a placeholder,
+ * a chart axis. Anything rendering a live amount should call `formatAmount()` or
+ * `currencySymbol()` instead, so it follows a currency change.
+ */
+export { RUPEE_SIGN } from '@/stores/config-store'
+
 /** The configured currency symbol, e.g. `₹`. */
 export function currencySymbol(): string {
   return useConfigStore.getState().currencySymbol
@@ -30,4 +38,16 @@ export function currencyCode(): string {
  */
 export function amountLabel(label: string): string {
   return `${label} (${currencySymbol()})`
+}
+
+/**
+ * An amount as a table/detail cell reads it: the currency symbol, then the
+ * value in Indian digit grouping — `1500` → `₹1,500`, `8.5` → `₹8.5`.
+ *
+ * Trailing zeros are dropped (`12.00` → `₹12`) because these are keyed-in rate
+ * values, not ledger figures. Use it for every money value a list shows, so a
+ * column of amounts can't read as a column of plain numbers.
+ */
+export function formatAmount(value: number): string {
+  return `${currencySymbol()}${Number(value.toFixed(2)).toLocaleString('en-IN')}`
 }

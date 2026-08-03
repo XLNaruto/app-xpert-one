@@ -8,5 +8,8 @@ export {
   useUpdateBranch,
   useDeleteBranch,
 } from './api/use-branch-mutations'
-export type { Branch } from './types'
+export { branchOptions } from './lib/branch-mappers'
+export { useBranchActs } from './api/use-branch-acts'
+export { useSaveBranchActs } from './api/use-branch-acts-mutations'
+export type { Branch, BranchActs } from './types'
 export type { BranchFormValues } from './schemas'

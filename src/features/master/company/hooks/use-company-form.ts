@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import type { ComboboxOption } from '@/components/ui/combobox'
-import { useDistricts } from '@/features/master/district'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { useStateSelect } from '@/features/master/state'
+import { useDistrictSelect } from '@/features/master/district'
 import { companySchema, type CompanyFormValues } from '../schemas'
 import { EMPTY_COMPANY_FORM } from '../constants'
 import { useCompany } from '../api/use-company'
@@ -13,8 +14,9 @@ import { companyToFormValues } from '../lib/company-mappers'
 
 /**
  * Owns the company form for both create and edit. In edit mode (`id` set) it
- * loads the record, seeds the form and saves via PUT; create mode POSTs a fresh
- * record. The page consumes this and only lays out fields.
+ * loads the record, seeds the form and saves via PATCH; create mode POSTs a
+ * fresh record. Also feeds the state/district dropdowns, with district cascading
+ * off the chosen state. The page consumes this and only lays out fields.
  */
 export function useCompanyForm(id?: number) {
   const isEdit = id !== undefined
@@ -29,7 +31,6 @@ export function useCompanyForm(id?: number) {
     control,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<CompanyFormValues>({
@@ -42,21 +43,49 @@ export function useCompanyForm(id?: number) {
     if (detail.data) reset(companyToFormValues(detail.data))
   }, [detail.data, reset])
 
-  // District choices come from the district master, narrowed to the chosen state.
-  const { data: districts } = useDistricts()
-  const state = watch('state')
-  const districtOptions = useMemo<ComboboxOption[]>(
-    () =>
-      (districts ?? [])
-        .filter((d) => d.state === state)
-        .map((d) => ({ label: d.districtName, value: d.districtName })),
-    [districts, state],
-  )
+  const selectedStateId = useWatch({ control, name: 'stateId' })
+  const selectedDistrictId = useWatch({ control, name: 'districtId' })
 
-  /** Pick a state and clear the district — it may not exist under the new state. */
+  /**
+   * What the form currently holds, plus the record's own name for it when there
+   * is one. The dropdowns page in from the server, and a saved selection is
+   * usually further down the master than the first page reaches — handed the
+   * value, the select keeps that option visible either way: labelled from the
+   * record when the API sent a name, or read by id in the background when it
+   * didn't. A name the API couldn't resolve reads as a dash, which is no use as
+   * a label, so it's dropped and the by-id read fills in instead.
+   */
+  const chosen = (value: string, recordId: number | null, name: string) => {
+    if (!value) return undefined
+    const isSaved = recordId !== null && String(recordId) === value
+    const label = isSaved && name && name !== '—' ? name : undefined
+    return { value, label }
+  }
+
+  // Both dropdowns page in as they're scrolled and search server-side, so the
+  // form never pulls all ~36 states or the district master's ~800 rows up front.
+  const state = useStateSelect({
+    selected: chosen(
+      selectedStateId,
+      detail.data?.stateId ?? null,
+      detail.data?.stateName ?? '',
+    ),
+  })
+
+  // Districts cascade off the state, and the API narrows them by `state_id`.
+  const district = useDistrictSelect({
+    stateId: selectedStateId ? Number(selectedStateId) : undefined,
+    selected: chosen(
+      selectedDistrictId,
+      detail.data?.districtId ?? null,
+      detail.data?.districtName ?? '',
+    ),
+  })
+
+  /** Pick a state and clear its district — it won't exist under the new state. */
   const changeState = (value: string, onChange: (value: string) => void) => {
     onChange(value)
-    setValue('district', '')
+    setValue('districtId', '')
   }
 
   const goToList = () => navigate({ to: '/master/company' })
@@ -77,18 +106,27 @@ export function useCompanyForm(id?: number) {
     })
   })
 
+  // Reading this record was refused — not a broken screen, so the page shows the
+  // 403 screen with the server's reason rather than the form.
+  const isForbidden = isEdit && isForbiddenError(detail.error)
+
   return {
     register,
     control,
     errors,
-    districtOptions,
-    changeState,
     onSubmit,
     isEdit,
     isPending: isEdit ? updateCompany.isPending : createCompany.isPending,
     isLoading: isEdit && detail.isLoading,
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
+    /** Scroll-lazy dropdown props — spread straight onto `<Combobox>`. */
+    state,
+    district,
+    hasState: Boolean(selectedStateId),
+    changeState,
   }
 }

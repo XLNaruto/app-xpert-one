@@ -1,94 +1,156 @@
-import { mockDelay } from '@/lib/utils'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import type { DocumentTypeFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { activeCompanyId } from '@/lib/active-company'
+import { DOCUMENT_TYPE_DEFAULT_SORT } from '../constants'
+import {
+  documentTypeResponseSchema,
+  documentTypesResponseSchema,
+} from '../schemas'
+import { documentTypeToPayload, toDocumentType } from '../lib/document-type-mappers'
+import type {
+  DocumentTypeFormValues,
+  DocumentTypePayload,
+  DocumentTypeUpdatePayload,
+} from '../schemas'
 import type { DocumentType } from '../types'
 
 /**
- * In-memory document type master store. No backend yet — records live here for
- * the session. Swap each function's body for the matching REST call when the API
- * lands; the signatures stay the same.
+ * Document types — `/user/document-types`. The company's document categories and
+ * the parent of the document master: one exists before anything can be filed
+ * under it.
+ *
+ * The endpoint is offset-paginated (`?limit=&offset=`, limit capped at 200) and
+ * answers `{ items, total }`, which is exactly the shape the list screen pages
+ * in. `search` matches the type name server-side and `sort` accepts `name`,
+ * `created_at` or `updated_at`.
+ *
+ * Reads take a required `company_id` and a create carries it in the body, both
+ * taken from the company the session has active.
  */
 
-let documentTypes: DocumentType[] = [
-  {
-    id: 1,
-    typeName: 'Identity Proof',
-    createdBy: 'Roman Rings',
-    createdAt: '2026-03-04T09:12:33.104Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-  {
-    id: 2,
-    typeName: 'Address Proof',
-    createdBy: 'Rohan Sanghani',
-    createdAt: '2026-03-04T09:18:47.522Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-  {
-    id: 3,
-    typeName: 'Education',
-    createdBy: 'Rohan Sanghani',
-    createdAt: '2026-03-17T12:40:19.771Z',
-    updatedBy: 'Rohan Sanghani',
-    updatedAt: '2026-04-02T07:22:51.008Z',
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 200
 
-function nextId(): number {
-  return documentTypes.reduce((max, d) => Math.max(max, d.id), 0) + 1
-}
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
-/** Map validated form values onto the stored fields shared by create + update. */
-function applyForm(values: DocumentTypeFormValues) {
-  return {
-    typeName: values.typeName.trim(),
+/**
+ * GET /user/document-types — one page of the company's types, in the requested
+ * order (name A→Z unless the screen says otherwise).
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master" — what the Document
+ * form's type dropdown asks for. The API caps a request at 200, so that case
+ * walks the pages until `total` is covered.
+ *
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
+ */
+export async function fetchDocumentTypes(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<DocumentType>> {
+  try {
+    const query = {
+      company_id: activeCompanyId('document types'),
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+      sort: params.sort ?? DOCUMENT_TYPE_DEFAULT_SORT.id,
+      sort_by: params.sortBy ?? (DOCUMENT_TYPE_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+    }
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.DOCUMENT_TYPES.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = documentTypesResponseSchema.parse(raw)
+      return { items: items.map(toDocumentType), total }
+    }
+
+    const collected: DocumentType[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.DOCUMENT_TYPES.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = documentTypesResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map(toDocumentType))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load document types.")
   }
 }
 
-/** Record fields the list screen's search box matches against. */
-const SEARCH_FIELDS: readonly (keyof DocumentType)[] = ['typeName']
-
-export async function fetchDocumentTypes(params: PageParams = ALL_ROWS): Promise<Paginated<DocumentType>> {
-  return mockDelay(paginate([...documentTypes], params, SEARCH_FIELDS))
-}
-
+/** GET /user/document-types/:id — one type, for the edit form. */
 export async function fetchDocumentType(id: number): Promise<DocumentType> {
-  const found = documentTypes.find((d) => d.id === id)
-  if (!found) throw new Error('Document type not found')
-  return mockDelay({ ...found })
+  try {
+    const raw = await http.get<unknown>(endpoints.DOCUMENT_TYPES.GET(id))
+    return toDocumentType(documentTypeResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'Document type not found')
+  }
 }
 
+/**
+ * POST /user/document-types — add a type to the active company's master. The
+ * name must be unique within the company; a repeat comes back 409 and the form
+ * shows the server's message.
+ */
 export async function createDocumentType(
   values: DocumentTypeFormValues,
 ): Promise<DocumentType> {
-  const record: DocumentType = {
-    id: nextId(),
-    ...applyForm(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.post<unknown, DocumentTypePayload>(
+      endpoints.DOCUMENT_TYPES.POST,
+      {
+        company_id: activeCompanyId('document types'),
+        ...documentTypeToPayload(values),
+      },
+    )
+    return toDocumentType(documentTypeResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the document type.")
   }
-  documentTypes = [record, ...documentTypes]
-  return mockDelay({ ...record })
 }
 
+/** PATCH /user/document-types/:id — rename a type; the owning company is fixed. */
 export async function updateDocumentType(
   id: number,
   values: DocumentTypeFormValues,
 ): Promise<DocumentType> {
-  const index = documentTypes.findIndex((d) => d.id === id)
-  if (index === -1) throw new Error('Document type not found')
-  const updated: DocumentType = {
-    ...documentTypes[index],
-    ...applyForm(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, DocumentTypeUpdatePayload>(
+      endpoints.DOCUMENT_TYPES.PATCH(id),
+      documentTypeToPayload(values),
+    )
+    return toDocumentType(documentTypeResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the document type.")
   }
-  documentTypes = documentTypes.map((d) => (d.id === id ? updated : d))
-  return mockDelay({ ...updated })
 }
 
+/**
+ * DELETE /user/document-types/:id — remove a type from the master.
+ *
+ * Refused with 409 while documents are still filed under it; that message comes
+ * from the server and is what the delete dialog surfaces.
+ */
 export async function deleteDocumentType(id: number): Promise<void> {
-  documentTypes = documentTypes.filter((d) => d.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.DOCUMENT_TYPES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the document type.")
+  }
 }

@@ -7,7 +7,11 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
-import { ESIC_RATE_VALUE_FIELDS } from '../constants'
+import {
+  ESIC_RATE_SORT,
+  ESIC_RATE_VALUE_FIELDS,
+  ESIC_RATE_VALUE_SORT_FIELDS,
+} from '../constants'
 import {
   formatEffectiveDate,
   formatEsicRateValue,
@@ -24,6 +28,10 @@ export function EsicRateListPage() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -57,6 +65,9 @@ export function EsicRateListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: ESIC_RATE_SORT.effectiveDate,
         accessorKey: 'wef',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Effective Date" />
@@ -69,32 +80,36 @@ export function EsicRateListPage() {
         ),
       },
       // Every rate/limit column, generated from the one field descriptor the
-      // form also reads.
-      ...ESIC_RATE_VALUE_FIELDS.map<ColumnDef<EsicRate>>((field) => ({
-        accessorKey: field.key,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={field.title} />
-        ),
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => formatEsicRateValue(row.original[field.key], field.kind),
-      })),
+      // form also reads. Only the four the endpoint can order by offer a sort
+      // control.
+      ...ESIC_RATE_VALUE_FIELDS.map<ColumnDef<EsicRate>>((field) => {
+        const sortId = ESIC_RATE_VALUE_SORT_FIELDS[field.key]
+        return {
+          accessorKey: field.key,
+          ...(sortId ? { id: sortId } : { enableSorting: false }),
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={field.title} />
+          ),
+          meta: { className: 'whitespace-nowrap' },
+          cell: ({ row }) => formatEsicRateValue(row.original[field.key], field.kind),
+        }
+      }),
       {
         accessorKey: 'contributionEndPeriod1',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Contribution Period 1" />
-        ),
+        enableSorting: false,
+        header: 'Contribution Period 1',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatMonth(row.original.contributionEndPeriod1),
       },
       {
         accessorKey: 'contributionEndPeriod2',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Contribution Period 2" />
-        ),
+        enableSorting: false,
+        header: 'Contribution Period 2',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatMonth(row.original.contributionEndPeriod2),
       },
-      ...auditColumns<EsicRate>(),
+      // The API tracks no `updated_at`, and only `created_at` is sortable.
+      ...auditColumns<EsicRate>({ createdAt: ESIC_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -118,27 +133,40 @@ export function EsicRateListPage() {
           {error instanceof Error ? error.message : "Couldn't load ESIC rates."}
         </p>
       ) : (
+        /* Search and sort are both server-side, so they span every page. */
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
+          searchPlaceholder="Search ESIC rate…"
           itemName="ESIC rates"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
           total={total}
           onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={HeartPulse}
-              title="No ESIC rates yet"
-              description="Add your first ESIC rate slab to get started."
+              title={search ? 'No matching ESIC rates' : 'No ESIC rates yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Add your first ESIC rate slab to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add ESIC Rate
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add ESIC Rate
+                  </Button>
+                )
               }
             />
           }

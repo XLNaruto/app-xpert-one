@@ -1,104 +1,153 @@
-import { mockDelay } from '@/lib/utils'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import type { AllowanceDeductionFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { activeCompanyId } from '@/lib/active-company'
+import { ALLOWANCE_DEDUCTION_DEFAULT_SORT } from '../constants'
+import { payComponentResponseSchema, payComponentsResponseSchema } from '../schemas'
+import {
+  allowanceDeductionToPayload,
+  toAllowanceDeduction,
+} from '../lib/allowance-deduction-mappers'
+import type {
+  AllowanceDeductionFormValues,
+  PayComponentPayload,
+  PayComponentUpdatePayload,
+} from '../schemas'
 import type { AllowanceDeduction } from '../types'
 
 /**
- * In-memory allowance / deduction master store. No backend yet — records live
- * here for the session. Swap each function's body for the matching REST call
- * when the API lands; the signatures stay the same.
+ * Allowances and deductions — `/user/pay-components`. Both live in one resource,
+ * told apart by the record's `type`, so this screen lists the whole payroll
+ * catalog rather than filtering it.
+ *
+ * The endpoint is offset-paginated (`?limit=&offset=`, limit capped at 100) and
+ * answers `{ items, total }`, which is exactly the shape the list screen pages
+ * in. `search` is matched server-side against the short code and the name, and
+ * `sort` accepts `short_code`, `name` or `created_at`.
+ *
+ * Reads take a required `company_id` and a create carries it in the body, both
+ * taken from the company the session has active.
  */
 
-let records: AllowanceDeduction[] = [
-  {
-    id: 1,
-    type: 'ALLOWANCE',
-    name: 'House Rent Allowance',
-    shortName: 'HRA',
-    createdBy: 'Roman Rings',
-    createdAt: '2026-03-11T10:12:04.221Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-  {
-    id: 2,
-    type: 'ALLOWANCE',
-    name: 'Conveyance Allowance',
-    shortName: 'CA',
-    createdBy: 'Rohan Sanghani',
-    createdAt: '2026-03-14T07:41:19.508Z',
-    updatedBy: 'Rohan Sanghani',
-    updatedAt: '2026-04-02T12:05:33.870Z',
-  },
-  {
-    id: 3,
-    type: 'DEDUCTION',
-    name: 'Professional Tax',
-    shortName: 'PT',
-    createdBy: 'Rohan Sanghani',
-    createdAt: '2026-03-20T09:02:55.113Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-function nextId(): number {
-  return records.reduce((max, r) => Math.max(max, r.id), 0) + 1
-}
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
-/** Map validated form values onto the stored fields shared by create + update. */
-function applyForm(values: AllowanceDeductionFormValues) {
-  return {
-    type: values.type,
-    name: values.name.trim(),
-    shortName: values.shortName.trim(),
+/** What `activeCompanyId` calls this master in its "select a company" message. */
+const WHAT = 'allowances and deductions'
+
+/**
+ * GET /user/pay-components — one page of the company's payroll catalog, in the
+ * requested order (short code A→Z unless the screen says otherwise).
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a request
+ * at 100, so that case walks the pages until `total` is covered.
+ *
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
+ */
+export async function fetchAllowanceDeductions(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<AllowanceDeduction>> {
+  try {
+    const query = {
+      company_id: activeCompanyId(WHAT),
+      ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+      sort: params.sort ?? ALLOWANCE_DEDUCTION_DEFAULT_SORT.id,
+      sort_by:
+        params.sortBy ?? (ALLOWANCE_DEDUCTION_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+    }
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.PAY_COMPONENTS.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = payComponentsResponseSchema.parse(raw)
+      return { items: items.map(toAllowanceDeduction), total }
+    }
+
+    const collected: AllowanceDeduction[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.PAY_COMPONENTS.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = payComponentsResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map(toAllowanceDeduction))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load allowances and deductions.")
   }
 }
 
-/** Record fields the list screen's search box matches against. */
-const SEARCH_FIELDS: readonly (keyof AllowanceDeduction)[] = ['name', 'shortName']
-
-export async function fetchAllowanceDeductions(params: PageParams = ALL_ROWS): Promise<Paginated<AllowanceDeduction>> {
-  return mockDelay(paginate([...records], params, SEARCH_FIELDS))
+/** GET /user/pay-components/:id — one component, for the edit form. */
+export async function fetchAllowanceDeduction(id: number): Promise<AllowanceDeduction> {
+  try {
+    const raw = await http.get<unknown>(endpoints.PAY_COMPONENTS.GET(id))
+    return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'Allowance / deduction not found')
+  }
 }
 
-export async function fetchAllowanceDeduction(
-  id: number,
-): Promise<AllowanceDeduction> {
-  const found = records.find((r) => r.id === id)
-  if (!found) throw new Error('Allowance / deduction not found')
-  return mockDelay({ ...found })
-}
-
+/** POST /user/pay-components — add a component to the company's catalog. */
 export async function createAllowanceDeduction(
   values: AllowanceDeductionFormValues,
 ): Promise<AllowanceDeduction> {
-  const record: AllowanceDeduction = {
-    id: nextId(),
-    ...applyForm(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.post<unknown, PayComponentPayload>(
+      endpoints.PAY_COMPONENTS.POST,
+      {
+        company_id: activeCompanyId(WHAT),
+        ...allowanceDeductionToPayload(values),
+      },
+    )
+    return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the record.")
   }
-  records = [record, ...records]
-  return mockDelay({ ...record })
 }
 
+/**
+ * PATCH /user/pay-components/:id — the endpoint accepts a partial body, but the
+ * form always submits every field, so we send the whole record.
+ */
 export async function updateAllowanceDeduction(
   id: number,
   values: AllowanceDeductionFormValues,
 ): Promise<AllowanceDeduction> {
-  const index = records.findIndex((r) => r.id === id)
-  if (index === -1) throw new Error('Allowance / deduction not found')
-  const updated: AllowanceDeduction = {
-    ...records[index],
-    ...applyForm(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, PayComponentUpdatePayload>(
+      endpoints.PAY_COMPONENTS.PATCH(id),
+      allowanceDeductionToPayload(values),
+    )
+    return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the record.")
   }
-  records = records.map((r) => (r.id === id ? updated : r))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/pay-components/:id — remove a component from the catalog. */
 export async function deleteAllowanceDeduction(id: number): Promise<void> {
-  records = records.filter((r) => r.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.PAY_COMPONENTS.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the record.")
+  }
 }

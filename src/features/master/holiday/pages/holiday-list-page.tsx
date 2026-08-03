@@ -8,7 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { formatDate } from '@/lib/utils'
-import { HOLIDAY_LABELS } from '../constants'
+import { HOLIDAY_LABELS, HOLIDAY_SORT } from '../constants'
 import { useHolidayList } from '../hooks/use-holiday-list'
 import type { Holiday } from '../types'
 
@@ -22,6 +22,8 @@ export function HolidayListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -55,6 +57,9 @@ export function HolidayListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: HOLIDAY_SORT.holidayName,
         accessorKey: 'holidayName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={HOLIDAY_LABELS.holidayName} />
@@ -64,20 +69,25 @@ export function HolidayListPage() {
         ),
       },
       {
+        id: HOLIDAY_SORT.fromDate,
         accessorKey: 'fromDate',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={HOLIDAY_LABELS.fromDate} />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatDate(row.original.fromDate),
       },
       {
+        id: HOLIDAY_SORT.toDate,
         accessorKey: 'toDate',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title={HOLIDAY_LABELS.toDate} />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatDate(row.original.toDate),
       },
-      ...auditColumns<Holiday>(),
+      // Only `created_at` is sortable; "Updated" renders without the control.
+      ...auditColumns<Holiday>({ createdAt: HOLIDAY_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -107,7 +117,7 @@ export function HolidayListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search holiday…"
           itemName="holidays"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -115,16 +125,25 @@ export function HolidayListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={CalendarHeart}
-              title="No holidays yet"
-              description="Create your first holiday to get started."
+              title={search ? 'No matching holidays' : 'No holidays yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Create your first holiday to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Holiday
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Holiday
+                  </Button>
+                )
               }
             />
           }

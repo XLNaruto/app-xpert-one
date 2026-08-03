@@ -66,13 +66,3 @@ export function formatTimestamp(value: string | null): string {
 export function formatMonth(month: string): string {
   return MONTH_OPTIONS.find((option) => option.value === month)?.label ?? '—'
 }
-
-/** Group-separated amount, e.g. `1,500`. */
-export function formatAmount(value: number): string {
-  return value.toLocaleString('en-IN')
-}
-
-/** Newest effective date first — the order the list and history both read in. */
-export function sortByEffectiveDateDesc(rates: LwfRate[]): LwfRate[] {
-  return [...rates].sort((a, b) => b.wef.localeCompare(a.wef))
-}

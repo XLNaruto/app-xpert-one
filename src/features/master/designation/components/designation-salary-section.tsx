@@ -14,6 +14,7 @@ import { FormSection } from '@/components/common/form-section'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { amountLabel } from '@/lib/currency'
 import { formatCurrency } from '@/lib/utils'
 import {
   ACT_AMOUNT_TYPE_OPTIONS,
@@ -115,12 +116,12 @@ export function DesignationSalarySection({
         />
       </Field>
       <Field
-        label="Basic Pay (₹)"
+        label={amountLabel('Basic Pay')}
         required
         hint="The monthly basic on which PF, ESIC and every percentage allowance are calculated."
         error={errors.basicPay?.message}
       >
-        <Input inputMode="decimal" placeholder="Basic Pay (₹)" {...register('basicPay')} />
+        <Input inputMode="decimal" placeholder={amountLabel('Basic Pay')} {...register('basicPay')} />
       </Field>
       <Field
         label="Working Day Calculation"
@@ -184,13 +185,13 @@ export function DesignationSalarySection({
         />
       </Field>
       <Field
-        label="Extra Day Amount Per Day (₹)"
+        label={amountLabel('Extra Day Amount Per Day')}
         hint="Paid for each day worked beyond the designation's working days."
         error={errors.extraDayAmountPerDay?.message}
       >
         <Input
           inputMode="decimal"
-          placeholder="Extra Day Amount Per Day (₹)"
+          placeholder={amountLabel('Extra Day Amount Per Day')}
           {...register('extraDayAmountPerDay')}
         />
       </Field>
@@ -406,10 +407,10 @@ export function DesignationSalarySection({
               />
             </Field>
             {ptActType === 'Manual' && (
-              <Field label="PT Amount (₹)" error={errors.ptAmount?.message}>
+              <Field label={amountLabel('PT Amount')} error={errors.ptAmount?.message}>
                 <Input
                   inputMode="decimal"
-                  placeholder="PT Amount (₹)"
+                  placeholder={amountLabel('PT Amount')}
                   {...register('ptAmount')}
                 />
               </Field>
@@ -447,10 +448,10 @@ export function DesignationSalarySection({
               />
             </Field>
             {lwfActType === 'Manual' && (
-              <Field label="LWF Amount (₹)" error={errors.lwfAmount?.message}>
+              <Field label={amountLabel('LWF Amount')} error={errors.lwfAmount?.message}>
                 <Input
                   inputMode="decimal"
-                  placeholder="LWF Amount (₹)"
+                  placeholder={amountLabel('LWF Amount')}
                   {...register('lwfAmount')}
                 />
               </Field>
@@ -491,7 +492,7 @@ export function DesignationSalarySection({
               />
             </Field>
             <Field
-              label="OT Rate Per Hour (₹)"
+              label={amountLabel('OT Rate Per Hour')}
               hint={
                 overtimeCalculationType === 'Manual'
                   ? 'The flat rate paid for each overtime hour.'
@@ -501,7 +502,7 @@ export function DesignationSalarySection({
             >
               <Input
                 inputMode="decimal"
-                placeholder="OT Rate Per Hour (₹)"
+                placeholder={amountLabel('OT Rate Per Hour')}
                 {...register('overtimeRatePerHour')}
               />
             </Field>
@@ -515,7 +516,7 @@ export function DesignationSalarySection({
 /** The PF value field is a percentage or a rupee amount, per the deduction type. */
 function pfValueLabel(pfDeductionType: string): string {
   return pfDeductionType === 'Fixed'
-    ? 'PF Deduction Amount (₹)'
+    ? amountLabel('PF Deduction Amount')
     : 'PF Deduction Percentage (%)'
 }
 

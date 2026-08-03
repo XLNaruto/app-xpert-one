@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Forbidden } from '@/features/error'
 import { DOCUMENT_LABELS } from '../constants'
 import { useDocumentForm } from '../hooks/use-document-form'
 
@@ -40,8 +42,15 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
   } = useDocumentForm(documentId)
+
+  // Reading this record was refused — show the 403 screen, not a broken form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -79,18 +88,18 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
               <FormSection
                 icon={FileText}
                 title="Document Detail"
-                description="Document type and name"
+                description="Document type, name and whether it is mandatory"
                 className="mt-0"
               />
 
               <Field
                 label={DOCUMENT_LABELS.documentType}
                 required
-                error={errors.documentType?.message}
+                error={errors.documentTypeId?.message}
               >
                 <Controller
                   control={control}
-                  name="documentType"
+                  name="documentTypeId"
                   render={({ field }) => (
                     <Combobox
                       className="w-full"
@@ -116,6 +125,28 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
                 <Input
                   placeholder={DOCUMENT_LABELS.documentName}
                   {...register('documentName')}
+                />
+              </Field>
+
+              {/* Mandatory for every employee — `is_required` on the record. */}
+              <Field label={DOCUMENT_LABELS.isRequired}>
+                <Controller
+                  control={control}
+                  name="isRequired"
+                  render={({ field }) => (
+                    <div className="flex h-10 items-center gap-3">
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        aria-label="Required for every employee"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {field.value
+                          ? 'Every employee must submit this'
+                          : 'Optional for employees'}
+                      </span>
+                    </div>
+                  )}
                 />
               </Field>
 

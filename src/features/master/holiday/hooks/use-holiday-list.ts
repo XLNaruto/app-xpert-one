@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { HOLIDAY_DEFAULT_SORT } from '../constants'
 import { useHolidays } from '../api/use-holidays'
 import { useDeleteHoliday } from '../api/use-holiday-mutations'
 import type { Holiday } from '../types'
@@ -14,8 +16,16 @@ import type { Holiday } from '../types'
  */
 export function useHolidayList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, HOLIDAY_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useHolidays(params)
   const deleteHoliday = useDeleteHoliday()
 
@@ -48,6 +58,10 @@ export function useHolidayList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

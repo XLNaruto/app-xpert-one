@@ -2,6 +2,14 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createIdbStorage } from '@/lib/idb-storage'
 
+/**
+ * The rupee sign — the portal's default currency symbol, and the one place the
+ * glyph itself is written. It lives here, with the state it seeds, so
+ * `lib/currency` (which reads this store) can re-export it without the two
+ * modules importing each other. Feature code imports it from `@/lib/currency`.
+ */
+export const RUPEE_SIGN = '₹'
+
 interface ConfigState {
   /**
    * Base URL for building media/asset URLs from the relative paths the API
@@ -32,7 +40,7 @@ export const useConfigStore = create<ConfigState>()(
     (set) => ({
       mediaBaseUrl: '',
       setMediaBaseUrl: (mediaBaseUrl) => set({ mediaBaseUrl }),
-      currencySymbol: '₹',
+      currencySymbol: RUPEE_SIGN,
       currencyCode: 'INR',
       setCurrency: ({ symbol, code }) =>
         set({ currencySymbol: symbol, currencyCode: code }),

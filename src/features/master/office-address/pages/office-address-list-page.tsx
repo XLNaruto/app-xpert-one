@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { OFFICE_ADDRESS_SORT } from '../constants'
 import { useOfficeAddressList } from '../hooks/use-office-address-list'
 import type { OfficeAddress, OfficeAddressScreen } from '../types'
 
@@ -25,6 +26,8 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -60,6 +63,9 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: OFFICE_ADDRESS_SORT.officeCode,
         accessorKey: 'officeCode',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Office Code" />
@@ -72,6 +78,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         ),
       },
       {
+        id: OFFICE_ADDRESS_SORT.officeName,
         accessorKey: 'officeName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Office Name" />
@@ -80,23 +87,27 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
       },
       {
         accessorKey: 'email',
+        enableSorting: false,
         header: 'Email',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => row.original.email || '—',
       },
       {
         accessorKey: 'stateName',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="State" />,
+        enableSorting: false,
+        header: 'State',
         meta: { className: 'whitespace-nowrap' },
       },
       {
         accessorKey: 'districtName',
+        enableSorting: false,
         header: 'District',
         meta: { className: 'whitespace-nowrap' },
       },
       {
+        id: OFFICE_ADDRESS_SORT.city,
         accessorKey: 'city',
-        header: 'City',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="City" />,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => row.original.city || '—',
       },
@@ -105,15 +116,15 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         ? [
             {
               accessorKey: 'officeType',
-              header: ({ column }) => (
-                <DataTableColumnHeader column={column} title="Office Type" />
-              ),
+              enableSorting: false,
+              header: 'Office Type',
               meta: { className: 'whitespace-nowrap' },
               cell: ({ row }) => row.original.officeType || '—',
             } satisfies ColumnDef<OfficeAddress>,
           ]
         : []),
-      ...auditColumns<OfficeAddress>(),
+      // The API tracks no `updated_at`, and only `created_at` is sortable.
+      ...auditColumns<OfficeAddress>({ createdAt: OFFICE_ADDRESS_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [screen.hasOfficeType],
@@ -153,7 +164,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
           isLoading={isLoading}
           searchPlaceholder={`Search ${screen.shortLabel}…`}
           itemName={screen.recordsLabel}
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -161,16 +172,23 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={screen.icon}
-              title={screen.emptyTitle}
-              description={screen.emptyDescription}
+              title={search ? `No matching ${screen.recordsLabel}` : screen.emptyTitle}
+              description={
+                search ? 'Try a different search term.' : screen.emptyDescription
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  {addLabel}
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    {addLabel}
+                  </Button>
+                )
               }
             />
           }

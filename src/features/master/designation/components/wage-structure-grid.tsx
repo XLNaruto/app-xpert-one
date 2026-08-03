@@ -9,6 +9,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarDays, Trash2, UserPen } from 'lucide-react'
 import { MonthPicker } from '@/components/ui/month-picker'
+import { amountLabel } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import {
   WAGE_ACT_TYPE_OPTIONS,
@@ -172,13 +173,13 @@ const COLUMNS: WageColumn[] = [
   },
   {
     key: 'wagePerDay',
-    label: 'Wage/Day (₹)',
+    label: amountLabel('Wage/Day'),
     width: 126,
     hint: 'Captured on a daily wage; on a monthly one it is the basic spread over the 26 statutory paid days, and disabled.',
   },
   {
     key: 'extraDay',
-    label: 'Extra Day Amount (₹)',
+    label: amountLabel('Extra Day Amount'),
     width: 116,
     hint: 'Paid for each day worked beyond the row’s working days.',
   },
@@ -208,7 +209,7 @@ const COLUMNS: WageColumn[] = [
   { key: 'otCalcType', label: 'Calc Type', group: 'overtime', width: 102 },
   {
     key: 'otRate',
-    label: 'Rate/Hr (₹)',
+    label: amountLabel('Rate/Hr'),
     group: 'overtime',
     width: 124,
     hint: 'Derived on “Auto”, entered on “Manual”.',
@@ -259,7 +260,7 @@ const COLUMNS: WageColumn[] = [
   { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
   {
     key: 'ptAmt',
-    label: 'Amt (₹)',
+    label: amountLabel('Amt'),
     group: 'pt',
     width: 94,
     hint: 'Asked only when the type is “Manual”.',
@@ -269,7 +270,7 @@ const COLUMNS: WageColumn[] = [
   { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
   {
     key: 'lwfAmt',
-    label: 'Amt (₹)',
+    label: amountLabel('Amt'),
     group: 'lwf',
     width: 94,
     hint: 'Asked only when the type is “Manual”.',

@@ -1,4 +1,4 @@
-import { ArrowLeft, History, Save } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden } from '@/features/error'
 import { LwfRateFormFields } from '../components/lwf-rate-form-fields'
-import { LwfRateHistoryTable } from '../components/lwf-rate-history-table'
 import { useLwfRateForm } from '../hooks/use-lwf-rate-form'
 
 interface LwfRateCreatePageProps {
@@ -18,9 +17,8 @@ interface LwfRateCreatePageProps {
 }
 
 /**
- * Create/edit an LWF rate, with the selected state's rate history below the
- * form. One screen for both: a `?data=` token edits the rate it carries, no
- * token adds a new one effective from its W.E.F date.
+ * Create/edit an LWF rate. One screen for both: a `?data=` token edits the rate
+ * it carries, no token adds a new one effective from its W.E.F date.
  */
 export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
   // Decrypt the params from the URL; missing/malformed → create mode.
@@ -39,9 +37,6 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
     goToList,
     stateOptions,
     isStatesLoading,
-    historyRows,
-    isHistoryLoading,
-    selectedStateName,
     isForbidden,
     forbiddenMessage,
   } = useLwfRateForm(lwfRateId)
@@ -110,19 +105,6 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
           )}
         </CardContent>
       </Card>
-
-      {/* History is per state — nothing to show until one is picked. */}
-      {selectedStateName && (
-        <section className="mt-6">
-          <div className="mb-3 flex items-center gap-2">
-            <History className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">
-              LWF Rate History — {selectedStateName}
-            </h2>
-          </div>
-          <LwfRateHistoryTable rows={historyRows} isLoading={isHistoryLoading} />
-        </section>
-      )}
     </div>
   )
 }

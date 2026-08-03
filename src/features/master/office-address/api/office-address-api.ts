@@ -4,6 +4,7 @@ import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
 import { ensureStates } from '@/features/master/state'
 import { ensureDistricts } from '@/features/master/district'
+import { OFFICE_ADDRESS_DEFAULT_SORT } from '../constants'
 import {
   officeAddressResponseSchema,
   officeAddressesResponseSchema,
@@ -61,12 +62,15 @@ async function recordNames(
 }
 
 /**
- * Every office address matching `search`, across all five `office_for` values.
+ * Every office address matching `search`, in the requested order, across all
+ * five `office_for` values.
  *
  * The endpoint has no `office_for` filter, so a screen can't ask the server for
- * just its own rows — see `fetchOfficeAddresses` for what that costs.
+ * just its own rows — see `fetchOfficeAddresses` for what that costs. Order is
+ * always sent: this walks every page, and an unordered walk can hand back the
+ * same record twice while missing another.
  */
-async function fetchAllOfficeAddresses(search?: string): Promise<OfficeAddress[]> {
+async function fetchAllOfficeAddresses(params: PageParams): Promise<OfficeAddress[]> {
   const records: OfficeAddressResponse[] = []
   let total = 0
 
@@ -75,7 +79,9 @@ async function fetchAllOfficeAddresses(search?: string): Promise<OfficeAddress[]
       params: {
         limit: MAX_LIMIT,
         offset: page * MAX_LIMIT,
-        ...(search?.trim() ? { search: search.trim() } : {}),
+        ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+        sort: params.sort ?? OFFICE_ADDRESS_DEFAULT_SORT.id,
+        sort_by: params.sortBy ?? (OFFICE_ADDRESS_DEFAULT_SORT.desc ? 'desc' : 'asc'),
       },
     })
     const parsed = officeAddressesResponseSchema.parse(raw)
@@ -101,16 +107,18 @@ async function fetchAllOfficeAddresses(search?: string): Promise<OfficeAddress[]
  * pages (100 at a time), keep the matching `office_for` and page the remainder
  * with `paginate()` — the same contract the screen would get from the server.
  *
- * `search` *is* supported server-side, so it's forwarded and spans every page.
+ * `search` and `sort` *are* supported server-side, so both are forwarded and
+ * span every page; filtering and slicing preserve the order they come back in.
  */
 export async function fetchOfficeAddresses(
   officeFor: OfficeFor,
   params: PageParams = ALL_ROWS,
 ): Promise<Paginated<OfficeAddress>> {
   try {
-    const all = await fetchAllOfficeAddresses(params.search)
+    const all = await fetchAllOfficeAddresses(params)
     const mine = all.filter((address) => address.officeFor === officeFor)
-    // The server already applied `search`, so `paginate` only slices here.
+    // The server already applied `search` and the ordering, so `paginate` only
+    // slices here.
     return paginate(mine, params)
   } catch (error) {
     throw toApiError(error, "Couldn't load office addresses.")

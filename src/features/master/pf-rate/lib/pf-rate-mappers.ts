@@ -1,4 +1,5 @@
 import { format, isValid, parseISO } from 'date-fns'
+import { formatAmount } from '@/lib/currency'
 import type { AuditFields } from '@/types/audit'
 import { PF_RATE_VALUE_FIELDS } from '../constants'
 import type { PfRateFormValues, PfRatePayload, PfRateResponse } from '../schemas'
@@ -86,14 +87,14 @@ export function formatEffectiveDate(wef: string): string {
 
 /**
  * Render one slab value the way its column expects: percentages carry a sign,
- * amounts are grouped, ages read as plain years. Trailing zeros are dropped so
- * 12.00 shows as 12 and 8.33 stays 8.33.
+ * amounts carry the currency symbol, ages read as plain years. Trailing zeros
+ * are dropped so 12.00 shows as 12 and 8.33 stays 8.33.
  */
 export function formatPfRateValue(value: number, kind: PfRateValueField['kind']): string {
   const trimmed = Number(value.toFixed(2))
   if (kind === 'percent') return `${trimmed}%`
   if (kind === 'age') return String(trimmed)
-  return trimmed.toLocaleString('en-IN')
+  return formatAmount(value)
 }
 
 /**
@@ -106,9 +107,4 @@ export function totalEmployerContribution(
 ): string {
   const total = Number(employerPf || 0) + Number(employerFpf || 0)
   return Number.isFinite(total) ? String(Number(total.toFixed(2))) : '0'
-}
-
-/** Newest effective date first — the order both the list and history read in. */
-export function sortByEffectiveDateDesc(rates: PfRate[]): PfRate[] {
-  return [...rates].sort((a, b) => b.wef.localeCompare(a.wef))
 }

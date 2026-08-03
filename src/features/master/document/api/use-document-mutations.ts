@@ -3,7 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { DocumentFormValues } from '../schemas'
 import { createDocument, deleteDocument, updateDocument } from './document-api'
 
-/** POST /documents — create a document, then refresh the list. */
+/** POST /user/documents — create a document, then refresh the list. */
 export function useCreateDocument() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -14,7 +14,7 @@ export function useCreateDocument() {
   })
 }
 
-/** PUT /documents/:id — update a document, then refresh the list + detail. */
+/** PATCH /user/documents/:id — update a document, then refresh the list + detail. */
 export function useUpdateDocument(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -25,7 +25,7 @@ export function useUpdateDocument(id: number) {
   })
 }
 
-/** DELETE /documents/:id — remove a document, then refresh the list. */
+/** DELETE /user/documents/:id — remove a document, then refresh the list. */
 export function useDeleteDocument() {
   const queryClient = useQueryClient()
   return useMutation({

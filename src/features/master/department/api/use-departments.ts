@@ -4,7 +4,7 @@ import { ALL_ROWS, type PageParams } from '@/lib/pagination'
 import { fetchDepartments } from './department-api'
 
 /**
- * GET /departments — the department master list.
+ * GET /user/departments — the active company’s departments, newest first.
  *
  * One limit/offset page — pass the params from `usePagination()`. Called with
  * no argument it returns the whole master, for dropdowns and history panels.

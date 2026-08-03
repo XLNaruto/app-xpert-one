@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { PT_RATE_DEFAULT_SORT } from '../constants'
 import { usePtRates } from '../api/use-pt-rates'
 import { useDeletePtRate } from '../api/use-pt-rate-mutations'
 import type { PtRate } from '../types'
@@ -14,8 +16,16 @@ import type { PtRate } from '../types'
  */
 export function usePtRateList() {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, PT_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = usePtRates(params)
   const deletePtRate = useDeletePtRate()
 
@@ -48,6 +58,10 @@ export function usePtRateList() {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

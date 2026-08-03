@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { encryptId } from '@/lib/crypto'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useCompany } from '../api/use-company'
 
 /**
@@ -17,5 +18,18 @@ export function useCompanyDetail(id: number | undefined) {
     navigate({ to: '/master/company/create', search: { data: encryptId(id) } })
   }
 
-  return { company: data, isLoading, isError, error, goToList, goToEdit }
+  // A 403 isn't a broken screen, it's a missing permission — the page shows the
+  // 403 screen with the server's reason instead of an inline error line.
+  const isForbidden = isForbiddenError(error)
+
+  return {
+    company: data,
+    isLoading,
+    isError,
+    error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
+    goToList,
+    goToEdit,
+  }
 }

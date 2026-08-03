@@ -1,77 +1,49 @@
-import type { ComboboxOption } from "@/components/ui/combobox";
-import type { CompanyFormValues } from "./schemas";
+import type { ComboboxOption } from '@/components/ui/combobox'
+import type { CompanyFormValues } from './schemas'
 
-/** Indian states & union territories, for the State dropdown. */
-export const INDIAN_STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
-] as const;
+/**
+ * The `sort` values `/user/companies` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ */
+export const COMPANY_SORT = {
+  companyName: 'company_name',
+  companyCode: 'company_code',
+  city: 'city',
+  createdAt: 'created_at',
+} as const
 
-export const STATE_OPTIONS: ComboboxOption[] = INDIAN_STATES.map((s) => ({
-  label: s,
-  value: s,
-}));
+/** Newest company first — the order the list opens in and reverts to. */
+export const COMPANY_DEFAULT_SORT = { id: COMPANY_SORT.createdAt, desc: true }
 
-/** Establish-year choices: current year down to 1900. */
+/**
+ * Establish-year choices: current year down to 1900. The API accepts anything
+ * from 1800, but no company on this master predates the shorter list.
+ */
 export const YEAR_OPTIONS: ComboboxOption[] = Array.from(
   { length: new Date().getFullYear() - 1899 },
   (_, i) => {
-    const year = String(new Date().getFullYear() - i);
-    return { label: year, value: year };
+    const year = String(new Date().getFullYear() - i)
+    return { label: year, value: year }
   },
-);
+)
 
 /** Blank form values for a brand-new company. */
 export const EMPTY_COMPANY_FORM: CompanyFormValues = {
-  companyName: "",
-  companyCode: "",
-  establishYear: "",
-  registrationNumber: "",
-  panNumber: "",
-  gstNumber: "",
-  addressLine1: "",
-  addressLine2: "",
-  addressLine3: "",
-  state: "",
-  district: "",
-  city: "",
-  pinCode: "",
-  phone: "",
-  mobile1: "",
-  mobile2: "",
-  email: "",
-};
+  companyName: '',
+  establishYear: '',
+  registrationNumber: '',
+  panNumber: '',
+  gstNumber: '',
+  addressLine1: '',
+  addressLine2: '',
+  addressLine3: '',
+  stateId: '',
+  districtId: '',
+  city: '',
+  pinCode: '',
+  phone: '',
+  mobile1: '',
+  mobile2: '',
+  email: '',
+}

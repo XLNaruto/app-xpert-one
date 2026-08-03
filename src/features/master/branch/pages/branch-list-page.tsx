@@ -7,6 +7,8 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { Forbidden } from '@/features/error'
+import { BRANCH_SORT } from '../constants'
 import { useBranchList } from '../hooks/use-branch-list'
 import type { Branch } from '../types'
 
@@ -20,9 +22,13 @@ export function BranchListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage,
     goToCreate,
     goToDetail,
     goToEdit,
@@ -55,45 +61,70 @@ export function BranchListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: BRANCH_SORT.branchName,
         accessorKey: 'branchName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Branch Name" />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium text-foreground">{row.original.branchName}</span>
             <span className="text-xs text-muted-foreground">
-              {row.original.addressLine1}
+              {row.original.addressLine1 || '—'}
             </span>
           </div>
         ),
       },
       {
-        accessorKey: 'state',
+        id: BRANCH_SORT.city,
+        accessorKey: 'city',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
-        cell: ({ row }) => (
-          <span>
-            {[row.original.city, row.original.state].filter(Boolean).join(', ') || '—'}
-          </span>
-        ),
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => {
+          const parts = [row.original.city, row.original.stateName].filter(
+            (part) => part && part !== '—',
+          )
+          return <span>{parts.length ? parts.join(', ') : '—'}</span>
+        },
       },
       {
         accessorKey: 'pinCode',
+        enableSorting: false,
         header: 'Pin Code',
-        cell: ({ row }) => <span>{row.original.pinCode ?? '—'}</span>,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.pinCode || '—',
       },
       {
-        accessorKey: 'pfCode',
-        header: 'PF Code',
+        accessorKey: 'mobile1',
+        enableSorting: false,
+        header: 'Mobile',
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.mobile1 || '—',
+      },
+      {
+        accessorKey: 'gstNumber',
+        enableSorting: false,
+        header: 'GST Number',
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
-          <span className="font-mono text-sm">{row.original.pfCode ?? '—'}</span>
+          <span className="font-mono text-sm">{row.original.gstNumber || '—'}</span>
         ),
       },
-      ...auditColumns<Branch>(),
+      // Only `created_at` is sortable on this endpoint.
+      ...auditColumns<Branch>({ createdAt: BRANCH_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
+
+  // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
+  // screen with the server's reason instead of the table and its Add button.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -119,7 +150,7 @@ export function BranchListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search branches…"
           itemName="branches"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -127,6 +158,9 @@ export function BranchListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Building}

@@ -1,140 +1,144 @@
-import { mockDelay } from '@/lib/utils'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import type { CompanyFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { COMPANY_DEFAULT_SORT } from '../constants'
+import { companiesResponseSchema, companyResponseSchema } from '../schemas'
+import { companyToPayload, toCompany } from '../lib/company-mappers'
+import type { CompanyFormValues, CompanyPayload } from '../schemas'
 import type { Company } from '../types'
 
 /**
- * In-memory company store. No backend yet — this module holds the records for
- * the session so create/edit/delete stay consistent across screens. When the
- * API lands, swap each function's body for the matching REST call and map the
- * response to `Company`; the signatures stay the same.
+ * The company master — `/user/companies`. Every company under the caller's
+ * account, offset-paginated (`?limit=&offset=`, limit capped at 100) and
+ * answering `{ items, total }`, which is exactly the shape the list screen pages
+ * in. Search and sort are server-side, so both span every page.
+ *
+ * A record carries its state and district names alongside their ids, so no
+ * screen joins the geography masters to read a company — the list rows, the
+ * detail screen and the edit form's dropdown labels all come off the record.
  */
 
-let companies: Company[] = [
-  {
-    id: 1,
-    companyName: 'XpertLab Technologies',
-    companyCode: 'XPL001',
-    establishYear: '2015',
-    registrationNumber: 'U72900GJ2015PTC084521',
-    panNumber: 'AABCX1234K',
-    gstNumber: '24AABCX1234K1Z5',
-    addressLine1: '4th Floor, Silver Business Point',
-    addressLine2: 'VIP Circle, Uttran',
-    addressLine3: null,
-    state:'Gujarat',
-    district: 'Surat',
-    city: 'Surat',
-    pinCode: '394105',
-    phone: '02612345678',
-    mobile1: '9876543210',
-    mobile2: null,
-    email: 'contact@xpertlab.com',
-    createdBy: 'Roman Rings',
-    createdAt: '2015-06-12T09:30:00.000Z',
-    updatedBy: 'Roman Rings',
-    updatedAt: '2025-01-01T05:35:00.000Z',
-  },
-  {
-    id: 2,
-    companyName: 'Rajani Group',
-    companyCode: 'RJG002',
-    establishYear: '2008',
-    registrationNumber: null,
-    panNumber: 'AAACR5678M',
-    gstNumber: null,
-    addressLine1: '12 MG Road',
-    addressLine2: null,
-    addressLine3: null,
-    state:'Maharashtra',
-    district: 'Mumbai',
-    city: 'Mumbai',
-    pinCode: '400001',
-    phone: null,
-    mobile1: '9820011223',
-    mobile2: '9820044556',
-    email: 'info@rajanigroup.com',
-    createdBy: 'John Cena',
-    createdAt: '2008-03-01T09:30:00.000Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-/** Next auto-increment id (max existing + 1). */
-function nextId(): number {
-  return companies.reduce((max, c) => Math.max(max, c.id), 0) + 1
-}
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
-/** Empty strings from the form become `null` for optional stored fields. */
-function nullIfBlank(value: string): string | null {
-  const trimmed = value.trim()
-  return trimmed === '' ? null : trimmed
-}
-
-/** Map validated form values onto the stored fields shared by create + update. */
-function applyForm(values: CompanyFormValues) {
+/**
+ * `search` / `sort` / `sort_by` as the endpoint spells them. Order is always
+ * sent — left off, the server's own default decides it, and a list whose order
+ * isn't pinned can repeat or skip rows as the user pages through it.
+ */
+function queryParams(params: PageParams) {
   return {
-    companyName: values.companyName.trim(),
-    companyCode: values.companyCode.trim(),
-    establishYear: values.establishYear,
-    registrationNumber: nullIfBlank(values.registrationNumber),
-    panNumber: values.panNumber.trim().toUpperCase(),
-    gstNumber: nullIfBlank(values.gstNumber),
-    addressLine1: values.addressLine1.trim(),
-    addressLine2: nullIfBlank(values.addressLine2),
-    addressLine3: nullIfBlank(values.addressLine3),
-    state: values.state.trim(),
-    district: nullIfBlank(values.district),
-    city: nullIfBlank(values.city),
-    pinCode: nullIfBlank(values.pinCode),
-    phone: nullIfBlank(values.phone),
-    mobile1: values.mobile1.trim(),
-    mobile2: nullIfBlank(values.mobile2),
-    email: values.email.trim(),
+    ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+    sort: params.sort ?? COMPANY_DEFAULT_SORT.id,
+    sort_by: params.sortBy ?? (COMPANY_DEFAULT_SORT.desc ? 'desc' : 'asc'),
   }
 }
 
-/** Record fields the list screen's search box matches against. */
-const SEARCH_FIELDS: readonly (keyof Company)[] = ['companyName', 'companyCode']
+/**
+ * GET /user/companies — one page of companies in the requested order (newest
+ * first unless the screen says otherwise).
+ *
+ * `ALL_ROWS` (a negative limit) means "the whole master": the API caps a
+ * request at 100, so that case walks the pages until `total` is covered.
+ */
+export async function fetchCompanies(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<Company>> {
+  try {
+    const query = queryParams(params)
 
-export async function fetchCompanies(params: PageParams = ALL_ROWS): Promise<Paginated<Company>> {
-  return mockDelay(paginate([...companies], params, SEARCH_FIELDS))
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.COMPANIES.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = companiesResponseSchema.parse(raw)
+      return { items: items.map((item) => toCompany(item)), total }
+    }
+
+    const records: Company[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.COMPANIES.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = companiesResponseSchema.parse(raw)
+      total = parsed.total
+      records.push(...parsed.items.map((item) => toCompany(item)))
+      if (parsed.items.length === 0 || records.length >= total) break
+    }
+
+    return { items: records, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load companies.")
+  }
 }
 
+/**
+ * GET /user/companies/:id — one company, for the detail and edit screens.
+ *
+ * The record's state and district names come back on the response itself, so
+ * this is one request: no lookup against the geography masters, on either
+ * screen.
+ */
 export async function fetchCompany(id: number): Promise<Company> {
-  const found = companies.find((c) => c.id === id)
-  if (!found) throw new Error('Company not found')
-  return mockDelay({ ...found })
-}
-
-export async function createCompany(values: CompanyFormValues): Promise<Company> {
-  const company: Company = {
-    id: nextId(),
-    ...applyForm(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.get<unknown>(endpoints.COMPANIES.GET(id))
+    return toCompany(companyResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'Company not found')
   }
-  companies = [company, ...companies]
-  return mockDelay({ ...company })
 }
 
+/** POST /user/companies — add a company; the server assigns its code. */
+export async function createCompany(values: CompanyFormValues): Promise<Company> {
+  try {
+    const raw = await http.post<unknown, CompanyPayload>(
+      endpoints.COMPANIES.POST,
+      companyToPayload(values),
+    )
+    return toCompany(companyResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the company.")
+  }
+}
+
+/**
+ * PATCH /user/companies/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the full record.
+ */
 export async function updateCompany(
   id: number,
   values: CompanyFormValues,
 ): Promise<Company> {
-  const index = companies.findIndex((c) => c.id === id)
-  if (index === -1) throw new Error('Company not found')
-  const updated: Company = {
-    ...companies[index],
-    ...applyForm(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, CompanyPayload>(
+      endpoints.COMPANIES.PATCH(id),
+      companyToPayload(values),
+    )
+    return toCompany(companyResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the company.")
   }
-  companies = companies.map((c) => (c.id === id ? updated : c))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/companies/:id */
 export async function deleteCompany(id: number): Promise<void> {
-  companies = companies.filter((c) => c.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.COMPANIES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the company.")
+  }
 }

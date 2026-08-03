@@ -7,9 +7,10 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { formatAmount } from '@/lib/currency'
 import { Forbidden } from '@/features/error'
-import { LWF_LABELS } from '../constants'
-import { formatAmount, formatEffectiveDate, formatMonth } from '../lib/lwf-rate-mappers'
+import { LWF_LABELS, LWF_RATE_SORT } from '../constants'
+import { formatEffectiveDate, formatMonth } from '../lib/lwf-rate-mappers'
 import { useLwfRateList } from '../hooks/use-lwf-rate-list'
 import type { LwfRate } from '../types'
 
@@ -21,6 +22,10 @@ export function LwfRateListPage() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -56,6 +61,9 @@ export function LwfRateListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: LWF_RATE_SORT.effectiveDate,
         accessorKey: 'wef',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="LWF Wage Effective Date" />
@@ -68,17 +76,22 @@ export function LwfRateListPage() {
         ),
       },
       {
+        id: LWF_RATE_SORT.state,
         accessorKey: 'stateName',
         header: ({ column }) => <DataTableColumnHeader column={column} title="State" />,
         meta: { className: 'whitespace-nowrap' },
       },
       {
+        id: LWF_RATE_SORT.month,
         accessorKey: 'month',
-        header: LWF_LABELS.month,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={LWF_LABELS.month} />
+        ),
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatMonth(row.original.month),
       },
       {
+        id: LWF_RATE_SORT.employeeContribution,
         accessorKey: 'employeeContribution',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Employee LWF Contribution" />
@@ -87,6 +100,7 @@ export function LwfRateListPage() {
         cell: ({ row }) => formatAmount(row.original.employeeContribution),
       },
       {
+        id: LWF_RATE_SORT.employerContribution,
         accessorKey: 'employerContribution',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Employer LWF Contribution" />
@@ -94,7 +108,8 @@ export function LwfRateListPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatAmount(row.original.employerContribution),
       },
-      ...auditColumns<LwfRate>(),
+      // The API tracks no `updated_at`, and only `created_at` is sortable.
+      ...auditColumns<LwfRate>({ createdAt: LWF_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -124,32 +139,40 @@ export function LwfRateListPage() {
           {error instanceof Error ? error.message : "Couldn't load LWF rates."}
         </p>
       ) : (
-        /*
-          No search box: `/user/lwf-rates` takes only `limit`/`offset`, and with
-          the list server-paged a client-side box would filter the current page
-          alone. It comes back when the endpoint accepts a search term.
-        */
+        /* Search and sort are both server-side, so they span every page. */
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
+          searchPlaceholder="Search LWF rate…"
           itemName="LWF rates"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
           total={total}
           onPaginationChange={onPaginationChange}
+          searchValue={search}
+          onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={HandCoins}
-              title="No LWF rates yet"
-              description="Add your first Labour Welfare Fund contribution to get started."
+              title={search ? 'No matching LWF rates' : 'No LWF rates yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Add your first Labour Welfare Fund contribution to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add LWF Rate
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add LWF Rate
+                  </Button>
+                )
               }
             />
           }

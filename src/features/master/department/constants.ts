@@ -2,16 +2,21 @@ import type { ComboboxOption } from '@/components/ui/combobox'
 import type { DepartmentFormValues } from './schemas'
 
 /**
- * Branch choices for the Branch dropdown. Static for now — swap for a branch
- * master query once that feature exists.
+ * The `sort` values `/user/departments` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
  */
-export const BRANCH_OPTIONS: ComboboxOption[] = [
-  'Head Office',
-  'Surat Branch',
-  'Mumbai Branch',
-  'Ahmedabad Branch',
-  'Delhi Branch',
-].map((b) => ({ label: b, value: b }))
+export const DEPARTMENT_SORT = {
+  departmentName: 'name',
+  departmentCode: 'code',
+  createdAt: 'created_at',
+} as const
+
+/**
+ * Newest department first — the order the list opens in and reverts to. This is
+ * not the endpoint's own default (name A→Z), so it's always sent.
+ */
+export const DEPARTMENT_DEFAULT_SORT = { id: DEPARTMENT_SORT.createdAt, desc: true }
 
 /** Day-of-month choices (1–31) for the Month Start Date dropdown. */
 export const MONTH_DAY_OPTIONS: ComboboxOption[] = Array.from({ length: 31 }, (_, i) => {
@@ -21,8 +26,7 @@ export const MONTH_DAY_OPTIONS: ComboboxOption[] = Array.from({ length: 31 }, (_
 
 /** Blank form values for a new department. */
 export const EMPTY_DEPARTMENT_FORM: DepartmentFormValues = {
-  branch: '',
+  branchId: '',
   departmentName: '',
-  departmentCode: '',
-  monthStartDate: '1',
+  monthStartDay: '1',
 }

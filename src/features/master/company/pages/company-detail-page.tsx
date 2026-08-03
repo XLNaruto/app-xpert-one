@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
 import { decryptId } from '@/lib/crypto'
+import { Forbidden } from '@/features/error'
 import { useCompanyDetail } from '../hooks/use-company-detail'
 
 /**
@@ -25,9 +26,22 @@ import { useCompanyDetail } from '../hooks/use-company-detail'
  * the `?data=` search param.
  */
 export function CompanyDetailPage({ data }: { data?: string }) {
-  const { company, isLoading, isError, error, goToList, goToEdit } = useCompanyDetail(
-    decryptId(data),
-  )
+  const {
+    company,
+    isLoading,
+    isError,
+    error,
+    isForbidden,
+    forbiddenMessage,
+    goToList,
+    goToEdit,
+  } = useCompanyDetail(decryptId(data))
+
+  // Reading this record was refused — show the 403 screen with the server's
+  // reason instead of an inline error line.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -94,8 +108,8 @@ export function CompanyDetailPage({ data }: { data?: string }) {
                 .join(', ')}
               className="sm:col-span-2"
             />
-            <DetailItem icon={MapPin} label="State" value={company.state} />
-            <DetailItem icon={MapPin} label="District" value={company.district} />
+            <DetailItem icon={MapPin} label="State" value={company.stateName} />
+            <DetailItem icon={MapPin} label="District" value={company.districtName} />
             <DetailItem icon={MapPin} label="City" value={company.city} />
             <DetailItem icon={MapPin} label="Pin Code" value={company.pinCode} />
 

@@ -1,174 +1,140 @@
-import { mockDelay } from '@/lib/utils'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
-import { createdStamp, updatedStamp } from '@/lib/audit'
-import type { AuditFields } from '@/types/audit'
-import type { BranchFormValues } from '../schemas'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { activeCompanyId } from '@/lib/active-company'
+import { BRANCH_DEFAULT_SORT } from '../constants'
+import { branchesResponseSchema, branchResponseSchema } from '../schemas'
+import { branchToPayload, toBranch } from '../lib/branch-mappers'
+import type { BranchFormValues, BranchPayload, BranchUpdatePayload } from '../schemas'
 import type { Branch } from '../types'
 
 /**
- * In-memory branch store. No backend yet — this module holds the records for
- * the session so create/edit/delete stay consistent across screens. When the
- * API lands, swap each function's body for the matching REST call and map the
- * response to `Branch`; the signatures stay the same.
+ * Branches — `/user/branches`. The endpoint is offset-paginated (`?limit=&offset=`,
+ * limit capped at 100) and answers `{ items, total }`, which is exactly the
+ * shape the list screen pages in. `search` is matched server-side against the
+ * branch name, the city, the email and either mobile number, and `sort` accepts
+ * `branch_name`, `city` or `created_at`.
+ *
+ * Reads take a required `company_id` and a create carries it in the body, both
+ * taken from the company the session has active.
  */
 
-/** Blank stored fields — every optional column starts out `null`. */
-const EMPTY_RECORD: Omit<
-  Branch,
-  'id' | 'branchName' | 'addressLine1' | keyof AuditFields
-> = {
-  addressLine2: null,
-  addressLine3: null,
-  state: null,
-  district: null,
-  city: null,
-  pinCode: null,
-  pfCode: null,
-  epfActDate: null,
-  fpfActDate: null,
-  pfState: null,
-  pfDistrict: null,
-  pfOfficeAddress: null,
-  pfUsername: null,
-  pfPassword: null,
-  esicCode: null,
-  esicDeductsOn: null,
-  esicRegistrationDate: null,
-  esicState: null,
-  esicDistrict: null,
-  esicOfficeAddress: null,
-  esicUsername: null,
-  esicPassword: null,
-  factoryActDate: null,
-  factoryLicenseNumber: null,
-  factoryFinNumber: null,
-  employeeCount: null,
-  electricHorsePower: null,
-  licenseExpiryDate: null,
-  stabilityExpiryDate: null,
-  ptRegistrationDate: null,
-  pecRegistrationNumber: null,
-  prcRegistrationNumber: null,
-  corporationName: null,
-  lwfRegistrationDate: null,
-  lwfRegistrationNumber: null,
-  lwfOfficeAddressId: null,
-  lwfUsername: null,
-  lwfPassword: null,
-  eeRegistrationDate: null,
-  eeRegistrationNumber: null,
-}
+/** The API's maximum `limit` — also the batch size when reading everything. */
+const MAX_LIMIT = 100
 
-let branches: Branch[] = [
-  {
-    ...EMPTY_RECORD,
-    id: 1,
-    branchName: 'Surat — Head Office',
-    addressLine1: '4th Floor, Silver Business Point',
-    addressLine2: 'VIP Circle, Uttran',
-    state: 'Gujarat',
-    district: 'Surat',
-    city: 'Surat',
-    pinCode: '394105',
-    pfCode: 'GJSRT0012345',
-    epfActDate: '2016-04-01',
-    pfState: 'Gujarat',
-    pfDistrict: 'Surat',
-    esicCode: '37000123450000999',
-    esicDeductsOn: 'Gross Salary',
-    esicRegistrationDate: '2016-06-15',
-    esicState: 'Gujarat',
-    esicDistrict: 'Surat',
-    createdBy: 'Roman Rings',
-    createdAt: '2016-04-01T09:30:00.000Z',
-    updatedBy: 'John Cena',
-    updatedAt: '2024-11-19T08:55:00.000Z',
-  },
-  {
-    ...EMPTY_RECORD,
-    id: 2,
-    branchName: 'Mumbai — Regional',
-    addressLine1: '12 MG Road',
-    state: 'Maharashtra',
-    district: 'Mumbai',
-    city: 'Mumbai',
-    pinCode: '400001',
-    factoryActDate: '2019-02-11',
-    factoryLicenseNumber: 'MH/FAC/2019/8821',
-    employeeCount: '46',
-    createdBy: 'John Cena',
-    createdAt: '2019-02-11T09:30:00.000Z',
-    updatedBy: null,
-    updatedAt: null,
-  },
-]
+/** Stop after this many batches so a bad `total` can't spin forever. */
+const MAX_PAGES = 20
 
-/** Next auto-increment id (max existing + 1). */
-function nextId(): number {
-  return branches.reduce((max, b) => Math.max(max, b.id), 0) + 1
-}
-
-/** Empty strings from the form become `null` for optional stored fields. */
-function nullIfBlank(value: string): string | null {
-  const trimmed = value.trim()
-  return trimmed === '' ? null : trimmed
+/**
+ * The tenant scope plus `search` / `sort` / `sort_by` as the endpoint spells
+ * them. Order is always sent — left off, the server's own default decides it,
+ * and a list whose order isn't pinned can repeat or skip rows as the user pages.
+ */
+function queryParams(params: PageParams) {
+  return {
+    company_id: activeCompanyId('branches'),
+    ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+    sort: params.sort ?? BRANCH_DEFAULT_SORT.id,
+    sort_by: params.sortBy ?? (BRANCH_DEFAULT_SORT.desc ? 'desc' : 'asc'),
+  }
 }
 
 /**
- * Map validated form values onto the stored fields shared by create + update.
- * The form's keys mirror the record's, so everything but the two mandatory
- * fields is trimmed and nulled when blank.
+ * GET /user/branches — one page of the company's branches, in the requested
+ * order (newest first unless the screen says otherwise).
+ *
+ * `ALL_ROWS` (a negative limit) means "every branch": the API caps a request at
+ * 100, so that case walks the pages until `total` is covered.
  */
-function applyForm(values: BranchFormValues): Omit<Branch, 'id' | keyof AuditFields> {
-  const optional = Object.fromEntries(
-    Object.entries(values).map(([key, value]) => [key, nullIfBlank(value)]),
-  )
-  return {
-    ...(optional as Omit<Branch, 'id' | keyof AuditFields>),
-    branchName: values.branchName.trim(),
-    addressLine1: values.addressLine1.trim(),
+export async function fetchBranches(
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<Branch>> {
+  try {
+    const query = queryParams(params)
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.BRANCHES.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = branchesResponseSchema.parse(raw)
+      return { items: items.map(toBranch), total }
+    }
+
+    const collected: Branch[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.BRANCHES.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = branchesResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map(toBranch))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load branches.")
   }
 }
 
-/** Record fields the list screen's search box matches against. */
-const SEARCH_FIELDS: readonly (keyof Branch)[] = ['branchName', 'city', 'district']
-
-export async function fetchBranches(params: PageParams = ALL_ROWS): Promise<Paginated<Branch>> {
-  return mockDelay(paginate([...branches], params, SEARCH_FIELDS))
-}
-
+/** GET /user/branches/:id — one branch, for the detail and edit screens. */
 export async function fetchBranch(id: number): Promise<Branch> {
-  const found = branches.find((b) => b.id === id)
-  if (!found) throw new Error('Branch not found')
-  return mockDelay({ ...found })
-}
-
-export async function createBranch(values: BranchFormValues): Promise<Branch> {
-  const branch: Branch = {
-    id: nextId(),
-    ...applyForm(values),
-    ...createdStamp(),
+  try {
+    const raw = await http.get<unknown>(endpoints.BRANCHES.GET(id))
+    return toBranch(branchResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, 'Branch not found')
   }
-  branches = [branch, ...branches]
-  return mockDelay({ ...branch })
 }
 
+/** POST /user/branches — add a branch to the active company. */
+export async function createBranch(values: BranchFormValues): Promise<Branch> {
+  try {
+    const raw = await http.post<unknown, BranchPayload>(endpoints.BRANCHES.POST, {
+      company_id: activeCompanyId('branches'),
+      ...branchToPayload(values),
+    })
+    return toBranch(branchResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't create the branch.")
+  }
+}
+
+/**
+ * PATCH /user/branches/:id — the endpoint accepts a partial body, but the form
+ * always submits every field, so we send the full record.
+ */
 export async function updateBranch(
   id: number,
   values: BranchFormValues,
 ): Promise<Branch> {
-  const index = branches.findIndex((b) => b.id === id)
-  if (index === -1) throw new Error('Branch not found')
-  const updated: Branch = {
-    ...branches[index],
-    ...applyForm(values),
-    ...updatedStamp(),
+  try {
+    const raw = await http.patch<unknown, BranchUpdatePayload>(
+      endpoints.BRANCHES.PATCH(id),
+      branchToPayload(values),
+    )
+    return toBranch(branchResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the branch.")
   }
-  branches = branches.map((b) => (b.id === id ? updated : b))
-  return mockDelay({ ...updated })
 }
 
+/** DELETE /user/branches/:id */
 export async function deleteBranch(id: number): Promise<void> {
-  branches = branches.filter((b) => b.id !== id)
-  return mockDelay(undefined)
+  try {
+    await http.delete<unknown>(endpoints.BRANCHES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the branch.")
+  }
 }

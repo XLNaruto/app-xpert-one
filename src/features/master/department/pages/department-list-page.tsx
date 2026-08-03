@@ -7,6 +7,8 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { Forbidden } from '@/features/error'
+import { DEPARTMENT_SORT } from '../constants'
 import { useDepartmentList } from '../hooks/use-department-list'
 import type { Department } from '../types'
 
@@ -20,9 +22,13 @@ export function DepartmentListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
+    isForbidden,
+    forbiddenMessage,
     goToCreate,
     goToEdit,
     pendingDelete,
@@ -53,6 +59,9 @@ export function DepartmentListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: DEPARTMENT_SORT.departmentName,
         accessorKey: 'departmentName',
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Department Name" />
@@ -62,25 +71,37 @@ export function DepartmentListPage() {
         ),
       },
       {
+        id: DEPARTMENT_SORT.departmentCode,
         accessorKey: 'departmentCode',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
         cell: ({ row }) => (
-          <span className="font-mono text-sm">{row.original.departmentCode}</span>
+          <span className="font-mono text-sm">{row.original.departmentCode || '—'}</span>
         ),
       },
       {
-        accessorKey: 'branch',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Branch" />,
+        // The endpoint doesn't sort on the branch — the name is joined in from
+        // the branch master, so the header renders without the control.
+        accessorKey: 'branchName',
+        header: 'Branch',
+        enableSorting: false,
       },
       {
-        accessorKey: 'monthStartDate',
+        accessorKey: 'monthStartDay',
         header: 'Month Start Date',
+        enableSorting: false,
+        cell: ({ row }) => row.original.monthStartDay ?? '—',
       },
-      ...auditColumns<Department>(),
+      // Only `created_at` is sortable; "Updated" renders without the control.
+      ...auditColumns<Department>({ createdAt: DEPARTMENT_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
+
+  // Reading the master was refused — show the 403 screen, not an error line.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -106,7 +127,7 @@ export function DepartmentListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search departments…"
           itemName="departments"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -114,16 +135,25 @@ export function DepartmentListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Building}
-              title="No departments yet"
-              description="Create your first department to get started."
+              title={search ? 'No matching departments' : 'No departments yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Create your first department to get started.'
+              }
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add New Department
-                </Button>
+                search ? undefined : (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add New Department
+                  </Button>
+                )
               }
             />
           }

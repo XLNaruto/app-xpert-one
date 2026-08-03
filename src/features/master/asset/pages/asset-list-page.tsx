@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { ASSET_SORT } from '../constants'
 import { useAssetList } from '../hooks/use-asset-list'
 import { AssetFormDialog } from '../components/asset-form-dialog'
 import type { AssetRecord } from '../types'
@@ -21,6 +22,8 @@ export function AssetListPage() {
     onPaginationChange,
     search,
     setSearch,
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,
@@ -57,13 +60,17 @@ export function AssetListPage() {
         ),
       },
       {
+        // Sortable columns are keyed by the API's own field name, so a header
+        // click travels to `?sort=` untranslated.
+        id: ASSET_SORT.assetName,
         accessorKey: 'assetName',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Asset Name" />,
         cell: ({ row }) => (
           <span className="font-medium text-foreground">{row.original.assetName}</span>
         ),
       },
-      ...auditColumns<AssetRecord>(),
+      // Only `created_at` is sortable; "Updated" renders without the control.
+      ...auditColumns<AssetRecord>({ createdAt: ASSET_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -93,7 +100,7 @@ export function AssetListPage() {
           isLoading={isLoading}
           searchPlaceholder="Search assets…"
           itemName="assets"
-          pageSizeOptions={[10, 25, 50]}
+          pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
           limit={limit}
           offset={offset}
@@ -101,16 +108,25 @@ export function AssetListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={Boxes}
-              title="No assets yet"
-              description="Add your first asset to get started."
+              title={search ? 'No matching assets' : 'No assets yet'}
+              description={
+                search
+                  ? 'Try a different search term.'
+                  : 'Add your first asset to get started.'
+              }
               action={
-                <Button onClick={openCreate}>
-                  <Plus className="size-4" />
-                  Add Asset
-                </Button>
+                search ? undefined : (
+                  <Button onClick={openCreate}>
+                    <Plus className="size-4" />
+                    Add Asset
+                  </Button>
+                )
               }
             />
           }

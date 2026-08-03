@@ -4,6 +4,8 @@ import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
+import { OFFICE_ADDRESS_DEFAULT_SORT } from '../constants'
 import { useOfficeAddresses } from '../api/use-office-addresses'
 import { useDeleteOfficeAddress } from '../api/use-office-address-mutations'
 import type { OfficeAddress, OfficeAddressScreen } from '../types'
@@ -16,8 +18,16 @@ import type { OfficeAddress, OfficeAddressScreen } from '../types'
  */
 export function useOfficeAddressList(screen: OfficeAddressScreen) {
   const navigate = useNavigate()
-  const { params, limit, offset, search, setSearch, onPaginationChange } =
-    usePagination()
+  const {
+    params,
+    limit,
+    offset,
+    search,
+    setSearch,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+  } = usePagination(DEFAULT_PAGE_SIZE, OFFICE_ADDRESS_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useOfficeAddresses(
     screen.officeFor,
     params,
@@ -60,6 +70,10 @@ export function useOfficeAddressList(screen: OfficeAddressScreen) {
     onPaginationChange,
     search,
     setSearch,
+    // Server-side ordering — a header click re-queries instead of sorting the
+    // page on screen.
+    sorting,
+    onSortingChange,
     isLoading,
     isError,
     error,

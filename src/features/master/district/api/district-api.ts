@@ -6,7 +6,7 @@ import { queryKeys } from '@/lib/query-keys'
 import { LOOKUP_STALE_TIME } from '@/lib/lookup-cache'
 import type { PageParams, Paginated } from '@/lib/pagination'
 import { fetchStates } from '@/features/master/state'
-import { districtsResponseSchema } from '../schemas'
+import { districtResponseSchema, districtsResponseSchema } from '../schemas'
 import type { DistrictRecord } from '../types'
 
 /**
@@ -118,4 +118,27 @@ export function ensureDistricts(stateId?: number): Promise<DistrictRecord[]> {
     queryFn: () => fetchDistricts(stateId),
     staleTime: LOOKUP_STALE_TIME,
   })
+}
+
+/**
+ * GET /user/districts/:id — one district.
+ *
+ * For labelling a dropdown selection the loaded pages don't reach — the district
+ * master runs to ~800 rows, so a saved district is rarely on the first page. The
+ * parent state's name isn't joined in; a cascade already knows its state.
+ */
+export async function fetchDistrict(id: number): Promise<DistrictRecord> {
+  try {
+    const raw = await http.get<unknown>(endpoints.DISTRICTS.GET(id))
+    const item = districtResponseSchema.parse(raw)
+    return {
+      id: item.id,
+      stateId: item.state_id,
+      state: '',
+      districtName: item.name,
+      createdAt: item.created_at,
+    }
+  } catch (error) {
+    throw toApiError(error, 'District not found')
+  }
 }

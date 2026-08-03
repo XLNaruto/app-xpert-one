@@ -15,6 +15,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { cn } from '@/lib/utils'
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import {
   Table,
   TableBody,
@@ -54,7 +55,7 @@ interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string
   /** Custom toolbar rendered above the table (replaces the built-in search). */
   toolbar?: ReactNode
-  /** Initial rows per page. */
+  /** Initial rows per page. Defaults to `DEFAULT_PAGE_SIZE`. */
   pageSize?: number
   /** Page-size choices; pass to show a "N / page" selector in the footer. */
   pageSizeOptions?: number[]
@@ -123,7 +124,7 @@ export function DataTable<TData, TValue>({
   searchColumn,
   searchPlaceholder,
   toolbar,
-  pageSize = 5,
+  pageSize = DEFAULT_PAGE_SIZE,
   pageSizeOptions,
   itemName,
   maxHeight,
@@ -196,6 +197,9 @@ export function DataTable<TData, TValue>({
     state: { sorting, columnFilters, globalFilter, pagination },
     manualPagination: serverPagination,
     manualSorting,
+    // The API sorts by a single `sort` field, so a shift-click mustn't build a
+    // second sort the request has nowhere to put.
+    enableMultiSort: !manualSorting,
     rowCount: serverPagination ? total : undefined,
     onSortingChange: onSortingChange ?? setInternalSorting,
     onColumnFiltersChange: setColumnFilters,

@@ -9,13 +9,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { STATE_OPTIONS, YEAR_OPTIONS } from '../constants'
+import { Forbidden } from '@/features/error'
+import { YEAR_OPTIONS } from '../constants'
 import { useCompanyForm } from '../hooks/use-company-form'
 
 interface CompanyCreatePageProps {
   /**
    * Encrypted company id from the `?data=` search param. When present the page
-   * switches to edit mode (GET to seed, PUT to save); otherwise it's a fresh
+   * switches to edit mode (GET to seed, PATCH to save); otherwise it's a fresh
    * create. The same page and form handle both.
    */
   data?: string
@@ -34,7 +35,9 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
     register,
     control,
     errors,
-    districtOptions,
+    state,
+    district,
+    hasState,
     changeState,
     onSubmit,
     isEdit,
@@ -42,8 +45,15 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
     isLoading,
     isError,
     loadError,
+    isForbidden,
+    forbiddenMessage,
     goToList,
   } = useCompanyForm(companyId)
+
+  // Reading this record was refused — show the 403 screen, not a broken form.
+  if (isForbidden) {
+    return <Forbidden description={forbiddenMessage} />
+  }
 
   return (
     <div>
@@ -148,33 +158,33 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
               <Field label="Address Line 3" error={errors.addressLine3?.message}>
                 <Input placeholder="Address Line 3" {...register('addressLine3')} />
               </Field>
-              <Field label="State" required error={errors.state?.message}>
+              <Field label="State" required error={errors.stateId?.message}>
                 <Controller
                   control={control}
-                  name="state"
+                  name="stateId"
                   render={({ field }) => (
                     <Combobox
                       className="w-full"
                       value={field.value}
                       onChange={(value) => changeState(value, field.onChange)}
-                      options={STATE_OPTIONS}
+                      {...state}
                       placeholder="Select State"
                       searchPlaceholder="Search state"
                     />
                   )}
                 />
               </Field>
-              <Field label="District" error={errors.district?.message}>
+              <Field label="District" error={errors.districtId?.message}>
                 <Controller
                   control={control}
-                  name="district"
+                  name="districtId"
                   render={({ field }) => (
                     <Combobox
                       className="w-full"
                       value={field.value}
                       onChange={field.onChange}
-                      options={districtOptions}
-                      placeholder="Select District"
+                      {...district}
+                      placeholder={hasState ? 'Select District' : 'Select a state first'}
                       searchPlaceholder="Search district"
                     />
                   )}

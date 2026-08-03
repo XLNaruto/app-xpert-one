@@ -8,8 +8,15 @@
  * `paginate()` to behave identically until their endpoint lands.
  */
 
-/** Rows per page when a screen doesn't say otherwise. */
-export const DEFAULT_PAGE_SIZE = 10
+/**
+ * Rows per page when a screen doesn't say otherwise — the option every list's
+ * page-size selector opens on. Keep it in the `pageSizeOptions` a page offers,
+ * or the selector shows a size the user can't pick again.
+ */
+export const DEFAULT_PAGE_SIZE = 5
+
+/** Sort direction — the API's `sort_by`. */
+export type SortDir = 'asc' | 'desc'
 
 export interface PageParams {
   /** Rows to fetch. Negative means "no limit" — see `ALL_ROWS`. */
@@ -18,6 +25,14 @@ export interface PageParams {
   offset: number
   /** Free-text filter applied server-side, so it spans every page. */
   search?: string
+  /**
+   * Column to order by, named the way the endpoint names it (`effective_date`,
+   * `office_name`, …). Sorting is server-side, so it spans every page — which is
+   * why the sortable list columns carry the API's field name as their column id.
+   */
+  sort?: string
+  /** Direction for `sort`. */
+  sortBy?: SortDir
 }
 
 export interface Paginated<T> {

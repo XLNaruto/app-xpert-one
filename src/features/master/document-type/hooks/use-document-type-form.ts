@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { documentTypeSchema, type DocumentTypeFormValues } from '../schemas'
 import { EMPTY_DOCUMENT_TYPE_FORM } from '../constants'
 import { useDocumentType } from '../api/use-document-type'
@@ -14,7 +15,7 @@ import { documentTypeToFormValues } from '../lib/document-type-mappers'
 
 /**
  * Owns the document type form for both create and edit. In edit mode (`id` set)
- * it loads the record, seeds the form and saves via PUT; create mode POSTs a
+ * it loads the record, seeds the form and saves via PATCH; create mode POSTs a
  * fresh record. The page consumes this and only lays out fields.
  */
 export function useDocumentTypeForm(id?: number) {
@@ -58,6 +59,10 @@ export function useDocumentTypeForm(id?: number) {
     })
   })
 
+  // Reading this record was refused — not a broken screen, so the page shows the
+  // 403 screen with the server's reason rather than the form.
+  const isForbidden = isEdit && isForbiddenError(detail.error)
+
   return {
     register,
     errors,
@@ -67,6 +72,8 @@ export function useDocumentTypeForm(id?: number) {
     isLoading: isEdit && detail.isLoading,
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
+    isForbidden,
+    forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
   }
 }

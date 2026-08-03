@@ -18,6 +18,24 @@ export const MONTH_OPTIONS: ComboboxOption[] = [
   { label: 'December', value: '12' },
 ]
 
+/**
+ * The `sort` values `/user/lwf-rates` accepts. Sorting is server-side, so a
+ * column is sortable only if it appears here — the list gives each of these
+ * columns the API's field name as its column id, and marks the rest unsortable.
+ * State orders by `state_id`, the only handle the endpoint offers on it.
+ */
+export const LWF_RATE_SORT = {
+  effectiveDate: 'effective_date',
+  state: 'state_id',
+  month: 'month',
+  employeeContribution: 'employee_contribution',
+  employerContribution: 'employer_contribution',
+  createdAt: 'created_at',
+} as const
+
+/** Newest record first — the order the list opens in and reverts to. */
+export const LWF_RATE_DEFAULT_SORT = { id: LWF_RATE_SORT.createdAt, desc: true }
+
 /** Field/column labels, shared by the form, the list and the history table. */
 export const LWF_LABELS = {
   wef: 'W.E.F (With Effect From)',

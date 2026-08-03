@@ -4,7 +4,7 @@ import { ALL_ROWS, type PageParams } from '@/lib/pagination'
 import { fetchBranches } from './branch-api'
 
 /**
- * GET /branches — the full branch master list.
+ * GET /user/branches — the active company's branches, newest first.
  *
  * One limit/offset page — pass the params from `usePagination()`. Called with
  * no argument it returns the whole master, for dropdowns and history panels.
