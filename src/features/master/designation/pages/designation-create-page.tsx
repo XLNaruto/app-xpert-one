@@ -83,7 +83,6 @@ function CreateView() {
           lwfActApplicable={form.lwfActApplicable}
           lwfActType={form.lwfActType}
           overtimeApplicable={form.overtimeApplicable}
-          overtimeCalculationType={form.overtimeCalculationType}
         />
 
         <FormSection

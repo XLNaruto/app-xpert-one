@@ -70,7 +70,6 @@ const NO_WAGE_STRUCTURE = {
   lwfAmount: null,
 
   overtimeApplicable: false,
-  overtimeCalculationType: null,
   overtimeRatePerHour: null,
 
   allowances: [],
@@ -164,13 +163,6 @@ function wageFieldsOf(wage: WageStructureResponse) {
     lwfAmount: wage.lwf_amount,
 
     overtimeApplicable: wage.is_overtime_applicable,
-    /*
-     * The API stores the hourly rate but not how it was arrived at, so a stored
-     * rate reads back as hand-entered — which is what it now is, whatever
-     * derived it in the first place.
-     */
-    overtimeCalculationType:
-      wage.overtime_rate_per_hour === null ? null : ('Manual' as const),
     overtimeRatePerHour: wage.overtime_rate_per_hour,
   }
 }
@@ -247,7 +239,6 @@ export function designationToFormValues(
     lwfAmount: optional(designation.lwfAmount),
 
     overtimeApplicable: designation.overtimeApplicable,
-    overtimeCalculationType: chosen(designation.overtimeCalculationType),
     overtimeRatePerHour: optional(designation.overtimeRatePerHour),
 
     allowances: designation.allowances.map(toComponentRow),

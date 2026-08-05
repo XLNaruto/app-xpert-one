@@ -78,10 +78,10 @@ export function CalculationFormulaStrip({ control }: CalculationFormulaStripProp
       key: 'ot',
       badge: 'OT',
       title: 'OT Amount',
-      formula:
-        values.overtimeCalculationType === 'Manual'
-          ? `OT Hours × ${amountOr(values.overtimeRatePerHour)} per hour`
-          : `OT Hours × (Basic Pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8) × 2`,
+      /* A rate typed into the form is what's paid; blank derives one. */
+      formula: values.overtimeRatePerHour
+        ? `OT Hours × ${amountOr(values.overtimeRatePerHour)} per hour`
+        : `OT Hours × (Basic Pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8) × 2`,
       badgeTone: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
     })
   }

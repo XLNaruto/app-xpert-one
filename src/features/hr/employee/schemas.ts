@@ -1,0 +1,1372 @@
+import { z } from 'zod'
+import { MINIMUM_EMPLOYEE_AGE, PERMANENT_EMPLOYMENT_TYPE } from './constants'
+
+/**
+ * Zod for the employee module: one form schema per step, plus the response shape
+ * of every endpoint behind them.
+ *
+ * Two conventions run through the whole file:
+ *
+ * - **Forms hold strings.** Ids come out of a `<Combobox>` as strings and dates
+ *   out of a `<DatePicker>` as `yyyy-MM-dd`; the mappers convert on the way to
+ *   the API and back. So a blank field is `''`, never `null` or `undefined`.
+ * - **The API's write bodies reject unknown keys** (`additionalProperties:
+ *   false`), so each `*Payload` type here is exactly what may be sent — nothing
+ *   is spread into a request wholesale.
+ */
+
+/* ── Shared field pieces ─────────────────────────────────────────────────── */
+
+/** Indian mobile number. */
+const MOBILE_RE = /^[6-9]\d{9}$/
+const PIN_CODE_RE = /^\d{6}$/
+const AADHAR_RE = /^\d{12}$/
+const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
+const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
+const DECIMAL_RE = /^\d+(\.\d{1,2})?$/
+/** `HH:MM`, 24-hour — the format the half-day times travel in. */
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+/** `yyyy-MM` — the month format an experience row's dates travel in. */
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+
+/** An optional text field: blank passes, anything filled must match `regex`. */
+function optionalPattern(regex: RegExp, message: string) {
+  return z
+    .string()
+    .trim()
+    .refine((value) => value === '' || regex.test(value), message)
+}
+
+/** A name: letters, digits and spaces, with at least one letter in it. */
+const NAME_RE = /^(?=.*[a-zA-Z])[a-zA-Z0-9\s.'-]+$/
+
+function nameField(label: string) {
+  return z
+    .string()
+    .trim()
+    .min(1, `Please enter ${label}`)
+    .min(2, 'Minimum 2 characters')
+    .max(150, 'Cannot exceed 150 characters')
+    .regex(NAME_RE, `${label} may only contain letters, digits and spaces`)
+}
+
+/** Whole years between a `yyyy-MM-dd` date and today. */
+function yearsSince(date: string): number {
+  const then = new Date(date)
+  const now = new Date()
+  let years = now.getFullYear() - then.getFullYear()
+  const monthDelta = now.getMonth() - then.getMonth()
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < then.getDate())) years -= 1
+  return years
+}
+
+/* ── Step 1 — basic detail + posting ─────────────────────────────────────── */
+
+/**
+ * Step 1's form: the person, their address, contact, health, and the FIRST
+ * posting — which the API creates in the same call, hence the service fields
+ * sitting on the same schema.
+ *
+ * The API itself requires only `company_id`, so everything marked required here
+ * is a house rule: an employee record with no name, no joining date or no
+ * designation is of no use to payroll, and catching that in the form beats
+ * discovering it later.
+ */
+export const employeeBasicSchema = z
+  .object({
+    /** Object key from the photo presign — never the file. */
+    photo: z.string(),
+
+    name: nameField('employee name'),
+    gender: z.string().trim().min(1, 'Please select a gender'),
+    birthDate: z
+      .string()
+      .trim()
+      .min(1, 'Please select a date of birth')
+      .refine(
+        (value) => yearsSince(value) >= MINIMUM_EMPLOYEE_AGE,
+        `Employee must be at least ${MINIMUM_EMPLOYEE_AGE} years old`,
+      ),
+    maritalStatus: z.string().trim().min(1, 'Please select a marital status'),
+    relation: z.string().trim().min(1, 'Please select a relation'),
+    relativeName: nameField('relative name'),
+
+    currentAddress1: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the current address')
+      .max(255, 'Cannot exceed 255 characters'),
+    currentAddress2: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    currentAddress3: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    currentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
+    currentStateId: z.string(),
+    currentDistrictId: z.string(),
+    currentTaluka: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    currentCity: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    currentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
+
+    /**
+     * UI-only: while on, the permanent block is hidden and kept in step with the
+     * current one. It never reaches the API — both address sets are stored.
+     */
+    sameAsCurrent: z.boolean(),
+    permanentAddress1: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentAddress2: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentAddress3: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
+    permanentStateId: z.string(),
+    permanentDistrictId: z.string(),
+    permanentTaluka: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentCity: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
+
+    mobileNumber1: z
+      .string()
+      .trim()
+      .min(1, 'Please enter a mobile number')
+      .regex(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
+    mobileNumber2: optionalPattern(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
+    landlineNumber: optionalPattern(/^\d{6,12}$/, 'Enter 6 to 12 digits'),
+    email: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === '' || z.string().email().safeParse(value).success,
+        'Enter a valid email address',
+      ),
+
+    bloodGroup: z.string(),
+    height: optionalPattern(DECIMAL_RE, 'Enter a number, e.g. 170 or 5.8'),
+    heightUnit: z.string(),
+    weight: optionalPattern(DECIMAL_RE, 'Enter a number, e.g. 68 or 68.5'),
+    weightUnit: z.string(),
+    isDisability: z.boolean(),
+    remarks: z.string().trim().max(1000, 'Cannot exceed 1000 characters'),
+
+    /**
+     * The posting. Branch and department are optional because the API supports a
+     * bypass hierarchy — a designation alone is a valid posting — but the
+     * designation itself is what the wage structure hangs off, so it's required.
+     */
+    branchId: z.string(),
+    departmentId: z.string(),
+    designationId: z.string().trim().min(1, 'Please select a designation'),
+    grade: z.string().trim().min(1, 'Please select a grade'),
+    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    contractPeriod: z.string(),
+    contractPeriodType: z.string(),
+    joiningDate: z.string().trim().min(1, 'Please select a joining date'),
+    confirmationDate: z.string().trim().min(1, 'Please select a confirmation date'),
+    renewalDate: z.string(),
+    isPoliceVerified: z.boolean(),
+    isStampAgreement: z.boolean(),
+
+    /** Leaving is recorded here for a correction; a real exit goes through step 8. */
+    leavingDate: z.string(),
+    leavingReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+  })
+  // A contract only means something with a period behind it.
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
+    { path: ['contractPeriod'], message: 'Please enter the contract period' },
+  )
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.renewalDate.trim() !== '',
+    { path: ['renewalDate'], message: 'Please select a renewal date' },
+  )
+  // Confirmation can't precede the day the employee started.
+  .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
+    path: ['confirmationDate'],
+    message: 'Confirmation date cannot be before the joining date',
+  })
+  .refine((v) => !v.joiningDate || !v.leavingDate || v.leavingDate >= v.joiningDate, {
+    path: ['leavingDate'],
+    message: 'Leaving date cannot be before the joining date',
+  })
+  // A leaving date without a reason leaves the record unexplained, and vice versa.
+  .refine((v) => !v.leavingDate || v.leavingReason.trim() !== '', {
+    path: ['leavingReason'],
+    message: 'Please enter the leaving reason',
+  })
+
+export type EmployeeBasicFormValues = z.infer<typeof employeeBasicSchema>
+
+/** `completed_steps` on the employee record. */
+export const completedStepsResponseSchema = z.object({
+  basic_detail: z.boolean(),
+  kyc_detail: z.boolean(),
+  wage_structure: z.boolean(),
+  family_detail: z.boolean(),
+  education_detail: z.boolean(),
+  documents: z.boolean(),
+  assets: z.boolean(),
+})
+
+/** The current posting, as it rides on an employee response. */
+export const employeeServiceResponseSchema = z.object({
+  id: z.number(),
+  branch_id: z.number().nullish(),
+  department_id: z.number().nullish(),
+  designation_id: z.number().nullish(),
+  grade: z.string().nullish(),
+  employment_type: z.string().nullish(),
+  contract_period: z.number().nullish(),
+  contract_period_type: z.string().nullish(),
+  joining_date: z.string().nullish(),
+  confirmation_date: z.string().nullish(),
+  renewal_date: z.string().nullish(),
+  leaving_date: z.string().nullish(),
+  leaving_reason: z.string().nullish(),
+})
+
+/**
+ * One employee. The KYC columns come back here too (they live on the same table)
+ * but the KYC screen reads its own endpoint, so they're ignored on this shape.
+ *
+ * `service` is absent on a list row and present on the detail read — which is
+ * why every field below the person is `nullish`: the two responses share this
+ * schema, and a list row simply carries less.
+ */
+export const employeeResponseSchema = z.object({
+  id: z.number(),
+  company_id: z.number(),
+  code: z.string().nullish(),
+  prefix: z.string().nullish(),
+  name: z.string().nullish(),
+  photo: z.string().nullish(),
+  gender: z.string().nullish(),
+  birth_date: z.string().nullish(),
+  marital_status: z.string().nullish(),
+  relation: z.string().nullish(),
+  relative_name: z.string().nullish(),
+
+  current_address1: z.string().nullish(),
+  current_address2: z.string().nullish(),
+  current_address3: z.string().nullish(),
+  current_country: z.string().nullish(),
+  current_state_id: z.number().nullish(),
+  current_district_id: z.number().nullish(),
+  current_taluka: z.string().nullish(),
+  current_city: z.string().nullish(),
+  current_pin_code: z.string().nullish(),
+
+  permanent_address1: z.string().nullish(),
+  permanent_address2: z.string().nullish(),
+  permanent_address3: z.string().nullish(),
+  permanent_country: z.string().nullish(),
+  permanent_state_id: z.number().nullish(),
+  permanent_district_id: z.number().nullish(),
+  permanent_taluka: z.string().nullish(),
+  permanent_city: z.string().nullish(),
+  permanent_pin_code: z.string().nullish(),
+
+  nationality: z.string().nullish(),
+  mobile_number1: z.string().nullish(),
+  mobile_number2: z.string().nullish(),
+  landline_number: z.string().nullish(),
+  email: z.string().nullish(),
+
+  blood_group: z.string().nullish(),
+  height: z.string().nullish(),
+  height_unit: z.string().nullish(),
+  weight: z.string().nullish(),
+  weight_unit: z.string().nullish(),
+  is_disability: z.boolean().nullish(),
+  remarks: z.string().nullish(),
+  is_police_verified: z.boolean().nullish(),
+  is_stamp_agreement: z.boolean().nullish(),
+
+  completed_steps: completedStepsResponseSchema.nullish(),
+  service: employeeServiceResponseSchema.nullish(),
+
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeResponse = z.infer<typeof employeeResponseSchema>
+
+export const employeesResponseSchema = z.object({
+  items: z.array(employeeResponseSchema),
+  total: z.number(),
+})
+
+/**
+ * The create body. `company_id` is the only field the API insists on; everything
+ * else is optional and an omitted key is simply not stored.
+ */
+export interface EmployeeBasicPayload {
+  company_id?: number
+  name: string | null
+  photo: string | null
+  gender: string | null
+  birth_date: string | null
+  marital_status: string | null
+  relation: string | null
+  relative_name: string | null
+
+  current_address1: string | null
+  current_address2: string | null
+  current_address3: string | null
+  current_country: string | null
+  current_state_id: number | null
+  current_district_id: number | null
+  current_taluka: string | null
+  current_city: string | null
+  current_pin_code: string | null
+
+  permanent_address1: string | null
+  permanent_address2: string | null
+  permanent_address3: string | null
+  permanent_country: string | null
+  permanent_state_id: number | null
+  permanent_district_id: number | null
+  permanent_taluka: string | null
+  permanent_city: string | null
+  permanent_pin_code: string | null
+
+  mobile_number1: string | null
+  mobile_number2: string | null
+  landline_number: string | null
+  email: string | null
+
+  blood_group: string | null
+  height: string | null
+  height_unit: string | null
+  weight: string | null
+  weight_unit: string | null
+  is_disability: boolean
+  remarks: string | null
+
+  branch_id: number | null
+  department_id: number | null
+  designation_id: number | null
+  grade: string | null
+  employment_type: string | null
+  contract_period: number | null
+  contract_period_type: string | null
+  joining_date: string | null
+  confirmation_date: string | null
+  renewal_date: string | null
+  is_police_verified: boolean
+  is_stamp_agreement: boolean
+  leaving_date: string | null
+  leaving_reason: string | null
+}
+
+/** The edit body — the same fields, minus the tenant, which can't be moved. */
+export type EmployeeBasicUpdatePayload = Omit<EmployeeBasicPayload, 'company_id'>
+
+/* ── Step 2 — KYC ────────────────────────────────────────────────────────── */
+
+/**
+ * KYC. Aadhaar and the bank block are required because payroll can't run without
+ * them; the rest of the identity documents are recorded when the employee
+ * produces them.
+ */
+export const employeeKycSchema = z
+  .object({
+    pfNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    uanNumber: optionalPattern(/^\d{12}$/, 'UAN must be 12 digits'),
+    esicNumber: optionalPattern(/^\d{10,17}$/, 'Enter 10 to 17 digits'),
+
+    bankId: z.string().trim().min(1, 'Please select a bank'),
+    bankAccountNumber: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the account number')
+      .regex(/^\d{9,18}$/, 'Account number must be 9 to 18 digits'),
+    bankBranchName: z.string().trim().max(150, 'Cannot exceed 150 characters'),
+    ifscCode: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the IFSC code')
+      .regex(IFSC_RE, 'Enter a valid IFSC code, e.g. HDFC0001234'),
+
+    aadharNumber: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the Aadhaar number')
+      .regex(AADHAR_RE, 'Aadhaar number must be 12 digits'),
+    nameAsPerAadhar: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the name as per Aadhaar')
+      .max(150, 'Cannot exceed 150 characters'),
+    panNumber: optionalPattern(PAN_RE, 'Enter a valid PAN, e.g. ABCDE1234F'),
+    epicNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    rationCardNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+
+    drivingLicenceNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    drivingLicenceExpiryDate: z.string(),
+
+    passportNumber: optionalPattern(
+      /^[A-Z][0-9]{7}$/,
+      'Enter a valid passport number, e.g. A1234567',
+    ),
+    passportValidFrom: z.string(),
+    passportValidTo: z.string(),
+  })
+  // The endpoint enforces no cross-date rule, so the form does.
+  .refine(
+    (v) => !v.passportValidFrom || !v.passportValidTo || v.passportValidTo >= v.passportValidFrom,
+    { path: ['passportValidTo'], message: '"Valid to" cannot be before "valid from"' },
+  )
+  .refine((v) => !v.drivingLicenceExpiryDate || v.drivingLicenceNumber.trim() !== '', {
+    path: ['drivingLicenceNumber'],
+    message: 'Please enter the licence number',
+  })
+  .refine((v) => (!v.passportValidFrom && !v.passportValidTo) || v.passportNumber.trim() !== '', {
+    path: ['passportNumber'],
+    message: 'Please enter the passport number',
+  })
+
+export type EmployeeKycFormValues = z.infer<typeof employeeKycSchema>
+
+export const employeeKycResponseSchema = z.object({
+  employee_id: z.number(),
+  pf_number: z.string().nullish(),
+  uan_number: z.string().nullish(),
+  esic_number: z.string().nullish(),
+  bank_id: z.number().nullish(),
+  bank_account_number: z.string().nullish(),
+  bank_branch_name: z.string().nullish(),
+  ifsc_code: z.string().nullish(),
+  aadhar_number: z.string().nullish(),
+  name_as_per_aadhar: z.string().nullish(),
+  pan_number: z.string().nullish(),
+  epic_number: z.string().nullish(),
+  ration_card_number: z.string().nullish(),
+  driving_licence_number: z.string().nullish(),
+  driving_licence_expiry_date: z.string().nullish(),
+  passport_number: z.string().nullish(),
+  passport_valid_from: z.string().nullish(),
+  passport_valid_to: z.string().nullish(),
+})
+
+export type EmployeeKycResponse = z.infer<typeof employeeKycResponseSchema>
+
+/**
+ * The KYC body, shared by the first save and every edit. POST is a full
+ * overwrite (an omitted key is stored as `null`) and PATCH is partial, but the
+ * form always submits every field — so one body serves both.
+ */
+export interface EmployeeKycPayload {
+  pf_number: string | null
+  uan_number: string | null
+  esic_number: string | null
+  bank_id: number | null
+  bank_account_number: string | null
+  bank_branch_name: string | null
+  ifsc_code: string | null
+  aadhar_number: string | null
+  name_as_per_aadhar: string | null
+  pan_number: string | null
+  epic_number: string | null
+  ration_card_number: string | null
+  driving_licence_number: string | null
+  driving_licence_expiry_date: string | null
+  passport_number: string | null
+  passport_valid_from: string | null
+  passport_valid_to: string | null
+}
+
+/* ── Step 3 — the inherited wage structure ───────────────────────────────── */
+
+export const employeeWageComponentResponseSchema = z.object({
+  pay_component_id: z.number(),
+  component_type: z.string().nullish(),
+  sort_order: z.number(),
+  amount: z.number(),
+  amount_type: z.string(),
+  pf_applicable: z.boolean().nullish(),
+  esic_applicable: z.boolean().nullish(),
+  pt_applicable: z.boolean().nullish(),
+})
+
+export const employeeWageStructureResponseSchema = z.object({
+  employee_id: z.number(),
+  employee_service_id: z.number(),
+  designation_id: z.number().nullish(),
+  designation_wage_structure_id: z.number().nullish(),
+  applicable_date: z.string().nullish(),
+  salary_type: z.string().nullish(),
+  wages_per_day: z.number().nullish(),
+  basic_pay: z.number().nullish(),
+  working_day_calculation_type: z.string().nullish(),
+  working_days: z.number().nullish(),
+  extra_day_amount_per_day: z.number().nullish(),
+  weekly_off: z.string().nullish(),
+
+  is_pf_act_applicable: z.boolean().nullish(),
+  pf_deduction_type: z.string().nullish(),
+  pf_deduction_amount: z.number().nullish(),
+  is_employee_pf_contribution_on_wage_limit: z.boolean().nullish(),
+  is_employer_pf_contribution_on_wage_limit: z.boolean().nullish(),
+
+  is_esic_act_applicable: z.boolean().nullish(),
+  esic_deduction_basis: z.string().nullish(),
+  esic_start_date: z.string().nullish(),
+
+  is_pt_act_applicable: z.boolean().nullish(),
+  pt_act_type: z.string().nullish(),
+  pt_amount: z.number().nullish(),
+
+  is_lwf_act_applicable: z.boolean().nullish(),
+  is_lwf_deduct_from_wages: z.boolean().nullish(),
+  lwf_act_type: z.string().nullish(),
+  lwf_amount: z.number().nullish(),
+
+  is_overtime_applicable: z.boolean().nullish(),
+  overtime_rate_per_hour: z.number().nullish(),
+  is_pf_applicable_on_overtime: z.boolean().nullish(),
+  is_esic_applicable_on_overtime: z.boolean().nullish(),
+  is_pt_applicable_on_overtime: z.boolean().nullish(),
+
+  is_tds_act_applicable: z.boolean().nullish(),
+  is_disability: z.boolean().nullish(),
+
+  salary_components: z.array(employeeWageComponentResponseSchema).nullish(),
+})
+
+export type EmployeeWageStructureResponse = z.infer<
+  typeof employeeWageStructureResponseSchema
+>
+
+
+/* ── Repeatable row lists ────────────────────────────────────────────────── */
+
+/**
+ * The row lists behind steps 4 to 7.
+ *
+ * Each of those steps is a card list with one Save, over an API that writes one
+ * row per call — so the form holds `{ rows: [...] }` and the step's save diffs it
+ * (see `lib/save-rows.ts`). Two consequences shape the schemas below:
+ *
+ * - **A row carries its server `id`** when it came back from a read, and doesn't
+ *   when the user just added it. That is what tells a POST from a PATCH.
+ * - **A blank row is legal.** The list always keeps one card on screen so there's
+ *   something to type into, which means an untouched step submits one empty row.
+ *   Validating it would block the step; saving it would create a junk record. So
+ *   the per-field rules live in a `superRefine` that skips blank rows, and the
+ *   save skips them too.
+ *
+ * The refine reports issues at `[index, 'field']`, which zod prefixes with the
+ * array's own path — so react-hook-form receives `rows.2.fullName` and the message
+ * lands under the right control in the right card.
+ */
+
+/** Is every one of `keys` blank on this row? */
+function rowIsBlank(row: Record<string, unknown>, keys: readonly string[]): boolean {
+  return keys.every((key) => {
+    const value = row[key]
+    return value === undefined || value === null || String(value).trim() === ''
+  })
+}
+
+/** The server id a saved row carries; absent on one the user just added. */
+const rowId = z.number().optional()
+
+/* ── Step 4 — family ─────────────────────────────────────────────────────── */
+
+/** One family member. Nothing is required at field level — see `rowIsBlank`. */
+export const employeeFamilyRowSchema = z.object({
+  id: rowId,
+  fullName: z.string(),
+  relation: z.string(),
+  birthDate: z.string(),
+  aadharNumber: z.string(),
+  isNominee: z.boolean(),
+})
+
+export type EmployeeFamilyFormValues = z.infer<typeof employeeFamilyRowSchema>
+
+/** What makes a family row real — a row with none of these is skipped. */
+export const FAMILY_ROW_KEYS = [
+  'fullName',
+  'relation',
+  'birthDate',
+  'aadharNumber',
+] as const
+
+export const employeeFamilyListSchema = z.object({
+  rows: z.array(employeeFamilyRowSchema).superRefine((rows, ctx) => {
+    const today = new Date().toISOString().slice(0, 10)
+
+    rows.forEach((row, index) => {
+      if (rowIsBlank(row, FAMILY_ROW_KEYS)) return
+
+      const name = row.fullName.trim()
+      if (name === '') {
+        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Please enter the name' })
+      } else if (name.length < 2) {
+        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Minimum 2 characters' })
+      } else if (!NAME_RE.test(name)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'fullName'],
+          message: 'Letters, digits and spaces only',
+        })
+      }
+
+      if (row.relation.trim() === '') {
+        ctx.addIssue({ code: 'custom', path: [index, 'relation'], message: 'Please select a relation' })
+      }
+
+      if (row.birthDate && row.birthDate > today) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'birthDate'],
+          message: 'Date of birth cannot be in the future',
+        })
+      }
+
+      const aadhar = row.aadharNumber.trim()
+      if (aadhar !== '' && !AADHAR_RE.test(aadhar)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'aadharNumber'],
+          message: 'Aadhaar number must be 12 digits',
+        })
+      }
+    })
+  }),
+})
+
+export type EmployeeFamilyListFormValues = z.infer<typeof employeeFamilyListSchema>
+
+export const employeeFamilyResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  full_name: z.string().nullish(),
+  relation: z.string().nullish(),
+  birth_date: z.string().nullish(),
+  aadhar_number: z.string().nullish(),
+  is_nominee: z.boolean().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeFamilyResponse = z.infer<typeof employeeFamilyResponseSchema>
+
+export const employeeFamilyListResponseSchema = z.object({
+  items: z.array(employeeFamilyResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeFamilyPayload {
+  full_name: string
+  relation: string | null
+  birth_date: string | null
+  aadhar_number: string | null
+  is_nominee: boolean
+}
+
+/* ── Step 5a — education ─────────────────────────────────────────────────── */
+
+export const employeeEducationRowSchema = z.object({
+  id: rowId,
+  educationName: z.string(),
+  board: z.string(),
+  passingYear: z.string(),
+  percentage: z.string(),
+})
+
+export type EmployeeEducationFormValues = z.infer<typeof employeeEducationRowSchema>
+
+/** What makes an education row real. */
+export const EDUCATION_ROW_KEYS = [
+  'educationName',
+  'board',
+  'passingYear',
+  'percentage',
+] as const
+
+const PERCENTAGE_RE = /^\d{1,3}(\.\d{1,2})?$/
+
+/** Per-row rules, shared by the education list and reused by the step's form. */
+function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.RefinementCtx) {
+  rows.forEach((row, index) => {
+    if (rowIsBlank(row, EDUCATION_ROW_KEYS)) return
+
+    if (row.educationName.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'educationName'],
+        message: 'Please enter the qualification',
+      })
+    }
+    if (row.passingYear.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'passingYear'],
+        message: 'Please select the passing year',
+      })
+    }
+
+    const percentage = row.percentage.trim()
+    if (percentage !== '') {
+      if (!PERCENTAGE_RE.test(percentage)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'percentage'],
+          message: 'Enter a percentage, e.g. 78 or 78.5',
+        })
+      } else if (Number(percentage) > 100) {
+        ctx.addIssue({ code: 'custom', path: [index, 'percentage'], message: 'Cannot exceed 100' })
+      }
+    }
+  })
+}
+
+export const employeeEducationResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  education_name: z.string().nullish(),
+  board: z.string().nullish(),
+  passing_year: z.string().nullish(),
+  percentage: z.string().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeEducationResponse = z.infer<typeof employeeEducationResponseSchema>
+
+export const employeeEducationListResponseSchema = z.object({
+  items: z.array(employeeEducationResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeEducationPayload {
+  education_name: string
+  passing_year: string
+  board: string | null
+  percentage: string | null
+}
+
+/* ── Step 5b — experience ────────────────────────────────────────────────── */
+
+/**
+ * Prior employment. Both dates are months — the API rejects a full date.
+ *
+ * The list itself lives on the step-5 form alongside education, since the two are
+ * captured together; `isFresher` is a UI flag that hides and skips this half.
+ */
+export const employeeExperienceRowSchema = z.object({
+  id: rowId,
+  companyName: z.string(),
+  fromDate: z.string(),
+  toDate: z.string(),
+  designation: z.string(),
+  salary: z.string(),
+  leavingReason: z.string(),
+  contactPersonName: z.string(),
+  contactPersonNumber: z.string(),
+})
+
+export type EmployeeExperienceFormValues = z.infer<typeof employeeExperienceRowSchema>
+
+/** What makes an experience row real. */
+export const EXPERIENCE_ROW_KEYS = [
+  'companyName',
+  'fromDate',
+  'toDate',
+  'designation',
+  'salary',
+  'leavingReason',
+  'contactPersonName',
+  'contactPersonNumber',
+] as const
+
+/** Per-row rules for prior employment. */
+function refineExperienceRows(
+  rows: EmployeeExperienceFormValues[],
+  ctx: z.RefinementCtx,
+) {
+  rows.forEach((row, index) => {
+    if (rowIsBlank(row, EXPERIENCE_ROW_KEYS)) return
+
+    if (row.companyName.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'companyName'],
+        message: 'Please enter the company name',
+      })
+    }
+    if (row.designation.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'designation'],
+        message: 'Please enter the designation',
+      })
+    }
+
+    // The API takes `YYYY-MM` and nothing else, so both ends are month values.
+    if (!MONTH_RE.test(row.fromDate)) {
+      ctx.addIssue({ code: 'custom', path: [index, 'fromDate'], message: 'Pick a from month' })
+    }
+    if (!MONTH_RE.test(row.toDate)) {
+      ctx.addIssue({ code: 'custom', path: [index, 'toDate'], message: 'Pick a to month' })
+    } else if (MONTH_RE.test(row.fromDate) && row.toDate < row.fromDate) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'toDate'],
+        // The endpoint enforces no ordering, so the form does.
+        message: '"To" month cannot be before the "from" month',
+      })
+    }
+
+    const salary = row.salary.trim()
+    if (salary !== '' && !DECIMAL_RE.test(salary)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'salary'],
+        message: 'Enter an amount, e.g. 25000',
+      })
+    }
+
+    const contact = row.contactPersonNumber.trim()
+    if (contact !== '' && !MOBILE_RE.test(contact)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'contactPersonNumber'],
+        message: 'Enter a valid 10-digit mobile number',
+      })
+    }
+  })
+}
+
+/**
+ * Step 5's whole form: both collections plus the fresher flag. One schema, because
+ * one Save covers both halves of the screen.
+ */
+export const employeeEducationStepSchema = z.object({
+  educations: z.array(employeeEducationRowSchema).superRefine(refineEducationRows),
+  /** UI-only: while on, the experience rows are hidden and never validated or sent. */
+  isFresher: z.boolean(),
+  experiences: z.array(employeeExperienceRowSchema),
+})
+
+export type EmployeeEducationStepFormValues = z.infer<typeof employeeEducationStepSchema>
+
+/**
+ * The same schema with the experience half enforced — used when the fresher switch
+ * is off. Kept as a separate resolver rather than a conditional refine so the rules
+ * genuinely don't run for a fresher.
+ */
+export const employeeEducationStepWithExperienceSchema = z.object({
+  educations: z.array(employeeEducationRowSchema).superRefine(refineEducationRows),
+  isFresher: z.boolean(),
+  experiences: z.array(employeeExperienceRowSchema).superRefine(refineExperienceRows),
+})
+
+export const employeeExperienceResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  company_name: z.string().nullish(),
+  from_date: z.string().nullish(),
+  to_date: z.string().nullish(),
+  designation: z.string().nullish(),
+  salary: z.string().nullish(),
+  leaving_reason: z.string().nullish(),
+  contact_person_name: z.string().nullish(),
+  contact_person_number: z.string().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeExperienceResponse = z.infer<typeof employeeExperienceResponseSchema>
+
+export const employeeExperienceListResponseSchema = z.object({
+  items: z.array(employeeExperienceResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeExperiencePayload {
+  company_name: string
+  from_date: string
+  to_date: string
+  designation: string
+  salary: string | null
+  leaving_reason: string | null
+  contact_person_name: string | null
+  contact_person_number: string | null
+}
+
+/* ── Step 6 — documents ──────────────────────────────────────────────────── */
+
+/**
+ * One attachment. `document` holds the object key the presigned upload returned,
+ * which is why it's a required string: a row with no file behind it is rejected
+ * by the API and would show as an empty attachment in the list.
+ */
+export const employeeDocumentRowSchema = z.object({
+  id: rowId,
+  documentTypeId: z.string(),
+  documentId: z.string(),
+  expiryDate: z.string(),
+  /** The object key the presigned upload returned — never the file itself. */
+  document: z.string(),
+})
+
+export type EmployeeDocumentFormValues = z.infer<typeof employeeDocumentRowSchema>
+
+/** What makes a document row real. */
+export const DOCUMENT_ROW_KEYS = [
+  'documentTypeId',
+  'documentId',
+  'expiryDate',
+  'document',
+] as const
+
+export const employeeDocumentListSchema = z.object({
+  rows: z.array(employeeDocumentRowSchema).superRefine((rows, ctx) => {
+    rows.forEach((row, index) => {
+      if (rowIsBlank(row, DOCUMENT_ROW_KEYS)) return
+
+      if (row.documentTypeId.trim() === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'documentTypeId'],
+          message: 'Please select a document type',
+        })
+      }
+      if (row.documentId.trim() === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'documentId'],
+          message: 'Please select a document',
+        })
+      }
+      // The API rejects a row with no file behind it, and an attachment without
+      // one would show as an empty entry — so the upload is what makes it savable.
+      if (row.document.trim() === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'document'],
+          message: 'Please upload the file',
+        })
+      }
+    })
+  }),
+})
+
+export type EmployeeDocumentListFormValues = z.infer<typeof employeeDocumentListSchema>
+
+export const employeeDocumentResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  document_type_id: z.number().nullish(),
+  document_type_name: z.string().nullish(),
+  document_id: z.number().nullish(),
+  document_name: z.string().nullish(),
+  expiry_date: z.string().nullish(),
+  document: z.string().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeDocumentResponse = z.infer<typeof employeeDocumentResponseSchema>
+
+export const employeeDocumentListResponseSchema = z.object({
+  items: z.array(employeeDocumentResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeDocumentPayload {
+  document_type_id: number
+  document_id: number
+  document: string
+  expiry_date: string | null
+}
+
+/* ── Step 7 — assets ─────────────────────────────────────────────────────── */
+
+export const employeeAssetRowSchema = z.object({
+  id: rowId,
+  assetId: z.string(),
+  status: z.string(),
+  assignedDate: z.string(),
+  validTill: z.string(),
+  remarks: z.string(),
+})
+
+export type EmployeeAssetFormValues = z.infer<typeof employeeAssetRowSchema>
+
+/**
+ * What makes an asset row real.
+ *
+ * `status` is deliberately absent: a blank row opens on `ASSIGNED`, so counting it
+ * would make every empty card look filled in.
+ */
+export const ASSET_ROW_KEYS = ['assetId', 'assignedDate', 'validTill', 'remarks'] as const
+
+export const employeeAssetListSchema = z.object({
+  rows: z.array(employeeAssetRowSchema).superRefine((rows, ctx) => {
+    rows.forEach((row, index) => {
+      if (rowIsBlank(row, ASSET_ROW_KEYS)) return
+
+      if (row.assetId.trim() === '') {
+        ctx.addIssue({ code: 'custom', path: [index, 'assetId'], message: 'Please select an asset' })
+      }
+      if (row.status.trim() === '') {
+        ctx.addIssue({ code: 'custom', path: [index, 'status'], message: 'Please select a status' })
+      }
+      if (row.assignedDate && row.validTill && row.validTill < row.assignedDate) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'validTill'],
+          message: '"Valid till" cannot be before the assigned date',
+        })
+      }
+    })
+  }),
+})
+
+export type EmployeeAssetListFormValues = z.infer<typeof employeeAssetListSchema>
+
+export const employeeAssetResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  asset_id: z.number().nullish(),
+  asset_name: z.string().nullish(),
+  assigned_date: z.string().nullish(),
+  valid_till: z.string().nullish(),
+  status: z.string().nullish(),
+  remarks: z.string().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeAssetResponse = z.infer<typeof employeeAssetResponseSchema>
+
+export const employeeAssetListResponseSchema = z.object({
+  items: z.array(employeeAssetResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeAssetPayload {
+  asset_id: number
+  status: string
+  assigned_date: string | null
+  valid_till: string | null
+  remarks: string | null
+}
+
+/* ── Step 8 — transfers ──────────────────────────────────────────────────── */
+
+/**
+ * A transfer: the leaving details that close the current posting plus the full
+ * terms of the new one. `transferType` tells the API which kind of move it is —
+ * a company change carries `newCompanyId`, a branch change stays in the tenant.
+ */
+export const employeeTransferSchema = z
+  .object({
+    leavingDate: z.string().trim().min(1, 'Please select the leaving date'),
+    leavingReason: z
+      .string()
+      .trim()
+      .min(1, 'Please enter the leaving reason')
+      .max(500, 'Cannot exceed 500 characters'),
+
+    transferType: z.string().trim().min(1, 'Please choose the transfer type'),
+    newCompanyId: z.string(),
+
+    branchId: z.string(),
+    departmentId: z.string(),
+    designationId: z.string().trim().min(1, 'Please select a designation'),
+    grade: z.string().trim().min(1, 'Please select a grade'),
+    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    contractPeriod: z.string(),
+    contractPeriodType: z.string(),
+    joiningDate: z.string().trim().min(1, 'Please select the new joining date'),
+    confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+    renewalDate: z.string(),
+  })
+  .refine((v) => v.transferType !== 'company' || v.newCompanyId.trim() !== '', {
+    path: ['newCompanyId'],
+    message: 'Please select the new company',
+  })
+  .refine((v) => v.transferType !== 'branch' || v.branchId.trim() !== '', {
+    path: ['branchId'],
+    message: 'Please select the new branch',
+  })
+  // The new posting has to start after the old one closed, never on the same day.
+  .refine((v) => !v.leavingDate || !v.joiningDate || v.joiningDate > v.leavingDate, {
+    path: ['joiningDate'],
+    message: 'The new joining date must be after the leaving date',
+  })
+  .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
+    path: ['confirmationDate'],
+    message: 'Confirmation date cannot be before the joining date',
+  })
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
+    { path: ['contractPeriod'], message: 'Please enter the contract period' },
+  )
+
+export type EmployeeTransferFormValues = z.infer<typeof employeeTransferSchema>
+
+/**
+ * The restricted edit of the latest posting — a correction, not a move: no
+ * leaving details and no transfer type, since nothing is being closed.
+ */
+export const employeeServiceEditSchema = z
+  .object({
+    branchId: z.string(),
+    departmentId: z.string(),
+    designationId: z.string().trim().min(1, 'Please select a designation'),
+    grade: z.string().trim().min(1, 'Please select a grade'),
+    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    contractPeriod: z.string(),
+    contractPeriodType: z.string(),
+    joiningDate: z.string().trim().min(1, 'Please select the joining date'),
+    confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+    renewalDate: z.string(),
+  })
+  .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
+    path: ['confirmationDate'],
+    message: 'Confirmation date cannot be before the joining date',
+  })
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
+    { path: ['contractPeriod'], message: 'Please enter the contract period' },
+  )
+
+export type EmployeeServiceEditFormValues = z.infer<typeof employeeServiceEditSchema>
+
+/** Closing the open posting without opening another — the employee exits. */
+export const leaveServiceSchema = z.object({
+  leavingDate: z.string().trim().min(1, 'Please select the leaving date'),
+  leavingReason: z
+    .string()
+    .trim()
+    .min(1, 'Please enter the leaving reason')
+    .max(500, 'Cannot exceed 500 characters'),
+})
+
+export type LeaveServiceFormValues = z.infer<typeof leaveServiceSchema>
+
+export const employeeTransferResponseSchema = z.object({
+  id: z.number(),
+  company_id: z.number(),
+  company_name: z.string().nullish(),
+  branch_id: z.number().nullish(),
+  branch_name: z.string().nullish(),
+  department_id: z.number().nullish(),
+  department_name: z.string().nullish(),
+  designation_id: z.number().nullish(),
+  designation_name: z.string().nullish(),
+  joining_date: z.string().nullish(),
+  leaving_date: z.string().nullish(),
+  is_current: z.boolean().nullish(),
+  is_latest: z.boolean().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeTransferResponse = z.infer<typeof employeeTransferResponseSchema>
+
+export const employeeTransferListResponseSchema = z.object({
+  items: z.array(employeeTransferResponseSchema),
+  total: z.number(),
+})
+
+export const employeeServiceDetailResponseSchema = z.object({
+  id: z.number(),
+  company_id: z.number(),
+  company_name: z.string().nullish(),
+  branch_id: z.number().nullish(),
+  branch_name: z.string().nullish(),
+  department_id: z.number().nullish(),
+  department_name: z.string().nullish(),
+  designation_id: z.number().nullish(),
+  designation_name: z.string().nullish(),
+  grade: z.string().nullish(),
+  employment_type: z.string().nullish(),
+  contract_period: z.number().nullish(),
+  contract_period_type: z.string().nullish(),
+  joining_date: z.string().nullish(),
+  confirmation_date: z.string().nullish(),
+  renewal_date: z.string().nullish(),
+  leaving_date: z.string().nullish(),
+  leaving_reason: z.string().nullish(),
+  is_current: z.boolean().nullish(),
+  is_latest: z.boolean().nullish(),
+  is_police_verified: z.boolean().nullish(),
+  is_stamp_agreement: z.boolean().nullish(),
+})
+
+export const employeeTransferWageStructureResponseSchema = z.object({
+  designation_wage_structure_id: z.number().nullish(),
+  salary_type: z.string().nullish(),
+  basic_pay: z.number().nullish(),
+  wages_per_day: z.number().nullish(),
+  is_pf_act_applicable: z.boolean().nullish(),
+  is_esic_act_applicable: z.boolean().nullish(),
+  is_pt_act_applicable: z.boolean().nullish(),
+  is_lwf_act_applicable: z.boolean().nullish(),
+  is_overtime_applicable: z.boolean().nullish(),
+  is_tds_act_applicable: z.boolean().nullish(),
+  weekly_off: z.string().nullish(),
+  is_disability: z.boolean().nullish(),
+})
+
+/** What every step 8 read and write answers with. */
+export const employeeTransferDetailResponseSchema = z.object({
+  wage_structure: employeeTransferWageStructureResponseSchema,
+  service_detail: employeeServiceDetailResponseSchema,
+})
+
+export type EmployeeTransferDetailResponse = z.infer<
+  typeof employeeTransferDetailResponseSchema
+>
+
+export interface EmployeeTransferPayload {
+  leaving_date: string
+  leaving_reason: string
+  transfer_type: 'company' | 'branch'
+  new_company_id?: number
+  branch_id: number | null
+  department_id: number | null
+  designation_id: number
+  grade: string
+  employment_type: string
+  contract_period: number | null
+  contract_period_type?: string
+  joining_date: string
+  confirmation_date: string
+  renewal_date: string | null
+}
+
+export interface EmployeeServiceEditPayload {
+  branch_id: number | null
+  department_id: number | null
+  designation_id: number
+  grade: string
+  employment_type: string
+  contract_period: number | null
+  contract_period_type?: string
+  joining_date: string
+  confirmation_date: string
+  renewal_date: string | null
+}
+
+export interface LeaveServicePayload {
+  leaving_date: string
+  leaving_reason: string
+}
+
+/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
+
+/**
+ * A leave record. `payType` is derived from the chosen leave type's own pay type
+ * and shown read-only, so the two can never disagree.
+ */
+export const employeeLeaveSchema = z
+  .object({
+    leaveTypeId: z.string().trim().min(1, 'Please select a leave type'),
+    fromDate: z.string().trim().min(1, 'Please select the from date'),
+    toDate: z.string().trim().min(1, 'Please select the to date'),
+    duration: z.string().trim().min(1, 'Please select the duration'),
+    fromTime: z.string(),
+    toTime: z.string(),
+    payType: z.string(),
+    status: z.string(),
+    leaveReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+  })
+  .refine((v) => !v.fromDate || !v.toDate || v.toDate >= v.fromDate, {
+    path: ['toDate'],
+    message: '"To" date cannot be before the "from" date',
+  })
+  // A half day is a slice of one day, so it carries the two times a full day mustn't.
+  .refine((v) => v.duration !== 'HALF_DAY' || TIME_RE.test(v.fromTime), {
+    path: ['fromTime'],
+    message: 'Enter a start time as HH:MM',
+  })
+  .refine((v) => v.duration !== 'HALF_DAY' || TIME_RE.test(v.toTime), {
+    path: ['toTime'],
+    message: 'Enter an end time as HH:MM',
+  })
+  .refine(
+    (v) => v.duration !== 'HALF_DAY' || !v.fromTime || !v.toTime || v.toTime > v.fromTime,
+    { path: ['toTime'], message: 'End time must be after the start time' },
+  )
+  .refine((v) => v.duration !== 'HALF_DAY' || v.fromDate === v.toDate, {
+    path: ['toDate'],
+    message: 'A half day covers a single date',
+  })
+
+export type EmployeeLeaveFormValues = z.infer<typeof employeeLeaveSchema>
+
+/** The Approve / Reject decision on a pending leave. */
+export const leaveDecisionSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED']),
+  remark: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+})
+
+export type LeaveDecisionFormValues = z.infer<typeof leaveDecisionSchema>
+
+export const employeeLeaveResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number(),
+  employee_name: z.string().nullish(),
+  employee_code: z.string().nullish(),
+  company_id: z.number(),
+  from_date: z.string().nullish(),
+  to_date: z.string().nullish(),
+  duration: z.enum(['FULL_DAY', 'HALF_DAY']),
+  from_time: z.string().nullish(),
+  to_time: z.string().nullish(),
+  pay_type: z.enum(['PAID', 'UNPAID']),
+  leave_type_id: z.number().nullish(),
+  leave_type: z.string().nullish(),
+  leave_type_name: z.string().nullish(),
+  leave_reason: z.string().nullish(),
+  attachment: z.string().nullish(),
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
+  status_remark: z.string().nullish(),
+  status_at: z.string().nullish(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeLeaveResponse = z.infer<typeof employeeLeaveResponseSchema>
+
+export const employeeLeaveListResponseSchema = z.object({
+  items: z.array(employeeLeaveResponseSchema),
+  total: z.number(),
+})
+
+export interface EmployeeLeavePayload {
+  employee_id?: number
+  status?: string
+  from_date: string | null
+  to_date: string | null
+  duration: string
+  from_time?: string
+  to_time?: string
+  leave_reason: string | null
+  pay_type: string
+  leave_type_id: number | null
+}
+
+export interface LeaveDecisionPayload {
+  status: 'APPROVED' | 'REJECTED'
+  remark: string | null
+}

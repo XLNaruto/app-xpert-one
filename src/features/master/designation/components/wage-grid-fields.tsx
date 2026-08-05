@@ -4,7 +4,9 @@ import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatAmount, formatDecimal } from '@/lib/currency'
 import { cn } from '@/lib/utils'
+import { gridAmount } from '../lib/wage-structure-calculations'
 
 /**
  * The controls the wage structure grid is built from. Every one of them is a
@@ -157,10 +159,14 @@ export function GridSelect({
   disabled?: boolean
   className?: string
 }) {
+  /*
+   * Disabled means the row rules this setting out — an act switched off — so the
+   * cell says so rather than showing a "Select…" it will never take.
+   */
   if (disabled) {
     return (
       <span className="flex h-7 items-center rounded-md border border-input px-2 text-xs text-muted-foreground/50">
-        {placeholder ?? '—'}
+        {NO_VALUE}
       </span>
     )
   }
@@ -289,15 +295,52 @@ export function GridSwitch({
 
 /* ── Read-only twins, for saved rows ────────────────────────────────────── */
 
-/** Text, or a dash when there's nothing recorded. */
+/**
+ * What a cell with no value shows. Spelled out rather than left as a dash: at this
+ * width a dash is easy to read as a minus sign or as part of the gridlines, where
+ * "N/A" says outright that the row records nothing here.
+ *
+ * One constant, so every kind of empty cell — a stored blank, a figure an act
+ * rules out, a field that isn't asked for — reads identically down a column.
+ */
+export const NO_VALUE = 'N/A'
+
+/** Text, or `N/A` when there's nothing recorded. Numbers are rounded to fit. */
 export function ReadText({ value }: { value: string | number | null }) {
   if (value === null || value === '') {
-    return <span className="text-muted-foreground/50">—</span>
+    return <span className="text-muted-foreground/50">{NO_VALUE}</span>
   }
-  return <span className="text-foreground">{value}</span>
+  return (
+    <span className="text-foreground">
+      {typeof value === 'number' ? gridAmount(value) : value}
+    </span>
+  )
 }
 
-/** A stored amount with the unit it was captured in. */
+/**
+ * A stored money figure: the currency sign, then the value grouped the Indian way
+ * — `₹1,50,000`. Every amount column of a saved row goes through this rather than
+ * printing the raw number, so a five- or six-figure basic can be read at a glance
+ * and an amount column can't be mistaken for a count like the working days.
+ *
+ * Not for a cell whose unit is the row's own choice — a percentage or an amount —
+ * which is `ReadAmount`'s job.
+ */
+export function ReadMoney({ value }: { value: number | null }) {
+  if (value === null) return <ReadText value={null} />
+  return <span className="text-foreground tabular-nums">{formatAmount(value)}</span>
+}
+
+/**
+ * A stored amount with the unit it was captured in, written the way each unit is
+ * written: a percentage takes its sign after the figure (`10%`), a rupee amount
+ * takes its sign before it (`₹10`).
+ *
+ * The sign is the same colour as the figure it belongs to. It used to be tinted
+ * per unit, which read as a status — a green figure against an amber one down a
+ * column of amounts — when all it says is what unit was typed, and the sign itself
+ * already says that.
+ */
 export function ReadAmount({
   amount,
   valueType,
@@ -306,21 +349,72 @@ export function ReadAmount({
   valueType: 'Percentage' | 'Fixed'
 }) {
   if (amount === null) return <ReadText value={null} />
-  const Icon = valueType === 'Percentage' ? Percent : IndianRupee
+
+  const isPercentage = valueType === 'Percentage'
+  const Icon = isPercentage ? Percent : IndianRupee
+  const sign = <Icon className="size-2.5 shrink-0" />
 
   return (
-    <span className="flex items-center justify-end gap-1">
-      <span
-        className={cn(
-          'flex size-4 shrink-0 items-center justify-center rounded',
-          valueType === 'Percentage'
-            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-        )}
-      >
-        <Icon className="size-2.5" />
-      </span>
-      <span className="text-foreground">{amount}</span>
+    <span className="flex items-center justify-center gap-px text-foreground">
+      {!isPercentage && sign}
+      <span className="tabular-nums">{formatDecimal(amount)}</span>
+      {isPercentage && sign}
+    </span>
+  )
+}
+
+/**
+ * The acts a stored allowance counts towards, as one compact line of chips under
+ * its amount. Only the acts it's marked for appear — a head marked for none is
+ * meaningful in itself, and three greyed-out chips on every row of the history
+ * said nothing while costing the row's whole second line.
+ *
+ * Each chip is tinted like its act's own column, so the line reads the same way
+ * as the markers on a draft row.
+ */
+export function ReadActMarkers({
+  pfApplicable,
+  esicApplicable,
+  ptApplicable,
+}: {
+  pfApplicable: boolean
+  esicApplicable: boolean
+  ptApplicable: boolean
+}) {
+  const marks = [
+    {
+      label: 'PF',
+      on: pfApplicable,
+      tone: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
+    },
+    {
+      label: 'ESI',
+      on: esicApplicable,
+      tone: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+    },
+    {
+      label: 'PT',
+      on: ptApplicable,
+      tone: 'bg-violet-500/15 text-violet-700 dark:text-violet-400',
+    },
+  ].filter((mark) => mark.on)
+
+  if (marks.length === 0) return null
+
+  return (
+    <span className="flex items-center justify-center gap-1">
+      {marks.map((mark) => (
+        <CellTooltip key={mark.label} label={`Counts towards ${mark.label}`}>
+          <span
+            className={cn(
+              'rounded px-1 py-px text-[9px] font-bold uppercase leading-tight',
+              mark.tone,
+            )}
+          >
+            {mark.label}
+          </span>
+        </CellTooltip>
+      ))}
     </span>
   )
 }
@@ -339,7 +433,7 @@ export function ReadBoolean({ value, tone }: { value: boolean; tone: string }) {
   )
 }
 
-/** A stored choice, as a tinted chip; nothing recorded reads as a dash. */
+/** A stored choice, as a tinted chip; nothing recorded reads as `N/A`. */
 export function ReadChoice({
   value,
   tone,

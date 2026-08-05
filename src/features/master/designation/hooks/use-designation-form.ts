@@ -85,7 +85,6 @@ export function useDesignationForm() {
   const lwfActApplicable = useWatch({ control, name: 'lwfActApplicable' })
   const lwfActType = useWatch({ control, name: 'lwfActType' })
   const overtimeApplicable = useWatch({ control, name: 'overtimeApplicable' })
-  const overtimeCalculationType = useWatch({ control, name: 'overtimeCalculationType' })
 
   const wagePerDay = calculateWagePerDay(basicPay ?? '')
 
@@ -139,7 +138,6 @@ export function useDesignationForm() {
     lwfActApplicable,
     lwfActType,
     overtimeApplicable,
-    overtimeCalculationType,
 
     onSubmit,
     isPending: createDesignation.isPending,

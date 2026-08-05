@@ -9,10 +9,10 @@ import { fetchBranches } from './branch-api'
  * One limit/offset page — pass the params from `usePagination()`. Called with
  * no argument it returns the whole master, for dropdowns and history panels.
  */
-export function useBranches(params: PageParams = ALL_ROWS) {
+export function useBranches(params: PageParams = ALL_ROWS, companyId?: number) {
   return useQuery({
-    queryKey: queryKeys.branch.list(params),
-    queryFn: () => fetchBranches(params),
+    queryKey: queryKeys.branch.list(params, companyId),
+    queryFn: () => fetchBranches(params, companyId),
     // Keep the previous page on screen while the next one loads.
     placeholderData: keepPreviousData,
   })

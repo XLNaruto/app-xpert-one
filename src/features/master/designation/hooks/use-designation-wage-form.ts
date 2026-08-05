@@ -1,19 +1,14 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { wageStructureFormSchema, type WageStructureFormValues } from '../schemas'
-import { EMPTY_WAGE_STRUCTURE_ROW } from '../constants'
 import { useDesignationWageStructures } from '../api/use-designation-wage-structures'
 import { useSaveDesignationWageStructures } from '../api/use-designation-wage-mutations'
+import { useWageHeads } from '../api/use-wage-heads'
 import { effectiveMonthBounds } from '../lib/effective-month'
-import { wageStructureToRow } from '../lib/wage-structure-mappers'
+import { blankWageStructureRow, wageStructureToRow } from '../lib/wage-structure-mappers'
 import type { DesignationWageStructure } from '../types'
-
-/** A fresh draft row — cloned so rows never share the head arrays. */
-function blankRow() {
-  return structuredClone(EMPTY_WAGE_STRUCTURE_ROW)
-}
 
 /**
  * Owns the wage structure tab: the stored version history, the rows being saved
@@ -24,10 +19,11 @@ function blankRow() {
  * - **drafted** — a new version, `POST`ed to take effect from its month. The
  *   earlier months keep what they were paid on, which is what makes the history
  *   an audit trail rather than a mutable record.
- * - **opened for correction** — a stored version pulled onto the grid by
- *   `editRow`, carrying its id, and `PATCH`ed in place. No version is created;
- *   what a past month is read as changes. It's for fixing a mistake, not for a
- *   revision, so the grid marks the row as an edit while it's open.
+ * - **opened for correction** — a stored version opened by `editRow`, carrying its
+ *   id, and `PATCH`ed in place. No version is created; what a past month is read
+ *   as changes. It's for fixing a mistake, not for a revision, so the grid opens
+ *   the row *where it already sits* in the history and marks it as an edit, rather
+ *   than adding a row that looks like a new version.
  *
  * Nothing here subscribes to field values or to `formState`. That's deliberate:
  * a subscription at this level re-renders the whole grid on every keystroke, and
@@ -37,29 +33,57 @@ function blankRow() {
 export function useDesignationWageForm(designationId: number) {
   const history = useDesignationWageStructures(designationId)
   const saveStructures = useSaveDesignationWageStructures(designationId)
+  /*
+   * The allowance and deduction columns are the master's heads, so a draft row
+   * can't be built until it has loaded — no row exists before then.
+   */
+  const { heads, isReady: headsReady, isLoading: headsLoading } = useWageHeads()
 
   const { register, control, handleSubmit, reset, setValue, getValues } =
     useForm<WageStructureFormValues>({
       resolver: zodResolver(wageStructureFormSchema),
-      defaultValues: { rows: [blankRow()] },
+      defaultValues: { rows: [] },
     })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'rows' })
+
+  const blankRow = useCallback(() => blankWageStructureRow(heads), [heads])
+
+  const existing = useMemo(() => history.data ?? [], [history.data])
+
+  /*
+   * One blank row, and only when the grid would otherwise be empty — nothing
+   * saved and nothing drafted. A designation with a history opens on that history
+   * with no row waiting to be filled in: a revision is added deliberately, and a
+   * correction opens the saved row itself.
+   *
+   * Written as a condition on the row count rather than a "have I seeded yet"
+   * ref, so it can also stand the grid back up after the last row is removed —
+   * and so a later refetch of the master or the history can't reset the grid and
+   * throw away what's been typed into it, since it only ever appends to an empty
+   * one.
+   */
+  useEffect(() => {
+    if (!headsReady || history.isLoading) return
+    if (existing.length > 0 || fields.length > 0) return
+    append(blankWageStructureRow(heads))
+  }, [headsReady, heads, history.isLoading, existing.length, fields.length, append])
 
   const monthBounds = useMemo(() => effectiveMonthBounds(), [])
 
   /** Months already in the history — pickable, but flagged as a supersede. */
   const takenMonths = useMemo(
-    () => new Set((history.data ?? []).map((row) => row.effectiveFrom)),
-    [history.data],
+    () => new Set(existing.map((row) => row.effectiveFrom)),
+    [existing],
   )
 
-  const addRow = useCallback(() => append(blankRow()), [append])
+  const addRow = useCallback(() => append(blankRow()), [append, blankRow])
 
   /**
-   * Pull a stored version onto the grid to correct it. The row carries the
-   * version's id, which is what turns its save into a `PATCH` of that row rather
-   * than a new version stacked on top of it.
+   * Open a stored version for correction. The row carries the version's id, which
+   * is what turns its save into a `PATCH` of that row rather than a new version
+   * stacked on top of it — and what the grid matches on to render the editable row
+   * in the saved row's own place.
    *
    * Opening the same version twice would send two conflicting patches for one
    * row, so the second click is ignored.
@@ -76,23 +100,16 @@ export function useDesignationWageForm(designationId: number) {
   )
 
   /**
-   * Never leave the grid with nothing to fill in — the last row resets instead.
+   * Drops a draft row, and closes a correction — a stored version isn't touched by
+   * this, only the editable copy of it on the grid.
    *
-   * The count is read through `getValues` rather than closed over from `fields`,
-   * which would change this callback's identity on every add or remove. Rows are
-   * memoised on their props, so an unstable callback here re-rendered every draft
-   * row — forty cells apiece — each time one was added.
+   * Always the plain remove, the last row included: a blank row you asked to get
+   * rid of has to actually go, and it used to come straight back as a fresh blank
+   * one. The grid is left empty over an existing history; with nothing saved
+   * either, the effect above puts one blank row back so there's something to fill
+   * in.
    */
-  const removeRow = useCallback(
-    (index: number) => {
-      if (getValues('rows').length === 1) {
-        reset({ rows: [blankRow()] })
-        return
-      }
-      remove(index)
-    },
-    [getValues, remove, reset],
-  )
+  const removeRow = useCallback((index: number) => remove(index), [remove])
 
   /**
    * Switching the salary type clears the wage the other mode owns, so a row never
@@ -127,8 +144,12 @@ export function useDesignationWageForm(designationId: number) {
       saveStructures.mutate(values.rows, {
         onSuccess: () => {
           toast.success(savedMessage(values.rows))
-          // The saved rows now come back from the history query — start clean.
-          reset({ rows: [blankRow()] })
+          /*
+           * The saved rows now come back from the history query, so the grid is
+           * left showing that — no row of its own. There's a history to look at
+           * either way now, so nothing needs a blank row put back.
+           */
+          reset({ rows: [] })
         },
         onError: (err) =>
           toast.error(
@@ -155,8 +176,12 @@ export function useDesignationWageForm(designationId: number) {
     changeSalaryType,
     changeWorkingDayCalculationType,
 
+    /** The master's heads — one allowance / deduction column per entry. */
+    heads,
+    headsLoading,
+
     /** Saved versions, most recent first — rendered read-only. */
-    existing: history.data ?? [],
+    existing,
     historyLoading: history.isLoading,
     historyError: history.isError,
 

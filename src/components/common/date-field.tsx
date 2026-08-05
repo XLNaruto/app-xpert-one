@@ -9,6 +9,8 @@ interface DateFieldProps<T extends FieldValues> {
   name: FieldPath<T>
   label: string
   required?: boolean
+  /** Spell out that the date may be left blank — an "(Optional)" label suffix. */
+  optional?: boolean
   /** Help text shown behind an info icon beside the label. */
   hint?: string
   error?: string
@@ -27,6 +29,7 @@ export function DateField<T extends FieldValues>({
   name,
   label,
   required = false,
+  optional = false,
   hint,
   error,
   minDate,
@@ -37,6 +40,7 @@ export function DateField<T extends FieldValues>({
     <Field
       label={label}
       required={required}
+      optional={optional}
       hint={hint}
       error={error}
       className={className}

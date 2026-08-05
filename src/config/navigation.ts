@@ -20,6 +20,7 @@ import {
   ReceiptIndianRupee,
   Settings2,
   SlidersHorizontal,
+  UserRoundCog,
   UsersRound,
   Wallet,
   // UsersRound,
@@ -47,6 +48,12 @@ export const navGroups: NavGroup[] = [
   {
     title: "Overview",
     items: [{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard }],
+  }, 
+  {
+    title: "Human Resource",
+    items: [
+      { label: "Employee Management", to: "/hr/employee", icon: UserRoundCog },
+    ],
   },
   {
     title: "Master",
@@ -120,6 +127,7 @@ export const navGroups: NavGroup[] = [
       },
     ],
   },
+ 
 ];
 
 /** Page names for routes that don't appear in the sidebar (auth, errors, etc.). */

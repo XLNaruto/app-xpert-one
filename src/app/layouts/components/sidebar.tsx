@@ -5,6 +5,7 @@ import { navGroups, type NavItem } from '@/config/navigation'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
+import { BrandLogo } from '@/components/common/brand-logo'
 
 function isActivePath(to: string | undefined, pathname: string) {
   if (!to) return false
@@ -87,13 +88,25 @@ export function Sidebar() {
           collapsed ? 'lg:w-16' : 'lg:w-72',
         )}
       >
-        {/* Controls */}
+        {/* Brand + controls */}
         <div
           className={cn(
-            'flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4',
+            'relative flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4',
             collapsed ? 'justify-center' : 'justify-end',
           )}
         >
+          {/* Centred on the panel (absolute, so the toggle can't shift it off
+              centre). Too wide for the rail, so hidden while collapsed. */}
+          {!collapsed && (
+            <Link
+              to="/dashboard"
+              onClick={closeMobile}
+              aria-label="XpertOne home"
+              className="absolute left-1/2 -translate-x-1/2"
+            >
+              <BrandLogo className="h-11 w-36" />
+            </Link>
+          )}
           {/* Desktop collapse toggle */}
           <SidebarTooltip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             <button

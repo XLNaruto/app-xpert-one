@@ -34,9 +34,15 @@ export const queryKeys = {
   },
   branch: {
     all: ['branch'] as const,
-    list: (params?: PageParams) =>
+    /**
+     * `companyId` is the tenant the page was read for. It's normally the session's
+     * active company and left off, but an employee transfer to another company has
+     * to list *that* company's branches — a different tenant is a different result
+     * set, so it belongs in the key.
+     */
+    list: (params?: PageParams, companyId?: number) =>
       params
-        ? ([...queryKeys.branch.all, 'list', params] as const)
+        ? ([...queryKeys.branch.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.branch.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.branch.all, 'detail', id] as const,
   },
@@ -53,17 +59,29 @@ export const queryKeys = {
   },
   department: {
     all: ['department'] as const,
-    list: (params?: PageParams) =>
+    /**
+     * `companyId` is the tenant the page was read for. It's normally the session's
+     * active company and left off, but an employee transfer to another company has
+     * to list *that* company's departments — a different tenant is a different result
+     * set, so it belongs in the key.
+     */
+    list: (params?: PageParams, companyId?: number) =>
       params
-        ? ([...queryKeys.department.all, 'list', params] as const)
+        ? ([...queryKeys.department.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.department.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
   },
   designation: {
     all: ['designation'] as const,
-    list: (params?: PageParams) =>
+    /**
+     * `companyId` is the tenant the page was read for. It's normally the session's
+     * active company and left off, but an employee transfer to another company has
+     * to list *that* company's designations — a different tenant is a different result
+     * set, so it belongs in the key.
+     */
+    list: (params?: PageParams, companyId?: number) =>
       params
-        ? ([...queryKeys.designation.all, 'list', params] as const)
+        ? ([...queryKeys.designation.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.designation.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.designation.all, 'detail', id] as const,
     /** Effective-dated wage structure history for one designation. */
@@ -191,6 +209,75 @@ export const queryKeys = {
       params
         ? ([...queryKeys.asset.all, 'list', params] as const)
         : ([...queryKeys.asset.all, 'list'] as const),
+  },
+  /**
+   * The employee and its nine steps. Every step is its own sub-resource keyed by
+   * the employee id, so `all` is what a mutation invalidates when a save could
+   * have moved the completion flags — which is every save, since
+   * `completed_steps` rides on the employee record itself.
+   */
+  employee: {
+    all: ['employee'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.employee.all, 'list', params] as const)
+        : ([...queryKeys.employee.all, 'list'] as const),
+    detail: (id: number) => [...queryKeys.employee.all, 'detail', id] as const,
+    /** Step 2 — the KYC columns of one employee. */
+    kyc: (id: number) => [...queryKeys.employee.all, 'kyc', id] as const,
+    /** Step 3 — the wage structure inherited from the current designation. */
+    wageStructure: (id: number) =>
+      [...queryKeys.employee.all, 'wage-structure', id] as const,
+    /** Step 4 — every family member. */
+    family: (id: number) => [...queryKeys.employee.all, 'family', id] as const,
+    /** Step 5a — every qualification. */
+    educations: (id: number) => [...queryKeys.employee.all, 'educations', id] as const,
+    /** Step 5b — every prior employment. */
+    experiences: (id: number) => [...queryKeys.employee.all, 'experiences', id] as const,
+    /** Step 6 — every attachment. */
+    documents: (id: number) => [...queryKeys.employee.all, 'documents', id] as const,
+    /** Step 7 — every asset handout. */
+    assets: (id: number) => [...queryKeys.employee.all, 'assets', id] as const,
+    /** Step 8 — the posting history, newest first. */
+    transfers: (id: number) => [...queryKeys.employee.all, 'transfers', id] as const,
+    /** Step 8 — one posting expanded: service detail + its wage structure. */
+    transfer: (id: number, serviceId: number) =>
+      [...queryKeys.employee.all, 'transfer', id, serviceId] as const,
+  },
+  /**
+   * Step 9 — leave records. `employeeId` scopes the list to one employee's tab
+   * (`0` is the company-wide queue), and the filters travel in the key alongside
+   * the page since each combination is its own result set.
+   */
+  employeeLeave: {
+    all: ['employee-leave'] as const,
+    list: (
+      employeeId?: number,
+      params?: PageParams,
+      filters?: Record<string, unknown>,
+    ) =>
+      params
+        ? ([
+            ...queryKeys.employeeLeave.all,
+            'list',
+            employeeId ?? 0,
+            params,
+            filters ?? {},
+          ] as const)
+        : ([...queryKeys.employeeLeave.all, 'list', employeeId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.employeeLeave.all, 'detail', id] as const,
+  },
+  bank: {
+    all: ['bank'] as const,
+    list: (params?: PageParams) =>
+      params
+        ? ([...queryKeys.bank.all, 'list', params] as const)
+        : ([...queryKeys.bank.all, 'list'] as const),
+    /** Paged, server-searched — backs the scroll-lazy bank dropdown. */
+    infinite: (search?: string) =>
+      [...queryKeys.bank.all, 'infinite', search ?? ''] as const,
+    /** One bank — for labelling a selection the loaded pages don't cover. */
+    detail: (id: number) => [...queryKeys.bank.all, 'detail', id] as const,
   },
   dashboard: {
     all: ['dashboard'] as const,

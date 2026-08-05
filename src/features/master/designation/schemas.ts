@@ -77,9 +77,8 @@ export const designationSchema = z
     lwfActType: z.enum(['', 'As Per Act', 'Manual']),
     lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
 
-    // Overtime
+    // Overtime — a rate entered here is what's paid; left blank it's derived.
     overtimeApplicable: z.boolean(),
-    overtimeCalculationType: z.enum(['', 'Manual', 'As Per Calculation']),
     overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
 
     // Allowance / deduction heads
@@ -114,9 +113,13 @@ export type DesignationBasicInfoValues = z.infer<typeof designationBasicInfoSche
 
 /* ── Wage structure history ─────────────────────────────────────────────── */
 
-/** One allowance head as valued in a draft wage structure row. */
+/**
+ * One allowance head as valued in a draft wage structure row. The head itself is
+ * the master's record — `componentId` is its `pay_component_id`, which is how the
+ * cell reaches the API's `salary_components` without a code lookup.
+ */
 const wageAllowanceRowSchema = z.object({
-  head: z.string(),
+  componentId: z.number(),
   valueType: z.enum(['Percentage', 'Fixed']),
   amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
   pfApplicable: z.boolean(),
@@ -126,7 +129,7 @@ const wageAllowanceRowSchema = z.object({
 
 /** One deduction head as valued in a draft wage structure row. */
 const wageDeductionRowSchema = z.object({
-  head: z.string(),
+  componentId: z.number(),
   valueType: z.enum(['Percentage', 'Fixed']),
   amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
 })
@@ -166,7 +169,6 @@ export const wageStructureRowSchema = z
     deductions: z.array(wageDeductionRowSchema),
 
     overtimeApplicable: z.boolean(),
-    overtimeCalculationType: z.enum(['', 'Auto', 'Manual']),
     overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
 
     pfActApplicable: z.boolean(),

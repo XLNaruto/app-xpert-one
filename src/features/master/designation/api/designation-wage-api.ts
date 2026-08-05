@@ -3,7 +3,7 @@ import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import { activeCompanyId } from '@/lib/active-company'
 import { byEffectiveMonthDesc } from '../lib/effective-month'
-import { toWageStructure, type WageHead } from '../lib/wage-structure-mappers'
+import { toWageStructure, type WageHeads } from '../lib/wage-structure-mappers'
 import { wageStructureResponseSchema, wageStructuresResponseSchema } from '../schemas'
 import type { WageStructureRowPayload } from '../schemas'
 import type { DesignationWageStructure } from '../types'
@@ -24,9 +24,9 @@ import type { DesignationWageStructure } from '../types'
  * a PATCH leaves an omitted field as stored. Both are sent in full regardless, so
  * a cleared cell reads as cleared rather than inheriting the old value.
  *
- * `salary_components` needs each head's id from the pay-component catalog, while
- * the grid's columns are fixed short codes — the caller passes the catalog in and
- * the mappers resolve the two.
+ * A version's `salary_components` come back as ids, and the grid's columns are the
+ * heads of the allowance / deduction master — the caller passes that master in so
+ * the mappers can lay each version's heads out under the columns.
  */
 
 /** The API's maximum `limit` — also the batch size when reading everything. */
@@ -46,7 +46,7 @@ const MAX_PAGES = 20
  */
 export async function fetchDesignationWageStructures(
   designationId: number,
-  heads: WageHead[],
+  heads: WageHeads,
 ): Promise<DesignationWageStructure[]> {
   try {
     const company_id = activeCompanyId('wage structures')
@@ -78,7 +78,7 @@ export async function fetchDesignationWageStructures(
 export async function createDesignationWageStructure(
   designationId: number,
   payload: Omit<WageStructureRowPayload, 'company_id'>,
-  heads: WageHead[],
+  heads: WageHeads,
 ): Promise<DesignationWageStructure> {
   try {
     const raw = await http.post<unknown, WageStructureRowPayload>(
@@ -100,7 +100,7 @@ export async function updateDesignationWageStructure(
   designationId: number,
   wageStructureId: number,
   payload: Omit<WageStructureRowPayload, 'company_id'>,
-  heads: WageHead[],
+  heads: WageHeads,
 ): Promise<DesignationWageStructure> {
   try {
     const raw = await http.patch<unknown, WageStructureRowPayload>(

@@ -49,5 +49,16 @@ export function amountLabel(label: string): string {
  * column of amounts can't read as a column of plain numbers.
  */
 export function formatAmount(value: number): string {
-  return `${currencySymbol()}${Number(value.toFixed(2)).toLocaleString('en-IN')}`
+  return `${currencySymbol()}${formatDecimal(value)}`
+}
+
+/**
+ * The digits of an amount alone, grouped the same way — `150000` → `1,50,000`.
+ *
+ * For the few places that carry the unit themselves rather than as a prefix: a
+ * cell that shows either a percentage or an amount, a figure sat next to a unit
+ * toggle. Everything else wants `formatAmount()`, symbol included.
+ */
+export function formatDecimal(value: number): string {
+  return Number(value.toFixed(2)).toLocaleString('en-IN')
 }

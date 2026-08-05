@@ -9,10 +9,10 @@ import { fetchDepartments } from './department-api'
  * One limit/offset page — pass the params from `usePagination()`. Called with
  * no argument it returns the whole master, for dropdowns and history panels.
  */
-export function useDepartments(params: PageParams = ALL_ROWS) {
+export function useDepartments(params: PageParams = ALL_ROWS, companyId?: number) {
   return useQuery({
-    queryKey: queryKeys.department.list(params),
-    queryFn: () => fetchDepartments(params),
+    queryKey: queryKeys.department.list(params, companyId),
+    queryFn: () => fetchDepartments(params, companyId),
     // Keep the previous page on screen while the next one loads.
     placeholderData: keepPreviousData,
   })

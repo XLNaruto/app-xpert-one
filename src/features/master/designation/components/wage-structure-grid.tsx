@@ -1,4 +1,4 @@
-import { memo, useLayoutEffect, useRef, useState } from 'react'
+import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   Controller,
   useFormState,
@@ -7,24 +7,26 @@ import {
   type UseFormRegister,
 } from 'react-hook-form'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { CalendarDays, Pencil, Trash2, UserPen } from 'lucide-react'
+import { CalendarDays, Pencil, Trash2, UserPen, X } from 'lucide-react'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { amountLabel } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import {
   WAGE_ACT_TYPE_OPTIONS,
-  WAGE_ALLOWANCE_HEADS,
-  WAGE_DEDUCTION_HEADS,
   WAGE_ESIC_DEDUCTION_BASIS_OPTIONS,
-  WAGE_OVERTIME_CALCULATION_OPTIONS,
   WAGE_SALARY_TYPE_OPTIONS,
   WAGE_WEEKLY_OFF_OPTIONS,
   WORKING_DAY_CALCULATION_OPTIONS,
 } from '../constants'
 import { formatMonth } from '../lib/effective-month'
-import { deriveOvertimeRate, deriveWages } from '../lib/wage-structure-calculations'
+import {
+  deriveOvertimeRate,
+  deriveWages,
+  gridAmount,
+} from '../lib/wage-structure-calculations'
+import type { WageHeads } from '../lib/wage-structure-mappers'
 import type { WageStructureFormValues } from '../schemas'
-import type { DesignationWageStructure } from '../types'
+import type { DesignationWageStructure, WageAllowance, WageDeduction } from '../types'
 import type { useDesignationWageForm } from '../hooks/use-designation-wage-form'
 import {
   ActMarkerButton,
@@ -34,19 +36,26 @@ import {
   GridInput,
   GridSelect,
   GridSwitch,
+  ReadActMarkers,
   ReadAmount,
   ReadBoolean,
   ReadChoice,
+  ReadMoney,
   ReadText,
   TogglePill,
   UnitAmountField,
+  NO_VALUE,
 } from './wage-grid-fields'
 
 type WageForm = ReturnType<typeof useDesignationWageForm>
 type Ctl = Control<WageStructureFormValues>
 type Reg = UseFormRegister<WageStructureFormValues>
 
-/** Height of a saved row. Fixed, so the virtualiser never has to measure one. */
+/**
+ * Height of a saved row. Fixed and set on the row, so the virtualiser's estimate
+ * is exact for every row it hasn't measured. A row opened for correction is the
+ * one exception — an editable row is taller, so those get measured.
+ */
 const SAVED_ROW_HEIGHT = 52
 
 /**
@@ -58,6 +67,16 @@ const SAVED_ROW_HEIGHT = 52
  */
 const BANNER_HEIGHT = 34
 const COLUMN_ROW_TOP = BANNER_HEIGHT - 1
+
+/**
+ * The pinned columns, in order: the row's action and the month it takes effect
+ * from — what tells you which row you're looking at and what you can do to it, so
+ * both stay put while the forty columns of settings scroll past them.
+ *
+ * Their widths live here because they're needed twice: as the columns' own widths
+ * and as each one's `left` offset. Anything after these two scrolls.
+ */
+const PINNED_WIDTHS = { action: 78, effectiveFrom: 178 } as const
 
 /* ── Column model ───────────────────────────────────────────────────────── */
 
@@ -85,7 +104,18 @@ interface WageColumn {
    * the key per cell — at forty columns times the rows on screen, that lookup
    * was running a thousand times per scroll step.
    */
-  head?: { kind: 'allowance' | 'deduction'; at: number }
+  head?: {
+    kind: 'allowance' | 'deduction'
+    at: number
+    /** The head's `pay_component_id`, for reading a saved row back. */
+    id: number
+  }
+  /**
+   * Set on a pinned column: how far from the scrollport's left edge it sits, i.e.
+   * the summed width of the pinned columns before it. Fixed widths, so these are
+   * known up front rather than measured — see `PINNED_WIDTHS`.
+   */
+  pin?: number
 }
 
 const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string }> = {
@@ -102,7 +132,7 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
   overtime: {
     label: 'Overtime',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'On “Auto” the hourly rate is derived from the wage per day at double time; on “Manual” it is entered here.',
+    hint: 'The hourly rate paid for overtime — entered on the row, or left blank to derive it from the wage per day at double time.',
   },
   deductions: {
     label: 'Deductions',
@@ -135,151 +165,168 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
  * Every column of the grid, in order. The header rows and both row renderers all
  * walk this one list, so a column can never appear in one and not the other.
  *
+ * The allowance and deduction columns are the allowance / deduction master's own
+ * heads — one column per head, headed by its short code — so the grid follows the
+ * master rather than a list of its own. Everything else is fixed.
+ *
  * A column under a banner gets one header row, so its label has to fit on one
  * line and its width is set accordingly. A column with no banner spans both
  * header rows instead, so its label is free to wrap over two lines — which is
  * why these are the narrower ones despite some having the longest names.
  */
-const COLUMNS: WageColumn[] = [
-  { key: 'effectiveFrom', label: 'Effective From', width: 178 },
+function buildColumns(heads: WageHeads): WageColumn[] {
+  return [
+    /*
+     * What can be done to the row — remove it while it's a draft, pull it back
+     * onto the grid once it's saved. First and pinned, so it's reachable however
+     * far across the settings you've scrolled.
+     */
+    { key: 'action', label: 'Action', width: PINNED_WIDTHS.action, pin: 0 },
+    {
+      key: 'effectiveFrom',
+      label: 'Effective From',
+      width: PINNED_WIDTHS.effectiveFrom,
+      pin: PINNED_WIDTHS.action,
+    },
 
-  {
-    key: 'calcType',
-    label: 'Calc Type',
-    group: 'workingDays',
-    width: 128,
-    hint: '“Fixed” pins the paid days; “As Per Calculation” derives them from the weekly off.',
-  },
-  { key: 'weeklyOff', label: 'Weekly Off', group: 'workingDays', width: 128 },
-  {
-    key: 'workingDays',
-    label: 'W. Days',
-    group: 'workingDays',
-    width: 96,
-    hint: 'Paid working days in the month — asked only when the calc type is “Fixed”.',
-  },
+    {
+      key: 'calcType',
+      label: 'Calc Type',
+      group: 'workingDays',
+      width: 128,
+      hint: '“Fixed” pins the paid days; “As Per Calculation” derives them from the weekly off.',
+    },
+    { key: 'weeklyOff', label: 'Weekly Off', group: 'workingDays', width: 128 },
+    {
+      key: 'workingDays',
+      label: 'W. Days',
+      group: 'workingDays',
+      width: 96,
+      hint: 'Paid working days in the month — asked only when the calc type is “Fixed”.',
+    },
 
-  {
-    key: 'salaryType',
-    label: 'Salary Type',
-    width: 118,
-    hint: 'Whether the wage is quoted per month or per day. The other figure is derived.',
-  },
-  {
-    key: 'basicPay',
-    label: 'Basic Pay',
-    width: 100,
-    hint: 'Captured on a monthly wage; on a daily one it is the wage per day carried over the 26 statutory paid days, and disabled.',
-  },
-  {
-    key: 'wagePerDay',
-    label: amountLabel('Wage/Day'),
-    width: 126,
-    hint: 'Captured on a daily wage; on a monthly one it is the basic spread over the 26 statutory paid days, and disabled.',
-  },
-  {
-    key: 'extraDay',
-    label: amountLabel('Extra Day Amount'),
-    width: 116,
-    hint: 'Paid for each day worked beyond the row’s working days.',
-  },
+    {
+      key: 'salaryType',
+      label: 'Salary Type',
+      width: 118,
+      hint: 'Whether the wage is quoted per month or per day. The other figure is derived.',
+    },
+    {
+      key: 'basicPay',
+      /*
+       * Always rupees, so it's signed like every other money column. The heads and
+       * the PF amount aren't signed, and shouldn't be — those cells take either a
+       * percentage or an amount, and the unit is the cell's own to say.
+       */
+      label: amountLabel('Basic Pay'),
+      width: 112,
+      hint: 'Captured on a monthly wage; on a daily one it is the wage per day carried over the 26 statutory paid days, and disabled.',
+    },
+    {
+      key: 'wagePerDay',
+      label: amountLabel('Wage/Day'),
+      width: 126,
+      hint: 'Captured on a daily wage; on a monthly one it is the basic spread over the 26 statutory paid days, and disabled.',
+    },
+    {
+      key: 'extraDay',
+      label: amountLabel('Extra Day Amount'),
+      width: 116,
+      hint: 'Paid for each day worked beyond the row’s working days.',
+    },
 
-  /*
-   * Wider than a plain amount column: each of these carries the PF / ESI / PT
-   * markers under its input, and those three share the cell's width evenly, so
-   * the column has to be wide enough for the longest label ("ESI") plus its
-   * border to sit in a third of it without wrapping.
-   */
-  ...WAGE_ALLOWANCE_HEADS.map((head, at) => ({
-    key: `allowance:${head.code}`,
-    label: head.code,
-    group: 'allowances' as const,
-    width: 148,
-    hint: head.label,
-    head: { kind: 'allowance' as const, at },
-  })),
+    /*
+     * Wider than a plain amount column: each of these carries the PF / ESI / PT
+     * markers under its input, and those three share the cell's width evenly, so
+     * the column has to be wide enough for the longest label ("ESI") plus its
+     * border to sit in a third of it without wrapping.
+     */
+    ...heads.allowances.map((head, at) => ({
+      key: `allowance:${head.id}`,
+      label: head.code,
+      group: 'allowances' as const,
+      width: 148,
+      hint: head.name,
+      head: { kind: 'allowance' as const, at, id: head.id },
+    })),
 
-  {
-    key: 'ot',
-    label: 'OT',
-    group: 'overtime',
-    width: 62,
-    hint: 'Whether overtime is paid at all.',
-  },
-  { key: 'otCalcType', label: 'Calc Type', group: 'overtime', width: 102 },
-  {
-    key: 'otRate',
-    label: amountLabel('Rate/Hr'),
-    group: 'overtime',
-    width: 124,
-    hint: 'Derived on “Auto”, entered on “Manual”.',
-  },
+    {
+      key: 'ot',
+      label: 'OT',
+      group: 'overtime',
+      width: 62,
+      hint: 'Whether overtime is paid at all.',
+    },
+    {
+      key: 'otRate',
+      label: amountLabel('Rate/Hr'),
+      group: 'overtime',
+      width: 124,
+      hint: 'Left blank, the rate derived from the wage per day is what gets saved — the empty field shows that figure.',
+    },
 
-  ...WAGE_DEDUCTION_HEADS.map((head, at) => ({
-    key: `deduction:${head.code}`,
-    label: head.code,
-    group: 'deductions' as const,
-    width: 106,
-    hint: head.label,
-    head: { kind: 'deduction' as const, at },
-  })),
+    ...heads.deductions.map((head, at) => ({
+      key: `deduction:${head.id}`,
+      label: head.code,
+      group: 'deductions' as const,
+      width: 106,
+      hint: head.name,
+      head: { kind: 'deduction' as const, at, id: head.id },
+    })),
 
-  { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF act applicable.' },
-  {
-    key: 'empWl',
-    label: 'Emp WL',
-    group: 'pf',
-    width: 86,
-    hint: 'Cap the employee share at the statutory wage limit.',
-  },
-  {
-    key: 'emprWl',
-    label: 'Empr WL',
-    group: 'pf',
-    width: 90,
-    hint: 'Cap the employer share at the statutory wage limit.',
-  },
-  {
-    key: 'pfAmt',
-    label: 'PF Amt',
-    group: 'pf',
-    width: 106,
-    hint: 'The employee share, as a percentage of EPF wages or a flat amount.',
-  },
+    { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF act applicable.' },
+    {
+      key: 'empWl',
+      label: 'Emp WL',
+      group: 'pf',
+      width: 86,
+      hint: 'Cap the employee share at the statutory wage limit.',
+    },
+    {
+      key: 'emprWl',
+      label: 'Empr WL',
+      group: 'pf',
+      width: 90,
+      hint: 'Cap the employer share at the statutory wage limit.',
+    },
+    {
+      key: 'pfAmt',
+      label: 'PF Amt',
+      group: 'pf',
+      width: 106,
+      hint: 'The employee share, as a percentage of EPF wages or a flat amount.',
+    },
 
-  { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC act applicable.' },
-  {
-    key: 'esicDedOn',
-    label: 'Ded. On',
-    group: 'esic',
-    width: 158,
-    hint: 'What the ESIC contribution is calculated on.',
-  },
+    { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC act applicable.' },
+    {
+      key: 'esicDedOn',
+      label: 'Ded. On',
+      group: 'esic',
+      width: 158,
+      hint: 'What the ESIC contribution is calculated on.',
+    },
 
-  { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT act applicable.' },
-  { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
-  {
-    key: 'ptAmt',
-    label: amountLabel('Amt'),
-    group: 'pt',
-    width: 94,
-    hint: 'Asked only when the type is “Manual”.',
-  },
+    { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT act applicable.' },
+    { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
+    {
+      key: 'ptAmt',
+      label: amountLabel('Amt'),
+      group: 'pt',
+      width: 94,
+      hint: 'Asked only when the type is “Manual”.',
+    },
 
-  { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
-  { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
-  {
-    key: 'lwfAmt',
-    label: amountLabel('Amt'),
-    group: 'lwf',
-    width: 94,
-    hint: 'Asked only when the type is “Manual”.',
-  },
-
-  { key: 'delete', label: 'Delete', width: 64 },
-]
-
-const TOTAL_WIDTH = COLUMNS.reduce((sum, column) => sum + column.width, 0)
+    { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
+    { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
+    {
+      key: 'lwfAmt',
+      label: amountLabel('Amt'),
+      group: 'lwf',
+      width: 94,
+      hint: 'Asked only when the type is “Manual”.',
+    },
+  ]
+}
 
 /**
  * One cell of the top header row: either a banner spanning the columns beneath
@@ -290,32 +337,58 @@ type HeaderCell =
   | { kind: 'group'; group: WageGroup; span: number }
   | { kind: 'single'; column: WageColumn }
 
-const HEADER_CELLS: HeaderCell[] = COLUMNS.reduce<HeaderCell[]>((cells, column) => {
-  if (!column.group) {
-    cells.push({ kind: 'single', column })
-    return cells
-  }
-  const last = cells[cells.length - 1]
-  if (last?.kind === 'group' && last.group === column.group) {
-    last.span += 1
-    return cells
-  }
-  cells.push({ kind: 'group', group: column.group, span: 1 })
-  return cells
-}, [])
+/**
+ * The grid's shape for one set of heads — the columns and everything the header
+ * rows and the `<colgroup>` are laid out from. Built once per heads list and
+ * passed down, so a scroll frame never rebuilds it.
+ */
+interface GridLayout {
+  columns: WageColumn[]
+  headerCells: HeaderCell[]
+  /** Only banner-owned columns need a cell in the second header row. */
+  subColumns: WageColumn[]
+  totalWidth: number
+}
 
-/** Only banner-owned columns need a cell in the second header row. */
-const SUB_COLUMNS = COLUMNS.filter((column) => column.group)
+function buildLayout(heads: WageHeads): GridLayout {
+  const columns = buildColumns(heads)
+
+  const headerCells = columns.reduce<HeaderCell[]>((cells, column) => {
+    if (!column.group) {
+      cells.push({ kind: 'single', column })
+      return cells
+    }
+    const last = cells[cells.length - 1]
+    if (last?.kind === 'group' && last.group === column.group) {
+      last.span += 1
+      return cells
+    }
+    cells.push({ kind: 'group', group: column.group, span: 1 })
+    return cells
+  }, [])
+
+  return {
+    columns,
+    headerCells,
+    subColumns: columns.filter((column) => column.group),
+    totalWidth: columns.reduce((sum, column) => sum + column.width, 0),
+  }
+}
 
 /** Shared cell frame for every header and body cell. */
 const CELL = 'border-b border-r border-border px-2 py-1.5 align-middle'
 
 /*
- * The pinned effective-from column. Its background is opaque and flat — see the
- * `.wage-*` rules in globals.css. Anything translucent here has to be re-blended
- * against the cells scrolling underneath it on every frame.
+ * A pinned body cell. Its background is opaque and flat — see the `.wage-*` rules
+ * in globals.css. Anything translucent here has to be re-blended against the cells
+ * scrolling underneath it on every frame.
  */
-const STICKY = 'wage-sticky sticky left-0 z-10'
+const STICKY = 'wage-sticky sticky z-10'
+
+/** `left` for a pinned cell; nothing at all for a column that scrolls. */
+function pinStyle(column: WageColumn) {
+  return column.pin === undefined ? undefined : { left: column.pin }
+}
 
 /* ── The grid ───────────────────────────────────────────────────────────── */
 
@@ -341,6 +414,28 @@ const STICKY = 'wage-sticky sticky left-0 z-10'
 export function WageStructureGrid({ form }: { form: WageForm }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const savedBodyRef = useRef<HTMLTableSectionElement>(null)
+
+  /*
+   * The allowance and deduction columns come from the master, so the layout is
+   * rebuilt when that list changes and at no other time — every row renderer
+   * reads its columns from here, so one memo keeps the whole grid off the
+   * critical path of a scroll frame.
+   */
+  const layout = useMemo(() => buildLayout(form.heads), [form.heads])
+
+  /*
+   * Which saved versions are open for correction, and at what index in the field
+   * array — a stored row opens *in its own place* in the history rather than as a
+   * new row on top, so the grid needs to find the draft belonging to a saved id
+   * while it walks the history. Built once per rows change, not per row.
+   */
+  const editing = useMemo(() => {
+    const at = new Map<number, number>()
+    form.fields.forEach((field, index) => {
+      if (field.wageStructureId !== undefined) at.set(field.wageStructureId, index)
+    })
+    return at
+  }, [form.fields])
 
   /*
    * Where the saved rows begin inside the scrollport — below the header and the
@@ -382,45 +477,89 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
     >
       <table
         className="table-fixed border-separate border-spacing-0 text-xs"
-        style={{ width: TOTAL_WIDTH }}
+        style={{ width: layout.totalWidth }}
       >
-        <GridHead />
+        <GridHead layout={layout} />
 
-        {/* Draft rows — the only editable ones; history is append-only. */}
+        {/*
+          New versions being drafted. Rows opened from the history are in the same
+          field array but render further down, in the saved row's own place — so
+          only the new ones are up here.
+        */}
         <tbody>
-          {form.fields.map((field, index) => (
-            <DraftRow
-              key={field.id}
-              index={index}
-              isCorrection={field.wageStructureId !== undefined}
-              control={form.control}
-              register={form.register}
-              monthBounds={form.monthBounds}
-              takenMonths={form.takenMonths}
-              onRemove={form.removeRow}
-              changeSalaryType={form.changeSalaryType}
-              changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
-            />
-          ))}
+          {form.fields.map((field, index) =>
+            field.wageStructureId === undefined ? (
+              <DraftRow
+                key={field.id}
+                index={index}
+                columns={layout.columns}
+                isCorrection={false}
+                control={form.control}
+                register={form.register}
+                monthBounds={form.monthBounds}
+                takenMonths={form.takenMonths}
+                onRemove={form.removeRow}
+                changeSalaryType={form.changeSalaryType}
+                changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
+              />
+            ) : null,
+          )}
         </tbody>
 
         <tbody ref={savedBodyRef}>
-          {form.historyLoading && <StatusRow>Loading wage structure history…</StatusRow>}
+          {form.historyLoading && (
+            <StatusRow span={layout.columns.length}>
+              Loading wage structure history…
+            </StatusRow>
+          )}
           {form.historyError && (
-            <StatusRow tone="text-destructive">
+            <StatusRow span={layout.columns.length} tone="text-destructive">
               Couldn’t load the wage structure history.
             </StatusRow>
           )}
 
-          {paddingTop > 0 && <SpacerRow height={paddingTop} />}
-          {items.map((item) => (
-            <SavedRow
-              key={form.existing[item.index].id}
-              row={form.existing[item.index]}
-              onEdit={form.editRow}
-            />
-          ))}
-          {paddingBottom > 0 && <SpacerRow height={paddingBottom} />}
+          {paddingTop > 0 && (
+            <SpacerRow span={layout.columns.length} height={paddingTop} />
+          )}
+          {items.map((item) => {
+            const row = form.existing[item.index]
+            const at = editing.get(row.id)
+
+            /*
+             * Both variants of a history row carry the virtualiser's index and its
+             * measuring ref, so the one row that changes height — a version opened
+             * for correction — is measured, and measured back down when it closes.
+             */
+            return at === undefined ? (
+              <SavedRow
+                key={row.id}
+                index={item.index}
+                measureRef={virtualizer.measureElement}
+                row={row}
+                columns={layout.columns}
+                onEdit={form.editRow}
+              />
+            ) : (
+              <DraftRow
+                key={row.id}
+                index={at}
+                virtualIndex={item.index}
+                measureRef={virtualizer.measureElement}
+                columns={layout.columns}
+                isCorrection
+                control={form.control}
+                register={form.register}
+                monthBounds={form.monthBounds}
+                takenMonths={form.takenMonths}
+                onRemove={form.removeRow}
+                changeSalaryType={form.changeSalaryType}
+                changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
+              />
+            )
+          })}
+          {paddingBottom > 0 && (
+            <SpacerRow span={layout.columns.length} height={paddingBottom} />
+          )}
         </tbody>
       </table>
     </div>
@@ -428,23 +567,23 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
 }
 
 /**
- * The column layout and the two header rows. Static, so it's memoised with no
- * props and renders exactly once — the virtualiser re-renders the grid on every
- * scroll frame, and rebuilding eighty header cells each time was most of the
- * cost of a scroll.
+ * The column layout and the two header rows. Memoised on the layout, which only
+ * changes when the master's heads do, so it renders once per heads list — the
+ * virtualiser re-renders the grid on every scroll frame, and rebuilding eighty
+ * header cells each time was most of the cost of a scroll.
  *
  * Note there's no `backdrop-blur` on these: a blurred sticky header has to
  * re-filter everything scrolling beneath it every frame, which is the single
  * most expensive thing you can put on a pinned row. The background is flat and
  * opaque instead.
  */
-const GridHead = memo(function GridHead() {
+const GridHead = memo(function GridHead({ layout }: { layout: GridLayout }) {
   return (
     <>
       {/* Fixed layout lays the grid out from these widths rather than by
           measuring cells — which is what keeps a table this wide cheap. */}
       <colgroup>
-        {COLUMNS.map((column) => (
+        {layout.columns.map((column) => (
           <col key={column.key} style={{ width: column.width }} />
         ))}
       </colgroup>
@@ -452,17 +591,19 @@ const GridHead = memo(function GridHead() {
       <thead>
         {/* Banners, and any column that has none — those span both rows. */}
         <tr>
-          {HEADER_CELLS.map((cell, index) => {
-            const pinned = index === 0 && 'left-0 z-50'
-
+          {layout.headerCells.map((cell) => {
             if (cell.kind === 'single') {
+              /* A pinned header is pinned both ways, so it outranks the rows it
+                 covers and the columns that scroll beneath it. */
+              const pinned = cell.column.pin !== undefined
               return (
                 <th
                   key={cell.column.key}
                   rowSpan={2}
+                  style={pinStyle(cell.column)}
                   className={cn(
-                    'wage-head-cell sticky top-0 z-40 border-b border-r border-border px-2 py-2 text-center align-middle text-[11px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground',
-                    pinned,
+                    'wage-head-cell sticky top-0 border-b border-r border-border px-2 py-2 text-center align-middle text-[11px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground',
+                    pinned ? 'z-50' : 'z-40',
                   )}
                 >
                   {cell.column.label}
@@ -480,7 +621,6 @@ const GridHead = memo(function GridHead() {
                 className={cn(
                   'wage-head-cell sticky top-0 z-40 whitespace-nowrap border-b border-r border-border px-2 text-center text-[11px] font-bold uppercase leading-none tracking-wide',
                   meta.tone,
-                  pinned,
                 )}
               >
                 {meta.label}
@@ -492,7 +632,7 @@ const GridHead = memo(function GridHead() {
 
         {/* Sub-columns of each banner. */}
         <tr>
-          {SUB_COLUMNS.map((column) => (
+          {layout.subColumns.map((column) => (
             <th
               key={column.key}
               style={{ top: COLUMN_ROW_TOP }}
@@ -512,11 +652,19 @@ const GridHead = memo(function GridHead() {
 })
 
 /** A row spanning the grid, for a loading or error message. */
-function StatusRow({ children, tone }: { children: string; tone?: string }) {
+function StatusRow({
+  span,
+  children,
+  tone,
+}: {
+  span: number
+  children: string
+  tone?: string
+}) {
   return (
     <tr>
       <td
-        colSpan={COLUMNS.length}
+        colSpan={span}
         className={cn(
           'border-b border-border px-3 py-6 text-center text-xs text-muted-foreground',
           tone,
@@ -529,10 +677,10 @@ function StatusRow({ children, tone }: { children: string; tone?: string }) {
 }
 
 /** Holds the scroll height of the rows outside the virtual window. */
-function SpacerRow({ height }: { height: number }) {
+function SpacerRow({ span, height }: { span: number; height: number }) {
   return (
     <tr aria-hidden>
-      <td colSpan={COLUMNS.length} style={{ height, padding: 0, border: 0 }} />
+      <td colSpan={span} style={{ height, padding: 0, border: 0 }} />
     </tr>
   )
 }
@@ -541,6 +689,15 @@ function SpacerRow({ height }: { height: number }) {
 
 interface DraftRowProps {
   index: number
+  /**
+   * Set only on a row rendered inside the virtualised history — its index there,
+   * and the ref that measures it. A new draft sits above the history and has
+   * neither.
+   */
+  virtualIndex?: number
+  measureRef?: (el: HTMLTableRowElement | null) => void
+  /** The grid's columns — the layout's list, stable between heads changes. */
+  columns: WageColumn[]
   control: Ctl
   register: Reg
   /**
@@ -556,17 +713,28 @@ interface DraftRowProps {
 }
 
 /**
- * One row being drafted. Memoised on props that are all stable — the callbacks
- * come back from the hook via `useCallback` — so scrolling the saved history
- * below never re-renders the editable rows.
+ * One row being edited — a new version at the top of the grid, or a stored one
+ * opened for correction in its own place in the history. Memoised on props that
+ * are all stable — the callbacks come back from the hook via `useCallback` — so
+ * scrolling the saved history below never re-renders the editable rows.
  */
 const DraftRow = memo(function DraftRow(props: DraftRowProps) {
   return (
-    <tr className="wage-row-draft">
-      {COLUMNS.map((column, columnIndex) => (
+    <tr
+      ref={props.measureRef}
+      data-index={props.virtualIndex}
+      /* A correction is outlined, so it reads as this history row opened up
+         rather than as a row that has appeared next to it. */
+      className={cn(
+        'wage-row-draft',
+        props.isCorrection && 'outline-1 -outline-offset-1 outline-primary/40',
+      )}
+    >
+      {props.columns.map((column) => (
         <td
           key={column.key}
-          className={cn(CELL, columnIndex === 0 && STICKY)}
+          style={pinStyle(column)}
+          className={cn(CELL, column.pin !== undefined && STICKY)}
         >
           <DraftCell column={column} {...props} />
         </td>
@@ -612,7 +780,7 @@ function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn })
               {props.isCorrection ? (
                 <p className="flex items-center gap-1 text-[10px] leading-tight text-primary">
                   <Pencil className="size-2.5 shrink-0" />
-                  Correcting the saved version
+                  Editing this version
                 </p>
               ) : (
                 field.value &&
@@ -701,8 +869,6 @@ function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn })
           label="Overtime applicable"
         />
       )
-    case 'otCalcType':
-      return <OtCalcTypeCell index={index} control={control} />
     case 'otRate':
       return <OtRateCell index={index} control={control} register={register} />
 
@@ -806,14 +972,30 @@ function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn })
         />
       )
 
-    case 'delete':
-      return (
+    /*
+     * A new draft is thrown away; a correction is only *closed* — the stored
+     * version it was opened from stays exactly as it is, so the icon says close
+     * rather than delete.
+     */
+    case 'action':
+      return props.isCorrection ? (
+        <CellTooltip label="Close without saving this correction">
+          <button
+            type="button"
+            onClick={() => props.onRemove(index)}
+            aria-label="Close this correction without saving"
+            className="mx-auto flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </CellTooltip>
+      ) : (
         <CellTooltip label="Remove this row">
           <button
             type="button"
             onClick={() => props.onRemove(index)}
             aria-label="Remove this row"
-            className="flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            className="mx-auto flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -934,51 +1116,32 @@ function useFieldInvalid(
   return Boolean(errors.rows?.[index]?.[field])
 }
 
-function OtCalcTypeCell({ index, control }: { index: number; control: Ctl }) {
-  const applicable = useWatch({ control, name: `rows.${index}.overtimeApplicable` })
-  return (
-    <Controller
-      control={control}
-      name={`rows.${index}.overtimeCalculationType`}
-      render={({ field }) => (
-        <TogglePill
-          value={field.value}
-          options={WAGE_OVERTIME_CALCULATION_OPTIONS}
-          onChange={field.onChange}
-          disabled={!applicable}
-          tone="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-400"
-        />
-      )}
-    />
-  )
-}
-
+/**
+ * The overtime rate. Always the row's own to type once overtime is on — there's no
+ * "auto or manual" to choose any more, so the figure the row would derive from its
+ * wage stands in the empty field as its placeholder. Left blank, that derived
+ * figure is what gets saved, so what the cell shows is what the row means.
+ */
 function OtRateCell({ index, control, register }: CellProps) {
   const applicable = useWatch({ control, name: `rows.${index}.overtimeApplicable` })
-  const calcType = useWatch({ control, name: `rows.${index}.overtimeCalculationType` })
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const basicPay = useWatch({ control, name: `rows.${index}.basicPay` })
   const wagePerDay = useWatch({ control, name: `rows.${index}.wagePerDay` })
 
   if (!applicable) return <DerivedValue value={null} />
-  if (calcType === 'Manual') {
-    return (
-      <GridAmountInput
-        placeholder="0.00"
-        {...register(`rows.${index}.overtimeRatePerHour`)}
-      />
-    )
-  }
+
+  const derived = deriveOvertimeRate({
+    salaryType,
+    basicPay,
+    wagePerDay,
+    overtimeApplicable: applicable,
+    overtimeRatePerHour: '',
+  })
+
   return (
-    <DerivedAmount
-      value={deriveOvertimeRate({
-        salaryType,
-        basicPay,
-        wagePerDay,
-        overtimeApplicable: applicable,
-        overtimeCalculationType: calcType,
-        overtimeRatePerHour: '',
-      })}
+    <GridAmountInput
+      placeholder={derived === null ? '0.00' : String(gridAmount(derived))}
+      {...register(`rows.${index}.overtimeRatePerHour`)}
     />
   )
 }
@@ -1210,8 +1373,9 @@ function DerivedAmount({ value }: { value: number | null }) {
     <GridAmountInput
       readOnly
       tabIndex={-1}
-      placeholder="—"
-      value={value === null ? '' : round2(value)}
+      /* Nothing to derive yet — the wage it comes from hasn't been typed. */
+      placeholder={NO_VALUE}
+      value={value === null ? '' : gridAmount(value)}
       className="border-dashed bg-muted/50 text-muted-foreground"
     />
   )
@@ -1224,14 +1388,9 @@ function DerivedAmount({ value }: { value: number | null }) {
 function DerivedValue({ value }: { value: number | null }) {
   return (
     <span className="flex h-7 items-center justify-end pr-1 text-xs text-muted-foreground">
-      {value === null ? '—' : round2(value)}
+      {value === null ? NO_VALUE : gridAmount(value)}
     </span>
   )
-}
-
-/** Two decimals, without trailing zeros on whole numbers. */
-function round2(value: number): number {
-  return Math.round(value * 100) / 100
 }
 
 /* ── Saved rows ─────────────────────────────────────────────────────────── */
@@ -1242,15 +1401,36 @@ function round2(value: number): number {
  */
 const SavedRow = memo(function SavedRow({
   row,
+  index,
+  measureRef,
+  columns,
   onEdit,
 }: {
   row: DesignationWageStructure
+  /** Its index in the virtual window, and the ref that measures it back down. */
+  index: number
+  measureRef: (el: HTMLTableRowElement | null) => void
+  columns: WageColumn[]
   onEdit: (row: DesignationWageStructure) => void
 }) {
   return (
-    <tr className="wage-row-saved" style={{ height: SAVED_ROW_HEIGHT }}>
-      {COLUMNS.map((column, columnIndex) => (
-        <td key={column.key} className={cn(CELL, columnIndex === 0 && STICKY)}>
+    <tr
+      ref={measureRef}
+      data-index={index}
+      className="wage-row-saved"
+      style={{ height: SAVED_ROW_HEIGHT }}
+    >
+      {columns.map((column) => (
+        <td
+          key={column.key}
+          style={pinStyle(column)}
+          /*
+           * A stored value sits centred in its cell, the pinned columns included —
+           * there's no input to line up with, and centring is what makes a whole
+           * row read as recorded rather than editable.
+           */
+          className={cn(CELL, 'text-center', column.pin !== undefined && STICKY)}
+        >
           <SavedCell column={column} row={row} onEdit={onEdit} />
         </td>
       ))}
@@ -1269,21 +1449,40 @@ function SavedCell({
   onEdit: (row: DesignationWageStructure) => void
 }) {
   if (column.head) {
-    const { kind, at } = column.head
-    const value = kind === 'allowance' ? row.allowances[at] : row.deductions[at]
+    const value = savedHeadValue(row, column.head)
     if (!value) return <ReadText value={null} />
-    return <ReadAmount amount={value.amount} valueType={value.valueType} />
+
+    const amount = <ReadAmount amount={value.amount} valueType={value.valueType} />
+    /*
+     * An allowance also shows the acts it counts towards, the same three markers
+     * the draft row carries. Nothing to show for a head this version didn't value,
+     * and a deduction has no markers at all.
+     */
+    if (value.amount === null || !('pfApplicable' in value)) return amount
+
+    return (
+      <div className="space-y-0.5">
+        {amount}
+        <ReadActMarkers
+          pfApplicable={value.pfApplicable}
+          esicApplicable={value.esicApplicable}
+          ptApplicable={value.ptApplicable}
+        />
+      </div>
+    )
   }
 
   switch (column.key) {
     case 'effectiveFrom':
       return (
         <div className="space-y-0.5">
-          <span className="flex items-center gap-1.5 font-semibold text-foreground">
+          {/* Both lines centre as a pair, so the icons stay beside their text
+              rather than pinning each line to the cell's left edge. */}
+          <span className="flex items-center justify-center gap-1.5 font-semibold text-foreground">
             <CalendarDays className="size-3 shrink-0 text-primary" />
             {formatMonth(row.effectiveFrom)}
           </span>
-          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <span className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
             <UserPen className="size-2.5 shrink-0" />
             {row.createdBy}
           </span>
@@ -1299,12 +1498,15 @@ function SavedCell({
 
     case 'salaryType':
       return <ReadChoice value={row.salaryType} tone="bg-primary/10 text-primary" />
+
+    /* The money columns — signed and grouped. Working days above is a count, so
+       it stays a plain number. */
     case 'basicPay':
-      return <ReadText value={row.basicPay} />
+      return <ReadMoney value={row.basicPay} />
     case 'wagePerDay':
-      return <ReadText value={row.wagePerDay} />
+      return <ReadMoney value={row.wagePerDay} />
     case 'extraDay':
-      return <ReadText value={row.extraDayAmountPerDay} />
+      return <ReadMoney value={row.extraDayAmountPerDay} />
 
     case 'ot':
       return (
@@ -1313,15 +1515,8 @@ function SavedCell({
           tone="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
         />
       )
-    case 'otCalcType':
-      return (
-        <ReadChoice
-          value={row.overtimeCalculationType}
-          tone="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-        />
-      )
     case 'otRate':
-      return <ReadText value={row.overtimeRatePerHour} />
+      return <ReadMoney value={row.overtimeRatePerHour} />
 
     case 'pf':
       return (
@@ -1372,7 +1567,7 @@ function SavedCell({
         />
       )
     case 'ptAmt':
-      return <ReadText value={row.ptAmount} />
+      return <ReadMoney value={row.ptAmount} />
 
     case 'lwf':
       return (
@@ -1389,9 +1584,9 @@ function SavedCell({
         />
       )
     case 'lwfAmt':
-      return <ReadText value={row.lwfAmount} />
+      return <ReadMoney value={row.lwfAmount} />
 
-    case 'delete':
+    case 'action':
       /*
        * A saved version is never removed — the history is the audit trail — but
        * it can be corrected. This pulls it onto the grid as an editable row that
@@ -1404,7 +1599,7 @@ function SavedCell({
           <button
             type="button"
             onClick={() => onEdit(row)}
-            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            className="mx-auto flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             aria-label={`Correct the wage structure effective ${formatMonth(row.effectiveFrom)}`}
           >
             <Pencil className="size-3.5" />
@@ -1415,6 +1610,22 @@ function SavedCell({
     default:
       return null
   }
+}
+
+/**
+ * What one saved row holds for one head column. The row's entries are built from
+ * the same heads list as the columns, so the head sits at the column's own index —
+ * but a row read before the master last changed can be one entry short or long, so
+ * the id is checked and only a mismatch pays for a lookup.
+ */
+function savedHeadValue(
+  row: DesignationWageStructure,
+  head: NonNullable<WageColumn['head']>,
+): WageAllowance | WageDeduction | undefined {
+  const side = head.kind === 'allowance' ? row.allowances : row.deductions
+  const at = side[head.at]
+  if (at?.componentId === head.id) return at
+  return side.find((entry) => entry.componentId === head.id)
 }
 
 /** "As Per Act" is spelled short inside the grid's narrow act columns. */

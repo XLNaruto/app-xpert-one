@@ -1,4 +1,4 @@
-import { WAGE_ALLOWANCE_HEADS, WAGE_DEDUCTION_HEADS } from '../constants'
+import { EMPTY_WAGE_STRUCTURE_ROW } from '../constants'
 import type {
   SalaryComponentPayload,
   WageStructureResponse,
@@ -22,33 +22,56 @@ import {
 } from './api-enums'
 
 /**
- * The grid's columns are a fixed list of head codes (`LOC`, `BONUS`, `TDS`, …)
- * while the API identifies a head by its id in the pay-component catalog. This
- * is the catalog as the mappers need it — the short code the master stores
- * against each id.
+ * One head of the grid — a record of the allowance / deduction master, which is
+ * where the grid's allowance and deduction columns come from. `id` is the API's
+ * own `pay_component_id`, so a cell reaches `salary_components` directly.
  */
 export interface WageHead {
   id: number
-  /** The head's short code in the pay-component master, e.g. `LOC`. */
-  shortName: string
+  /** The head's short code, e.g. `LOC` — the column's header. */
+  code: string
+  /** The head's full name, e.g. "Local Conveyance" — the column's hint. */
+  name: string
 }
 
 /**
- * Resolve the grid's head codes against the catalog, both ways. A code the
- * company's master doesn't carry simply can't be saved — its column stays on the
- * grid (the history has to keep its shape) but the cell is dropped on the way
- * out, rather than sent as an id the API would reject.
+ * The master's heads, split by the side each one sits on. A head's own `type` in
+ * the master decides that, so the grid never asks and the API never says: one
+ * `salary_components` array carries both.
  */
-function headIndex(heads: WageHead[]) {
-  const idByCode = new Map<string, number>()
-  const codeById = new Map<number, string>()
-  for (const head of heads) {
-    const code = head.shortName.trim().toUpperCase()
-    if (!code) continue
-    idByCode.set(code, head.id)
-    codeById.set(head.id, code)
+export interface WageHeads {
+  allowances: WageHead[]
+  deductions: WageHead[]
+}
+
+/** No heads at all — what the grid renders on until the master has loaded. */
+export const NO_WAGE_HEADS: WageHeads = { allowances: [], deductions: [] }
+
+/**
+ * A blank draft row for the heads currently in the master — one entry per head,
+ * on both sides, nothing valued. Allowances default to a percentage of basic pay
+ * and deductions to a flat amount, which is how each side is usually quoted.
+ *
+ * The row arrays are index-aligned with `heads`, which is also the grid's column
+ * order — that alignment is what lets a cell address its field by index.
+ */
+export function blankWageStructureRow(heads: WageHeads): WageStructureRow {
+  return {
+    ...EMPTY_WAGE_STRUCTURE_ROW,
+    allowances: heads.allowances.map((head) => ({
+      componentId: head.id,
+      valueType: 'Percentage' as const,
+      amount: '',
+      pfApplicable: false,
+      esicApplicable: false,
+      ptApplicable: false,
+    })),
+    deductions: heads.deductions.map((head) => ({
+      componentId: head.id,
+      valueType: 'Fixed' as const,
+      amount: '',
+    })),
   }
-  return { idByCode, codeById }
 }
 
 /** The month half of the API's `applicable_date`, as the grid's `yyyy-MM`. */
@@ -57,8 +80,8 @@ function toEffectiveMonth(applicableDate: string): string {
 }
 
 /**
- * One validated draft row → the body both wage-structure writes take. The
- * derived side of each pair (the wage per day, an "Auto" overtime rate) is
+ * One validated draft row → the body both wage-structure writes take. Anything the
+ * row leaves to be derived (the wage per day, an overtime rate left blank) is
  * computed here, so the stored version is complete on its own — the API keeps the
  * figure, not the formula behind it.
  *
@@ -69,7 +92,6 @@ function toEffectiveMonth(applicableDate: string): string {
  */
 export function wageRowToPayload(
   row: WageStructureRow,
-  heads: WageHead[],
 ): Omit<WageStructureRowPayload, 'company_id'> {
   const { basicPay, wagePerDay } = deriveWages(row)
   // Fixed days and a weekly off are alternatives, each owned by one calc type.
@@ -118,7 +140,7 @@ export function wageRowToPayload(
         ? toOptionalAmount(row.lwfAmount)
         : null,
 
-    salary_components: headsToPayload(row, heads),
+    salary_components: headsToPayload(row),
   }
 }
 
@@ -133,16 +155,14 @@ export function wageRowToPayload(
  * the row's act toggles: the markers are always enabled on the grid, and silently
  * clearing one here would contradict what the user just set.
  */
-function headsToPayload(row: WageStructureRow, heads: WageHead[]) {
-  const { idByCode } = headIndex(heads)
+function headsToPayload(row: WageStructureRow) {
   const components: SalaryComponentPayload[] = []
 
   for (const allowance of row.allowances) {
     const amount = toOptionalAmount(allowance.amount)
-    const id = idByCode.get(allowance.head.toUpperCase())
-    if (amount === null || id === undefined) continue
+    if (amount === null) continue
     components.push({
-      pay_component_id: id,
+      pay_component_id: allowance.componentId,
       amount_type: allowance.valueType,
       amount,
       pf_applicable: allowance.pfApplicable,
@@ -153,10 +173,9 @@ function headsToPayload(row: WageStructureRow, heads: WageHead[]) {
 
   for (const deduction of row.deductions) {
     const amount = toOptionalAmount(deduction.amount)
-    const id = idByCode.get(deduction.head.toUpperCase())
-    if (amount === null || id === undefined) continue
+    if (amount === null) continue
     components.push({
-      pay_component_id: id,
+      pay_component_id: deduction.componentId,
       amount_type: deduction.valueType,
       amount,
       /*
@@ -175,19 +194,21 @@ function headsToPayload(row: WageStructureRow, heads: WageHead[]) {
 }
 
 /**
- * A history row → the stored wage structure the grid renders. Every column of the
- * grid is filled in, valued or not: the columns are fixed so the history keeps
- * its shape, and a head this version didn't carry reads as blank.
+ * A history row → the stored wage structure the grid renders. Every head in the
+ * master gets an entry, valued or not: the entries are index-aligned with the
+ * grid's columns, and a head this version didn't carry reads as blank.
+ *
+ * A head the version was saved with but the master no longer lists has no column
+ * to sit under, so it's dropped here rather than shifting the ones that do.
  */
 export function toWageStructure(
   response: WageStructureResponse,
   designationId: number,
-  heads: WageHead[],
+  heads: WageHeads,
 ): DesignationWageStructure {
-  const { codeById } = headIndex(heads)
-  const byCode = new Map(
+  const byId = new Map(
     (response.salary_components ?? []).map((component) => [
-      codeById.get(component.pay_component_id) ?? '',
+      component.pay_component_id,
       component,
     ]),
   )
@@ -210,10 +231,10 @@ export function toWageStructure(
     wagePerDay: response.wages_per_day,
     extraDayAmountPerDay: response.extra_day_amount_per_day,
 
-    allowances: WAGE_ALLOWANCE_HEADS.map((head) => {
-      const component = byCode.get(head.code)
+    allowances: heads.allowances.map((head) => {
+      const component = byId.get(head.id)
       return {
-        head: head.code,
+        componentId: head.id,
         valueType: component ? toValueType(component.amount_type) : 'Percentage',
         amount: component?.amount ?? null,
         pfApplicable: component?.pf_applicable ?? false,
@@ -221,22 +242,16 @@ export function toWageStructure(
         ptApplicable: component?.pt_applicable ?? false,
       }
     }),
-    deductions: WAGE_DEDUCTION_HEADS.map((head) => {
-      const component = byCode.get(head.code)
+    deductions: heads.deductions.map((head) => {
+      const component = byId.get(head.id)
       return {
-        head: head.code,
+        componentId: head.id,
         valueType: component ? toValueType(component.amount_type) : 'Fixed',
         amount: component?.amount ?? null,
       }
     }),
 
     overtimeApplicable: response.is_overtime_applicable,
-    /*
-     * The API stores the hourly rate but not how it was arrived at, so a stored
-     * rate reads back as hand-entered — which is what it now is, whatever
-     * derived it in the first place.
-     */
-    overtimeCalculationType: response.overtime_rate_per_hour === null ? null : 'Manual',
     overtimeRatePerHour: response.overtime_rate_per_hour,
 
     pfActApplicable: response.is_pf_act_applicable ?? false,
@@ -290,7 +305,7 @@ export function wageStructureToRow(
     extraDayAmountPerDay: optional(structure.extraDayAmountPerDay),
 
     allowances: structure.allowances.map((allowance) => ({
-      head: allowance.head,
+      componentId: allowance.componentId,
       valueType: allowance.valueType,
       amount: optional(allowance.amount),
       pfApplicable: allowance.pfApplicable,
@@ -298,17 +313,16 @@ export function wageStructureToRow(
       ptApplicable: allowance.ptApplicable,
     })),
     deductions: structure.deductions.map((deduction) => ({
-      head: deduction.head,
+      componentId: deduction.componentId,
       valueType: deduction.valueType,
       amount: optional(deduction.amount),
     })),
 
     overtimeApplicable: structure.overtimeApplicable,
     /*
-     * A stored rate is a figure, not a formula — reopened for editing it is the
-     * hand-entered one, so re-deriving it doesn't overwrite what was paid.
+     * A stored rate is a figure, not a formula. It comes back onto the row as
+     * entered, so correcting the row can't silently re-derive what was paid.
      */
-    overtimeCalculationType: structure.overtimeApplicable ? 'Manual' : 'Auto',
     overtimeRatePerHour: optional(structure.overtimeRatePerHour),
 
     pfActApplicable: structure.pfActApplicable,

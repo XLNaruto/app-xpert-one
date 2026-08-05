@@ -24,6 +24,12 @@ export const authUserResponseSchema = z.object({
    */
   company_id: z.number().nullable().optional().default(null),
   is_owner: z.boolean().optional().default(false),
+  /**
+   * The company this account last worked in. Not a selection — the token is
+   * still minted without a company for an owner — only a hint the company gate
+   * uses to pre-highlight a choice. Absent on accounts that never selected one.
+   */
+  last_selected_company_id: z.number().nullable().optional().default(null),
 })
 
 /** Shared by `POST /user/auth/login` and `POST /user/auth/refresh`. */

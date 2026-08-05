@@ -37,6 +37,10 @@ type AllowanceDeductionSectionProps = Pick<
  * Both sides take the same row, because the API takes both in one
  * `salary_components` array with one shape — a head's `type` in the master
  * decides which side it lands on, and the request never says which.
+ *
+ * Only an allowance carries the act markers. They say which statutory wages a
+ * head is *added* to, which is a question about pay — a deduction is taken out of
+ * that pay, so there is nothing for it to count towards.
  */
 export function AllowanceDeductionSection({
   register,
@@ -72,9 +76,11 @@ export function AllowanceDeductionSection({
             error={errors.allowances?.[index]?.amount?.message}
             register={register}
             control={control}
-            pfActApplicable={pfActApplicable}
-            esicActApplicable={esicActApplicable}
-            ptActApplicable={ptActApplicable}
+            acts={{
+              pf: pfActApplicable,
+              esic: esicActApplicable,
+              pt: ptActApplicable,
+            }}
           />
         ))}
       </HeadColumn>
@@ -101,9 +107,6 @@ export function AllowanceDeductionSection({
             error={errors.deductions?.[index]?.amount?.message}
             register={register}
             control={control}
-            pfActApplicable={pfActApplicable}
-            esicActApplicable={esicActApplicable}
-            ptActApplicable={ptActApplicable}
           />
         ))}
       </HeadColumn>
@@ -148,13 +151,15 @@ interface HeadRowShellProps {
  * gets narrow.
  */
 /**
- * One head's row — its value, the ₹/% toggle and the three act markers. The same
- * row serves allowances and deductions; `side` picks which half of the form the
- * fields register under, and nothing else differs between the two.
+ * One head's row — its value, the ₹/% toggle and, on an allowance, the three act
+ * markers. The same row serves allowances and deductions; `side` picks which half
+ * of the form the fields register under, and the markers are the only thing that
+ * differs between the two.
  *
- * A marker is disabled while its act is switched off on the designation: a head
- * can't count towards an act the designation isn't covered by, and the payload
- * drops it either way.
+ * `acts` carries the designation's act toggles and is given for an allowance only —
+ * omitted, the row shows no markers at all. A marker is disabled while its act is
+ * switched off: a head can't count towards an act the designation isn't covered
+ * by, and the payload drops it either way.
  */
 function ComponentRow({
   side,
@@ -165,9 +170,7 @@ function ComponentRow({
   error,
   register,
   control,
-  pfActApplicable,
-  esicActApplicable,
-  ptActApplicable,
+  acts,
 }: {
   side: 'allowances' | 'deductions'
   index: number
@@ -175,30 +178,25 @@ function ComponentRow({
   tone: string
   indexTone: string
   error?: string
-} & Pick<
-  AllowanceDeductionSectionProps,
-  'register' | 'control' | 'pfActApplicable' | 'esicActApplicable' | 'ptActApplicable'
->) {
-  const markers = [
-    {
-      name: 'pfApplicable',
-      label: 'PF',
-      enabled: pfActApplicable,
-      activeTone: 'text-primary',
-    },
-    {
-      name: 'esicApplicable',
-      label: 'ESI',
-      enabled: esicActApplicable,
-      activeTone: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-      name: 'ptApplicable',
-      label: 'PT',
-      enabled: ptActApplicable,
-      activeTone: 'text-violet-600 dark:text-violet-400',
-    },
-  ] as const
+  acts?: { pf: boolean; esic: boolean; pt: boolean }
+} & Pick<AllowanceDeductionSectionProps, 'register' | 'control'>) {
+  const markers = acts
+    ? ([
+        { name: 'pfApplicable', label: 'PF', enabled: acts.pf, activeTone: 'text-primary' },
+        {
+          name: 'esicApplicable',
+          label: 'ESI',
+          enabled: acts.esic,
+          activeTone: 'text-emerald-600 dark:text-emerald-400',
+        },
+        {
+          name: 'ptApplicable',
+          label: 'PT',
+          enabled: acts.pt,
+          activeTone: 'text-violet-600 dark:text-violet-400',
+        },
+      ] as const)
+    : []
 
   return (
     <HeadRowShell index={index} label={label} tone={tone} indexTone={indexTone} error={error}>
@@ -219,25 +217,27 @@ function ComponentRow({
         )}
       />
 
-      {/* Which statutory wages this head counts towards. */}
-      <div className="flex shrink-0 items-center gap-2.5">
-        {markers.map((marker) => (
-          <Controller
-            key={marker.name}
-            control={control}
-            name={`${side}.${index}.${marker.name}`}
-            render={({ field }) => (
-              <ActMarker
-                label={marker.label}
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                disabled={!marker.enabled}
-                activeTone={marker.activeTone}
-              />
-            )}
-          />
-        ))}
-      </div>
+      {/* Which statutory wages this head counts towards — allowances only. */}
+      {markers.length > 0 && (
+        <div className="flex shrink-0 items-center gap-2.5">
+          {markers.map((marker) => (
+            <Controller
+              key={marker.name}
+              control={control}
+              name={`${side}.${index}.${marker.name}`}
+              render={({ field }) => (
+                <ActMarker
+                  label={marker.label}
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={!marker.enabled}
+                  activeTone={marker.activeTone}
+                />
+              )}
+            />
+          ))}
+        </div>
+      )}
     </HeadRowShell>
   )
 }

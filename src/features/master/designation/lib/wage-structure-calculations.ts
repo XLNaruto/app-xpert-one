@@ -30,9 +30,10 @@ export function deriveWages(
 }
 
 /**
- * Overtime rate for one hour. Entered by hand on "Manual"; on "Auto" it comes
- * off the wage per day at double time, matching how the designation form
- * describes the calculation.
+ * Overtime rate for one hour. A rate entered on the row is the rate paid; left
+ * blank it comes off the row's wage per day at double time, which is also what
+ * the cell shows as its placeholder — so the row never has to say which of the
+ * two it means, and the stored figure is the same either way.
  */
 export function deriveOvertimeRate(
   row: Pick<
@@ -41,15 +42,28 @@ export function deriveOvertimeRate(
     | 'basicPay'
     | 'wagePerDay'
     | 'overtimeApplicable'
-    | 'overtimeCalculationType'
     | 'overtimeRatePerHour'
   >,
 ): number | null {
   if (!row.overtimeApplicable) return null
-  if (row.overtimeCalculationType === 'Manual') {
-    return toOptionalAmount(row.overtimeRatePerHour)
-  }
+
+  const entered = toOptionalAmount(row.overtimeRatePerHour)
+  if (entered !== null) return entered
+
   const { wagePerDay } = deriveWages(row)
   if (wagePerDay === null) return null
   return (wagePerDay / HOURS_PER_DAY) * 2
+}
+
+/**
+ * Two decimals at most, and none on a whole number.
+ *
+ * Every figure the wage grid prints goes through here, because most of them are
+ * one division away from a repeating decimal — a monthly basic spread over the
+ * paid days, an hourly rate off that again — and a cell is far too narrow to show
+ * `144.23076923076923`. Two decimals is also all the API accepts back, so nothing
+ * is lost by never showing more.
+ */
+export function gridAmount(value: number): number {
+  return Math.round(value * 100) / 100
 }

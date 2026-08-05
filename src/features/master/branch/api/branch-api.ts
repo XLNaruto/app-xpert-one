@@ -27,13 +27,24 @@ const MAX_LIMIT = 100
 const MAX_PAGES = 20
 
 /**
+ * The tenant a read is scoped to.
+ *
+ * Normally the company the session has active. An employee transfer to another
+ * company is the exception: it has to list the *destination* company's branches, so
+ * the caller passes that id explicitly.
+ */
+function tenantId(companyId: number | undefined): number {
+  return companyId ?? activeCompanyId('branches')
+}
+
+/**
  * The tenant scope plus `search` / `sort` / `sort_by` as the endpoint spells
  * them. Order is always sent — left off, the server's own default decides it,
  * and a list whose order isn't pinned can repeat or skip rows as the user pages.
  */
-function queryParams(params: PageParams) {
+function queryParams(params: PageParams, companyId?: number) {
   return {
-    company_id: activeCompanyId('branches'),
+    company_id: tenantId(companyId),
     ...(params.search?.trim() ? { search: params.search.trim() } : {}),
     sort: params.sort ?? BRANCH_DEFAULT_SORT.id,
     sort_by: params.sortBy ?? (BRANCH_DEFAULT_SORT.desc ? 'desc' : 'asc'),
@@ -49,9 +60,10 @@ function queryParams(params: PageParams) {
  */
 export async function fetchBranches(
   params: PageParams = ALL_ROWS,
+  companyId?: number,
 ): Promise<Paginated<Branch>> {
   try {
-    const query = queryParams(params)
+    const query = queryParams(params, companyId)
 
     if (params.limit > 0) {
       const raw = await http.get<unknown>(endpoints.BRANCHES.LIST, {

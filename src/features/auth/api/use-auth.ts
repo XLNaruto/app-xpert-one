@@ -20,6 +20,9 @@ async function mockLogin({ username }: LoginValues): Promise<AuthSession> {
       roleId: null,
       companyId: null,
       isOwner: true,
+      // Mirrors an owner who last worked in the second demo tenant — the gate
+      // still asks, with that one pre-highlighted.
+      lastSelectedCompanyId: 2,
     },
     token: 'mock-access-token',
     // An empty refresh token keeps the refresh scheduler and the 401 retry

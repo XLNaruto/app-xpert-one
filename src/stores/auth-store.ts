@@ -17,6 +17,12 @@ export interface AuthUser {
   roleId: number | null
   companyId: number | null
   isOwner: boolean
+  /**
+   * The company this account last worked in — a hint, not a selection: the gate
+   * still asks every login, it just pre-highlights this one. Null when the
+   * account has never picked a company.
+   */
+  lastSelectedCompanyId: number | null
   phone?: string
   avatarUrl?: string
 }

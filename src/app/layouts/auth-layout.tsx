@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
+import { BrandLogo } from '@/components/common/brand-logo'
 import {
   Tooltip,
   TooltipContent,
@@ -62,23 +63,6 @@ const HIGHLIGHTS = [
   { Icon: Cloud, title: 'Cloud Ready', body: 'Access your workspace from anywhere.' },
   { Icon: Users, title: 'Role Based Access', body: 'Right access for the right people.' },
 ]
-
-/** Text wordmark used in place of a logo asset. */
-function BrandMark() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-linear-to-br from-primary to-primary-hover font-heading text-2xl font-black leading-none text-white shadow-lg shadow-primary/25">
-        X
-      </div>
-      <div className="leading-tight">
-        <p className="font-heading text-xl font-bold text-foreground">
-          Xpert<span className="text-primary">One</span>
-        </p>
-        <p className="text-xs text-muted-foreground">Enterprise Admin Suite</p>
-      </div>
-    </div>
-  )
-}
 
 function ThemeToggle() {
   const theme = useUiStore((s) => s.theme)
@@ -130,7 +114,7 @@ export function AuthLayout() {
       {/* ============================================================= */}
       <header className="relative z-10 flex items-center justify-end px-6 py-6 sm:px-10 lg:justify-between lg:px-12">
         <div className="hidden lg:block">
-          <BrandMark />
+          <BrandLogo className="h-16 w-56" />
         </div>
         <ThemeToggle />
       </header>
@@ -225,7 +209,7 @@ export function AuthLayout() {
           <div className="w-full max-w-md rounded-2xl border border-white/60 bg-sky-50/70 p-6 shadow-[0_24px_60px_-15px_rgba(2,132,199,0.30)] ring-1 ring-black/5 backdrop-blur-2xl sm:p-7 lg:max-w-sm xl:max-w-md xl:p-9 dark:border-white/10 dark:bg-card/50 dark:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.6)] dark:ring-white/5">
             {/* Wordmark inside card on small screens */}
             <div className="mb-6 flex justify-center lg:hidden">
-              <BrandMark />
+              <BrandLogo className="h-14 w-48" />
             </div>
             <Outlet />
           </div>

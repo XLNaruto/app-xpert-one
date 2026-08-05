@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLogout } from '@/features/auth'
+import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '../api/use-my-companies'
 import { useSelectCompany } from '../api/use-select-company'
 
@@ -17,7 +18,19 @@ export function useCompanyGate() {
   const { companies, requiresSelection } = useMyCompanies()
   const selectCompany = useSelectCompany()
   const logout = useLogout()
+  const lastSelectedId = useAuthStore((s) => s.user?.lastSelectedCompanyId ?? null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+
+  // Pre-highlight the company the account last worked in (an owner signs in
+  // with no active company, so the gate still asks every time — this only saves
+  // the hunt). Applied once, when the list arrives: an id the caller no longer
+  // belongs to is ignored, and a manual pick afterwards is never overwritten.
+  const preselected = useRef(false)
+  useEffect(() => {
+    if (preselected.current || lastSelectedId == null || companies.length === 0) return
+    preselected.current = true
+    if (companies.some((c) => c.id === lastSelectedId)) setSelectedId(lastSelectedId)
+  }, [lastSelectedId, companies])
 
   // Exactly one company — resolve it without asking. Fired once: a failure
   // surfaces as an error with a Retry rather than retrying in a loop.

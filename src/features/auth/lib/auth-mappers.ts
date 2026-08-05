@@ -12,5 +12,6 @@ export function toAuthUser(raw: AuthUserResponse): AuthUser {
     roleId: raw.role_id,
     companyId: raw.company_id,
     isOwner: raw.is_owner,
+    lastSelectedCompanyId: raw.last_selected_company_id,
   }
 }

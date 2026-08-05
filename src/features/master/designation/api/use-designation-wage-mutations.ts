@@ -31,7 +31,7 @@ export function useSaveDesignationWageStructures(designationId: number) {
     mutationFn: async (rows: WageStructureRow[]) => {
       const saved: DesignationWageStructure[] = []
       for (const row of rows) {
-        const payload = wageRowToPayload(row, heads)
+        const payload = wageRowToPayload(row)
         saved.push(
           row.wageStructureId === undefined
             ? await createDesignationWageStructure(designationId, payload, heads)

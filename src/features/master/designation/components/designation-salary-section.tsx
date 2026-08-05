@@ -19,7 +19,6 @@ import { formatCurrency } from '@/lib/utils'
 import {
   ACT_AMOUNT_TYPE_OPTIONS,
   ESIC_DEDUCTION_BASIS_OPTIONS,
-  OVERTIME_CALCULATION_TYPE_OPTIONS,
   PF_DEDUCTION_TYPE_OPTIONS,
   SALARY_TYPE_OPTIONS,
   WAGE_DAYS_PER_MONTH,
@@ -49,7 +48,6 @@ type DesignationSalarySectionProps = Pick<
   | 'lwfActApplicable'
   | 'lwfActType'
   | 'overtimeApplicable'
-  | 'overtimeCalculationType'
 >
 
 /**
@@ -73,7 +71,6 @@ export function DesignationSalarySection({
   lwfActApplicable,
   lwfActType,
   overtimeApplicable,
-  overtimeCalculationType,
 }: DesignationSalarySectionProps) {
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -465,39 +462,11 @@ export function DesignationSalarySection({
             title="Overtime Settings"
             tone="border-sky-500/20 bg-sky-500/5"
             iconTone="text-sky-600 dark:text-sky-400"
-            footnote={
-              overtimeCalculationType === 'As Per Calculation'
-                ? `Left blank, the rate is derived from the wage per day: basic pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8 hours, paid at double.`
-                : undefined
-            }
+            footnote={`Left blank, the rate is derived from the wage per day: basic pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8 hours, paid at double.`}
           >
             <Field
-              label="OT Calculation Type"
-              error={errors.overtimeCalculationType?.message}
-            >
-              <Controller
-                control={control}
-                name="overtimeCalculationType"
-                render={({ field }) => (
-                  <Combobox
-                    className="w-full"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={OVERTIME_CALCULATION_TYPE_OPTIONS}
-                    placeholder="Select Calculation"
-                    searchable={false}
-                    clearable
-                  />
-                )}
-              />
-            </Field>
-            <Field
               label={amountLabel('OT Rate Per Hour')}
-              hint={
-                overtimeCalculationType === 'Manual'
-                  ? 'The flat rate paid for each overtime hour.'
-                  : 'Optional override — leave blank to let the calculated wage per hour drive the rate.'
-              }
+              hint="The flat rate paid for each overtime hour — leave it blank to derive one from the wage."
               error={errors.overtimeRatePerHour?.message}
             >
               <Input

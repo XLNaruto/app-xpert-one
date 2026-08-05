@@ -205,6 +205,113 @@ export const endpoints = {
     PATCH: (id: number) => `/user/documents/${id}`,
     DELETE: (id: number) => `/user/documents/${id}`,
   },
+  /**
+   * The employee — one person, plus the postings and the nine steps hung off
+   * them. The wizard's shape follows the API's: step 1 is the employee row
+   * itself (created together with the FIRST posting), and every later step is
+   * its own sub-resource under `/user/employees/:id/…`.
+   *
+   * `POST` establishes the person and their opening posting in one body, so a
+   * new employee exists only once step 1 is saved — which is why every other
+   * tab is locked until then. `PATCH` writes the person and the CURRENT posting;
+   * moving someone between company / branch / department / designation goes
+   * through `TRANSFERS` instead, so the old posting survives as history.
+   *
+   * Reads are scoped by a required `company_id` on the list and by the record's
+   * own tenant everywhere else.
+   */
+  EMPLOYEES: {
+    LIST: '/user/employees',
+    POST: '/user/employees',
+    GET: (id: number) => `/user/employees/${id}`,
+    PATCH: (id: number) => `/user/employees/${id}`,
+
+    /**
+     * Step 2 — KYC. Every field is a column on the employee, so an untouched
+     * step reads back as a record of `null`s rather than a 404. The first save
+     * is a POST (a full overwrite: an omitted field is stored as `null`), and
+     * every save after it is a PATCH.
+     */
+    KYC: (id: number) => `/user/employees/${id}/kyc`,
+
+    /**
+     * Step 3 — read-only. The wage structure the employee inherits from the
+     * designation on their current posting; nothing is stored per employee, so
+     * there is no write here at all.
+     */
+    WAGE_STRUCTURE: (id: number) => `/user/employees/${id}/wage-structure`,
+
+    /** Step 4 — family members, one row per call (no whole-step save). */
+    FAMILY: (id: number) => `/user/employees/${id}/family`,
+    FAMILY_MEMBER: (id: number, memberId: number) =>
+      `/user/employees/${id}/family/${memberId}`,
+
+    /** Step 5a — qualifications. */
+    EDUCATIONS: (id: number) => `/user/employees/${id}/educations`,
+    EDUCATION: (id: number, educationId: number) =>
+      `/user/employees/${id}/educations/${educationId}`,
+
+    /** Step 5b — prior employment. Its two dates are `YYYY-MM`, never full dates. */
+    EXPERIENCES: (id: number) => `/user/employees/${id}/experiences`,
+    EXPERIENCE: (id: number, experienceId: number) =>
+      `/user/employees/${id}/experiences/${experienceId}`,
+
+    /**
+     * Step 6 — attachments. `document` is the object key from
+     * `UPLOADS.EMPLOYEE_DOCUMENT`; the file itself never passes through here.
+     */
+    DOCUMENTS: (id: number) => `/user/employees/${id}/documents`,
+    DOCUMENT: (id: number, employeeDocumentId: number) =>
+      `/user/employees/${id}/documents/${employeeDocumentId}`,
+
+    /** Step 7 — assets issued from the asset master. */
+    ASSETS: (id: number) => `/user/employees/${id}/assets`,
+    ASSET: (id: number, employeeAssetId: number) =>
+      `/user/employees/${id}/assets/${employeeAssetId}`,
+
+    /**
+     * Step 8 — the posting history, newest first. `POST` is one atomic move
+     * (close the open posting, open the new one); `PATCH` corrects the latest
+     * posting in place and is refused for a closed one; `LEAVE_SERVICE` closes
+     * the open posting without opening another — the employee exits.
+     */
+    TRANSFERS: (id: number) => `/user/employees/${id}/transfers`,
+    TRANSFER: (id: number, serviceId: number) =>
+      `/user/employees/${id}/transfers/${serviceId}`,
+    LEAVE_SERVICE: (id: number, serviceId: number) =>
+      `/user/employees/${id}/transfers/${serviceId}/leave-service`,
+  },
+  /**
+   * Step 9 — leave records. A top-level collection rather than a sub-resource:
+   * `?employee_id=` is the employee's own tab, and leaving it off gives the
+   * company-wide queue. Recording a leave from the back office IS the approval
+   * (`status` defaults to `APPROVED`); `STATUS` is the decision on one that was
+   * filed as `PENDING`, and only a pending row can be decided.
+   */
+  EMPLOYEE_LEAVES: {
+    LIST: '/user/employee-leaves',
+    POST: '/user/employee-leaves',
+    GET: (id: number) => `/user/employee-leaves/${id}`,
+    PATCH: (id: number) => `/user/employee-leaves/${id}`,
+    DELETE: (id: number) => `/user/employee-leaves/${id}`,
+    STATUS: (id: number) => `/user/employee-leaves/${id}/status`,
+  },
+  /**
+   * Presigned PUT handshakes. Each answers `{ upload_url, key }`: PUT the file
+   * straight at `upload_url` with the same `Content-Type` that was presigned,
+   * then send `key` on the record. No file ever travels through the API, and no
+   * DB row is touched here — an abandoned upload just leaves a stray object.
+   */
+  UPLOADS: {
+    EMPLOYEE_PHOTO: '/user/uploads/employee-photo',
+    EMPLOYEE_DOCUMENT: '/user/uploads/employee-document',
+    LEAVE_ATTACHMENT: '/user/uploads/leave-attachment',
+  },
+  /** Read-only lookup — the bank master is maintained by the super admin. */
+  BANKS: {
+    LIST: '/user/banks',
+    GET: (id: number) => `/user/banks/${id}`,
+  },
   /** Read-only lookup — states are maintained by the super admin. */
   STATES: {
     LIST: '/user/states',

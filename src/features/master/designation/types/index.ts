@@ -9,9 +9,6 @@ export type ActAmountType = 'As Per Act' | 'Manual'
 /** Whether the PF share is a flat amount or a share of the EPF wages. */
 export type PfDeductionType = 'Fixed' | 'Percentage'
 
-/** Whether the overtime rate is entered by hand or derived from the wage. */
-export type OvertimeCalculationType = 'Manual' | 'As Per Calculation'
-
 /** Whether an allowance is a share of basic pay or a flat rupee amount. */
 export type AllowanceValueType = 'Percentage' | 'Fixed'
 
@@ -91,7 +88,7 @@ export interface Designation extends AuditFields {
 
   // Overtime
   overtimeApplicable: boolean
-  overtimeCalculationType: OvertimeCalculationType | null
+  /** The stored rate for an overtime hour — the API keeps the figure, not how it was arrived at. */
   overtimeRatePerHour: number | null
 
   // Allowance / deduction heads
@@ -104,16 +101,13 @@ export interface Designation extends AuditFields {
 /** Whether the wage is quoted per day or per month. */
 export type WageSalaryType = 'Daily' | 'Monthly'
 
-/** Whether the overtime rate is derived from the wage or entered by hand. */
-export type WageOvertimeCalculationType = 'Auto' | 'Manual'
-
 /** What the ESIC contribution is worked out on — the API's own three answers. */
 export type WageEsicDeductionBasis = 'Wage Ceiling' | 'Gross Salary' | 'As Per Act'
 
 /** One allowance head as valued in a wage structure row. */
 export interface WageAllowance {
-  /** Short code of the head — one of `WAGE_ALLOWANCE_HEADS`. */
-  head: string
+  /** Id of the head's record in the allowance / deduction master. */
+  componentId: number
   valueType: AllowanceValueType
   /** Percent of basic pay, or a flat amount — read per `valueType`. */
   amount: number | null
@@ -124,8 +118,8 @@ export interface WageAllowance {
 
 /** One deduction head as valued in a wage structure row. */
 export interface WageDeduction {
-  /** Short code of the head — one of `WAGE_DEDUCTION_HEADS`. */
-  head: string
+  /** Id of the head's record in the allowance / deduction master. */
+  componentId: number
   valueType: AllowanceValueType
   amount: number | null
 }
@@ -162,8 +156,7 @@ export interface DesignationWageStructure extends AuditFields {
 
   // Overtime
   overtimeApplicable: boolean
-  overtimeCalculationType: WageOvertimeCalculationType | null
-  /** Set only when `overtimeCalculationType` is "Manual". */
+  /** The rate for an overtime hour, as stored — entered on the row or derived from its wage. */
   overtimeRatePerHour: number | null
 
   // PF act

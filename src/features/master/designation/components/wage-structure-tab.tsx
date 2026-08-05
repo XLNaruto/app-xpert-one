@@ -19,9 +19,17 @@ interface WageStructureTabProps {
  */
 export function WageStructureTab({ designationId }: WageStructureTabProps) {
   const form = useDesignationWageForm(designationId)
-  const draftCount = form.fields.length
   const savedCount = form.existing.length
-  const total = savedCount + draftCount
+  /*
+   * A row opened for correction is one of the saved entries, not an extra one —
+   * it's already counted in `savedCount`, so only genuinely new rows add to the
+   * total.
+   */
+  const editingCount = form.fields.filter(
+    (field) => field.wageStructureId !== undefined,
+  ).length
+  const newCount = form.fields.length - editingCount
+  const total = savedCount + newCount
 
   return (
     <form onSubmit={form.onSubmit} noValidate>
@@ -43,7 +51,16 @@ export function WageStructureTab({ designationId }: WageStructureTabProps) {
               </p>
             </div>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={form.addRow}>
+          {/* `ml-auto` as well as the row's `justify-between`: once the header
+              wraps, the button is alone on its line and has nothing to be spaced
+              apart from, so it would otherwise drop to the left edge. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={form.addRow}
+            className="ml-auto"
+          >
             <Plus className="size-4" />
             Add Row
           </Button>
@@ -65,14 +82,25 @@ export function WageStructureTab({ designationId }: WageStructureTabProps) {
           <p className="text-xs text-muted-foreground">
             {total} {total === 1 ? 'entry' : 'entries'} —{' '}
             <span className="font-medium text-foreground">{savedCount} existing</span>,{' '}
-            <span className="font-medium text-primary">{draftCount} new</span>
+            <span className="font-medium text-primary">{newCount} new</span>
+            {editingCount > 0 && (
+              <>
+                {', '}
+                <span className="font-medium text-primary">{editingCount} being edited</span>
+              </>
+            )}
           </p>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" size="sm" onClick={form.addRow}>
               <Plus className="size-4" />
               Add Row
             </Button>
-            <Button type="submit" size="sm" disabled={form.isPending}>
+            {/* Nothing on the grid to save — the history alone is nothing to send. */}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={form.isPending || form.fields.length === 0}
+            >
               {form.isPending ? 'Saving…' : 'Save Wage Structure'}
             </Button>
           </div>
