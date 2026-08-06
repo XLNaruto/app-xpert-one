@@ -135,7 +135,7 @@ function StepBody({
   wizard: ReturnType<typeof useEmployeeWizard>
   employeeId: number | undefined
 }) {
-  const { tab, goToNextTab, goToList, openCreatedEmployee, employee } = wizard
+  const { tab, goToNextTab, goToPrevTab, openCreatedEmployee, employee } = wizard
 
   if (tab === 'basic') {
     return (
@@ -143,7 +143,7 @@ function StepBody({
         employee={employee}
         onCreated={openCreatedEmployee}
         onSaved={goToNextTab}
-        onClose={goToList}
+        onBack={goToPrevTab}
       />
     )
   }
@@ -161,14 +161,18 @@ function StepBody({
   switch (tab) {
     case 'kyc':
       return (
-        <KycDetailTab employeeId={employeeId} onSaved={goToNextTab} onClose={goToList} />
+        <KycDetailTab
+          employeeId={employeeId}
+          onSaved={goToNextTab}
+          onBack={goToPrevTab}
+        />
       )
     case 'wage':
       return (
         <WageStructureTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'family':
@@ -176,7 +180,7 @@ function StepBody({
         <FamilyDetailTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'education':
@@ -184,7 +188,7 @@ function StepBody({
         <EducationExperienceTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'documents':
@@ -192,7 +196,7 @@ function StepBody({
         <DocumentDetailTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'assets':
@@ -200,7 +204,7 @@ function StepBody({
         <AssetDetailTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'transfers':
@@ -208,11 +212,11 @@ function StepBody({
         <TransferHistoryTab
           employeeId={employeeId}
           onContinue={goToNextTab}
-          onClose={goToList}
+          onBack={goToPrevTab}
         />
       )
     case 'leaves':
-      return <LeaveManagementTab employeeId={employeeId} onClose={goToList} />
+      return <LeaveManagementTab employeeId={employeeId} onBack={goToPrevTab} />
     default:
       return null
   }

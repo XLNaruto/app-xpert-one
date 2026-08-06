@@ -1,14 +1,14 @@
 import { Controller } from 'react-hook-form'
 import { Briefcase, GraduationCap } from 'lucide-react'
-import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { YearPicker } from '@/components/ui/year-picker'
 import { Field } from '@/components/common/form-field'
 import { Forbidden } from '@/features/error'
-import { PASSING_YEAR_OPTIONS } from '../constants'
+import { EARLIEST_PASSING_DATE } from '../constants'
 import { useEmployeeEducationTab } from '../hooks/use-employee-education-tab'
 import { RepeatCard, RepeatCardBadge, RepeatSection } from './repeat-card'
 import { StepFormFooter } from './step-form-footer'
@@ -29,11 +29,11 @@ import { StepFormFooter } from './step-form-footer'
 export function EducationExperienceTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     form,
@@ -50,9 +50,8 @@ export function EducationExperienceTab({
     isForbidden,
     forbiddenMessage,
     onSubmit,
-    onSubmitAndClose,
     isSaving,
-  } = useEmployeeEducationTab({ employeeId, onSaved: onContinue, onClose })
+  } = useEmployeeEducationTab({ employeeId, onSaved: onContinue })
 
   if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
@@ -119,31 +118,31 @@ export function EducationExperienceTab({
                 />
               </Field>
 
-              <Field label="Board / University" optional error={errors?.board?.message}>
+              <Field label="Board / University" error={errors?.board?.message}>
                 <Input
                   placeholder="Select Board / University"
                   {...form.register(`educations.${index}.board`)}
                 />
               </Field>
 
+              {/* A year, not a date — the calendar opens on decade tiles. */}
               <Field label="Passing Year" required error={errors?.passingYear?.message}>
                 <Controller
                   control={form.control}
                   name={`educations.${index}.passingYear`}
                   render={({ field: year }) => (
-                    <Combobox
-                      className="w-full"
+                    <YearPicker
                       value={year.value}
                       onChange={year.onChange}
-                      options={PASSING_YEAR_OPTIONS}
-                      placeholder="Select Year"
-                      searchPlaceholder="Search year"
+                      minDate={EARLIEST_PASSING_DATE}
+                      maxDate={new Date()}
+                      invalid={Boolean(errors?.passingYear)}
                     />
                   )}
                 />
               </Field>
 
-              <Field label="Percentage" optional error={errors?.percentage?.message}>
+              <Field label="Percentage" error={errors?.percentage?.message}>
                 <Input
                   inputMode="decimal"
                   placeholder="Percentage"
@@ -246,7 +245,7 @@ export function EducationExperienceTab({
                 />
               </Field>
 
-              <Field label="Salary" optional error={errors?.salary?.message}>
+              <Field label="Salary" error={errors?.salary?.message}>
                 <Input
                   inputMode="decimal"
                   placeholder="Salary"
@@ -257,7 +256,6 @@ export function EducationExperienceTab({
 
               <Field
                 label="Contact Person"
-                optional
                 error={errors?.contactPersonName?.message}
               >
                 <Input
@@ -268,7 +266,6 @@ export function EducationExperienceTab({
 
               <Field
                 label="Contact Number"
-                optional
                 error={errors?.contactPersonNumber?.message}
               >
                 <Input
@@ -282,7 +279,6 @@ export function EducationExperienceTab({
 
               <Field
                 label="Reason for Leaving"
-                optional
                 error={errors?.leavingReason?.message}
               >
                 <Textarea
@@ -297,11 +293,9 @@ export function EducationExperienceTab({
       </RepeatSection>
 
       <StepFormFooter
-        onCancel={onClose}
-        onSaveAndClose={onSubmitAndClose}
+        onBack={onBack}
         isSaving={isSaving}
-        saveLabel="Save Education / Experience"
-        hint="Blank cards are ignored — remove a saved entry to delete it on save."
+        hint="At least one qualification is required; extra blank cards are ignored."
       />
     </form>
   )

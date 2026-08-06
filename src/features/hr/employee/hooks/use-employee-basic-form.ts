@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { useStateSelect } from '@/features/master/state'
 import { useDistrictSelect } from '@/features/master/district'
 import { employeeBasicSchema, type EmployeeBasicFormValues } from '../schemas'
@@ -27,23 +28,21 @@ import { PERMANENT_EMPLOYMENT_TYPE } from '../constants'
  * exists, and a successful create hands its new id back up so the wizard can move
  * on to step 2 — which is only addressable once that id exists.
  *
- * A save is offered two ways: continue to the next step, or close back to the
- * list. Both run the same mutation; only what happens afterwards differs.
+ * The step has one save, and it moves the wizard on. A save that doesn't validate
+ * moves nothing — `handleSubmit` never reaches the mutation, and `notifyInvalid`
+ * says which field held it back.
  */
 export function useEmployeeBasicForm({
   employee,
   onCreated,
   onSaved,
-  onClose,
 }: {
   /** The record being edited, or `undefined` for a fresh employee. */
   employee: Employee | undefined
   /** A new employee was created — the wizard adopts the id and opens step 2. */
   onCreated: (id: number) => void
-  /** An existing employee was saved and the user asked to continue. */
+  /** An existing employee was saved — the wizard opens the next step. */
   onSaved: () => void
-  /** Saved (or cancelled) and the user asked to leave. */
-  onClose: () => void
 }) {
   const isEdit = employee !== undefined
   const employeeId = employee?.id ?? Number.NaN
@@ -58,12 +57,21 @@ export function useEmployeeBasicForm({
   })
   const { control, setValue, getValues, reset, handleSubmit } = form
 
-  /** Which button was pressed — read in the success handler, not by the mutation. */
-  const closeAfterSaveRef = useRef(false)
+  /**
+   * The picked file, held until Save. Nothing is presigned or PUT while the user
+   * is still filling the form: an abandoned form leaves no stray object in
+   * storage, and swapping the photo three times costs one upload, not three. The
+   * form's `photo` value stays the *stored* key until the save's upload lands.
+   */
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
 
-  // Seed the form once the record loads (edit mode only).
+  // Seed the form once the record loads (edit mode only). A re-seed discards the
+  // pending photo along with everything else typed — the two have to agree.
   useEffect(() => {
-    if (employee) reset(employeeToBasicFormValues(employee, EMPTY_EMPLOYEE_BASIC_FORM))
+    if (employee) {
+      reset(employeeToBasicFormValues(employee, EMPTY_EMPLOYEE_BASIC_FORM))
+      setPhotoFile(null)
+    }
   }, [employee, reset])
 
   /* ── Address: the "same as current" mirror ─────────────────────────────── */
@@ -196,57 +204,60 @@ export function useEmployeeBasicForm({
   /* ── Photo ─────────────────────────────────────────────────────────────── */
 
   /**
-   * Upload the picked file and answer its storage key, which is what the form
-   * holds. Rethrows so the field can drop its optimistic preview.
+   * Take (or clear) the pending file. The content type is checked here rather
+   * than at save time — the file dialog is already filtered, but a user who gets
+   * an unsupported one through should hear about it now, not lose a save to it.
    */
-  const uploadPhotoFile = async (file: File): Promise<string> => {
-    try {
-      return await uploadPhoto.mutateAsync(file)
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, "Couldn't upload the photo."))
-      throw error
+  const pickPhotoFile = (file: File | null) => {
+    if (file && !(IMAGE_CONTENT_TYPES as readonly string[]).includes(file.type)) {
+      toast.error('Photo must be a JPG, PNG or WebP image.')
+      return
     }
+    setPhotoFile(file)
   }
 
   /* ── Submit ────────────────────────────────────────────────────────────── */
 
-  const submit = handleSubmit((values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
+  const submit = handleSubmit(async (values) => {
+    // The photo is uploaded as part of the save, not when it was picked. It has
+    // to land first: the record stores the key the presigned PUT answers.
+    let payload = values
+    if (photoFile) {
+      try {
+        const key = await uploadPhoto.mutateAsync(photoFile)
+        setValue('photo', key)
+        setPhotoFile(null)
+        payload = { ...values, photo: key }
+      } catch (error) {
+        // The pending file is kept, so Save can be pressed again without
+        // re-picking — and nothing was written, so there's no half-saved record.
+        toast.error(getApiErrorMessage(error, "Couldn't upload the photo."))
+        return
+      }
+    }
 
     if (isEdit) {
-      updateEmployee.mutate(values, {
+      updateEmployee.mutate(payload, {
         onSuccess: () => {
           toast.success('Basic detail saved')
-          if (shouldClose) onClose()
-          else onSaved()
+          onSaved()
         },
         onError: (error) => toast.error(getApiErrorMessage(error, "Couldn't save.")),
       })
       return
     }
 
-    createEmployee.mutate(values, {
+    createEmployee.mutate(payload, {
       onSuccess: (created) => {
         toast.success('Employee created')
         // Every later step is addressed by this id, so the wizard has to adopt it
         // before any of them can open.
-        if (shouldClose) onClose()
-        else onCreated(created.id)
+        onCreated(created.id)
       },
       onError: (error) =>
         toast.error(getApiErrorMessage(error, "Couldn't create the employee.")),
     })
   })
-
-  /** Save and continue to step 2. */
-  const onSubmit = submit
-
-  /** Save and go back to the list. */
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   return {
     form,
@@ -254,9 +265,11 @@ export function useEmployeeBasicForm({
     control,
     errors: form.formState.errors,
     isEdit,
-    isPending: createEmployee.isPending || updateEmployee.isPending,
+    isPending:
+      createEmployee.isPending || updateEmployee.isPending || uploadPhoto.isPending,
     isUploadingPhoto: uploadPhoto.isPending,
-    uploadPhotoFile,
+    photoFile,
+    pickPhotoFile,
     sameAsCurrent,
     employmentType,
     currentState,
@@ -268,8 +281,6 @@ export function useEmployeeBasicForm({
     hasCurrentState: Boolean(currentStateId),
     hasPermanentState: Boolean(permanentStateId),
     postingOptions,
-    onSubmit,
-    onSubmitAndClose,
-    onClose,
+    onSubmit: submit,
   }
 }

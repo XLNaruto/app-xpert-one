@@ -1,12 +1,25 @@
 /**
  * ENDPOINT REFERENCE — documentation only, no code. Paths live in `endpoints.ts`.
  *
- * Base URL: `env.VITE_APP_API_URL` (see `config/env.ts`). Every route is
- * namespaced under `/user`. Bodies and responses are snake_case; the feature
- * `lib/*-mappers.ts` convert to the camelCase UI types.
+ * Base URL: `env.VITE_APP_API_URL` (see `config/env.ts`). Every tenant route is
+ * namespaced under `/user`; the public ones (CONFIG) sit at the root. Bodies and
+ * responses are snake_case; the feature `lib/*-mappers.ts` convert to the
+ * camelCase UI types.
  *
  * Auth header: `Authorization: Bearer <access_token>` on everything except
- * LOGIN and REFRESH_TOKEN (added by the `api-client` request interceptor).
+ * CONFIG, LOGIN and REFRESH_TOKEN (added by the `api-client` request interceptor).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * CONFIG.GET — GET /config                                  (no bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * ←  { "media_path": "https://cdn.dev.xpertoneindia.com/" }
+ * Notes: the CDN origin every stored path is rendered against. Read once per
+ * session from the dashboard layout and mirrored into `stores/config-store`, so
+ * the pure `lib/media.mediaUrl()` helper can join base + path synchronously —
+ * the store is IndexedDB-persisted, so it resolves on the first paint after a
+ * reload too. Not tenant-scoped: a company switch leaves it alone.
+ * Code: `features/config/api/config-api.ts` → `fetchAppConfig`,
+ *       `features/config/api/use-app-config.ts`
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AUTH.LOGIN — POST /user/auth/login                       (no bearer)

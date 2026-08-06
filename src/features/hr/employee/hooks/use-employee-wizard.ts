@@ -119,6 +119,17 @@ export function useEmployeeWizard(employeeId: number | undefined, openTab: Emplo
     else goToList()
   }, [tab, nextTab, setTab, goToList])
 
+  /**
+   * Step back. From the first step there is nowhere back to inside the wizard, so
+   * Back leaves it — which is what the button means there anyway.
+   */
+  const goToPrevTab = useCallback(() => {
+    const at = EMPLOYEE_TABS.indexOf(tab)
+    const previous = at > 0 ? EMPLOYEE_TABS[at - 1] : undefined
+    if (previous) setTab(previous)
+    else goToList()
+  }, [tab, setTab, goToList])
+
   const completedSteps: EmployeeCompletedSteps =
     detail.data?.completedSteps ??
     ({
@@ -175,6 +186,7 @@ export function useEmployeeWizard(employeeId: number | undefined, openTab: Emplo
     goToList,
     goToDetail,
     goToNextTab,
+    goToPrevTab,
     nextTab,
     openCreatedEmployee,
     onLockedStep,

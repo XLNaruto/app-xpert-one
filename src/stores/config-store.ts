@@ -13,8 +13,9 @@ export const RUPEE_SIGN = '₹'
 interface ConfigState {
   /**
    * Base URL for building media/asset URLs from the relative paths the API
-   * returns (e.g. `office_image_paths`). Fetched once per session from
-   * `GET /sales-incharge-admin/config` and read by the `mediaUrl()` helper.
+   * returns (e.g. an employee `photo`). Fetched once per session from
+   * `GET /config` (`features/config` → `useAppConfig`) and read by the
+   * `mediaUrl()` helper.
    */
   mediaBaseUrl: string
   setMediaBaseUrl: (url: string) => void

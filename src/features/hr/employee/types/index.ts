@@ -51,16 +51,16 @@ export interface EmployeeService {
 /**
  * An employee — the list row and the step 1 form, which are the same record.
  *
- * `code` is generated server-side, and `prefix` / `nationality` come back on
- * reads but aren't writable through the create/edit body, so both are shown and
- * never edited.
+ * `code` is generated server-side, and `nationality` comes back on reads but
+ * isn't writable through the create/edit body, so both are shown and never
+ * edited.
  */
 export interface Employee extends AuditFields {
   id: number
   companyId: number
   /** Server-generated employee code — read-only. */
   code: string
-  /** Mr / Mrs / … — read-only: the write body has no `prefix`. */
+  /** Mr / Mrs / … — the salutation that fronts the name. */
   prefix: string
   name: string
   /** Object key of the profile photo, to be resolved with `mediaUrl()`. */

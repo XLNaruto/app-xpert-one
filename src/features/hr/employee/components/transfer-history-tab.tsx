@@ -40,7 +40,7 @@ import { StepNavFooter } from './step-nav-footer'
 import type { EmployeeTransfer, EmployeeTransferDetail } from '../types'
 
 /**
- * Step 8 — Employee Transfer History.
+ * Step 8 — Employee Service History.
  *
  * The one tab with no Save button and no form of its own: the history is
  * append-only, so every write here is a deliberate act through a dialog. Which
@@ -56,11 +56,11 @@ import type { EmployeeTransfer, EmployeeTransferDetail } from '../types'
 export function TransferHistoryTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const tab = useEmployeeTransferTab(employeeId)
 
@@ -199,7 +199,7 @@ export function TransferHistoryTab({
             onClick={tab.startTransfer}
           >
             <ArrowRightLeft className="size-4" />
-            Transfer Employee
+            Add Service
           </Button>
         </div>
       </div>
@@ -237,7 +237,7 @@ export function TransferHistoryTab({
         )}
       </div>
 
-      <StepNavFooter onContinue={onContinue} onClose={onClose}>
+      <StepNavFooter onContinue={onContinue} onBack={onBack}>
         A transfer closes the open posting and opens a new one — the old row is kept
         as history, never overwritten.
       </StepNavFooter>
@@ -248,7 +248,7 @@ export function TransferHistoryTab({
         <StepDialog
           open={tab.dialog === 'transfer'}
           onOpenChange={(open) => !open && tab.closeDialog()}
-          title="Transfer Employee"
+          title="Add Service"
           description="One call closes the current posting and opens the new one, so the history survives."
           onSubmit={tab.transfer.onSubmit}
           isPending={tab.transfer.isPending}

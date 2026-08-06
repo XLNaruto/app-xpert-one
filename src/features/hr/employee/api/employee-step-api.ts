@@ -350,9 +350,17 @@ export async function fetchEmployeeDocuments(
  * Upload an attachment and answer the object key to store as `document`. The
  * bytes go straight to storage on a presigned PUT; replacing a file is a fresh
  * upload plus a PATCH with the new key.
+ *
+ * The presign files the object key under the document type, so `documentTypeId`
+ * is required by the API and the card's type has to be chosen before its file.
  */
-export async function uploadEmployeeDocumentFile(file: File): Promise<string> {
-  return uploadFile(endpoints.UPLOADS.EMPLOYEE_DOCUMENT, file, DOCUMENT_CONTENT_TYPES)
+export async function uploadEmployeeDocumentFile(
+  file: File,
+  documentTypeId: number,
+): Promise<string> {
+  return uploadFile(endpoints.UPLOADS.EMPLOYEE_DOCUMENT, file, DOCUMENT_CONTENT_TYPES, {
+    document_type_id: documentTypeId,
+  })
 }
 
 export async function createEmployeeDocument(

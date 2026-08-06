@@ -25,11 +25,11 @@ import { StepFormFooter } from './step-form-footer'
 export function FamilyDetailTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     form,
@@ -42,9 +42,8 @@ export function FamilyDetailTab({
     isForbidden,
     forbiddenMessage,
     onSubmit,
-    onSubmitAndClose,
     isSaving,
-  } = useEmployeeFamilyTab({ employeeId, onSaved: onContinue, onClose })
+  } = useEmployeeFamilyTab({ employeeId, onSaved: onContinue })
 
   if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
@@ -99,6 +98,12 @@ export function FamilyDetailTab({
               hasError={Boolean(errors)}
               onRemove={() => removeRow(index)}
               canRemove={fields.length > 1 || Boolean(row?.id)}
+              /*
+                On a wide screen the whole member reads as one line, so the
+                nominee switch takes only the width it needs (`auto`) instead of
+                a full column that would push it onto a second row.
+              */
+              gridClassName="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
             >
               {/*
                 Relation + name as one joined control: the select loses its right
@@ -109,7 +114,7 @@ export function FamilyDetailTab({
                 label="Full Name"
                 required
                 error={errors?.fullName?.message ?? errors?.relation?.message}
-                className="md:col-span-2"
+                className="md:col-span-2 xl:col-span-1"
               >
                 <div className="flex">
                   <Controller
@@ -140,14 +145,12 @@ export function FamilyDetailTab({
                 control={form.control}
                 name={`rows.${index}.birthDate`}
                 label="Birth Date"
-                optional
                 error={errors?.birthDate?.message}
                 maxDate={new Date()}
               />
 
               <Field
                 label="Aadhar Number"
-                optional
                 error={errors?.aadharNumber?.message}
               >
                 <Input
@@ -181,11 +184,9 @@ export function FamilyDetailTab({
       </RepeatSection>
 
       <StepFormFooter
-        onCancel={onClose}
-        onSaveAndClose={onSubmitAndClose}
+        onBack={onBack}
         isSaving={isSaving}
-        saveLabel="Save Family Detail"
-        hint="Blank cards are ignored — remove a saved member to delete it on save."
+        hint="At least one member is required; extra blank cards are ignored."
       />
     </form>
   )

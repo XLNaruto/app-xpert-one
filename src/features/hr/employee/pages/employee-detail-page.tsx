@@ -25,7 +25,7 @@ import {
   Weight,
 } from 'lucide-react'
 import { decryptId, encryptId } from '@/lib/crypto'
-import { mediaUrl } from '@/lib/media'
+import { useMediaResolver, useMediaUrl } from '@/hooks/use-media-url'
 import { formatDate } from '@/lib/utils'
 import { formatAmount } from '@/lib/currency'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
@@ -73,6 +73,7 @@ function maritalStatusLabel(value: string): string {
 export function EmployeeDetailPage({ data }: { data?: string }) {
   const navigate = useNavigate()
   const employeeId = decryptId(data)
+  const resolveMedia = useMediaResolver()
 
   const detail = useEmployee(employeeId ?? Number.NaN)
 
@@ -556,7 +557,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                   )}
                   {document.document && (
                     <a
-                      href={mediaUrl(document.document)}
+                      href={resolveMedia(document.document)}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
@@ -661,6 +662,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
 
 /** Photo, name, code and how complete the record is. */
 function EmployeeHero({ employee }: { employee: Employee }) {
+  const photoUrl = useMediaUrl(employee.photo)
   const { completed, total, percent } = stepProgress(
     employee.completedSteps,
     EMPLOYEE_PROGRESS_STEPS.map((step) => step.flag),
@@ -672,7 +674,7 @@ function EmployeeHero({ employee }: { employee: Employee }) {
     <Card>
       <CardContent className="flex flex-wrap items-center gap-5 p-5">
         <ImageWithFallback
-          src={mediaUrl(employee.photo)}
+          src={photoUrl}
           alt={employee.name || 'Employee photo'}
           wrapperClassName="size-20 shrink-0 rounded-xl ring-1 ring-border"
           className="object-cover"

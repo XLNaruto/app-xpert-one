@@ -214,7 +214,7 @@ export function EmployeeListPage() {
                 ? ` — their posting since ${formatDate(targetJoiningDate)} is closed`
                 : ''}
               . The record and its history stay intact, and a new posting can be opened
-              later from the Transfer History tab.
+              later from the Service History tab.
             </>
           ) : undefined
         }

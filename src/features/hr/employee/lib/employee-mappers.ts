@@ -152,6 +152,7 @@ export function employeeBasicToPayload(
   values: EmployeeBasicFormValues,
 ): EmployeeBasicUpdatePayload {
   return {
+    prefix: orNull(values.prefix),
     name: orNull(values.name),
     photo: orNull(values.photo),
     gender: orNull(values.gender),
@@ -234,6 +235,7 @@ export function employeeToBasicFormValues(
 
   return {
     photo: employee.photo,
+    prefix: employee.prefix,
     name: employee.name,
     gender: employee.gender,
     birthDate: toFormDate(employee.birthDate),

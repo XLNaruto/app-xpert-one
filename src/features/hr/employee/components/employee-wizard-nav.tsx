@@ -55,9 +55,9 @@ export function EmployeeWizardNav({
           </span>
         </div>
 
-        {/* Transfer history and leave management are registers, not steps to finish. */}
+        {/* Service history and leave management are registers, not steps to finish. */}
         <p className="text-xs text-muted-foreground">
-          Transfer History and Leave Management are ongoing registers and aren't counted.
+          Service History and Leave Management are ongoing registers and aren't counted.
         </p>
       </div>
 

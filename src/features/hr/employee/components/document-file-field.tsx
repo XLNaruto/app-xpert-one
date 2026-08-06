@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
-import { ExternalLink, Loader2, Upload } from 'lucide-react'
+import { Eye, Loader2, Upload } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { mediaUrl } from '@/lib/media'
+import { useMediaUrl } from '@/hooks/use-media-url'
 import { cn } from '@/lib/utils'
 import { DOCUMENT_ACCEPT } from '../constants'
 
@@ -21,15 +21,22 @@ export function DocumentFileField({
   value,
   onPick,
   isUploading,
+  disabled = false,
 }: {
   /** The stored object key, or `''` for nothing uploaded yet. */
   value: string
   /** Uploads the file and answers its object key. */
   onPick: (file: File) => Promise<string>
   isUploading: boolean
+  /**
+   * Blocks picking — the presign needs the card's document type, so the field waits
+   * for it rather than failing the upload.
+   */
+  disabled?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pickedName, setPickedName] = useState('')
+  const fileUrl = useMediaUrl(value)
 
   const pick = async (file: File | undefined) => {
     if (!file) return
@@ -52,30 +59,33 @@ export function DocumentFileField({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={isUploading}
+        disabled={isUploading || disabled}
         className={cn(
           'flex h-9 min-w-0 flex-1 items-center rounded-md border border-dashed border-input px-3 text-left text-sm transition-colors hover:border-ring/50',
           name ? 'text-foreground' : 'text-muted-foreground',
           isUploading ? 'cursor-wait' : 'cursor-pointer',
+          disabled && 'cursor-not-allowed opacity-60 hover:border-input',
         )}
       >
-        <span className="truncate">{name || 'Choose file…'}</span>
+        <span className="truncate">
+          {name || (disabled ? 'Select a document type first' : 'Choose file…')}
+        </span>
       </button>
 
       {value && (
         <Tooltip>
           <TooltipTrigger asChild>
             <a
-              href={mediaUrl(value)}
+              href={fileUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label="Open the uploaded file"
-              className="grid size-9 shrink-0 place-items-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Preview the uploaded file"
+              className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 transition-colors hover:bg-primary/20 hover:ring-primary/40"
             >
-              <ExternalLink className="size-4" />
+              <Eye className="size-4" />
             </a>
           </TooltipTrigger>
-          <TooltipContent>Open</TooltipContent>
+          <TooltipContent>Preview file</TooltipContent>
         </Tooltip>
       )}
 
@@ -84,9 +94,13 @@ export function DocumentFileField({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            disabled={isUploading}
+            disabled={isUploading || disabled}
             aria-label={value ? 'Replace the file' : 'Upload a file'}
-            className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-wait"
+            className={cn(
+              'grid size-9 shrink-0 cursor-pointer place-items-center rounded-md border border-input text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
+              isUploading && 'cursor-wait',
+              disabled && 'cursor-not-allowed opacity-60 hover:bg-transparent',
+            )}
           >
             {isUploading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -96,7 +110,11 @@ export function DocumentFileField({
           </button>
         </TooltipTrigger>
         <TooltipContent>
-          {value ? 'Replace file' : 'PDF, JPG, PNG or WebP'}
+          {disabled
+            ? 'Choose a document type first'
+            : value
+              ? 'Replace file'
+              : 'PDF, JPG, PNG or WebP'}
         </TooltipContent>
       </Tooltip>
 

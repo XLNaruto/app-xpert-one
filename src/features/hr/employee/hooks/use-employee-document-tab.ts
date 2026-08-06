@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -33,6 +33,9 @@ import { useRowSeed } from './use-row-seed'
  * half-saved record. Replacing a file is a fresh upload and a new key; the old
  * object stays where it is, since the API exposes no way to remove one.
  *
+ * The type gates the file too, not just the name: the presign files the object key
+ * under the chosen document type, so a card's picker stays disabled until it has one.
+ *
  * The two dropdowns cascade — type first, then the documents filed under it. The API
  * can narrow that itself (`?document_type_id=`), but both masters are already loaded
  * whole for the dropdowns, so the filter runs over what's in hand and changing type
@@ -41,11 +44,9 @@ import { useRowSeed } from './use-row-seed'
 export function useEmployeeDocumentTab({
   employeeId,
   onSaved,
-  onClose,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
 }) {
   const list = useEmployeeDocuments(employeeId)
   const createDocument = useCreateEmployeeDocument(employeeId)
@@ -64,7 +65,6 @@ export function useEmployeeDocumentTab({
   const rows = useFieldArray({ control, name: 'rows' })
 
   const [removedIds, setRemovedIds] = useState<number[]>([])
-  const closeAfterSaveRef = useRef(false)
   const [isSaving, setIsSaving] = useState(false)
   /** Which card is mid-upload — only that card's picker shows a spinner. */
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
@@ -120,11 +120,26 @@ export function useEmployeeDocumentTab({
     setValue(`rows.${index}.documentId`, '')
   }
 
-  /** Upload one card's file and hold its object key on that row. */
+  /**
+   * Upload one card's file and hold its object key on that row.
+   *
+   * The presign files the object key under the document type, so the type has to be
+   * chosen first. That's caught here as a field error rather than sent as a presign
+   * the API would reject.
+   */
   const uploadDocumentFile = async (index: number, file: File): Promise<string> => {
+    const documentTypeId = Number(form.getValues(`rows.${index}.documentTypeId`))
+    if (!documentTypeId) {
+      form.setError(`rows.${index}.documentTypeId`, {
+        message: 'Choose a document type before uploading the file.',
+      })
+      toast.error('Choose a document type before uploading the file.')
+      throw new Error('documentTypeId is required to presign the upload')
+    }
+
     setUploadingIndex(index)
     try {
-      const key = await uploadFile.mutateAsync(file)
+      const key = await uploadFile.mutateAsync({ file, documentTypeId })
       setValue(`rows.${index}.document`, key, { shouldValidate: true })
       return key
     } catch (error) {
@@ -136,18 +151,9 @@ export function useEmployeeDocumentTab({
   }
 
   const submit = handleSubmit(async (values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
-
     const savable = values.rows.filter(
       (row) => !isBlankRow(row as Record<string, unknown>, DOCUMENT_ROW_KEYS),
     )
-
-    if (savable.length === 0 && removedIds.length === 0) {
-      if (shouldClose) onClose()
-      else onSaved()
-      return
-    }
 
     setIsSaving(true)
     try {
@@ -158,19 +164,13 @@ export function useEmployeeDocumentTab({
       })
       setRemovedIds([])
       toast.success('Documents saved')
-      if (shouldClose) onClose()
-      else onSaved()
+      onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save the documents."))
     } finally {
       setIsSaving(false)
     }
   })
-
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   const isForbidden = isForbiddenError(list.error)
 
@@ -191,8 +191,6 @@ export function useEmployeeDocumentTab({
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(list.error) : undefined,
     onSubmit: submit,
-    onSubmitAndClose,
-    onClose,
     isSaving,
   }
 }

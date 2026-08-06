@@ -11,7 +11,6 @@ import {
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { DateField } from '@/components/common/date-field'
-import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -22,6 +21,7 @@ import {
   HEIGHT_UNIT_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   MINIMUM_EMPLOYEE_AGE,
+  PREFIX_OPTIONS,
   RELATION_OPTIONS,
   WEIGHT_UNIT_OPTIONS,
 } from '../constants'
@@ -33,6 +33,7 @@ import {
 } from '../lib/address-fields'
 import { EmployeePhotoField } from './employee-photo-field'
 import { PostingSection } from './posting-section'
+import { StepFormFooter } from './step-form-footer'
 import type { Employee } from '../types'
 
 /**
@@ -53,12 +54,12 @@ export function BasicDetailTab({
   employee,
   onCreated,
   onSaved,
-  onClose,
+  onBack,
 }: {
   employee: Employee | undefined
   onCreated: (id: number) => void
   onSaved: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     form,
@@ -68,7 +69,8 @@ export function BasicDetailTab({
     isEdit,
     isPending,
     isUploadingPhoto,
-    uploadPhotoFile,
+    photoFile,
+    pickPhotoFile,
     sameAsCurrent,
     currentState,
     currentDistrict,
@@ -80,8 +82,7 @@ export function BasicDetailTab({
     hasPermanentState,
     postingOptions,
     onSubmit,
-    onSubmitAndClose,
-  } = useEmployeeBasicForm({ employee, onCreated, onSaved, onClose })
+  } = useEmployeeBasicForm({ employee, onCreated, onSaved })
 
   /** Newest date of birth that clears the minimum-age rule. */
   const maxBirthDate = new Date()
@@ -102,17 +103,42 @@ export function BasicDetailTab({
             <EmployeePhotoField
               value={form.watch('photo')}
               onChange={(key) => form.setValue('photo', key)}
-              onPick={uploadPhotoFile}
+              pendingFile={photoFile}
+              onPickFile={pickPhotoFile}
               isUploading={isUploadingPhoto}
             />
           </div>
 
-          <Field label="Employee Name" required error={errors.name?.message}>
-            <Input
-              placeholder="Full name"
-              aria-invalid={errors.name ? true : undefined}
-              {...register('name')}
-            />
+          <Field
+            label="Employee Name"
+            required
+            error={errors.prefix?.message ?? errors.name?.message}
+          >
+            {/* One control, two inputs: the prefix trigger and the name field
+                share an edge, so the pair reads as a single bordered box. */}
+            <div className="flex">
+              <Controller
+                control={control}
+                name="prefix"
+                render={({ field }) => (
+                  <Combobox
+                    className="w-18 shrink-0"
+                    triggerClassName="rounded-r-none border-r-0 pr-2"
+                    searchable={false}
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={PREFIX_OPTIONS}
+                    placeholder="Mr"
+                  />
+                )}
+              />
+              <Input
+                placeholder="Full name"
+                className="flex-1 rounded-l-none"
+                aria-invalid={errors.name ? true : undefined}
+                {...register('name')}
+              />
+            </div>
           </Field>
 
           <Field label="Gender" required error={errors.gender?.message}>
@@ -159,29 +185,37 @@ export function BasicDetailTab({
             />
           </Field>
 
-          <Field label="Relation" required error={errors.relation?.message}>
-            <Controller
-              control={control}
-              name="relation"
-              render={({ field }) => (
-                <Combobox
-                  className="w-full"
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={RELATION_OPTIONS}
-                  placeholder="Select relation"
-                  searchPlaceholder="Search relation"
-                />
-              )}
-            />
-          </Field>
-
-          <Field label="Relative Name" required error={errors.relativeName?.message}>
-            <Input
-              placeholder="Father's / husband's name"
-              aria-invalid={errors.relativeName ? true : undefined}
-              {...register('relativeName')}
-            />
+          {/* The relation only ever qualifies the name beside it, so the two
+              share an edge and read as one control — as with the prefix. */}
+          <Field
+            label="Relative Name"
+            required
+            error={errors.relation?.message ?? errors.relativeName?.message}
+          >
+            <div className="flex">
+              <Controller
+                control={control}
+                name="relation"
+                render={({ field }) => (
+                  <Combobox
+                    className="w-28 shrink-0"
+                    triggerClassName="rounded-r-none border-r-0 pr-2"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={RELATION_OPTIONS}
+                    placeholder="Relation"
+                    searchPlaceholder="Search relation"
+                    panelMinWidth={200}
+                  />
+                )}
+              />
+              <Input
+                placeholder="Father's / husband's name"
+                className="flex-1 rounded-l-none"
+                aria-invalid={errors.relativeName ? true : undefined}
+                {...register('relativeName')}
+              />
+            </div>
           </Field>
 
           {/* ── Current address ─────────────────────────────────────────── */}
@@ -365,15 +399,12 @@ export function BasicDetailTab({
               control={control}
               name="isDisability"
               render={({ field }) => (
-                <div className="flex h-10 items-center gap-3">
+                <div className="flex h-10 items-center">
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     aria-label="Employee has a disability"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {field.value ? 'Recorded' : 'None recorded'}
-                  </span>
                 </div>
               )}
             />
@@ -387,7 +418,7 @@ export function BasicDetailTab({
             <p className="col-span-full -mt-1 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
               Editing these fields rewrites the <strong>current</strong> posting.
               If the employee is actually moving branch, department or designation,
-              use <strong>Employee Transfer History</strong> instead — it closes this
+              use <strong>Employee Service History</strong> instead — it closes this
               posting and opens a new one, so the history survives.
             </p>
           )}
@@ -397,15 +428,12 @@ export function BasicDetailTab({
               control={control}
               name="isPoliceVerified"
               render={({ field }) => (
-                <div className="flex h-10 items-center gap-3">
+                <div className="flex h-10 items-center">
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     aria-label="Police verification is on file"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {field.value ? 'On file' : 'Not on file'}
-                  </span>
                 </div>
               )}
             />
@@ -416,15 +444,12 @@ export function BasicDetailTab({
               control={control}
               name="isStampAgreement"
               render={({ field }) => (
-                <div className="flex h-10 items-center gap-3">
+                <div className="flex h-10 items-center">
                   <Switch
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     aria-label="Stamped agreement is on file"
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {field.value ? 'On file' : 'Not on file'}
-                  </span>
                 </div>
               )}
             />
@@ -435,7 +460,7 @@ export function BasicDetailTab({
           <FormSection
             icon={DoorOpen}
             title="Leaving Details"
-            description="Only for correcting an exit already recorded — a real exit belongs in Transfer History"
+            description="Only for correcting an exit already recorded — a real exit belongs in Service History"
           />
 
           <DateField
@@ -461,21 +486,12 @@ export function BasicDetailTab({
             <Textarea rows={3} placeholder="Anything worth noting" {...register('remarks')} />
           </Field>
 
-          <div className="col-span-full mt-2 flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onSubmitAndClose}
-              disabled={isPending}
-            >
-              {isPending ? 'Saving…' : 'Save & Close'}
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? 'Saving…' : isEdit ? 'Save & Continue' : 'Create & Continue'}
-            </Button>
+          <div className="col-span-full">
+            <StepFormFooter
+              onBack={onBack}
+              isSaving={isPending}
+              saveLabel={isEdit ? 'Save & Next' : 'Create & Next'}
+            />
           </div>
         </div>
       </form>

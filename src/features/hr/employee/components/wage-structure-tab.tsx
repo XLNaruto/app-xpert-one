@@ -30,17 +30,17 @@ import type { EmployeeWageStructure } from '../types'
  *
  * So the two ways to change an employee's pay are both elsewhere: revise the
  * designation's wage structure (Master → Designation), or move the employee to a
- * different designation (Transfer History). The banner says as much, because a
+ * different designation (Service History). The banner says as much, because a
  * read-only form with no explanation reads as a bug.
  */
 export function WageStructureTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const { data, isLoading, isError, error } = useEmployeeWageStructure(employeeId)
 
@@ -98,7 +98,7 @@ export function WageStructureTab({
           This is inherited from the employee's designation — nothing here is stored
           against the employee, so there's nothing to edit. To change the pay, revise
           the designation's wage structure, or move the employee to another
-          designation from <strong>Employee Transfer History</strong>.
+          designation from <strong>Employee Service History</strong>.
         </span>
       </p>
 
@@ -207,22 +207,25 @@ export function WageStructureTab({
         </div>
       </div>
 
-      {data.salaryComponents.length > 0 && (
-        <div>
-          <FormSection
-            icon={Wallet}
-            title="Allowances & Deductions"
-            description="The heads attached to this wage structure"
-          />
+      {/*
+        Rendered even when the structure carries no heads: an absent section reads
+        as a screen that forgot to load them, where two "None on this structure"
+        cards say plainly that the designation attached none.
+      */}
+      <div>
+        <FormSection
+          icon={Wallet}
+          title="Allowances & Deductions"
+          description="The heads attached to this wage structure"
+        />
 
-          <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <ComponentTable title="Allowances" rows={allowances} headNames={headNames} />
-            <ComponentTable title="Deductions" rows={deductions} headNames={headNames} />
-          </div>
+        <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ComponentTable title="Allowances" rows={allowances} headNames={headNames} />
+          <ComponentTable title="Deductions" rows={deductions} headNames={headNames} />
         </div>
-      )}
+      </div>
 
-      <StepNavFooter onContinue={onContinue} onClose={onClose}>
+      <StepNavFooter onContinue={onContinue} onBack={onBack}>
         Nothing to save here — the structure comes from the designation.
       </StepNavFooter>
     </div>

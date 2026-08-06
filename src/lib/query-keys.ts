@@ -11,6 +11,15 @@ import type { PageParams } from '@/lib/pagination'
  * `all` and pick up all of them.
  */
 export const queryKeys = {
+  /**
+   * Client-facing app config (the media base URL) — `features/config`. Read once
+   * per session and never invalidated; it isn't tenant-scoped, so a company
+   * switch leaves it alone.
+   */
+  config: {
+    all: ['config'] as const,
+    app: () => [...queryKeys.config.all, 'app'] as const,
+  },
   profile: {
     all: ['profile'] as const,
     me: () => [...queryKeys.profile.all, 'me'] as const,

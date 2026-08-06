@@ -7,13 +7,6 @@ import { cn } from '@/lib/utils'
 interface FieldProps {
   label: string
   required?: boolean
-  /**
-   * Spell out that the field may be left blank — an "(Optional)" suffix beside
-   * the label. For forms dense enough that the absence of a required marker
-   * isn't a clear enough answer on its own; leave it off elsewhere rather than
-   * labelling every field one way or the other.
-   */
-  optional?: boolean
   /** Help text shown behind an info icon beside the label. */
   hint?: string
   error?: string
@@ -22,14 +15,16 @@ interface FieldProps {
 }
 
 /**
- * A labelled form field with an optional required-marker, an optional help
- * tooltip, a control slot and inline error text. Shared by every feature form
- * so field markup stays identical across screens.
+ * A labelled form field with a required-marker, an optional help tooltip, a
+ * control slot and inline error text. Shared by every feature form so field markup
+ * stays identical across screens.
+ *
+ * Only what's required is marked. Every other field is optional by definition, and
+ * saying so beside each label was noise on a form of forty of them.
  */
 export function Field({
   label,
   required = false,
-  optional = false,
   hint,
   error,
   className,
@@ -40,11 +35,6 @@ export function Field({
       <Label className="text-foreground/90">
         {label}
         {required && <span className="ml-0.5 text-destructive">*</span>}
-        {optional && !required && (
-          <span className="ml-1 text-xs font-normal text-muted-foreground">
-            (Optional)
-          </span>
-        )}
         {hint && (
           <Tooltip>
             <TooltipTrigger asChild>

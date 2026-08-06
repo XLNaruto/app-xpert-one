@@ -89,7 +89,7 @@ export function useEmployeeList() {
       {
         serviceId: openServiceId,
         // Today is the natural leaving date from a list row; a back-dated exit
-        // belongs in the Transfer History tab, where the date is chosen.
+        // belongs in the Service History tab, where the date is chosen.
         values: { leavingDate: todayIso(), leavingReason: deactivateReason.trim() },
       },
       {

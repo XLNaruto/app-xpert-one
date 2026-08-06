@@ -2,7 +2,7 @@ import { Eye, Pencil, UserRoundX } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
-import { mediaUrl } from '@/lib/media'
+import { useMediaUrl } from '@/hooks/use-media-url'
 import { cn } from '@/lib/utils'
 import { EMPLOYEE_PROGRESS_STEPS } from '../constants'
 import { stepProgress } from '../lib/employee-mappers'
@@ -17,11 +17,12 @@ import type { Employee } from '../types'
  */
 export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
   const label = [employee.prefix, employee.name].filter(Boolean).join(' ')
+  const photoUrl = useMediaUrl(employee.photo)
 
   return (
     <div className="flex items-center gap-3">
       <ImageWithFallback
-        src={mediaUrl(employee.photo)}
+        src={photoUrl}
         alt={employee.name || 'Employee photo'}
         wrapperClassName="size-9 shrink-0 rounded-full ring-1 ring-border"
         className="object-cover"

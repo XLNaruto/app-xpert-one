@@ -110,6 +110,7 @@ export function RepeatCard({
   hasError = false,
   onRemove,
   canRemove = true,
+  gridClassName,
   children,
 }: {
   /** Zero-based; displayed 1-based. */
@@ -119,6 +120,11 @@ export function RepeatCard({
   hasError?: boolean
   onRemove: () => void
   canRemove?: boolean
+  /**
+   * Replaces the default column counts when a card's fields have uneven widths —
+   * a switch next to three inputs fits one row only with an explicit template.
+   */
+  gridClassName?: string
   children: ReactNode
 }) {
   return (
@@ -174,7 +180,13 @@ export function RepeatCard({
         </Tooltip>
       </div>
 
-      <div className="grid grid-cols-1 gap-x-5 gap-y-4 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div
+        className={cn(
+          'grid gap-x-5 gap-y-4 p-4',
+          gridClassName ??
+            'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+        )}
+      >
         {children}
       </div>
     </div>

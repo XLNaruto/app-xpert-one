@@ -2,11 +2,20 @@
  * Centralised REST endpoint paths. Feature `api/` layers reference these
  * instead of hard-coding URL strings, so a path only ever changes in one place.
  * Paths are relative to `apiClient`'s baseURL (see `env.VITE_APP_API_URL`), and
- * every route on this API is namespaced under `/user`.
+ * every tenant route on this API is namespaced under `/user` — the public
+ * routes (`CONFIG`) sit at the root instead.
  *
  * Request/response shapes and flow notes live in `endpoints.reference.ts`.
  */
 export const endpoints = {
+  /**
+   * Client-facing app config — the media/CDN base URL that turns the storage
+   * paths the API returns into renderable URLs. Public: root-namespaced and
+   * needs no bearer, so it can be read before a company is selected.
+   */
+  CONFIG: {
+    GET: '/config',
+  },
   AUTH: {
     LOGIN: '/user/auth/login',
     REFRESH_TOKEN: '/user/auth/refresh',

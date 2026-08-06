@@ -1,24 +1,25 @@
 import type { ReactNode } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
- * Close / Continue for a step with nothing of its own to save.
+ * Back / Next for a step with nothing of its own to save.
  *
  * Two steps are like that. Wage Structure is read-only — the structure is inherited
- * from the designation and stored nowhere on the employee. Transfer History is
+ * from the designation and stored nowhere on the employee. Service History is
  * append-only, and every write there happens inside a dialog. A Save button on
- * either would have nothing to send, and a button that does nothing is worse than
- * no button at all.
+ * either would have nothing to send, so these two wear the same pair of buttons as
+ * every other step, minus the save.
  */
 export function StepNavFooter({
   onContinue,
-  onClose,
-  continueLabel = 'Continue',
+  onBack,
+  continueLabel = 'Next',
   children,
 }: {
   onContinue: () => void
-  onClose: () => void
+  /** Go back a step — the previous tab. */
+  onBack: () => void
   continueLabel?: string
   /** A line of explanation on the left of the footer. */
   children?: ReactNode
@@ -27,8 +28,9 @@ export function StepNavFooter({
     <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
       <div className="text-xs text-muted-foreground">{children}</div>
       <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Close
+        <Button type="button" variant="outline" onClick={onBack}>
+          <ArrowLeft className="size-4" />
+          Back
         </Button>
         <Button type="button" onClick={onContinue}>
           {continueLabel}

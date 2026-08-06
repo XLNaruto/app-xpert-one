@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -39,13 +39,7 @@ import type { EmployeeLeave } from '../types'
  * `PATCH …/:id/status` does, and only from `PENDING`. A leave recorded by the back
  * office defaults to `APPROVED`, because recording it *is* the approval.
  */
-export function useEmployeeLeaveTab({
-  employeeId,
-  onClose,
-}: {
-  employeeId: number
-  onClose: () => void
-}) {
+export function useEmployeeLeaveTab({ employeeId }: { employeeId: number }) {
   const {
     params,
     limit,
@@ -90,9 +84,6 @@ export function useEmployeeLeaveTab({
     resolver: zodResolver(leaveDecisionSchema),
     defaultValues: { status: 'APPROVED', remark: '' },
   })
-
-  /** What happens after a successful save — set by whichever button was pressed. */
-  const afterSaveRef = useRef<'stay' | 'close' | 'addNew'>('stay')
 
   const leaveTypeId = useWatch({ control, name: 'leaveTypeId' })
   const duration = useWatch({ control, name: 'duration' })
@@ -140,18 +131,11 @@ export function useEmployeeLeaveTab({
   const closeDecision = () => setDeciding(null)
 
   const submit = handleSubmit((values) => {
-    const after = afterSaveRef.current
-    afterSaveRef.current = 'stay'
-
     const row = editing
     const done = () => {
       toast.success(row ? 'Leave updated' : 'Leave recorded')
-      if (after === 'close') {
-        onClose()
-        return
-      }
-      // Both "stay" and "add new" leave a blank form ready for the next record —
-      // the history table below has already refreshed with what was just saved.
+      // A save leaves a blank form ready for the next record — the history table
+      // below has already refreshed with what was just saved.
       clearForm()
     }
     const fail = (error: unknown) =>
@@ -163,16 +147,6 @@ export function useEmployeeLeaveTab({
       createLeave.mutate(values, { onSuccess: done, onError: fail })
     }
   })
-
-  const onSubmitAndClose = () => {
-    afterSaveRef.current = 'close'
-    void submit()
-  }
-
-  const onSubmitAndAddNew = () => {
-    afterSaveRef.current = 'addNew'
-    void submit()
-  }
 
   const onSubmitDecision = decisionForm.handleSubmit((values) => {
     if (!deciding) return
@@ -239,10 +213,7 @@ export function useEmployeeLeaveTab({
     isLeaveTypesLoading: leaveTypes.isLoading,
     isHalfDay: duration === 'HALF_DAY',
     onSubmit: submit,
-    onSubmitAndClose,
-    onSubmitAndAddNew,
     isSaving: createLeave.isPending || updateLeave.isPending,
-    onClose,
 
     deciding,
     startDecision,

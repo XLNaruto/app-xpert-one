@@ -29,11 +29,11 @@ function isExpired(expiryDate: string): boolean {
 export function DocumentDetailTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     form,
@@ -52,9 +52,8 @@ export function DocumentDetailTab({
     isForbidden,
     forbiddenMessage,
     onSubmit,
-    onSubmitAndClose,
     isSaving,
-  } = useEmployeeDocumentTab({ employeeId, onSaved: onContinue, onClose })
+  } = useEmployeeDocumentTab({ employeeId, onSaved: onContinue })
 
   if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
@@ -165,7 +164,6 @@ export function DocumentDetailTab({
                 control={form.control}
                 name={`rows.${index}.expiryDate`}
                 label="Expiry Date"
-                optional
                 error={errors?.expiryDate?.message}
                 hint="Leave empty for a document that doesn't expire."
               />
@@ -174,11 +172,14 @@ export function DocumentDetailTab({
                 label="Upload Document"
                 required
                 error={errors?.document?.message}
+                // The presign files the object key under the type, so it comes first.
+                hint={row?.documentTypeId ? undefined : 'Choose a document type first.'}
               >
                 <DocumentFileField
                   value={row?.document ?? ''}
                   onPick={(file) => uploadDocumentFile(index, file)}
                   isUploading={uploadingIndex === index}
+                  disabled={!row?.documentTypeId}
                 />
               </Field>
             </RepeatCard>
@@ -187,11 +188,9 @@ export function DocumentDetailTab({
       </RepeatSection>
 
       <StepFormFooter
-        onCancel={onClose}
-        onSaveAndClose={onSubmitAndClose}
+        onBack={onBack}
         isSaving={isSaving}
-        saveLabel="Save Documents"
-        hint="Files upload as you pick them; Save records the rows against the employee."
+        hint="At least one document is required; files upload as you pick them."
       />
     </form>
   )

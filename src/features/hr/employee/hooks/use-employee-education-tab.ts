@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -49,11 +49,9 @@ import { useRowSeed } from './use-row-seed'
 export function useEmployeeEducationTab({
   employeeId,
   onSaved,
-  onClose,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
 }) {
   const educationList = useEmployeeEducations(employeeId)
   const experienceList = useEmployeeExperiences(employeeId)
@@ -94,7 +92,6 @@ export function useEmployeeEducationTab({
   /** Server ids removed from each list — deleted on Save, not on click. */
   const [removedEducationIds, setRemovedEducationIds] = useState<number[]>([])
   const [removedExperienceIds, setRemovedExperienceIds] = useState<number[]>([])
-  const closeAfterSaveRef = useRef(false)
   const [isSaving, setIsSaving] = useState(false)
 
   const educationRows = educationList.data
@@ -158,9 +155,6 @@ export function useEmployeeEducationTab({
   }
 
   const submit = handleSubmit(async (values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
-
     const savableEducations = values.educations.filter(
       (row) => !isBlankRow(row as Record<string, unknown>, EDUCATION_ROW_KEYS),
     )
@@ -208,19 +202,13 @@ export function useEmployeeEducationTab({
       setRemovedEducationIds([])
       setRemovedExperienceIds([])
       toast.success('Education & experience saved')
-      if (shouldClose) onClose()
-      else onSaved()
+      onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save education & experience."))
     } finally {
       setIsSaving(false)
     }
   })
-
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   const isForbidden =
     isForbiddenError(educationList.error) || isForbiddenError(experienceList.error)
@@ -243,8 +231,6 @@ export function useEmployeeEducationTab({
       ? getApiErrorMessage(educationList.error ?? experienceList.error)
       : undefined,
     onSubmit: submit,
-    onSubmitAndClose,
-    onClose,
     isSaving,
   }
 }

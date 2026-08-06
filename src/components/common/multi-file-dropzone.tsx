@@ -2,7 +2,7 @@ import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Plus, UploadCloud, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
-import { mediaUrl } from '@/lib/media'
+import { useMediaResolver } from '@/hooks/use-media-url'
 import { ImageWithFallback } from './image-with-fallback'
 import type { DropzoneFile } from './file-dropzone'
 
@@ -72,6 +72,9 @@ export function MultiFileDropzone({
   className,
 }: MultiFileDropzoneProps) {
   const types = acceptToTypes(accept)
+  // Resolves each stored file's path against the media base URL; the `data:`
+  // URLs of freshly picked files pass through untouched.
+  const resolveMedia = useMediaResolver()
 
   const take = async (fileList: File[]) => {
     const incoming = fileList
@@ -171,7 +174,7 @@ export function MultiFileDropzone({
             >
               {image ? (
                 <ImageWithFallback
-                  src={mediaUrl(file.url)}
+                  src={resolveMedia(file.url)}
                   alt={file.name}
                   wrapperClassName="size-full"
                   className="object-cover"
@@ -179,7 +182,7 @@ export function MultiFileDropzone({
               ) : (
                 <button
                   type="button"
-                  onClick={() => openFilePreview(file, mediaUrl(file.url))}
+                  onClick={() => openFilePreview(file, resolveMedia(file.url))}
                   title={file.name}
                   className="flex size-full items-center gap-3 p-3 text-left text-primary"
                 >

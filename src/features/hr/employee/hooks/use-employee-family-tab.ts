@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -27,19 +27,19 @@ import { useRowSeed } from './use-row-seed'
  * form holds the whole list, and saving diffs it into the POSTs, PATCHes and
  * DELETEs that make the server match (`lib/save-rows.ts`). Removing a card queues
  * its id rather than deleting immediately — nothing is destroyed until Save, so
- * Cancel really cancels.
+ * leaving the step without saving destroys nothing.
  *
  * The list always keeps one card on screen, which means an untouched step submits
- * one blank row. Blank rows are skipped by both the validation and the save.
+ * one blank row. Blank rows are skipped by both the validation and the save — but a
+ * step where *every* row is blank is rejected rather than skipped, so Save & Next
+ * can't walk past a step that has recorded nobody.
  */
 export function useEmployeeFamilyTab({
   employeeId,
   onSaved,
-  onClose,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
 }) {
   const list = useEmployeeFamily(employeeId)
   const createMember = useCreateEmployeeFamilyMember(employeeId)
@@ -55,8 +55,6 @@ export function useEmployeeFamilyTab({
 
   /** Server ids of cards the user removed — deleted on Save, not on click. */
   const [removedIds, setRemovedIds] = useState<number[]>([])
-  /** Which button was pressed — read in the success handler. */
-  const closeAfterSaveRef = useRef(false)
   const [isSaving, setIsSaving] = useState(false)
 
   // Seed from the server, and again after each save — but never mid-save.
@@ -88,19 +86,9 @@ export function useEmployeeFamilyTab({
   }
 
   const submit = handleSubmit(async (values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
-
     const savable = values.rows.filter(
       (row) => !isBlankRow(row as Record<string, unknown>, FAMILY_ROW_KEYS),
     )
-
-    // Nothing entered and nothing removed — there's no call to make.
-    if (savable.length === 0 && removedIds.length === 0) {
-      if (shouldClose) onClose()
-      else onSaved()
-      return
-    }
 
     setIsSaving(true)
     try {
@@ -111,8 +99,7 @@ export function useEmployeeFamilyTab({
       })
       setRemovedIds([])
       toast.success('Family detail saved')
-      if (shouldClose) onClose()
-      else onSaved()
+      onSaved()
     } catch (error) {
       // The calls that already went through stay done; a second Save resumes.
       toast.error(getApiErrorMessage(error, "Couldn't save the family detail."))
@@ -120,11 +107,6 @@ export function useEmployeeFamilyTab({
       setIsSaving(false)
     }
   })
-
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   const isForbidden = isForbiddenError(list.error)
 
@@ -139,8 +121,6 @@ export function useEmployeeFamilyTab({
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(list.error) : undefined,
     onSubmit: submit,
-    onSubmitAndClose,
-    onClose,
     isSaving,
   }
 }

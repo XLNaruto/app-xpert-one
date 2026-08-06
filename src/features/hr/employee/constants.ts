@@ -42,7 +42,7 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
   education: 'Education / Experience',
   documents: 'Documents',
   assets: 'Assets',
-  transfers: 'Employee Transfer History',
+  transfers: 'Employee Service History',
   leaves: 'Leave Management',
 }
 
@@ -96,6 +96,11 @@ export const LEAVE_SORT = {
 export const LEAVE_DEFAULT_SORT = { id: LEAVE_SORT.fromDate, desc: true }
 
 /* ── Option sets ─────────────────────────────────────────────────────────── */
+
+/** Salutation that fronts the name — stored as typed, no mapping table. */
+export const PREFIX_OPTIONS: ComboboxOption[] = ['Mr', 'Mrs', 'Ms', 'Dr'].map(
+  (value) => ({ label: value, value }),
+)
 
 export const GENDER_OPTIONS: ComboboxOption[] = [
   'Male',
@@ -216,20 +221,12 @@ export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
 ]
 
 /** Earliest passing year the education dropdown reaches back to. */
-const EARLIEST_PASSING_YEAR = 1970
-
 /**
- * Passing years, newest first. Built once at module load — a year boundary
- * crossed mid-session is picked up on the next reload, which is fine for a
- * qualification that was earned in the past.
+ * The floor of the passing-year picker. A qualification older than this belongs to
+ * someone past retirement, so the decade view starts here rather than scrolling
+ * back through empty centuries.
  */
-export const PASSING_YEAR_OPTIONS: ComboboxOption[] = Array.from(
-  { length: new Date().getFullYear() - EARLIEST_PASSING_YEAR + 1 },
-  (_, index) => {
-    const year = String(new Date().getFullYear() - index)
-    return { label: year, value: year }
-  },
-)
+export const EARLIEST_PASSING_DATE = new Date(1970, 0, 1)
 
 /** Youngest an employee may be, in years. */
 export const MINIMUM_EMPLOYEE_AGE = 18
@@ -257,6 +254,7 @@ export const PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp'
  */
 export const EMPTY_EMPLOYEE_BASIC_FORM: EmployeeBasicFormValues = {
   photo: '',
+  prefix: '',
   name: '',
   gender: '',
   birthDate: '',

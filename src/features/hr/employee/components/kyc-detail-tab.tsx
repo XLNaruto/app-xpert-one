@@ -3,12 +3,12 @@ import { BadgeCheck, CarFront, Landmark, Plane, ShieldCheck } from 'lucide-react
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { DateField } from '@/components/common/date-field'
-import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden } from '@/features/error'
 import { useEmployeeKycForm } from '../hooks/use-employee-kyc-form'
+import { StepFormFooter } from './step-form-footer'
 
 /**
  * Step 2 — KYC Detail: statutory numbers, the bank the salary is paid into, and
@@ -22,11 +22,11 @@ import { useEmployeeKycForm } from '../hooks/use-employee-kyc-form'
 export function KycDetailTab({
   employeeId,
   onSaved,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     register,
@@ -40,8 +40,7 @@ export function KycDetailTab({
     isForbidden,
     forbiddenMessage,
     onSubmit,
-    onSubmitAndClose,
-  } = useEmployeeKycForm({ employeeId, onSaved, onClose })
+  } = useEmployeeKycForm({ employeeId, onSaved })
 
   if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
@@ -255,21 +254,8 @@ export function KycDetailTab({
         error={errors.passportValidTo?.message}
       />
 
-      <div className="col-span-full mt-2 flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
-        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onSubmitAndClose}
-          disabled={isPending}
-        >
-          {isPending ? 'Saving…' : 'Save & Close'}
-        </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save & Continue'}
-        </Button>
+      <div className="col-span-full">
+        <StepFormFooter onBack={onBack} isSaving={isPending} />
       </div>
     </form>
   )

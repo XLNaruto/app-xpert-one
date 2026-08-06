@@ -1,32 +1,30 @@
-import { ArrowLeft, ArrowRight, CheckCheck, Plus, Save } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
- * The footer every editable step wears: back out, save and go on, or save and
- * leave.
+ * The footer every editable step wears: step back, or save and go on.
  *
- * Both save buttons run the same submit — only what happens afterwards differs, so
- * the primary one is a real `type="submit"` (Enter works) and the secondary sets a
- * flag before submitting.
+ * Two buttons and no more. A step is one stop in a nine-stop wizard, so the only
+ * two things to do at the bottom of one are "go back a step" and "save this one
+ * and move on" — extra save-and-leave variants only made the important button
+ * harder to find.
  *
- * `onSaveAndAddNew` is only for the steps where entering the *next* record straight
- * away is the normal rhythm — leave, in practice. Omit it elsewhere; a third save
- * button that does nothing useful just makes the important one harder to find.
+ * The save is a real `type="submit"`, so Enter works and the form's validation runs
+ * first: a step that doesn't validate never advances — it marks every field that
+ * held it back and scrolls to the first one, which is the whole message. No toast
+ * repeats what the fields already say.
  */
 export function StepFormFooter({
-  onCancel,
-  onSaveAndClose,
-  onSaveAndAddNew,
+  onBack,
   isSaving,
-  saveLabel,
+  saveLabel = 'Save & Next',
   hint,
 }: {
-  onCancel: () => void
-  onSaveAndClose: () => void
-  onSaveAndAddNew?: () => void
+  /** Go back a step — the previous tab, or out of the wizard from the first. */
+  onBack: () => void
   isSaving: boolean
-  /** Label for the primary submit — "Save Family Detail", "Save Leave", … */
-  saveLabel: string
+  /** Label for the submit; defaults to "Save & Next". */
+  saveLabel?: string
   /** A line of explanation on the left of the footer. */
   hint?: string
 }) {
@@ -35,9 +33,9 @@ export function StepFormFooter({
       <p className="text-xs text-muted-foreground">{hint}</p>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
+        <Button type="button" variant="outline" onClick={onBack} disabled={isSaving}>
           <ArrowLeft className="size-4" />
-          Cancel
+          Back
         </Button>
 
         <Button type="submit" disabled={isSaving}>
@@ -45,28 +43,6 @@ export function StepFormFooter({
           {isSaving ? 'Saving…' : saveLabel}
           {!isSaving && <ArrowRight className="size-4" />}
         </Button>
-
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onSaveAndClose}
-          disabled={isSaving}
-        >
-          <CheckCheck className="size-4" />
-          Save &amp; Close
-        </Button>
-
-        {onSaveAndAddNew && (
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onSaveAndAddNew}
-            disabled={isSaving}
-          >
-            <Plus className="size-4" />
-            Save &amp; Add New
-          </Button>
-        )}
       </div>
     </div>
   )

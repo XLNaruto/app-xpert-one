@@ -186,10 +186,14 @@ export function useDeleteEmployeeExperience(employeeId: number) {
 
 /**
  * Presign + PUT one attachment, answering the object key. The row itself is saved
- * separately with that key, so nothing is invalidated here.
+ * separately with that key, so nothing is invalidated here. The presign files the
+ * key under the card's document type, which is why the id travels with the file.
  */
 export function useUploadEmployeeDocumentFile() {
-  return useMutation({ mutationFn: (file: File) => uploadEmployeeDocumentFile(file) })
+  return useMutation({
+    mutationFn: ({ file, documentTypeId }: { file: File; documentTypeId: number }) =>
+      uploadEmployeeDocumentFile(file, documentTypeId),
+  })
 }
 
 export function useCreateEmployeeDocument(employeeId: number) {

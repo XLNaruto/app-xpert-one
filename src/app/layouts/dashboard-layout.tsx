@@ -1,10 +1,15 @@
 import { Outlet } from '@tanstack/react-router'
 import { asset } from '@/lib/asset'
 import { CompanySelectGate } from '@/features/company'
+import { useAppConfig } from '@/features/config'
 import { Sidebar } from './components/sidebar'
 import { Topbar } from './components/topbar'
 
 export function DashboardLayout() {
+  // Load the media base URL once, globally, so `mediaUrl()` can resolve image
+  // and document paths synchronously from anywhere inside the shell.
+  useAppConfig()
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Blocks the shell until a multi-company user picks an active company */}

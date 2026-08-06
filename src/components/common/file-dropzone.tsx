@@ -2,7 +2,7 @@ import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
-import { mediaUrl } from '@/lib/media'
+import { useMediaUrl } from '@/hooks/use-media-url'
 import { ImageWithFallback } from './image-with-fallback'
 
 export interface DropzoneFile {
@@ -66,6 +66,9 @@ export function FileDropzone({
   className,
 }: FileDropzoneProps) {
   const types = acceptToTypes(accept)
+  // Stored files carry a storage path; freshly picked ones a `data:` URL, which
+  // passes through untouched.
+  const previewUrl = useMediaUrl(value?.url)
 
   const take = async (file: File) => {
     onChange({ name: file.name, url: await readAsDataUrl(file), file })
@@ -86,7 +89,7 @@ export function FileDropzone({
         {isImage(value) ? (
           <>
             <ImageWithFallback
-              src={mediaUrl(value.url)}
+              src={previewUrl}
               alt={value.name}
               wrapperClassName="absolute inset-0 h-full w-full"
               className="object-contain"

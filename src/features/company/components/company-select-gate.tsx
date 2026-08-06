@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-import { mediaUrl } from '@/lib/media'
+import { useMediaResolver } from '@/hooks/use-media-url'
 import { useCompanyGate } from '../hooks/use-company-gate'
 
 /**
@@ -24,6 +24,7 @@ import { useCompanyGate } from '../hooks/use-company-gate'
  */
 export function CompanySelectGate() {
   const gate = useCompanyGate()
+  const resolveMedia = useMediaResolver()
 
   if (!gate.open) return null
 
@@ -58,7 +59,7 @@ export function CompanySelectGate() {
           <div className="mt-4 flex flex-col gap-3">
             {gate.companies.map((company) => {
               const isSelected = gate.selectedId === company.id
-              const logo = mediaUrl(company.logo)
+              const logo = resolveMedia(company.logo)
               return (
                 <button
                   key={company.id}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -31,11 +31,9 @@ import { useRowSeed } from './use-row-seed'
 export function useEmployeeAssetTab({
   employeeId,
   onSaved,
-  onClose,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
 }) {
   const list = useEmployeeAssets(employeeId)
   const createAsset = useCreateEmployeeAsset(employeeId)
@@ -52,7 +50,6 @@ export function useEmployeeAssetTab({
   const rows = useFieldArray({ control, name: 'rows' })
 
   const [removedIds, setRemovedIds] = useState<number[]>([])
-  const closeAfterSaveRef = useRef(false)
   const [isSaving, setIsSaving] = useState(false)
 
   // Seed from the server, and again after each save — but never mid-save.
@@ -89,18 +86,9 @@ export function useEmployeeAssetTab({
   }
 
   const submit = handleSubmit(async (values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
-
     const savable = values.rows.filter(
       (row) => !isBlankRow(row as Record<string, unknown>, ASSET_ROW_KEYS),
     )
-
-    if (savable.length === 0 && removedIds.length === 0) {
-      if (shouldClose) onClose()
-      else onSaved()
-      return
-    }
 
     setIsSaving(true)
     try {
@@ -111,19 +99,13 @@ export function useEmployeeAssetTab({
       })
       setRemovedIds([])
       toast.success('Assets saved')
-      if (shouldClose) onClose()
-      else onSaved()
+      onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save the assets."))
     } finally {
       setIsSaving(false)
     }
   })
-
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   const isForbidden = isForbiddenError(list.error)
 
@@ -140,8 +122,6 @@ export function useEmployeeAssetTab({
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(list.error) : undefined,
     onSubmit: submit,
-    onSubmitAndClose,
-    onClose,
     isSaving,
   }
 }

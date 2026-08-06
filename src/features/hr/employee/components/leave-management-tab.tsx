@@ -48,12 +48,12 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
  */
 export function LeaveManagementTab({
   employeeId,
-  onClose,
+  onBack,
 }: {
   employeeId: number
-  onClose: () => void
+  onBack: () => void
 }) {
-  const tab = useEmployeeLeaveTab({ employeeId, onClose })
+  const tab = useEmployeeLeaveTab({ employeeId })
 
   const columns = useMemo<ColumnDef<EmployeeLeave>[]>(
     () => [
@@ -266,7 +266,6 @@ export function LeaveManagementTab({
           {/* Derived from the leave type, so it's shown rather than asked for. */}
           <Field
             label="Pay Type"
-            optional
             hint="Taken from the leave type — change the type to change this."
           >
             <Input readOnly placeholder="Select Paid / Unpaid" value={tab.form.watch('payType')} />
@@ -293,7 +292,6 @@ export function LeaveManagementTab({
           {!tab.editing && (
             <Field
               label="Status"
-              optional
               error={errors.status?.message}
               hint="Recording a leave from the back office is the approval — file it as Pending to leave the decision to someone else."
             >
@@ -336,7 +334,6 @@ export function LeaveManagementTab({
 
           <Field
             label="Leave Reason"
-            optional
             error={errors.leaveReason?.message}
             className="md:col-span-2"
           >
@@ -349,9 +346,7 @@ export function LeaveManagementTab({
         </div>
 
         <StepFormFooter
-          onCancel={onClose}
-          onSaveAndClose={tab.onSubmitAndClose}
-          onSaveAndAddNew={tab.onSubmitAndAddNew}
+          onBack={onBack}
           isSaving={tab.isSaving}
           saveLabel={tab.editing ? 'Update Leave' : 'Save Leave'}
         />
@@ -431,7 +426,6 @@ export function LeaveManagementTab({
       >
         <Field
           label="Remark"
-          optional
           className="sm:col-span-2"
           error={decisionErrors.remark?.message}
           hint="Shown to the employee alongside the decision."

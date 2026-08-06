@@ -715,6 +715,15 @@
   padding: 0.6rem 0;
 }
 
+/* Decade view of the year-only picker (<YearPicker>) — same three-a-row grid, so
+   a year tile is as easy to hit as a month one. */
+.react-calendar__decade-view {
+  width: 15rem;
+}
+.react-calendar__decade-view__years__year {
+  padding: 0.6rem 0;
+}
+
 /* The calendar is portalled into a host that <DatePicker> positions itself, so
    the panel just fills that host instead of sizing/placing itself. */
 .sa-datepicker-portal .react-date-picker__calendar {

@@ -47,7 +47,10 @@ function nameField(label: string) {
     .min(1, `Please enter ${label}`)
     .min(2, 'Minimum 2 characters')
     .max(150, 'Cannot exceed 150 characters')
-    .regex(NAME_RE, `${label} may only contain letters, digits and spaces`)
+    .regex(
+      NAME_RE,
+      `${label} must include at least one letter, and can only use letters, digits, spaces and . ' -`,
+    )
 }
 
 /** Whole years between a `yyyy-MM-dd` date and today. */
@@ -77,6 +80,8 @@ export const employeeBasicSchema = z
     /** Object key from the photo presign — never the file. */
     photo: z.string(),
 
+    /** Salutation in front of the name — optional, stored as chosen. */
+    prefix: z.string().trim(),
     name: nameField('employee name'),
     gender: z.string().trim().min(1, 'Please select a gender'),
     birthDate: z
@@ -298,6 +303,7 @@ export const employeesResponseSchema = z.object({
  */
 export interface EmployeeBasicPayload {
   company_id?: number
+  prefix: string | null
   name: string | null
   photo: string | null
   gender: string | null
@@ -546,11 +552,13 @@ export type EmployeeWageStructureResponse = z.infer<
  *
  * - **A row carries its server `id`** when it came back from a read, and doesn't
  *   when the user just added it. That is what tells a POST from a PATCH.
- * - **A blank row is legal.** The list always keeps one card on screen so there's
- *   something to type into, which means an untouched step submits one empty row.
- *   Validating it would block the step; saving it would create a junk record. So
- *   the per-field rules live in a `superRefine` that skips blank rows, and the
- *   save skips them too.
+ * - **A blank row is legal — unless it's the only one.** The list always keeps one
+ *   card on screen so there's something to type into, so an *extra* untouched card
+ *   is skipped by both the rules and the save: validating it would block the step,
+ *   saving it would create a junk record. But a list where *every* card is blank has
+ *   recorded nothing, and the step must not pass — so the first card is held to the
+ *   full rules there, which marks every missing answer at once rather than one
+ *   field at a time (`rowNeedsRules`).
  *
  * The refine reports issues at `[index, 'field']`, which zod prefixes with the
  * array's own path — so react-hook-form receives `rows.2.fullName` and the message
@@ -563,6 +571,23 @@ function rowIsBlank(row: Record<string, unknown>, keys: readonly string[]): bool
     const value = row[key]
     return value === undefined || value === null || String(value).trim() === ''
   })
+}
+
+/**
+ * Do this row's field rules run?
+ *
+ * Yes for any row with something in it, and yes for the first card of an all-blank
+ * list — that list has recorded nothing, and reporting every required field of card
+ * one is how the step says so. An extra blank card alongside a filled one is
+ * skipped: it's the empty card the list always keeps on screen.
+ */
+function rowNeedsRules<TRow extends Record<string, unknown>>(
+  rows: readonly TRow[],
+  index: number,
+  keys: readonly string[],
+): boolean {
+  if (!rowIsBlank(rows[index], keys)) return true
+  return index === 0 && rows.every((row) => rowIsBlank(row, keys))
 }
 
 /** The server id a saved row carries; absent on one the user just added. */
@@ -595,7 +620,7 @@ export const employeeFamilyListSchema = z.object({
     const today = new Date().toISOString().slice(0, 10)
 
     rows.forEach((row, index) => {
-      if (rowIsBlank(row, FAMILY_ROW_KEYS)) return
+      if (!rowNeedsRules(rows, index, FAMILY_ROW_KEYS)) return
 
       const name = row.fullName.trim()
       if (name === '') {
@@ -606,7 +631,7 @@ export const employeeFamilyListSchema = z.object({
         ctx.addIssue({
           code: 'custom',
           path: [index, 'fullName'],
-          message: 'Letters, digits and spaces only',
+          message: "Must include at least one letter, and can only use letters, digits, spaces and . ' -",
         })
       }
 
@@ -690,7 +715,7 @@ const PERCENTAGE_RE = /^\d{1,3}(\.\d{1,2})?$/
 /** Per-row rules, shared by the education list and reused by the step's form. */
 function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.RefinementCtx) {
   rows.forEach((row, index) => {
-    if (rowIsBlank(row, EDUCATION_ROW_KEYS)) return
+    if (!rowNeedsRules(rows, index, EDUCATION_ROW_KEYS)) return
 
     if (row.educationName.trim() === '') {
       ctx.addIssue({
@@ -789,7 +814,7 @@ function refineExperienceRows(
   ctx: z.RefinementCtx,
 ) {
   rows.forEach((row, index) => {
-    if (rowIsBlank(row, EXPERIENCE_ROW_KEYS)) return
+    if (!rowNeedsRules(rows, index, EXPERIENCE_ROW_KEYS)) return
 
     if (row.companyName.trim() === '') {
       ctx.addIssue({
@@ -929,7 +954,7 @@ export const DOCUMENT_ROW_KEYS = [
 export const employeeDocumentListSchema = z.object({
   rows: z.array(employeeDocumentRowSchema).superRefine((rows, ctx) => {
     rows.forEach((row, index) => {
-      if (rowIsBlank(row, DOCUMENT_ROW_KEYS)) return
+      if (!rowNeedsRules(rows, index, DOCUMENT_ROW_KEYS)) return
 
       if (row.documentTypeId.trim() === '') {
         ctx.addIssue({
@@ -1013,7 +1038,7 @@ export const ASSET_ROW_KEYS = ['assetId', 'assignedDate', 'validTill', 'remarks'
 export const employeeAssetListSchema = z.object({
   rows: z.array(employeeAssetRowSchema).superRefine((rows, ctx) => {
     rows.forEach((row, index) => {
-      if (rowIsBlank(row, ASSET_ROW_KEYS)) return
+      if (!rowNeedsRules(rows, index, ASSET_ROW_KEYS)) return
 
       if (row.assetId.trim() === '') {
         ctx.addIssue({ code: 'custom', path: [index, 'assetId'], message: 'Please select an asset' })

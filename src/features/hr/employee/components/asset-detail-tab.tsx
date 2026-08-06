@@ -27,11 +27,11 @@ const STATUS_VARIANT: Record<string, 'success' | 'default' | 'destructive'> = {
 export function AssetDetailTab({
   employeeId,
   onContinue,
-  onClose,
+  onBack,
 }: {
   employeeId: number
   onContinue: () => void
-  onClose: () => void
+  onBack: () => void
 }) {
   const {
     form,
@@ -46,9 +46,8 @@ export function AssetDetailTab({
     isForbidden,
     forbiddenMessage,
     onSubmit,
-    onSubmitAndClose,
     isSaving,
-  } = useEmployeeAssetTab({ employeeId, onSaved: onContinue, onClose })
+  } = useEmployeeAssetTab({ employeeId, onSaved: onContinue })
 
   if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
@@ -124,7 +123,6 @@ export function AssetDetailTab({
                 control={form.control}
                 name={`rows.${index}.assignedDate`}
                 label="Assigned Date"
-                optional
                 error={errors?.assignedDate?.message}
               />
 
@@ -132,7 +130,6 @@ export function AssetDetailTab({
                 control={form.control}
                 name={`rows.${index}.validTill`}
                 label="Valid Till"
-                optional
                 error={errors?.validTill?.message}
                 hint="When the asset is due back, for anything issued on loan."
                 minDate={
@@ -159,7 +156,6 @@ export function AssetDetailTab({
 
               <Field
                 label="Remarks"
-                optional
                 error={errors?.remarks?.message}
                 className="md:col-span-2"
               >
@@ -175,11 +171,9 @@ export function AssetDetailTab({
       </RepeatSection>
 
       <StepFormFooter
-        onCancel={onClose}
-        onSaveAndClose={onSubmitAndClose}
+        onBack={onBack}
         isSaving={isSaving}
-        saveLabel="Save Assets"
-        hint="When an asset comes back, set its status to Returned — don't remove the card."
+        hint="At least one asset is required; when one comes back, set its status to Returned rather than removing the card."
       />
     </form>
   )

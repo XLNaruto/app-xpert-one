@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -25,11 +25,9 @@ import { isKycEmpty, kycToFormValues } from '../lib/employee-step-mappers'
 export function useEmployeeKycForm({
   employeeId,
   onSaved,
-  onClose,
 }: {
   employeeId: number
   onSaved: () => void
-  onClose: () => void
 }) {
   const detail = useEmployeeKyc(employeeId)
   const isFirstSave = detail.data ? isKycEmpty(detail.data) : true
@@ -40,9 +38,6 @@ export function useEmployeeKycForm({
     defaultValues: EMPTY_EMPLOYEE_KYC_FORM,
   })
   const { control, reset, handleSubmit } = form
-
-  /** Which button was pressed — read in the success handler. */
-  const closeAfterSaveRef = useRef(false)
 
   useEffect(() => {
     if (detail.data) reset(kycToFormValues(detail.data, EMPTY_EMPLOYEE_KYC_FORM))
@@ -58,24 +53,15 @@ export function useEmployeeKycForm({
   const bank = useBankSelect({ selected: bankId ? { value: bankId } : undefined })
 
   const submit = handleSubmit((values) => {
-    const shouldClose = closeAfterSaveRef.current
-    closeAfterSaveRef.current = false
-
     saveKyc.mutate(values, {
       onSuccess: () => {
         toast.success('KYC detail saved')
-        if (shouldClose) onClose()
-        else onSaved()
+        onSaved()
       },
       onError: (error) =>
         toast.error(getApiErrorMessage(error, "Couldn't save the KYC detail.")),
     })
   })
-
-  const onSubmitAndClose = () => {
-    closeAfterSaveRef.current = true
-    void submit()
-  }
 
   const isForbidden = isForbiddenError(detail.error)
 
@@ -91,7 +77,5 @@ export function useEmployeeKycForm({
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     onSubmit: submit,
-    onSubmitAndClose,
-    onClose,
   }
 }

@@ -32,16 +32,35 @@ export interface PresignedUpload {
 }
 
 /**
+ * Body fields a particular presign endpoint needs on top of the content type —
+ * `document_type_id` on the employee-document presign, for one, which the API
+ * requires because the object key is filed under the chosen type.
+ */
+export type PresignFields = Record<string, string | number>
+
+/** The presign's own cap on `file_name`. */
+const FILE_NAME_MAX = 255
+
+/**
  * Ask for a presigned PUT. `contentType` must be the file's own type — the
  * signature covers it, so the PUT has to send exactly the same one back.
+ *
+ * `fileName` is optional and never becomes the key: the server generates that and
+ * appends a slugified form of the name after the uuid, purely so the object is
+ * recognisable when browsing the bucket. Omit it for a camera capture, which has
+ * no meaningful name of its own.
  */
 export async function presignUpload(
   endpoint: string,
   contentType: string,
+  { fileName, fields }: { fileName?: string; fields?: PresignFields } = {},
 ): Promise<PresignedUpload> {
+  const name = fileName?.trim().slice(0, FILE_NAME_MAX)
   try {
-    const raw = await http.post<unknown, { content_type: string }>(endpoint, {
+    const raw = await http.post<unknown, PresignFields>(endpoint, {
+      ...fields,
       content_type: contentType,
+      ...(name ? { file_name: name } : {}),
     })
     const parsed = presignResponseSchema.parse(raw)
     return { uploadUrl: parsed.upload_url, key: parsed.key }
@@ -55,11 +74,13 @@ export async function presignUpload(
  *
  * `allowed` is the set the endpoint signs for; a file outside it fails here with
  * a message a form can show, rather than as an opaque 400 from the presign call.
+ * `fields` carries whatever else that endpoint requires in the presign body.
  */
 export async function uploadFile(
   endpoint: string,
   file: File,
   allowed?: readonly string[],
+  fields?: PresignFields,
 ): Promise<string> {
   const contentType = file.type
   if (allowed && !allowed.includes(contentType)) {
@@ -69,7 +90,10 @@ export async function uploadFile(
     )
   }
 
-  const { uploadUrl, key } = await presignUpload(endpoint, contentType)
+  const { uploadUrl, key } = await presignUpload(endpoint, contentType, {
+    fileName: file.name,
+    fields,
+  })
 
   try {
     // Bare axios: the presigned URL is self-authenticating, and our bearer
