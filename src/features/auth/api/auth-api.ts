@@ -13,19 +13,26 @@ import type { AuthSession } from '../types'
  */
 
 /**
- * POST /user/auth/login — exchange username + password for an access/refresh
- * pair plus the signed-in user. Signing in from a new device invalidates the
- * account's previous sessions, so any other tab will 401 and be signed out.
+ * POST /user/auth/login — exchange email + password for an access/refresh pair
+ * plus the signed-in user. `email` is unique platform-wide, so an account owner
+ * and a tenant-created admin sign in through the same form (there is no
+ * `is_owner` flag or company code to disambiguate).
+ *
+ * `source: 'WEB'` is what makes this a browser session: the API keeps exactly
+ * one, so signing in again elsewhere on the web signs the previous browser out
+ * — while the same user's `APP` sessions on their phones are left alone. It
+ * also decides the permission the login is checked against (`web:access`), so a
+ * user without panel access gets a 403 rather than a 401.
  */
 export async function loginRequest({
-  username,
+  email,
   password,
-}: Pick<LoginValues, 'username' | 'password'>): Promise<AuthSession> {
+}: Pick<LoginValues, 'email' | 'password'>): Promise<AuthSession> {
   try {
-    const raw = await http.post<unknown, { username: string; password: string }>(
-      endpoints.AUTH.LOGIN,
-      { username, password },
-    )
+    const raw = await http.post<
+      unknown,
+      { email: string; password: string; source: 'WEB' }
+    >(endpoints.AUTH.LOGIN, { email, password, source: 'WEB' })
     const data = loginResponseSchema.parse(raw)
     return {
       user: toAuthUser(data.user),

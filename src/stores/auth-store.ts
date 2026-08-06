@@ -12,7 +12,6 @@ export interface AuthUser {
   id: number
   accountId: number
   email: string
-  username: string
   name: string
   roleId: number | null
   companyId: number | null

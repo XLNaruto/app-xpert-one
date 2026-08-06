@@ -53,6 +53,7 @@ export const navGroups: NavGroup[] = [
     title: "Human Resource",
     items: [
       { label: "Employee Management", to: "/hr/employee", icon: UserRoundCog },
+      { label: "Leave Management", to: "/hr/leave", icon: CalendarDays },
     ],
   },
   {

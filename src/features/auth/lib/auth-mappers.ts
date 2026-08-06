@@ -7,7 +7,6 @@ export function toAuthUser(raw: AuthUserResponse): AuthUser {
     id: raw.id,
     accountId: raw.account_id,
     email: raw.email,
-    username: raw.username,
     name: raw.name,
     roleId: raw.role_id,
     companyId: raw.company_id,

@@ -1,13 +1,8 @@
 import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
-import { activeCompanyId } from '@/lib/active-company'
 import { uploadFile } from '@/lib/uploads'
-import type { PageParams, Paginated } from '@/lib/pagination'
-import {
-  DOCUMENT_CONTENT_TYPES,
-  LEAVE_DEFAULT_SORT,
-} from '../constants'
+import { DOCUMENT_CONTENT_TYPES } from '../constants'
 import {
   employeeAssetListResponseSchema,
   employeeAssetResponseSchema,
@@ -20,8 +15,6 @@ import {
   employeeFamilyListResponseSchema,
   employeeFamilyResponseSchema,
   employeeKycResponseSchema,
-  employeeLeaveListResponseSchema,
-  employeeLeaveResponseSchema,
   employeeTransferDetailResponseSchema,
   employeeTransferListResponseSchema,
   employeeWageStructureResponseSchema,
@@ -33,9 +26,7 @@ import {
   experienceToPayload,
   familyToPayload,
   kycToPayload,
-  leaveDecisionToPayload,
   leaveServiceToPayload,
-  leaveToPayload,
   serviceEditToPayload,
   toEmployeeAsset,
   toEmployeeDocument,
@@ -43,7 +34,6 @@ import {
   toEmployeeExperience,
   toEmployeeFamilyMember,
   toEmployeeKyc,
-  toEmployeeLeave,
   toEmployeeTransfer,
   toEmployeeTransferDetail,
   toEmployeeWageStructure,
@@ -62,14 +52,10 @@ import type {
   EmployeeFamilyPayload,
   EmployeeKycFormValues,
   EmployeeKycPayload,
-  EmployeeLeaveFormValues,
-  EmployeeLeavePayload,
   EmployeeServiceEditFormValues,
   EmployeeServiceEditPayload,
   EmployeeTransferFormValues,
   EmployeeTransferPayload,
-  LeaveDecisionFormValues,
-  LeaveDecisionPayload,
   LeaveServiceFormValues,
   LeaveServicePayload,
 } from '../schemas'
@@ -80,14 +66,13 @@ import type {
   EmployeeExperience,
   EmployeeFamilyMember,
   EmployeeKyc,
-  EmployeeLeave,
   EmployeeTransfer,
   EmployeeTransferDetail,
   EmployeeWageStructure,
 } from '../types'
 
 /**
- * Steps 2 through 9 — the sub-resources hung off one employee.
+ * Steps 2 through 8 — the sub-resources hung off one employee.
  *
  * Every collection here is **row-at-a-time**: the API has no whole-step save, so
  * a tab's Add/Edit dialog issues one POST or PATCH and its bin icon one DELETE.
@@ -95,7 +80,7 @@ import type {
  * — the screen shape follows the endpoint shape.
  *
  * The collection reads take no pagination: each answers every row of one
- * employee, which is a handful. Only the leave register is genuinely paged.
+ * employee, which is a handful.
  */
 
 /* ── Step 2 — KYC ────────────────────────────────────────────────────────── */
@@ -502,11 +487,12 @@ export async function fetchEmployeeTransferDetail(
 export async function transferEmployee(
   employeeId: number,
   values: EmployeeTransferFormValues,
+  currentCompanyId?: number,
 ): Promise<EmployeeTransferDetail> {
   try {
     const raw = await http.post<unknown, EmployeeTransferPayload>(
       endpoints.EMPLOYEES.TRANSFERS(employeeId),
-      transferToPayload(values),
+      transferToPayload(values, currentCompanyId),
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
@@ -552,122 +538,5 @@ export async function leaveEmployeeService(
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't close the posting.")
-  }
-}
-
-/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
-
-/** The filters the leave register narrows by, beyond the page itself. */
-export interface LeaveFilters {
-  /** One employee's own tab; leave it off for the company-wide queue. */
-  employeeId?: number
-  status?: string
-  leaveTypeId?: number
-  payType?: string
-  /** An overlap window — a leave straddling it is in it. */
-  fromDate?: string
-  toDate?: string
-}
-
-/** The API's maximum `limit` on the leave register. */
-const LEAVE_MAX_LIMIT = 100
-
-/**
- * GET /user/employee-leaves — one page of leave records, newest first. With
- * `employeeId` this is step 9's table; without it, the company-wide queue.
- */
-export async function fetchEmployeeLeaves(
-  params: PageParams,
-  filters: LeaveFilters = {},
-): Promise<Paginated<EmployeeLeave>> {
-  try {
-    const raw = await http.get<unknown>(endpoints.EMPLOYEE_LEAVES.LIST, {
-      params: {
-        company_id: activeCompanyId('leave records'),
-        limit: params.limit < 0 ? LEAVE_MAX_LIMIT : Math.min(params.limit, LEAVE_MAX_LIMIT),
-        offset: params.offset,
-        ...(filters.employeeId ? { employee_id: filters.employeeId } : {}),
-        ...(filters.status ? { status: filters.status } : {}),
-        ...(filters.leaveTypeId ? { leave_type_id: filters.leaveTypeId } : {}),
-        ...(filters.payType ? { pay_type: filters.payType } : {}),
-        ...(filters.fromDate ? { from_date: filters.fromDate } : {}),
-        ...(filters.toDate ? { to_date: filters.toDate } : {}),
-        ...(params.search?.trim() ? { search: params.search.trim() } : {}),
-        // Always send an order, or paging can repeat or skip rows.
-        sort: params.sort ?? LEAVE_DEFAULT_SORT.id,
-        sort_by: params.sortBy ?? (LEAVE_DEFAULT_SORT.desc ? 'desc' : 'asc'),
-      },
-    })
-    const { items, total } = employeeLeaveListResponseSchema.parse(raw)
-    return { items: items.map(toEmployeeLeave), total }
-  } catch (error) {
-    throw toApiError(error, "Couldn't load the leave records.")
-  }
-}
-
-/**
- * POST /user/employee-leaves — record a leave. `status` defaults to `APPROVED`:
- * the back office recording a leave *is* the approval, and `PENDING` files it for
- * a decision later.
- */
-export async function createEmployeeLeave(
-  employeeId: number,
-  values: EmployeeLeaveFormValues,
-): Promise<EmployeeLeave> {
-  try {
-    const raw = await http.post<unknown, EmployeeLeavePayload>(
-      endpoints.EMPLOYEE_LEAVES.POST,
-      { employee_id: employeeId, ...leaveToPayload(values, { includeStatus: true }) },
-    )
-    return toEmployeeLeave(employeeLeaveResponseSchema.parse(raw))
-  } catch (error) {
-    throw toApiError(error, "Couldn't record the leave.")
-  }
-}
-
-/**
- * PATCH /user/employee-leaves/:id — edit a leave. The status isn't editable here;
- * a decision goes through `decideEmployeeLeave`.
- */
-export async function updateEmployeeLeave(
-  id: number,
-  values: EmployeeLeaveFormValues,
-): Promise<EmployeeLeave> {
-  try {
-    const raw = await http.patch<unknown, EmployeeLeavePayload>(
-      endpoints.EMPLOYEE_LEAVES.PATCH(id),
-      leaveToPayload(values, { includeStatus: false }),
-    )
-    return toEmployeeLeave(employeeLeaveResponseSchema.parse(raw))
-  } catch (error) {
-    throw toApiError(error, "Couldn't update the leave.")
-  }
-}
-
-export async function deleteEmployeeLeave(id: number): Promise<void> {
-  try {
-    await http.delete<unknown>(endpoints.EMPLOYEE_LEAVES.DELETE(id))
-  } catch (error) {
-    throw toApiError(error, "Couldn't remove the leave.")
-  }
-}
-
-/**
- * PATCH /user/employee-leaves/:id/status — approve or reject. Only a `PENDING`
- * row can be decided: the employee has already been told the first answer, and
- * the row records who gave it. Undoing means deleting and recording again.
- */
-export async function decideEmployeeLeave(
-  id: number,
-  values: LeaveDecisionFormValues,
-): Promise<EmployeeLeave> {
-  try {
-    const raw = await http.patch<unknown, LeaveDecisionPayload>(
-      endpoints.EMPLOYEE_LEAVES.STATUS(id),
-      leaveDecisionToPayload(values),
-    )
-    return toEmployeeLeave(employeeLeaveResponseSchema.parse(raw))
-  } catch (error) {
-    throw toApiError(error, "Couldn't record the decision.")
   }
 }

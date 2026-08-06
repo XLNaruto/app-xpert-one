@@ -7,7 +7,6 @@ import type {
   EmployeeExperienceFormValues,
   EmployeeFamilyFormValues,
   EmployeeKycFormValues,
-  EmployeeLeaveFormValues,
   EmployeeServiceEditFormValues,
   EmployeeTransferFormValues,
 } from './schemas'
@@ -15,7 +14,7 @@ import type {
 /* ── The wizard ──────────────────────────────────────────────────────────── */
 
 /**
- * The nine steps, in order. The values double as the `tab` carried inside the
+ * The eight steps, in order. The values double as the `tab` carried inside the
  * screen's encrypted `?data=` token, so a refresh comes back to the tab that was
  * open — and `nextTab()` walks this list after a save.
  */
@@ -28,7 +27,6 @@ export const EMPLOYEE_TABS = [
   'documents',
   'assets',
   'transfers',
-  'leaves',
 ] as const
 
 export type EmployeeTab = (typeof EMPLOYEE_TABS)[number]
@@ -43,16 +41,15 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
   documents: 'Documents',
   assets: 'Assets',
   transfers: 'Employee Service History',
-  leaves: 'Leave Management',
 }
 
 /**
  * The seven steps that count toward completion, paired with the flag on the
  * employee record's `completed_steps` that reports each one.
  *
- * Transfer history and leave management are deliberately absent: both are
- * ongoing registers rather than steps you finish, and the API tracks no flag for
- * them — so the progress ring reads `n/7`, not `n/9`.
+ * Transfer history is deliberately absent: it's an ongoing register rather than
+ * a step you finish, and the API tracks no flag for it — so the progress ring
+ * reads `n/7`, not `n/8`.
  */
 export const EMPLOYEE_PROGRESS_STEPS = [
   { tab: 'basic', flag: 'basicDetail' },
@@ -78,22 +75,6 @@ export const EMPLOYEE_SORT = {
 
 /** Newest employee first — the order the list opens in and reverts to. */
 export const EMPLOYEE_DEFAULT_SORT = { id: EMPLOYEE_SORT.createdAt, desc: true }
-
-/**
- * The `sort` values `/user/employee-leaves` accepts, for the leave table's
- * sortable headers.
- */
-export const LEAVE_SORT = {
-  fromDate: 'from_date',
-  toDate: 'to_date',
-  payType: 'pay_type',
-  leaveType: 'leave_type',
-  duration: 'duration',
-  status: 'status',
-} as const
-
-/** Newest leave first. */
-export const LEAVE_DEFAULT_SORT = { id: LEAVE_SORT.fromDate, desc: true }
 
 /* ── Option sets ─────────────────────────────────────────────────────────── */
 
@@ -185,39 +166,6 @@ export const ASSET_STATUS_OPTIONS: ComboboxOption[] = [
   { label: 'Assigned', value: 'ASSIGNED' },
   { label: 'Returned', value: 'RETURNED' },
   { label: 'Lost', value: 'LOST' },
-]
-
-/** What kind of move a transfer is — the API's own `transfer_type`. */
-export const TRANSFER_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Company Change', value: 'company' },
-  { label: 'Branch Change', value: 'branch' },
-]
-
-export const LEAVE_DURATION_OPTIONS: ComboboxOption[] = [
-  { label: 'Full Day', value: 'FULL_DAY' },
-  { label: 'Half Day', value: 'HALF_DAY' },
-]
-
-export const LEAVE_PAY_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Paid', value: 'PAID' },
-  { label: 'Unpaid', value: 'UNPAID' },
-]
-
-/**
- * The status a newly recorded leave gets. The back office recording a leave IS
- * the approval, so the default is `APPROVED`; `PENDING` files it for a decision.
- */
-export const LEAVE_STATUS_OPTIONS: ComboboxOption[] = [
-  { label: 'Approved', value: 'APPROVED' },
-  { label: 'Pending', value: 'PENDING' },
-]
-
-/** Status filter on the leave table — `''` is every status. */
-export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
-  { label: 'All statuses', value: '' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Approved', value: 'APPROVED' },
-  { label: 'Rejected', value: 'REJECTED' },
 ]
 
 /** Earliest passing year the education dropdown reaches back to. */
@@ -376,8 +324,7 @@ export const EMPTY_EMPLOYEE_ASSET_FORM: EmployeeAssetFormValues = {
 export const EMPTY_EMPLOYEE_TRANSFER_FORM: EmployeeTransferFormValues = {
   leavingDate: '',
   leavingReason: '',
-  transferType: 'branch',
-  newCompanyId: '',
+  companyId: '',
   branchId: '',
   departmentId: '',
   designationId: '',
@@ -403,14 +350,3 @@ export const EMPTY_EMPLOYEE_SERVICE_EDIT_FORM: EmployeeServiceEditFormValues = {
   renewalDate: '',
 }
 
-export const EMPTY_EMPLOYEE_LEAVE_FORM: EmployeeLeaveFormValues = {
-  leaveTypeId: '',
-  fromDate: '',
-  toDate: '',
-  duration: 'FULL_DAY',
-  fromTime: '',
-  toTime: '',
-  payType: 'PAID',
-  status: 'APPROVED',
-  leaveReason: '',
-}

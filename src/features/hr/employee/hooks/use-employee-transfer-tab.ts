@@ -34,6 +34,18 @@ import type { EmployeeTransfer } from '../types'
 /** Which of the tab's four dialogs is open, if any. */
 type OpenDialog = 'transfer' | 'edit' | 'leave' | 'detail' | null
 
+/** The day after an ISO date, or the day after today when there isn't one. */
+function nextDayIso(iso: string): string {
+  const date = iso ? new Date(`${iso}T00:00:00`) : new Date()
+  date.setDate(date.getDate() + 1)
+  return date.toISOString().slice(0, 10)
+}
+
+/** The later of two ISO dates — they sort lexically. */
+function maxIso(a: string, b: string): string {
+  return a > b ? a : b
+}
+
 /**
  * Step 8 — the posting history and the three writes over it.
  *
@@ -67,6 +79,13 @@ export function useEmployeeTransferTab(employeeId: number) {
   /** The open posting: the newest row with no leaving date. */
   const openPosting = rows.find((row) => row.isCurrent && !row.leavingDate)
   const latestPosting = rows.find((row) => row.isLatest) ?? rows[0]
+  /**
+   * The employee has left — every posting is closed. A new posting can still be
+   * added (they rejoin); only the two closing actions have nothing to act on.
+   */
+  const isRejoining = openPosting === undefined && latestPosting !== undefined
+  /** The posting a new one is seeded from — the open one, or the last one held. */
+  const postingToFollow = openPosting ?? latestPosting
 
   /* ── Forms ─────────────────────────────────────────────────────────────── */
 
@@ -103,18 +122,18 @@ export function useEmployeeTransferTab(employeeId: number) {
   /* ── Cascading dropdowns ───────────────────────────────────────────────── */
 
   const transferBranchId = useWatch({ control: transferForm.control, name: 'branchId' })
-  const transferType = useWatch({ control: transferForm.control, name: 'transferType' })
-  const newCompanyId = useWatch({ control: transferForm.control, name: 'newCompanyId' })
+  const transferCompanyId = useWatch({ control: transferForm.control, name: 'companyId' })
   const editBranchId = useWatch({ control: editForm.control, name: 'branchId' })
 
   /*
-   * A company transfer must point at the DESTINATION company's masters, not the
-   * session's — its branches, departments and designations are different rows
-   * entirely. So the chosen company scopes the three reads; a branch change (or no
-   * company picked yet) falls back to the active company.
+   * The new posting must point at the DESTINATION company's masters, not the
+   * session's — another company's branches, departments and designations are
+   * different rows entirely. The company is chosen outright on the form (seeded
+   * with the one being left), so it scopes the three reads directly.
    */
-  const destinationCompanyId =
-    transferType === 'company' && newCompanyId.trim() ? Number(newCompanyId) : undefined
+  const destinationCompanyId = transferCompanyId.trim()
+    ? Number(transferCompanyId)
+    : undefined
 
   const transferOptions = usePostingOptions(transferBranchId, destinationCompanyId)
   const editOptions = usePostingOptions(editBranchId)
@@ -148,13 +167,29 @@ export function useEmployeeTransferTab(employeeId: number) {
     if (lastDestinationRef.current === destinationCompanyId) return
     const isFirstRead = lastDestinationRef.current === undefined
     lastDestinationRef.current = destinationCompanyId
-    if (isFirstRead && destinationCompanyId === undefined) return
+    // The first read IS the seed — the company the employee is already in.
+    if (isFirstRead) return
 
     transferForm.setValue('branchId', '')
     transferForm.setValue('departmentId', '')
     transferForm.setValue('designationId', '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialog, destinationCompanyId])
+
+  /*
+   * The new posting must start after the old one closed, and that error sits on
+   * the joining date. Moving the *leaving* date won't clear it on its own — a
+   * resolver only refreshes the field that changed — so re-check it here.
+   */
+  const transferLeavingDate = useWatch({
+    control: transferForm.control,
+    name: 'leavingDate',
+  })
+
+  useEffect(() => {
+    if (transferForm.formState.errors.joiningDate) void transferForm.trigger('joiningDate')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transferLeavingDate])
 
   /* ── Contract dates on the transfer form ───────────────────────────────── */
 
@@ -193,21 +228,28 @@ export function useEmployeeTransferTab(employeeId: number) {
    * transfer usually changes one thing — a branch, a designation — rather than
    * everything; and the leaving date defaults to today with the new posting
    * starting the day after, which is what the schema requires anyway.
+   *
+   * When the employee has already left there is nothing left to close, so the
+   * closed posting's own leaving date is what the (still mandatory) leaving field
+   * repeats, and the new posting starts today — or the day after the exit, when
+   * they left today, since the schema won't take the two on the same day.
    */
   const startTransfer = () => {
-    const posting = openPosting ?? latestPosting
+    const posting = postingToFollow
     if (!posting) return
 
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const nextDay = tomorrow.toISOString().slice(0, 10)
+    const leavingDate = isRejoining ? toFormDate(posting.leavingDate) : todayIso()
+    const startDate = isRejoining
+      ? maxIso(todayIso(), nextDayIso(leavingDate))
+      : nextDayIso(todayIso())
 
     setActiveServiceId(posting.id)
     transferForm.reset({
       ...EMPTY_EMPLOYEE_TRANSFER_FORM,
-      leavingDate: todayIso(),
-      joiningDate: nextDay,
-      confirmationDate: nextDay,
+      leavingDate,
+      joiningDate: startDate,
+      confirmationDate: startDate,
+      companyId: String(posting.companyId),
       branchId: posting.branchId === null ? '' : String(posting.branchId),
       departmentId: posting.departmentId === null ? '' : String(posting.departmentId),
       designationId: posting.designationId === null ? '' : String(posting.designationId),
@@ -241,14 +283,17 @@ export function useEmployeeTransferTab(employeeId: number) {
   /* ── Submits ───────────────────────────────────────────────────────────── */
 
   const submitTransfer = transferForm.handleSubmit((values) => {
-    transferEmployee.mutate(values, {
-      onSuccess: () => {
-        toast.success('Employee transferred')
-        closeDialog()
+    transferEmployee.mutate(
+      { values, currentCompanyId: postingToFollow?.companyId },
+      {
+        onSuccess: () => {
+          toast.success('Employee transferred')
+          closeDialog()
+        },
+        onError: (error) =>
+          toast.error(getApiErrorMessage(error, "Couldn't transfer the employee.")),
       },
-      onError: (error) =>
-        toast.error(getApiErrorMessage(error, "Couldn't transfer the employee.")),
-    })
+    )
   })
 
   const submitEdit = editForm.handleSubmit((values) => {
@@ -291,10 +336,14 @@ export function useEmployeeTransferTab(employeeId: number) {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(list.error) : undefined,
 
-    /** True while a posting is open — the two closing actions need one. */
+    /** True while a posting is open — closing the service needs one. */
     hasOpenPosting: openPosting !== undefined,
-    /** The joining date of the posting being closed, as the dialogs' floor. */
-    openPostingJoiningDate: toFormDate(openPosting?.joiningDate),
+    /** Adding a posting only needs an earlier one to follow, open or closed. */
+    canAddService: postingToFollow !== undefined,
+    /** True when the new posting is a rejoin rather than a move. */
+    isRejoining,
+    /** The joining date of the posting being followed, as the dialogs' floor. */
+    openPostingJoiningDate: toFormDate(postingToFollow?.joiningDate),
 
     dialog,
     closeDialog,
@@ -306,10 +355,12 @@ export function useEmployeeTransferTab(employeeId: number) {
     transfer: {
       form: transferForm,
       options: transferOptions,
-      /** True once a cross-company move has its destination chosen. */
-      isCrossCompany: destinationCompanyId !== undefined,
-      /** A company transfer can't list the destination's masters until it's picked. */
-      needsCompany: transferType === 'company' && destinationCompanyId === undefined,
+      /** True once the chosen company isn't the one the employee is in today. */
+      isCrossCompany:
+        destinationCompanyId !== undefined &&
+        destinationCompanyId !== postingToFollow?.companyId,
+      /** The masters below belong to a company, so none can be listed without one. */
+      needsCompany: destinationCompanyId === undefined,
       companyOptions,
       isCompaniesLoading: companies.isLoading,
       onSubmit: submitTransfer,

@@ -7,7 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden } from '@/features/error'
 import { EMPLOYEE_TAB_LABELS } from '../constants'
 import { asEmployeeTab, useEmployeeWizard } from '../hooks/use-employee-wizard'
-import { EmployeeWizardNav } from '../components/employee-wizard-nav'
+import {
+  EmployeeWizardNav,
+  EmployeeWizardProgress,
+} from '../components/employee-wizard-nav'
 import { BasicDetailTab } from '../components/basic-detail-tab'
 import { KycDetailTab } from '../components/kyc-detail-tab'
 import { WageStructureTab } from '../components/wage-structure-tab'
@@ -16,7 +19,6 @@ import { EducationExperienceTab } from '../components/education-experience-tab'
 import { DocumentDetailTab } from '../components/document-detail-tab'
 import { AssetDetailTab } from '../components/asset-detail-tab'
 import { TransferHistoryTab } from '../components/transfer-history-tab'
-import { LeaveManagementTab } from '../components/leave-management-tab'
 
 interface EmployeeCreatePageProps {
   /**
@@ -28,7 +30,7 @@ interface EmployeeCreatePageProps {
 }
 
 /**
- * Add / edit an employee: one screen, nine steps.
+ * Add / edit an employee: one screen, eight steps.
  *
  * The wizard's shape is the API's shape. `POST /user/employees` creates the person
  * *and* their first posting together, and every later step is a sub-resource
@@ -39,8 +41,6 @@ interface EmployeeCreatePageProps {
  * Steps 4 through 7 are card lists with one Save each. The API writes a row at a
  * time — there is no whole-step endpoint — so those saves diff the list into the
  * inserts, updates and deletes that make the server match (`lib/save-rows.ts`).
- * Step 9 is one leave form over a paged history, for the same reason its data
- * grows without bound.
  *
  * Two steps have no save of their own. Step 3 is read-only: the wage structure is
  * inherited from the designation and stored nowhere on the employee. Step 8 writes
@@ -62,7 +62,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
   const title = employeeId === undefined ? 'Add Employee' : 'Edit Employee'
   const description =
     employeeId === undefined
-      ? 'Save Basic Detail first — the other eight steps hang off the saved employee.'
+      ? 'Save Basic Detail first — the other seven steps hang off the saved employee.'
       : [employee?.name, employee?.code].filter(Boolean).join(' · ') ||
         'Complete the employee record'
 
@@ -87,16 +87,18 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
         }
       />
 
-      <Card>
-        <CardContent className="space-y-6 pt-6">
-          <EmployeeWizardNav
-            steps={wizard.steps}
-            value={wizard.tab}
-            onChange={wizard.setTab}
-            onLockedStep={wizard.onLockedStep}
-            progress={wizard.progress}
-          />
+      {/* Progress and tabs both sit above the card — the card holds only the step. */}
+      <EmployeeWizardProgress progress={wizard.progress} />
 
+      <EmployeeWizardNav
+        steps={wizard.steps}
+        value={wizard.tab}
+        onChange={wizard.setTab}
+        onLockedStep={wizard.onLockedStep}
+      />
+
+      <Card>
+        <CardContent className="pt-6">
           {wizard.isLoading ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 12 }).map((_, index) => (
@@ -125,7 +127,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
  * The open step's body.
  *
  * Only the active step is mounted — a hidden tab would otherwise fire its own read
- * on the first render, and nine of those at once is nine requests for one step the
+ * on the first render, and eight of those at once is eight requests for one step the
  * user is looking at.
  */
 function StepBody({
@@ -215,8 +217,6 @@ function StepBody({
           onBack={goToPrevTab}
         />
       )
-    case 'leaves':
-      return <LeaveManagementTab employeeId={employeeId} onBack={goToPrevTab} />
     default:
       return null
   }

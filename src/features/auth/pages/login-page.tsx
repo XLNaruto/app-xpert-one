@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, User } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { useLogin } from '../hooks/use-login'
 const fieldClasses =
   'h-11 border border-border bg-white/80 pl-10 text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 dark:border-white/15 dark:bg-white/5 dark:focus-visible:border-primary'
 
-/** Username · password sign-in. */
+/** Email · password sign-in. */
 export function LoginPage() {
   const { register, errors, onSubmit, isPending, isError, error } = useLogin()
   const [showPassword, setShowPassword] = useState(false)
@@ -44,30 +44,30 @@ export function LoginPage() {
           </p>
         )}
 
-        {/* Username */}
+        {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="username" className="block text-foreground/90">
-            Username
+          <Label htmlFor="email" className="block text-foreground/90">
+            Email
           </Label>
           <div className="group relative">
-            <User
+            <Mail
               strokeWidth={2.25}
               className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
             />
             <Input
-              id="username"
-              type="text"
+              id="email"
+              type="email"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              placeholder="Enter your username"
+              placeholder="Enter your email"
               className={fieldClasses}
-              {...register('username')}
+              {...register('email')}
             />
           </div>
-          {errors.username && (
-            <p className="text-xs text-destructive">{errors.username.message}</p>
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
 

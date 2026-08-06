@@ -1,6 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
-import type { PageParams } from '@/lib/pagination'
 import {
   fetchEmployeeAssets,
   fetchEmployeeDocuments,
@@ -8,22 +7,20 @@ import {
   fetchEmployeeExperiences,
   fetchEmployeeFamily,
   fetchEmployeeKyc,
-  fetchEmployeeLeaves,
   fetchEmployeeTransferDetail,
   fetchEmployeeTransfers,
   fetchEmployeeWageStructure,
-  type LeaveFilters,
 } from './employee-step-api'
 
 /**
- * Read hooks for steps 2–9.
+ * Read hooks for steps 2–8.
  *
  * Every one is gated on a real employee id: until step 1 has been saved there is
  * nothing to address, and the wizard keeps those tabs locked anyway — `enabled`
  * makes sure a mounted-but-locked tab can't fire a request at `/employees/NaN/…`.
  *
  * The collection reads are unpaged because each endpoint answers every row of one
- * employee, which is a handful. Only the leave register pages.
+ * employee, which is a handful.
  */
 
 /** Is this an employee id we can actually read by? */
@@ -112,27 +109,5 @@ export function useEmployeeTransferDetail(employeeId: number, serviceId?: number
     queryKey: queryKeys.employee.transfer(employeeId, serviceId ?? 0),
     queryFn: () => fetchEmployeeTransferDetail(employeeId, serviceId as number),
     enabled: canRead(employeeId) && serviceId !== undefined,
-  })
-}
-
-/**
- * Step 9 — GET /user/employee-leaves, paged and filtered server-side. Pass
- * `filters.employeeId` for one employee's tab; leave it off for the company-wide
- * queue.
- */
-export function useEmployeeLeaves(params: PageParams, filters: LeaveFilters = {}) {
-  return useQuery({
-    queryKey: queryKeys.employeeLeave.list(filters.employeeId, params, {
-      status: filters.status ?? '',
-      leaveTypeId: filters.leaveTypeId ?? 0,
-      payType: filters.payType ?? '',
-      fromDate: filters.fromDate ?? '',
-      toDate: filters.toDate ?? '',
-    }),
-    queryFn: () => fetchEmployeeLeaves(params, filters),
-    // A leave tab without an employee behind it has nothing to list.
-    enabled: filters.employeeId === undefined || canRead(filters.employeeId),
-    // Keep the previous page on screen while the next one loads.
-    placeholderData: keepPreviousData,
   })
 }

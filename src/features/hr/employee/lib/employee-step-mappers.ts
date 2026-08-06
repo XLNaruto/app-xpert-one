@@ -17,9 +17,6 @@ import type {
   EmployeeKycFormValues,
   EmployeeKycPayload,
   EmployeeKycResponse,
-  EmployeeLeaveFormValues,
-  EmployeeLeavePayload,
-  EmployeeLeaveResponse,
   EmployeeServiceEditFormValues,
   EmployeeServiceEditPayload,
   EmployeeTransferDetailResponse,
@@ -27,8 +24,6 @@ import type {
   EmployeeTransferPayload,
   EmployeeTransferResponse,
   EmployeeWageStructureResponse,
-  LeaveDecisionFormValues,
-  LeaveDecisionPayload,
   LeaveServiceFormValues,
   LeaveServicePayload,
 } from '../schemas'
@@ -39,7 +34,6 @@ import type {
   EmployeeExperience,
   EmployeeFamilyMember,
   EmployeeKyc,
-  EmployeeLeave,
   EmployeeTransfer,
   EmployeeTransferDetail,
   EmployeeWageStructure,
@@ -538,19 +532,24 @@ export function toEmployeeTransferDetail(
  * contract fields only on a contractual posting — a permanent one has no period
  * to renew, and the API would store a stray value.
  */
+/**
+ * The form asks for the destination company outright, so the API's
+ * `transfer_type` is read off it: a company the employee isn't in today is a
+ * company move, anything else is a move inside the one being left.
+ */
 export function transferToPayload(
   values: EmployeeTransferFormValues,
+  currentCompanyId?: number,
 ): EmployeeTransferPayload {
   const isContractual = values.employmentType !== PERMANENT_EMPLOYMENT_TYPE
-  const transferType = values.transferType === 'company' ? 'company' : 'branch'
+  const companyId = Number(values.companyId)
+  const isCompanyMove = Number.isFinite(companyId) && companyId !== currentCompanyId
 
   return {
     leaving_date: toRequiredApiDate(values.leavingDate),
     leaving_reason: values.leavingReason.trim(),
-    transfer_type: transferType,
-    ...(transferType === 'company' && values.newCompanyId.trim()
-      ? { new_company_id: Number(values.newCompanyId) }
-      : {}),
+    transfer_type: isCompanyMove ? 'company' : 'branch',
+    ...(isCompanyMove ? { new_company_id: companyId } : {}),
     branch_id: idOrNull(values.branchId),
     department_id: idOrNull(values.departmentId),
     designation_id: Number(values.designationId),
@@ -610,78 +609,4 @@ export function leaveServiceToPayload(
     leaving_date: toRequiredApiDate(values.leavingDate),
     leaving_reason: values.leavingReason.trim(),
   }
-}
-
-/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
-
-export function toEmployeeLeave(response: EmployeeLeaveResponse): EmployeeLeave {
-  return {
-    id: response.id,
-    employeeId: response.employee_id,
-    employeeName: response.employee_name ?? '',
-    employeeCode: response.employee_code ?? '',
-    companyId: response.company_id,
-    fromDate: response.from_date ?? '',
-    toDate: response.to_date ?? '',
-    duration: response.duration,
-    fromTime: response.from_time ?? '',
-    toTime: response.to_time ?? '',
-    payType: response.pay_type,
-    leaveTypeId: response.leave_type_id ?? null,
-    leaveType: response.leave_type ?? '',
-    leaveTypeName: response.leave_type_name ?? '',
-    leaveReason: response.leave_reason ?? '',
-    attachment: response.attachment ?? '',
-    status: response.status,
-    statusRemark: response.status_remark ?? '',
-    statusAt: response.status_at ?? '',
-    ...auditOf(response),
-  }
-}
-
-/**
- * A leave body. The two times travel only on a half day — the API rejects them on
- * a full one — and `status` only on create, since the decision has its own
- * endpoint and a PATCH here can't change it.
- */
-export function leaveToPayload(
-  values: EmployeeLeaveFormValues,
-  options: { includeStatus: boolean },
-): EmployeeLeavePayload {
-  const isHalfDay = values.duration === 'HALF_DAY'
-
-  return {
-    ...(options.includeStatus ? { status: values.status } : {}),
-    from_date: toApiDate(values.fromDate),
-    to_date: toApiDate(values.toDate),
-    duration: values.duration,
-    ...(isHalfDay ? { from_time: values.fromTime, to_time: values.toTime } : {}),
-    leave_reason: orNull(values.leaveReason),
-    pay_type: values.payType,
-    leave_type_id: idOrNull(values.leaveTypeId),
-  }
-}
-
-export function leaveToFormValues(
-  leave: EmployeeLeave,
-  blank: EmployeeLeaveFormValues,
-): EmployeeLeaveFormValues {
-  return {
-    ...blank,
-    leaveTypeId: leave.leaveTypeId === null ? '' : String(leave.leaveTypeId),
-    fromDate: toFormDate(leave.fromDate),
-    toDate: toFormDate(leave.toDate),
-    duration: leave.duration,
-    fromTime: leave.fromTime,
-    toTime: leave.toTime,
-    payType: leave.payType,
-    status: leave.status,
-    leaveReason: leave.leaveReason,
-  }
-}
-
-export function leaveDecisionToPayload(
-  values: LeaveDecisionFormValues,
-): LeaveDecisionPayload {
-  return { status: values.status, remark: orNull(values.remark) }
 }

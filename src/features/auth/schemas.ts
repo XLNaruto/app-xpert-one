@@ -1,8 +1,13 @@
 import { z } from 'zod'
 
-/** Username + password sign-in (mirrors the login request body). */
+/** Email + password sign-in (mirrors the login request body). */
 export const loginSchema = z.object({
-  username: z.string().trim().min(1, 'Username is required').max(50),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .max(255)
+    .email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
   remember: z.boolean(),
 })
@@ -14,7 +19,6 @@ export const authUserResponseSchema = z.object({
   id: z.number(),
   account_id: z.number(),
   email: z.string(),
-  username: z.string(),
   name: z.string(),
   role_id: z.number().nullable(),
   /**
@@ -23,7 +27,7 @@ export const authUserResponseSchema = z.object({
    * one, so a missing key means the same thing as "none selected yet".
    */
   company_id: z.number().nullable().optional().default(null),
-  is_owner: z.boolean().optional().default(false),
+  is_owner: z.boolean(),
   /**
    * The company this account last worked in. Not a selection — the token is
    * still minted without a company for an owner — only a hint the company gate

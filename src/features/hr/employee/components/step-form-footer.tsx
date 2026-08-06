@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 /**
  * The footer every editable step wears: step back, or save and go on.
  *
- * Two buttons and no more. A step is one stop in a nine-stop wizard, so the only
+ * Two buttons and no more. A step is one stop in an eight-stop wizard, so the only
  * two things to do at the bottom of one are "go back a step" and "save this one
  * and move on" — extra save-and-leave variants only made the important button
  * harder to find.

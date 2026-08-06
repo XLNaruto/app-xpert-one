@@ -7,10 +7,8 @@ import type {
   EmployeeExperienceFormValues,
   EmployeeFamilyFormValues,
   EmployeeKycFormValues,
-  EmployeeLeaveFormValues,
   EmployeeServiceEditFormValues,
   EmployeeTransferFormValues,
-  LeaveDecisionFormValues,
   LeaveServiceFormValues,
 } from '../schemas'
 import {
@@ -19,14 +17,11 @@ import {
   createEmployeeEducation,
   createEmployeeExperience,
   createEmployeeFamilyMember,
-  createEmployeeLeave,
-  decideEmployeeLeave,
   deleteEmployeeAsset,
   deleteEmployeeDocument,
   deleteEmployeeEducation,
   deleteEmployeeExperience,
   deleteEmployeeFamilyMember,
-  deleteEmployeeLeave,
   leaveEmployeeService,
   saveEmployeeKyc,
   transferEmployee,
@@ -36,13 +31,12 @@ import {
   updateEmployeeExperience,
   updateEmployeeFamilyMember,
   updateEmployeeKyc,
-  updateEmployeeLeave,
   updateEmployeeService,
   uploadEmployeeDocumentFile,
 } from './employee-step-api'
 
 /**
- * Write hooks for steps 2–9.
+ * Write hooks for steps 2–8.
  *
  * Each one invalidates `queryKeys.employee.all`, not just its own collection.
  * That's deliberate: `completed_steps` lives on the employee record, so saving a
@@ -270,8 +264,14 @@ export function useDeleteEmployeeAsset(employeeId: number) {
 export function useTransferEmployee(employeeId: number) {
   const invalidate = useInvalidateEmployee()
   return useMutation({
-    mutationFn: (values: EmployeeTransferFormValues) =>
-      transferEmployee(employeeId, values),
+    mutationFn: ({
+      values,
+      currentCompanyId,
+    }: {
+      values: EmployeeTransferFormValues
+      /** The company being left — what tells a company move from a branch one. */
+      currentCompanyId?: number
+    }) => transferEmployee(employeeId, values, currentCompanyId),
     onSuccess: invalidate,
   })
 }
@@ -306,54 +306,6 @@ export function useLeaveEmployeeService(employeeId: number) {
       serviceId: number
       values: LeaveServiceFormValues
     }) => leaveEmployeeService(employeeId, serviceId, values),
-    onSuccess: invalidate,
-  })
-}
-
-/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
-
-/** Leave records live in their own collection, so they get their own refresh. */
-function useInvalidateLeaves() {
-  const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.employeeLeave.all })
-}
-
-export function useCreateEmployeeLeave(employeeId: number) {
-  const invalidate = useInvalidateLeaves()
-  return useMutation({
-    mutationFn: (values: EmployeeLeaveFormValues) =>
-      createEmployeeLeave(employeeId, values),
-    onSuccess: invalidate,
-  })
-}
-
-export function useUpdateEmployeeLeave() {
-  const invalidate = useInvalidateLeaves()
-  return useMutation({
-    mutationFn: ({ id, values }: { id: number; values: EmployeeLeaveFormValues }) =>
-      updateEmployeeLeave(id, values),
-    onSuccess: invalidate,
-  })
-}
-
-export function useDeleteEmployeeLeave() {
-  const invalidate = useInvalidateLeaves()
-  return useMutation({
-    mutationFn: (id: number) => deleteEmployeeLeave(id),
-    onSuccess: invalidate,
-  })
-}
-
-/**
- * PATCH …/status — the Approve / Reject button. Only a pending row can be
- * decided, so a second decision comes back 400 and the screen shows the server's
- * message.
- */
-export function useDecideEmployeeLeave() {
-  const invalidate = useInvalidateLeaves()
-  return useMutation({
-    mutationFn: ({ id, values }: { id: number; values: LeaveDecisionFormValues }) =>
-      decideEmployeeLeave(id, values),
     onSuccess: invalidate,
   })
 }

@@ -40,7 +40,7 @@ export function Topbar() {
   const phone =
     profile?.phone?.replace(/^\+91/, '') ??
     user?.phone?.replace(/^\+91/, '') ??
-    user?.username
+    user?.email
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">

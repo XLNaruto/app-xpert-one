@@ -24,8 +24,6 @@ const AADHAR_RE = /^\d{12}$/
 const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
 const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
 const DECIMAL_RE = /^\d+(\.\d{1,2})?$/
-/** `HH:MM`, 24-hour — the format the half-day times travel in. */
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 /** `yyyy-MM` — the month format an experience row's dates travel in. */
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 
@@ -1093,8 +1091,9 @@ export interface EmployeeAssetPayload {
 
 /**
  * A transfer: the leaving details that close the current posting plus the full
- * terms of the new one. `transferType` tells the API which kind of move it is —
- * a company change carries `newCompanyId`, a branch change stays in the tenant.
+ * terms of the new one. The destination company is picked directly — the API's
+ * `transfer_type` is derived from whether it differs from the company being
+ * left, so there is no separate "kind of move" question to answer.
  */
 export const employeeTransferSchema = z
   .object({
@@ -1105,10 +1104,9 @@ export const employeeTransferSchema = z
       .min(1, 'Please enter the leaving reason')
       .max(500, 'Cannot exceed 500 characters'),
 
-    transferType: z.string().trim().min(1, 'Please choose the transfer type'),
-    newCompanyId: z.string(),
+    companyId: z.string().trim().min(1, 'Please select the company'),
 
-    branchId: z.string(),
+    branchId: z.string().trim().min(1, 'Please select the branch'),
     departmentId: z.string(),
     designationId: z.string().trim().min(1, 'Please select a designation'),
     grade: z.string().trim().min(1, 'Please select a grade'),
@@ -1118,14 +1116,6 @@ export const employeeTransferSchema = z
     joiningDate: z.string().trim().min(1, 'Please select the new joining date'),
     confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
     renewalDate: z.string(),
-  })
-  .refine((v) => v.transferType !== 'company' || v.newCompanyId.trim() !== '', {
-    path: ['newCompanyId'],
-    message: 'Please select the new company',
-  })
-  .refine((v) => v.transferType !== 'branch' || v.branchId.trim() !== '', {
-    path: ['branchId'],
-    message: 'Please select the new branch',
   })
   // The new posting has to start after the old one closed, never on the same day.
   .refine((v) => !v.leavingDate || !v.joiningDate || v.joiningDate > v.leavingDate, {
@@ -1145,7 +1135,13 @@ export type EmployeeTransferFormValues = z.infer<typeof employeeTransferSchema>
 
 /**
  * The restricted edit of the latest posting — a correction, not a move: no
- * leaving details and no transfer type, since nothing is being closed.
+ * leaving details and nothing being closed.
+ *
+ * The three dates aren't asked for either: the dialog corrects *where* the
+ * posting sits, not when it ran. They stay in the form, seeded from the record
+ * and written back untouched, which is why none of them is required here — a
+ * posting saved without a confirmation date would otherwise be unsubmittable
+ * against a field the user can't see.
  */
 export const employeeServiceEditSchema = z
   .object({
@@ -1156,13 +1152,9 @@ export const employeeServiceEditSchema = z
     employmentType: z.string().trim().min(1, 'Please select an employment type'),
     contractPeriod: z.string(),
     contractPeriodType: z.string(),
-    joiningDate: z.string().trim().min(1, 'Please select the joining date'),
-    confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+    joiningDate: z.string(),
+    confirmationDate: z.string(),
     renewalDate: z.string(),
-  })
-  .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
-    path: ['confirmationDate'],
-    message: 'Confirmation date cannot be before the joining date',
   })
   .refine(
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
@@ -1293,105 +1285,4 @@ export interface EmployeeServiceEditPayload {
 export interface LeaveServicePayload {
   leaving_date: string
   leaving_reason: string
-}
-
-/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
-
-/**
- * A leave record. `payType` is derived from the chosen leave type's own pay type
- * and shown read-only, so the two can never disagree.
- */
-export const employeeLeaveSchema = z
-  .object({
-    leaveTypeId: z.string().trim().min(1, 'Please select a leave type'),
-    fromDate: z.string().trim().min(1, 'Please select the from date'),
-    toDate: z.string().trim().min(1, 'Please select the to date'),
-    duration: z.string().trim().min(1, 'Please select the duration'),
-    fromTime: z.string(),
-    toTime: z.string(),
-    payType: z.string(),
-    status: z.string(),
-    leaveReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
-  })
-  .refine((v) => !v.fromDate || !v.toDate || v.toDate >= v.fromDate, {
-    path: ['toDate'],
-    message: '"To" date cannot be before the "from" date',
-  })
-  // A half day is a slice of one day, so it carries the two times a full day mustn't.
-  .refine((v) => v.duration !== 'HALF_DAY' || TIME_RE.test(v.fromTime), {
-    path: ['fromTime'],
-    message: 'Enter a start time as HH:MM',
-  })
-  .refine((v) => v.duration !== 'HALF_DAY' || TIME_RE.test(v.toTime), {
-    path: ['toTime'],
-    message: 'Enter an end time as HH:MM',
-  })
-  .refine(
-    (v) => v.duration !== 'HALF_DAY' || !v.fromTime || !v.toTime || v.toTime > v.fromTime,
-    { path: ['toTime'], message: 'End time must be after the start time' },
-  )
-  .refine((v) => v.duration !== 'HALF_DAY' || v.fromDate === v.toDate, {
-    path: ['toDate'],
-    message: 'A half day covers a single date',
-  })
-
-export type EmployeeLeaveFormValues = z.infer<typeof employeeLeaveSchema>
-
-/** The Approve / Reject decision on a pending leave. */
-export const leaveDecisionSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED']),
-  remark: z.string().trim().max(500, 'Cannot exceed 500 characters'),
-})
-
-export type LeaveDecisionFormValues = z.infer<typeof leaveDecisionSchema>
-
-export const employeeLeaveResponseSchema = z.object({
-  id: z.number(),
-  employee_id: z.number(),
-  employee_name: z.string().nullish(),
-  employee_code: z.string().nullish(),
-  company_id: z.number(),
-  from_date: z.string().nullish(),
-  to_date: z.string().nullish(),
-  duration: z.enum(['FULL_DAY', 'HALF_DAY']),
-  from_time: z.string().nullish(),
-  to_time: z.string().nullish(),
-  pay_type: z.enum(['PAID', 'UNPAID']),
-  leave_type_id: z.number().nullish(),
-  leave_type: z.string().nullish(),
-  leave_type_name: z.string().nullish(),
-  leave_reason: z.string().nullish(),
-  attachment: z.string().nullish(),
-  status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
-  status_remark: z.string().nullish(),
-  status_at: z.string().nullish(),
-  created_at: z.string().nullish(),
-  created_by_name: z.string().nullish(),
-  updated_at: z.string().nullish(),
-  updated_by_name: z.string().nullish(),
-})
-
-export type EmployeeLeaveResponse = z.infer<typeof employeeLeaveResponseSchema>
-
-export const employeeLeaveListResponseSchema = z.object({
-  items: z.array(employeeLeaveResponseSchema),
-  total: z.number(),
-})
-
-export interface EmployeeLeavePayload {
-  employee_id?: number
-  status?: string
-  from_date: string | null
-  to_date: string | null
-  duration: string
-  from_time?: string
-  to_time?: string
-  leave_reason: string | null
-  pay_type: string
-  leave_type_id: number | null
-}
-
-export interface LeaveDecisionPayload {
-  status: 'APPROVED' | 'REJECTED'
-  remark: string | null
 }

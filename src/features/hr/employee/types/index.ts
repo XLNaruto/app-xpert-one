@@ -345,35 +345,3 @@ export interface EmployeeTransferDetail {
   wageStructure: EmployeeTransferWageStructure
   serviceDetail: EmployeeServiceDetail
 }
-
-/* ── Step 9 — leave ──────────────────────────────────────────────────────── */
-
-export type LeaveDuration = 'FULL_DAY' | 'HALF_DAY'
-export type LeavePayType = 'PAID' | 'UNPAID'
-export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-export interface EmployeeLeave extends AuditFields {
-  id: number
-  employeeId: number
-  employeeName: string
-  employeeCode: string
-  companyId: number
-  fromDate: string
-  toDate: string
-  duration: LeaveDuration
-  /** `HH:MM` — only a half day carries the two times. */
-  fromTime: string
-  toTime: string
-  payType: LeavePayType
-  leaveTypeId: number | null
-  /** Free-text type, for a leave recorded without a master row behind it. */
-  leaveType: string
-  leaveTypeName: string
-  leaveReason: string
-  /** Object key of the proof file, to be resolved with `mediaUrl()`. */
-  attachment: string
-  status: LeaveStatus
-  /** The note the employee reads — a rejection reason, typically. */
-  statusRemark: string
-  statusAt: string
-}

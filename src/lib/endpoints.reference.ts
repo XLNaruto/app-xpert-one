@@ -24,7 +24,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  * AUTH.LOGIN — POST /user/auth/login                       (no bearer)
  * ───────────────────────────────────────────────────────────────────────────
- * →  { "username": "jdoe", "password": "secret" }
+ * →  { "email": "jdoe@acme.com", "password": "secret", "source": "WEB" }
  * ←  {
  *      "access_token": "…",
  *      "refresh_token": "…",
@@ -33,14 +33,21 @@
  *        "id": 1,
  *        "account_id": 1,
  *        "email": "jdoe@acme.com",
- *        "username": "jdoe",
  *        "name": "J Doe",
  *        "role_id": 2 | null,
- *        "company_id": 5 | null            // active company, or null → must select one
+ *        "company_id": 5 | null,           // active company, or null → must select one
+ *        "last_selected_company_id": 5 | null,
+ *        "is_owner": false
  *      }
  *    }
- * Notes: signing in from a new device invalidates the account's earlier
- * sessions, so other open tabs 401 and get signed out.
+ * Notes: one form for everyone — `email` is unique platform-wide, so an account
+ * owner and a tenant-created admin sign in identically (there is no `is_owner`
+ * flag or company code to send). `source: "WEB"` allows exactly ONE browser
+ * session, so signing in again on the web signs the previous browser out, while
+ * the user's `APP` sessions on their phones are untouched. It also picks the
+ * permission the login is checked against — `web:access` — so a user without
+ * panel access gets a 403, not a 401 (owners are exempt on WEB). A wrong
+ * password and an unknown address both answer 401.
  * Code: `features/auth/api/auth-api.ts` → `loginRequest`
  * Schema: `loginResponseSchema` (`features/auth/schemas.ts`)
  *

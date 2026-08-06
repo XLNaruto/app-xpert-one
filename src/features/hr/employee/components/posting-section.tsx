@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 import { Briefcase } from 'lucide-react'
 import { Field } from '@/components/common/form-field'
@@ -40,20 +41,43 @@ export function PostingSection({
   options,
   /** Hide the heading when the host already provides one (a dialog, typically). */
   showHeading = true,
+  /**
+   * Hide the joining, confirmation and renewal dates. The restricted edit is a
+   * correction of *where* the posting sits, not of when it ran — its dates stay
+   * as the record holds them and travel back to the API untouched.
+   */
+  showDates = true,
 }: {
   options: PostingOptions
   showHeading?: boolean
+  showDates?: boolean
 }) {
   const {
     register,
     control,
     watch,
     setValue,
+    trigger,
     formState: { errors },
   } = useFormContext<PostingSectionValues>()
 
   const employmentType = watch('employmentType')
   const joiningDate = watch('joiningDate')
+
+  /*
+   * Confirmation and renewal are only valid relative to the joining date, but a
+   * resolver-backed form refreshes the error of the field the user just changed
+   * and no other. So moving the joining date up to meet a confirmation date
+   * leaves that field still showing "cannot be before the joining date" against
+   * two dates that now match. Re-check the dependants whenever it moves.
+   */
+  useEffect(() => {
+    const stale = (['confirmationDate', 'renewalDate'] as const).filter(
+      (name) => errors[name],
+    )
+    if (stale.length) void trigger(stale)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joiningDate])
   // A permanent posting has no period to run out, so the contract block and the
   // renewal date have nothing to say — and the mappers drop them from the body.
   const isContractual = employmentType !== PERMANENT_EMPLOYMENT_TYPE
@@ -203,34 +227,38 @@ export function PostingSection({
         </Field>
       )}
 
-      <DateField
-        control={control}
-        name="joiningDate"
-        label="Joining Date"
-        required
-        error={errors.joiningDate?.message}
-      />
+      {showDates && (
+        <>
+          <DateField
+            control={control}
+            name="joiningDate"
+            label="Joining Date"
+            required
+            error={errors.joiningDate?.message}
+          />
 
-      <DateField
-        control={control}
-        name="confirmationDate"
-        label="Confirmation Date"
-        required
-        error={errors.confirmationDate?.message}
-        // Confirmation is an event within the posting, so it can't precede its start.
-        minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
-      />
+          <DateField
+            control={control}
+            name="confirmationDate"
+            label="Confirmation Date"
+            required
+            error={errors.confirmationDate?.message}
+            // Confirmation is an event within the posting, so it can't precede its start.
+            minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
+          />
 
-      {isContractual && (
-        <DateField
-          control={control}
-          name="renewalDate"
-          label="Renewal Date"
-          required
-          error={errors.renewalDate?.message}
-          hint="Filled in from the joining date and the contract period — override it if the contract says otherwise."
-          minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
-        />
+          {isContractual && (
+            <DateField
+              control={control}
+              name="renewalDate"
+              label="Renewal Date"
+              required
+              error={errors.renewalDate?.message}
+              hint="Filled in from the joining date and the contract period — override it if the contract says otherwise."
+              minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
+            />
+          )}
+        </>
       )}
     </>
   )

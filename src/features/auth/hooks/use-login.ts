@@ -20,7 +20,7 @@ export function useLogin() {
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: '', password: '', remember: false },
+    defaultValues: { email: '', password: '', remember: false },
   })
 
   const onSubmit = handleSubmit((v) =>

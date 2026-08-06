@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden, NotFound } from '@/features/error'
+import { useLeaves } from '@/features/hr/leave'
 import { useEmployee } from '../api/use-employees'
 import {
   useEmployeeAssets,
@@ -47,7 +48,6 @@ import {
   useEmployeeExperiences,
   useEmployeeFamily,
   useEmployeeKyc,
-  useEmployeeLeaves,
   useEmployeeTransfers,
   useEmployeeWageStructure,
 } from '../api/use-employee-steps'
@@ -63,12 +63,12 @@ function maritalStatusLabel(value: string): string {
 }
 
 /**
- * The read-only 360° view of one employee — everything the nine steps captured, on
+ * The read-only 360° view of one employee — everything the eight steps captured, on
  * one page, so a record can be checked without stepping through the wizard.
  *
  * It reads all ten endpoints at once, which is the right trade here: this is the
  * screen someone opens to answer a question, and paging them one section at a time
- * would mean nine waits instead of one.
+ * would mean eight waits instead of one.
  */
 export function EmployeeDetailPage({ data }: { data?: string }) {
   const navigate = useNavigate()
@@ -88,7 +88,8 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
   const documents = useEmployeeDocuments(id)
   const assets = useEmployeeAssets(id)
   const transfers = useEmployeeTransfers(id)
-  const leaves = useEmployeeLeaves({ limit: 5, offset: 0 }, { employeeId: id })
+  // The register itself lives in Leave Management; this is the last five rows of it.
+  const leaves = useLeaves({ limit: 5, offset: 0 }, { employeeId: id })
 
   // No usable token — nothing to show.
   if (employeeId === undefined) return <NotFound />
@@ -622,7 +623,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
         <ListSection
           icon={CalendarDays}
           title="Recent Leave"
-          description="The five most recent records — the full register is on the Leave Management step"
+          description="The five most recent records — the full register is under Leave Management"
           isLoading={leaves.isLoading}
           isEmpty={(leaves.data?.items ?? []).length === 0}
           emptyMessage="No leave recorded."

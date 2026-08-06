@@ -1,12 +1,9 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Plus, UserRoundX, UsersRound } from 'lucide-react'
+import { Plus, UsersRound } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
-import { ConfirmDialog } from '@/components/common/confirm-dialog'
-import { Field } from '@/components/common/form-field'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { formatDate } from '@/lib/utils'
@@ -23,7 +20,7 @@ import type { Employee } from '../types'
  * Employee Management — the module's entry point.
  *
  * A row is one person plus their current posting, and the Progress column says
- * how much of the nine-step record is filled in, so a half-entered employee is
+ * how much of the eight-step record is filled in, so a half-entered employee is
  * visible at a glance rather than only once you open them.
  *
  * `GET /user/employees` searches the name, the employee code and either mobile
@@ -50,17 +47,6 @@ export function EmployeeListPage() {
     goToCreate,
     goToEdit,
     goToDetail,
-    pendingDeactivate,
-    deactivateReason,
-    setDeactivateReason,
-    startDeactivate,
-    cancelDeactivate,
-    confirmDeactivate,
-    isLoadingTarget,
-    canDeactivate,
-    alreadyLeftOn,
-    targetJoiningDate,
-    isDeactivating,
   } = useEmployeeList()
 
   const columns = useMemo<ColumnDef<Employee>[]>(
@@ -83,7 +69,6 @@ export function EmployeeListPage() {
           <EmployeeRowActions
             onView={() => goToDetail(row.original.id)}
             onEdit={() => goToEdit(row.original.id)}
-            onDeactivate={() => startDeactivate(row.original)}
           />
         ),
       },
@@ -145,7 +130,7 @@ export function EmployeeListPage() {
     <div>
       <PageHeader
         title="Employee Management"
-        description="Add employees and complete their nine-step record."
+        description="Add employees and complete their eight-step record."
         actions={
           <Button onClick={goToCreate}>
             <Plus className="size-4" />
@@ -191,65 +176,6 @@ export function EmployeeListPage() {
           }
         />
       )}
-
-      {/*
-        Deactivate closes the open posting (`…/leave-service`) — the API has no
-        employee delete, and this is what takes someone off strength. The reason
-        is required by the endpoint, so the dialog can't be confirmed without one.
-      */}
-      <ConfirmDialog
-        open={pendingDeactivate !== null}
-        onOpenChange={(open) => !open && cancelDeactivate()}
-        variant="destructive"
-        icon={UserRoundX}
-        title="Deactivate this employee?"
-        description={
-          pendingDeactivate ? (
-            <>
-              <strong className="text-foreground">
-                {pendingDeactivate.name || 'This employee'}
-              </strong>{' '}
-              will be marked as having left today
-              {targetJoiningDate
-                ? ` — their posting since ${formatDate(targetJoiningDate)} is closed`
-                : ''}
-              . The record and its history stay intact, and a new posting can be opened
-              later from the Service History tab.
-            </>
-          ) : undefined
-        }
-        confirmLabel="Deactivate"
-        cancelLabel="Cancel"
-        loading={isDeactivating}
-        confirmDisabled={
-          isLoadingTarget || !canDeactivate || deactivateReason.trim() === ''
-        }
-        keepOpenOnConfirm
-        onConfirm={confirmDeactivate}
-      >
-        {/*
-          The list row doesn't carry the posting — only the detail read does — so
-          the dialog reads it and says plainly when there's nothing left to close.
-        */}
-        {isLoadingTarget ? (
-          <p className="text-sm text-muted-foreground">Checking the current posting…</p>
-        ) : !canDeactivate ? (
-          <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
-            {alreadyLeftOn
-              ? `This employee already left on ${formatDate(alreadyLeftOn)} — there's no open posting to close.`
-              : "This employee has no open posting, so there's nothing to close."}
-          </p>
-        ) : (
-          <Field label="Reason for leaving" required>
-            <Textarea
-              value={deactivateReason}
-              onChange={(event) => setDeactivateReason(event.target.value)}
-              placeholder="e.g. Resigned, contract ended, absconded"
-              rows={3}
-            />
-          </Field>
-        )}
-      </ConfirmDialog>
     </div>
   )
 }

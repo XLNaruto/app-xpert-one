@@ -254,12 +254,12 @@ export const queryKeys = {
       [...queryKeys.employee.all, 'transfer', id, serviceId] as const,
   },
   /**
-   * Step 9 — leave records. `employeeId` scopes the list to one employee's tab
-   * (`0` is the company-wide queue), and the filters travel in the key alongside
-   * the page since each combination is its own result set.
+   * Leave Management — the company-wide leave register. `employeeId` scopes the
+   * list to one person (`0` is the whole company), and the filters travel in the
+   * key alongside the page since each combination is its own result set.
    */
-  employeeLeave: {
-    all: ['employee-leave'] as const,
+  leave: {
+    all: ['leave'] as const,
     list: (
       employeeId?: number,
       params?: PageParams,
@@ -267,14 +267,14 @@ export const queryKeys = {
     ) =>
       params
         ? ([
-            ...queryKeys.employeeLeave.all,
+            ...queryKeys.leave.all,
             'list',
             employeeId ?? 0,
             params,
             filters ?? {},
           ] as const)
-        : ([...queryKeys.employeeLeave.all, 'list', employeeId ?? 0] as const),
-    detail: (id: number) => [...queryKeys.employeeLeave.all, 'detail', id] as const,
+        : ([...queryKeys.leave.all, 'list', employeeId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.leave.all, 'detail', id] as const,
   },
   bank: {
     all: ['bank'] as const,

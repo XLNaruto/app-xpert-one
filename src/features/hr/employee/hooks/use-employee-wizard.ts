@@ -28,12 +28,12 @@ export interface EmployeeWizardStep {
   locked: boolean
   /** Saved at least once, per `completed_steps`. */
   completed: boolean
-  /** Counted toward the progress ring (steps 8 and 9 are not). */
+  /** Counted toward the progress ring (step 8 is not). */
   counted: boolean
 }
 
 /**
- * Owns the nine-step wizard: which step is open, which are reachable, and how
+ * Owns the eight-step wizard: which step is open, which are reachable, and how
  * complete the record is.
  *
  * **Why every step but the first is locked on a new employee.** The API creates

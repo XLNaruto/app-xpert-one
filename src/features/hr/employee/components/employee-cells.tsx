@@ -1,4 +1,4 @@
-import { Eye, Pencil, UserRoundX } from 'lucide-react'
+import { Eye, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
@@ -108,29 +108,20 @@ function ActionButton({
 }
 
 /**
- * The list's row actions.
- *
- * View and Edit are the two ways into the record; Deactivate closes the open
- * posting, which is what takes an employee off strength.
+ * The list's row actions — View and Edit, the two ways into the record.
  *
  * There is no Delete: the API exposes no `DELETE /user/employees/:id`, and
  * deliberately so — payroll, attendance and leave history all reference the row,
- * so removing it would orphan them. Deactivate is the endpoint that models the
- * intent.
- *
- * Deactivate is always offered here, because a list row can't tell whether a
- * posting is open — `GET /user/employees` doesn't send `service`. The dialog reads
- * the one record and refuses there if the employee has already left, which is
- * better than greying out an action on data the row doesn't have.
+ * so removing it would orphan them. Taking someone off strength means closing
+ * their open posting, which is done from the Service History tab where the
+ * leaving date and reason are chosen.
  */
 export function EmployeeRowActions({
   onView,
   onEdit,
-  onDeactivate,
 }: {
   onView: () => void
   onEdit: () => void
-  onDeactivate: () => void
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -145,12 +136,6 @@ export function EmployeeRowActions({
         icon={Pencil}
         onClick={onEdit}
         className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
-      />
-      <ActionButton
-        label="Deactivate"
-        icon={UserRoundX}
-        onClick={onDeactivate}
-        className="bg-destructive/10 text-destructive hover:bg-destructive/20"
       />
     </div>
   )

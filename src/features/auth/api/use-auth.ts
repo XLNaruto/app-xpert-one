@@ -8,15 +8,15 @@ import type { LoginValues } from '../schemas'
 import type { AuthSession } from '../types'
 
 /** Demo session for `VITE_USE_MOCK_API=true` (no backend reachable). */
-async function mockLogin({ username }: LoginValues): Promise<AuthSession> {
+async function mockLogin({ email }: LoginValues): Promise<AuthSession> {
   await mockDelay(undefined, 600)
+  const handle = email.split('@')[0]
   return {
     user: {
       id: 0,
       accountId: 0,
-      email: `${username}@example.com`,
-      username,
-      name: username.charAt(0).toUpperCase() + username.slice(1),
+      email,
+      name: handle.charAt(0).toUpperCase() + handle.slice(1),
       roleId: null,
       companyId: null,
       isOwner: true,

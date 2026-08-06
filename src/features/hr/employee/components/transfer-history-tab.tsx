@@ -32,7 +32,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Forbidden } from '@/features/error'
 import { formatAmount } from '@/lib/currency'
 import { formatDate } from '@/lib/utils'
-import { TRANSFER_TYPE_OPTIONS } from '../constants'
 import { useEmployeeTransferTab } from '../hooks/use-employee-transfer-tab'
 import { PostingSection } from './posting-section'
 import { StepDialog } from './step-dialog'
@@ -170,7 +169,6 @@ export function TransferHistoryTab({
 
   const transferErrors = tab.transfer.form.formState.errors
   const leaveErrors = tab.leave.form.formState.errors
-  const transferType = tab.transfer.form.watch('transferType')
 
   return (
     <div>
@@ -195,7 +193,7 @@ export function TransferHistoryTab({
           <Button
             type="button"
             size="sm"
-            disabled={!tab.hasOpenPosting}
+            disabled={!tab.canAddService}
             onClick={tab.startTransfer}
           >
             <ArrowRightLeft className="size-4" />
@@ -206,8 +204,8 @@ export function TransferHistoryTab({
 
       {!tab.hasOpenPosting && !tab.isLoading && tab.rows.length > 0 && (
         <p className="mt-4 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
-          This employee has no open posting — they've left. Nothing further can be
-          transferred or closed until a new posting exists.
+          This employee has no open posting — they've left. Nothing is left to
+          close; Add Service starts a fresh posting if they rejoin.
         </p>
       )}
 
@@ -249,17 +247,25 @@ export function TransferHistoryTab({
           open={tab.dialog === 'transfer'}
           onOpenChange={(open) => !open && tab.closeDialog()}
           title="Add Service"
-          description="One call closes the current posting and opens the new one, so the history survives."
+          description={
+            tab.isRejoining
+              ? 'The employee has already left — this opens a fresh posting on top of the closed history.'
+              : 'One call closes the current posting and opens the new one, so the history survives.'
+          }
           onSubmit={tab.transfer.onSubmit}
           isPending={tab.transfer.isPending}
-          submitLabel="Transfer"
+          submitLabel={tab.isRejoining ? 'Add Service' : 'Transfer'}
           size="wide"
         >
           <div className="sm:col-span-2">
             <FormSection
               icon={LogOut}
-              title="Close the current posting"
-              description="The leaving details recorded against the posting being left"
+              title={tab.isRejoining ? 'The posting being followed' : 'Close the current posting'}
+              description={
+                tab.isRejoining
+                  ? 'Already closed — the exit is repeated here as it was recorded'
+                  : 'The leaving details recorded against the posting being left'
+              }
               className="mt-0"
             />
           </div>
@@ -297,62 +303,43 @@ export function TransferHistoryTab({
             />
           </div>
 
+          {/*
+            The company is picked outright — seeded with the one being left, so a
+            plain branch move is just leaving it alone. Whether the API is told
+            'company' or 'branch' follows from that choice.
+          */}
           <Field
-            label="Transfer Type"
+            label="Company"
             required
-            error={transferErrors.transferType?.message}
-            hint="A company change moves the employee to another company on the account; a branch change keeps them here."
+            error={transferErrors.companyId?.message}
+            hint="Leave it as it is for a move inside the same company; pick another to transfer the employee across."
           >
             <Controller
               control={tab.transfer.form.control}
-              name="transferType"
+              name="companyId"
               render={({ field }) => (
                 <Combobox
                   className="w-full"
-                  searchable={false}
                   value={field.value}
                   onChange={field.onChange}
-                  options={TRANSFER_TYPE_OPTIONS}
-                  placeholder="Select transfer type"
+                  options={tab.transfer.companyOptions}
+                  placeholder={
+                    tab.transfer.isCompaniesLoading ? 'Loading…' : 'Select company'
+                  }
+                  searchPlaceholder="Search company"
                 />
               )}
             />
           </Field>
 
-          {transferType === 'company' && (
-            <Field
-              label="New Company"
-              required
-              error={transferErrors.newCompanyId?.message}
-            >
-              <Controller
-                control={tab.transfer.form.control}
-                name="newCompanyId"
-                render={({ field }) => (
-                  <Combobox
-                    className="w-full"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={tab.transfer.companyOptions}
-                    placeholder={
-                      tab.transfer.isCompaniesLoading ? 'Loading…' : 'Select company'
-                    }
-                    searchPlaceholder="Search company"
-                  />
-                )}
-              />
-            </Field>
-          )}
-
           {/*
-            A company transfer points at the destination company's own branches,
-            departments and designations — so those lists can't be shown until the
-            company is chosen.
+            Branches, departments and designations all belong to the chosen
+            company, so those lists can't be shown until one is picked.
           */}
           {tab.transfer.needsCompany ? (
             <p className="sm:col-span-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-              Choose the new company first — the branch, department and designation
-              lists below belong to it, not to the company being left.
+              Choose the company first — the branch, department and designation lists
+              below belong to it.
             </p>
           ) : (
             <PostingSection options={tab.transfer.options} showHeading={false} />
@@ -380,7 +367,11 @@ export function TransferHistoryTab({
               ))}
             </div>
           ) : (
-            <PostingSection options={tab.edit.options} showHeading={false} />
+            <PostingSection
+              options={tab.edit.options}
+              showHeading={false}
+              showDates={false}
+            />
           )}
         </StepDialog>
       </FormProvider>
@@ -489,8 +480,8 @@ function PostingDetailDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl" onClose={() => onOpenChange(false)}>
+        <DialogHeader className="pr-10">
           <DialogTitle>Posting Detail</DialogTitle>
           <DialogDescription>
             {detail
