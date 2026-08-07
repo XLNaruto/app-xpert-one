@@ -136,6 +136,21 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                   )}
                 />
               </Field>
+              {/* Blank inherits the company's shift hours. */}
+              <Field
+                label="Shift Hours"
+                error={errors.shiftHours?.message}
+                hint="Hours a shift may run before an open check-in is abandoned. Leave blank to inherit the company's."
+              >
+                <Input
+                  type="number"
+                  min={0.5}
+                  max={24}
+                  step={0.5}
+                  placeholder="Shift Hours"
+                  {...register('shiftHours')}
+                />
+              </Field>
 
               <div className="col-span-full mt-4 flex items-center justify-end gap-3 border-t border-border pt-5">
                 <Button

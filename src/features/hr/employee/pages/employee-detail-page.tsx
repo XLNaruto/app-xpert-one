@@ -1,95 +1,102 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import {
   ArrowLeft,
   ArrowRightLeft,
-  BadgeCheck,
+  Banknote,
   Boxes,
   Briefcase,
   CalendarDays,
-  Droplet,
-  ExternalLink,
+  CheckCircle2,
+  Download,
+  Eye,
   FileStack,
+  FileText,
   GraduationCap,
   Heart,
-  Home,
+  IdCard,
   Landmark,
-  Mail,
+  LogOut,
   MapPin,
   Pencil,
   Phone,
-  Ruler,
+  Plane,
+  ScanFace,
   ShieldCheck,
-  Users,
   UserRound,
-  Weight,
+  Users,
+  XCircle,
+  type LucideIcon,
 } from 'lucide-react'
-import { decryptId, encryptId } from '@/lib/crypto'
-import { useMediaResolver, useMediaUrl } from '@/hooks/use-media-url'
-import { formatDate } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
 import { formatAmount } from '@/lib/currency'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { useMediaResolver, useMediaUrl } from '@/hooks/use-media-url'
 import { PageHeader } from '@/components/common/page-header'
+import { CollapsibleSection } from '@/components/common/collapsible-section'
 import { DetailItem } from '@/components/common/detail-item'
 import { EmptyState } from '@/components/common/empty-state'
-import { FormSection } from '@/components/common/form-section'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden, NotFound } from '@/features/error'
-import { useLeaves } from '@/features/hr/leave'
-import { useEmployee } from '../api/use-employees'
 import {
-  useEmployeeAssets,
-  useEmployeeDocuments,
-  useEmployeeEducations,
-  useEmployeeExperiences,
-  useEmployeeFamily,
-  useEmployeeKyc,
-  useEmployeeTransfers,
-  useEmployeeWageStructure,
-} from '../api/use-employee-steps'
-import { EMPLOYEE_PROGRESS_STEPS, MARITAL_STATUS_OPTIONS } from '../constants'
-import { stepProgress } from '../lib/employee-mappers'
+  EMPLOYMENT_TYPE_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  CONTRACT_PERIOD_TYPE_OPTIONS,
+} from '../constants'
+import { useEmployeeDetail } from '../hooks/use-employee-detail'
 import { isDocumentExpired } from '../lib/employee-step-mappers'
-import { toFormDate } from '../lib/employee-dates'
-import type { Employee } from '../types'
+import type { Employee, EmployeeTransfer } from '../types'
 
-/** The employee's marital status, spelled the way a reader expects. */
-function maritalStatusLabel(value: string): string {
-  return MARITAL_STATUS_OPTIONS.find((option) => option.value === value)?.label ?? value
+/** An option value → its label, falling back to the stored value. */
+function labelOf(
+  options: { label: string; value: string }[],
+  value: string | undefined,
+): string {
+  if (!value) return ''
+  return options.find((option) => option.value === value)?.label ?? value
+}
+
+/** An API date → what the screen shows, blank staying blank. */
+function onDate(value: string | null | undefined): string | null {
+  return value ? formatDate(value) : null
 }
 
 /**
- * The read-only 360° view of one employee — everything the eight steps captured, on
- * one page, so a record can be checked without stepping through the wizard.
+ * The read-only 360° view of one employee — everything the eight steps captured,
+ * on one page.
  *
- * It reads all ten endpoints at once, which is the right trade here: this is the
- * screen someone opens to answer a question, and paging them one section at a time
- * would mean eight waits instead of one.
+ * Every part of the record is its own collapsible section, opening on the ones
+ * that answer most questions (who they are, how to reach them, where they sit)
+ * and leaving the registers — documents, postings, leave — shut but counted, so
+ * the page opens short and the header alone says what's inside each block.
  */
 export function EmployeeDetailPage({ data }: { data?: string }) {
-  const navigate = useNavigate()
-  const employeeId = decryptId(data)
+  const {
+    employeeId,
+    detail,
+    employee,
+    kyc,
+    wage,
+    family,
+    educations,
+    experiences,
+    documents,
+    assets,
+    transfers,
+    leaves,
+    posting,
+    isActive,
+    bankName,
+    stateName,
+    districtName,
+    goToList,
+    goToEdit,
+  } = useEmployeeDetail(data)
+
   const resolveMedia = useMediaResolver()
-
-  const detail = useEmployee(employeeId ?? Number.NaN)
-
-  // Every section below is gated on the id inside its own hook, so these are inert
-  // until there's an employee to read.
-  const id = employeeId ?? Number.NaN
-  const kyc = useEmployeeKyc(id)
-  const wage = useEmployeeWageStructure(id)
-  const family = useEmployeeFamily(id)
-  const educations = useEmployeeEducations(id)
-  const experiences = useEmployeeExperiences(id)
-  const documents = useEmployeeDocuments(id)
-  const assets = useEmployeeAssets(id)
-  const transfers = useEmployeeTransfers(id)
-  // The register itself lives in Leave Management; this is the last five rows of it.
-  const leaves = useLeaves({ limit: 5, offset: 0 }, { employeeId: id })
 
   // No usable token — nothing to show.
   if (employeeId === undefined) return <NotFound />
@@ -98,25 +105,28 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     return <Forbidden description={getApiErrorMessage(detail.error)} />
   }
 
-  const goToList = () => navigate({ to: '/hr/employee' })
-  const goToEdit = () =>
-    navigate({ to: '/hr/employee/create', search: { data: encryptId(employeeId) } })
-
   if (detail.isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-28 w-full" />
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 12 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 w-full" />
-          ))}
-        </div>
+      <div className="space-y-4">
+        <Skeleton className="h-28 w-full rounded-xl" />
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-14 w-full rounded-xl" />
+        ))}
       </div>
     )
   }
 
-  const employee = detail.data
   if (!employee) return <NotFound />
+
+  const service = employee.service
+  const familyRows = family.data ?? []
+  const educationRows = educations.data ?? []
+  const experienceRows = experiences.data ?? []
+  const documentRows = documents.data ?? []
+  const assetRows = assets.data ?? []
+  const transferRows = transfers.data ?? []
+  const leaveRows = leaves.data?.items ?? []
+  const faces = employee.faces
 
   return (
     <div>
@@ -137,657 +147,835 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
         }
       />
 
-      <div className="space-y-6">
-        <EmployeeHero employee={employee} />
+      <div className="space-y-4">
+        <EmployeeHero
+          employee={employee}
+          posting={posting}
+          isActive={isActive}
+        />
 
-        {/* ── Personal ─────────────────────────────────────────────────── */}
+        {/* ── Personal ───────────────────────────────────────────────────── */}
 
-        <Section icon={UserRound} title="Personal" first>
-          <DetailItem icon={UserRound} label="Gender" value={employee.gender || null} />
-          <DetailItem
-            icon={CalendarDays}
-            label="Date of Birth"
-            value={employee.birthDate ? formatDate(employee.birthDate) : null}
-          />
-          <DetailItem
-            icon={Heart}
-            label="Marital Status"
-            value={
-              employee.maritalStatus ? maritalStatusLabel(employee.maritalStatus) : null
-            }
-          />
-          <DetailItem
-            icon={Users}
-            label={employee.relation || 'Relative'}
-            value={employee.relativeName || null}
-          />
-          <DetailItem
-            icon={MapPin}
-            label="Nationality"
-            value={employee.nationality || null}
-          />
-          <DetailItem
-            icon={Droplet}
-            label="Blood Group"
-            value={employee.bloodGroup || null}
-          />
-          <DetailItem
-            icon={Ruler}
-            label="Height"
-            value={employee.height ? `${employee.height} ${employee.heightUnit}` : null}
-          />
-          <DetailItem
-            icon={Weight}
-            label="Weight"
-            value={employee.weight ? `${employee.weight} ${employee.weightUnit}` : null}
-          />
-          <DetailItem
-            icon={Heart}
-            label="Disability"
-            value={employee.isDisability ? 'Recorded' : 'None'}
-          />
-        </Section>
+        <CollapsibleSection icon={UserRound} title="Personal Details">
+          <Grid>
+            <DetailItem
+              label="Full Name"
+              value={
+                [employee.prefix, employee.name].filter(Boolean).join(' ') || null
+              }
+            />
+            <DetailItem label="Gender" value={employee.gender || null} />
+            <DetailItem label="Date of Birth" value={onDate(employee.birthDate)} />
+            <DetailItem
+              label="Marital Status"
+              value={labelOf(MARITAL_STATUS_OPTIONS, employee.maritalStatus) || null}
+            />
+            <DetailItem label="Relation" value={employee.relation || null} />
+            <DetailItem label="Relative Name" value={employee.relativeName || null} />
+            <DetailItem label="Nationality" value={employee.nationality || null} />
+            <DetailItem label="Employee Code" value={employee.code || null} />
+            {employee.remarks && (
+              <DetailItem
+                label="Remarks"
+                value={employee.remarks}
+                className="sm:col-span-2 lg:col-span-4"
+              />
+            )}
+          </Grid>
+        </CollapsibleSection>
 
-        {/* ── Contact & address ────────────────────────────────────────── */}
+        {/* ── Contact ────────────────────────────────────────────────────── */}
 
-        <Section icon={Phone} title="Contact">
-          <DetailItem icon={Phone} label="Mobile" value={employee.mobileNumber1 || null} />
-          <DetailItem
-            icon={Phone}
-            label="Alternate Mobile"
-            value={employee.mobileNumber2 || null}
-          />
-          <DetailItem
-            icon={Phone}
-            label="Landline"
-            value={employee.landlineNumber || null}
-          />
-          <DetailItem icon={Mail} label="Email" value={employee.email || null} />
-        </Section>
+        <CollapsibleSection icon={Phone} title="Contact Details">
+          <Grid>
+            <DetailItem label="Mobile Number 1" value={employee.mobileNumber1 || null} />
+            <DetailItem label="Mobile Number 2" value={employee.mobileNumber2 || null} />
+            <DetailItem label="Landline Number" value={employee.landlineNumber || null} />
+            <DetailItem label="Email Address" value={employee.email || null} />
+          </Grid>
+        </CollapsibleSection>
 
-        <Section icon={Home} title="Current Address">
-          <DetailItem
-            icon={Home}
-            label="Address"
-            value={
-              [
-                employee.currentAddress1,
-                employee.currentAddress2,
-                employee.currentAddress3,
-              ]
-                .filter(Boolean)
-                .join(', ') || null
-            }
-            className="sm:col-span-2"
-          />
-          <DetailItem icon={MapPin} label="City" value={employee.currentCity || null} />
-          <DetailItem
-            icon={MapPin}
-            label="Taluka"
-            value={employee.currentTaluka || null}
-          />
-          <DetailItem
-            icon={MapPin}
-            label="PIN Code"
-            value={employee.currentPinCode || null}
-          />
-          <DetailItem
-            icon={MapPin}
-            label="Country"
-            value={employee.currentCountry || null}
-          />
-        </Section>
+        {/* ── Address ────────────────────────────────────────────────────── */}
 
-        <Section icon={MapPin} title="Permanent Address">
-          <DetailItem
-            icon={Home}
-            label="Address"
-            value={
-              [
-                employee.permanentAddress1,
-                employee.permanentAddress2,
-                employee.permanentAddress3,
-              ]
-                .filter(Boolean)
-                .join(', ') || null
-            }
-            className="sm:col-span-2"
-          />
-          <DetailItem icon={MapPin} label="City" value={employee.permanentCity || null} />
-          <DetailItem
-            icon={MapPin}
-            label="Taluka"
-            value={employee.permanentTaluka || null}
-          />
-          <DetailItem
-            icon={MapPin}
-            label="PIN Code"
-            value={employee.permanentPinCode || null}
-          />
-          <DetailItem
-            icon={MapPin}
-            label="Country"
-            value={employee.permanentCountry || null}
-          />
-        </Section>
+        <CollapsibleSection icon={MapPin} title="Address Details">
+          <SubHeading icon={MapPin} title="Current Address" />
+          <Grid>
+            <DetailItem label="Address Line 1" value={employee.currentAddress1 || null} />
+            <DetailItem label="Address Line 2" value={employee.currentAddress2 || null} />
+            <DetailItem label="Address Line 3" value={employee.currentAddress3 || null} />
+            <DetailItem label="Country" value={employee.currentCountry || null} />
+            <DetailItem
+              label="State"
+              value={stateName(employee.currentStateId) || null}
+            />
+            <DetailItem
+              label="District"
+              value={
+                districtName(
+                  employee.currentStateId,
+                  employee.currentDistrictId,
+                  'current',
+                ) || null
+              }
+            />
+            <DetailItem label="Taluka" value={employee.currentTaluka || null} />
+            <DetailItem label="City" value={employee.currentCity || null} />
+            <DetailItem label="Pincode" value={employee.currentPinCode || null} />
+          </Grid>
 
-        {/* ── Current posting ──────────────────────────────────────────── */}
+          <SubHeading icon={MapPin} title="Permanent Address" />
+          <Grid>
+            <DetailItem
+              label="Address Line 1"
+              value={employee.permanentAddress1 || null}
+            />
+            <DetailItem
+              label="Address Line 2"
+              value={employee.permanentAddress2 || null}
+            />
+            <DetailItem
+              label="Address Line 3"
+              value={employee.permanentAddress3 || null}
+            />
+            <DetailItem label="Country" value={employee.permanentCountry || null} />
+            <DetailItem
+              label="State"
+              value={stateName(employee.permanentStateId) || null}
+            />
+            <DetailItem
+              label="District"
+              value={
+                districtName(
+                  employee.permanentStateId,
+                  employee.permanentDistrictId,
+                  'permanent',
+                ) || null
+              }
+            />
+            <DetailItem label="Taluka" value={employee.permanentTaluka || null} />
+            <DetailItem label="City" value={employee.permanentCity || null} />
+            <DetailItem label="Pincode" value={employee.permanentPinCode || null} />
+          </Grid>
+        </CollapsibleSection>
 
-        <Section icon={Briefcase} title="Current Posting">
-          {employee.service === null ? (
-            <p className="col-span-full text-sm text-muted-foreground">
-              No open posting — the employee has left.
+        {/* ── Service ────────────────────────────────────────────────────── */}
+
+        <CollapsibleSection
+          icon={Briefcase}
+          title="Service Details"
+          isLoading={transfers.isLoading}
+        >
+          {service === null ? (
+            <p className="text-sm text-muted-foreground">
+              No open posting — every posting on this record has been closed.
             </p>
           ) : (
             <>
-              <DetailItem
-                icon={Briefcase}
-                label="Grade"
-                value={employee.service.grade || null}
-              />
-              <DetailItem
-                icon={Briefcase}
-                label="Employment Type"
-                value={
-                  employee.service.employmentType
-                    ? employee.service.contractPeriod
-                      ? `${employee.service.employmentType} · ${employee.service.contractPeriod} ${employee.service.contractPeriodType}`
-                      : employee.service.employmentType
-                    : null
-                }
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Joining Date"
-                value={
-                  employee.service.joiningDate
-                    ? formatDate(employee.service.joiningDate)
-                    : null
-                }
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Confirmation Date"
-                value={
-                  employee.service.confirmationDate
-                    ? formatDate(employee.service.confirmationDate)
-                    : null
-                }
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Renewal Date"
-                value={
-                  employee.service.renewalDate
-                    ? formatDate(employee.service.renewalDate)
-                    : null
-                }
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Leaving Date"
-                value={
-                  employee.service.leavingDate
-                    ? formatDate(employee.service.leavingDate)
-                    : 'Still working'
-                }
-              />
-              <DetailItem
-                icon={ShieldCheck}
-                label="Police Verified"
-                value={employee.isPoliceVerified ? 'Yes' : 'No'}
-              />
-              <DetailItem
-                icon={ShieldCheck}
-                label="Stamp Agreement"
-                value={employee.isStampAgreement ? 'Yes' : 'No'}
-              />
+              <Grid>
+                <DetailItem label="Company" value={posting?.companyName || null} />
+                <DetailItem label="Branch" value={posting?.branchName || null} />
+                <DetailItem label="Department" value={posting?.departmentName || null} />
+                <DetailItem
+                  label="Designation"
+                  value={posting?.designationName || null}
+                />
+                <DetailItem label="Grade" value={service.grade || null} />
+                <DetailItem
+                  label="Employment Type"
+                  value={labelOf(EMPLOYMENT_TYPE_OPTIONS, service.employmentType) || null}
+                />
+                <DetailItem
+                  label="Contract Period"
+                  value={
+                    service.contractPeriod
+                      ? `${service.contractPeriod} ${labelOf(
+                          CONTRACT_PERIOD_TYPE_OPTIONS,
+                          service.contractPeriodType,
+                        )}`
+                      : null
+                  }
+                />
+                <DetailItem label="Joining Date" value={onDate(service.joiningDate)} />
+                <DetailItem
+                  label="Confirmation Date"
+                  value={onDate(service.confirmationDate)}
+                />
+                <DetailItem label="Renewal Date" value={onDate(service.renewalDate)} />
+              </Grid>
+
+              <div className="mt-5 flex flex-wrap gap-x-8 gap-y-4 border-t border-dashed pt-4">
+                <BoolChip label="Police Verified" value={employee.isPoliceVerified} />
+                <BoolChip label="Stamp Agreement" value={employee.isStampAgreement} />
+              </div>
+
+              {service.leavingDate && (
+                <>
+                  <SubHeading icon={LogOut} title="Leaving Details" tone="destructive" />
+                  <Grid>
+                    <DetailItem
+                      label="Leaving Date"
+                      value={onDate(service.leavingDate)}
+                    />
+                    <DetailItem
+                      label="Leaving Reason"
+                      value={service.leavingReason || null}
+                      className="sm:col-span-2"
+                    />
+                  </Grid>
+                </>
+              )}
             </>
           )}
-        </Section>
+        </CollapsibleSection>
 
-        {/* ── KYC ──────────────────────────────────────────────────────── */}
+        {/* ── Health ─────────────────────────────────────────────────────── */}
 
-        <Section icon={BadgeCheck} title="KYC" isLoading={kyc.isLoading}>
-          <DetailItem
-            icon={ShieldCheck}
-            label="PF Number"
-            value={kyc.data?.pfNumber || null}
-          />
-          <DetailItem
-            icon={ShieldCheck}
-            label="UAN"
-            value={kyc.data?.uanNumber || null}
-          />
-          <DetailItem
-            icon={ShieldCheck}
-            label="ESIC Number"
-            value={kyc.data?.esicNumber || null}
-          />
-          <DetailItem
-            icon={BadgeCheck}
-            label="Aadhaar"
-            value={kyc.data?.aadharNumber || null}
-          />
-          <DetailItem
-            icon={BadgeCheck}
-            label="Name as per Aadhaar"
-            value={kyc.data?.nameAsPerAadhar || null}
-          />
-          <DetailItem icon={BadgeCheck} label="PAN" value={kyc.data?.panNumber || null} />
-          <DetailItem
-            icon={Landmark}
-            label="Bank Account"
-            value={kyc.data?.bankAccountNumber || null}
-          />
-          <DetailItem icon={Landmark} label="IFSC" value={kyc.data?.ifscCode || null} />
-          <DetailItem
-            icon={Landmark}
-            label="Bank Branch"
-            value={kyc.data?.bankBranchName || null}
-          />
-        </Section>
+        <CollapsibleSection icon={Heart} title="Health Details">
+          <Grid>
+            <DetailItem label="Blood Group" value={employee.bloodGroup || null} />
+            <DetailItem
+              label="Height"
+              value={employee.height ? `${employee.height} ${employee.heightUnit}` : null}
+            />
+            <DetailItem
+              label="Weight"
+              value={employee.weight ? `${employee.weight} ${employee.weightUnit}` : null}
+            />
+            <div>
+              <BoolChip label="Disability" value={employee.isDisability} />
+            </div>
+          </Grid>
+        </CollapsibleSection>
 
-        {/* ── Wage structure ───────────────────────────────────────────── */}
+        {/* ── KYC ────────────────────────────────────────────────────────── */}
 
-        <Section
-          icon={Landmark}
+        <CollapsibleSection
+          icon={ShieldCheck}
+          title="KYC & Identity"
+          isLoading={kyc.isLoading}
+        >
+          <Grid>
+            <DetailItem label="PF Number" value={kyc.data?.pfNumber || null} />
+            <DetailItem label="UAN Number" value={kyc.data?.uanNumber || null} />
+            <DetailItem label="ESIC Number" value={kyc.data?.esicNumber || null} />
+            <DetailItem label="Aadhaar Number" value={kyc.data?.aadharNumber || null} />
+            <DetailItem
+              label="Name as per Aadhaar"
+              value={kyc.data?.nameAsPerAadhar || null}
+            />
+            <DetailItem label="PAN Number" value={kyc.data?.panNumber || null} />
+            <DetailItem label="EPIC Number" value={kyc.data?.epicNumber || null} />
+            <DetailItem
+              label="Ration Card Number"
+              value={kyc.data?.rationCardNumber || null}
+            />
+          </Grid>
+
+          <SubHeading icon={Landmark} title="Bank Details" />
+          <Grid>
+            <DetailItem label="Bank Name" value={bankName || null} />
+            <DetailItem
+              label="Account Number"
+              value={kyc.data?.bankAccountNumber || null}
+            />
+            <DetailItem label="IFSC Code" value={kyc.data?.ifscCode || null} />
+            <DetailItem label="Branch Name" value={kyc.data?.bankBranchName || null} />
+          </Grid>
+
+          <SubHeading icon={IdCard} title="Driving Licence" />
+          <Grid>
+            <DetailItem
+              label="Licence Number"
+              value={kyc.data?.drivingLicenceNumber || null}
+            />
+            <DetailItem
+              label="Expiry Date"
+              value={onDate(kyc.data?.drivingLicenceExpiryDate)}
+            />
+          </Grid>
+
+          <SubHeading icon={Plane} title="Passport Details" />
+          <Grid>
+            <DetailItem
+              label="Passport Number"
+              value={kyc.data?.passportNumber || null}
+            />
+            <DetailItem label="Valid From" value={onDate(kyc.data?.passportValidFrom)} />
+            <DetailItem label="Valid To" value={onDate(kyc.data?.passportValidTo)} />
+          </Grid>
+        </CollapsibleSection>
+
+        {/* ── Wage structure ─────────────────────────────────────────────── */}
+
+        <CollapsibleSection
+          icon={Banknote}
           title="Wage Structure"
           description="Inherited from the designation on the current posting"
           isLoading={wage.isLoading}
         >
           {!wage.data ? (
-            <p className="col-span-full text-sm text-muted-foreground">
-              No wage structure in force for this employee's designation.
+            <p className="text-sm text-muted-foreground">
+              No wage structure in force for this employee&apos;s designation.
             </p>
           ) : (
             <>
-              <DetailItem
-                icon={Landmark}
-                label="Salary Type"
-                value={wage.data.salaryType || null}
-              />
-              <DetailItem
-                icon={Landmark}
-                label="Basic Pay"
-                value={
-                  wage.data.basicPay === null ? null : formatAmount(wage.data.basicPay)
-                }
-              />
-              <DetailItem
-                icon={Landmark}
-                label="Wage Per Day"
-                value={
-                  wage.data.wagesPerDay === null
-                    ? null
-                    : formatAmount(wage.data.wagesPerDay)
-                }
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Working Days"
-                value={wage.data.workingDays === null ? null : String(wage.data.workingDays)}
-              />
-              <DetailItem
-                icon={CalendarDays}
-                label="Weekly Off"
-                value={wage.data.weeklyOff || null}
-              />
-              <DetailItem
-                icon={ShieldCheck}
-                label="Acts Applicable"
-                value={
-                  [
-                    wage.data.isPfActApplicable ? 'PF' : null,
-                    wage.data.isEsicActApplicable ? 'ESIC' : null,
-                    wage.data.isPtActApplicable ? 'PT' : null,
-                    wage.data.isLwfActApplicable ? 'LWF' : null,
-                    wage.data.isTdsActApplicable ? 'TDS' : null,
-                  ]
-                    .filter(Boolean)
-                    .join(', ') || 'None'
-                }
-                className="sm:col-span-2"
-              />
+              <Grid>
+                <DetailItem label="Salary Type" value={wage.data.salaryType || null} />
+                <DetailItem
+                  label="Basic Salary"
+                  value={
+                    wage.data.basicPay === null ? null : formatAmount(wage.data.basicPay)
+                  }
+                />
+                <DetailItem
+                  label="Wages Per Day"
+                  value={
+                    wage.data.wagesPerDay === null
+                      ? null
+                      : formatAmount(wage.data.wagesPerDay)
+                  }
+                />
+                <DetailItem
+                  label="Working Days"
+                  value={
+                    wage.data.workingDays === null ? null : String(wage.data.workingDays)
+                  }
+                />
+                <DetailItem label="Weekly Off" value={wage.data.weeklyOff || 'None'} />
+                <DetailItem
+                  label="Applicable Date"
+                  value={onDate(wage.data.applicableDate)}
+                />
+              </Grid>
+
+              <SubHeading icon={ShieldCheck} title="Acts Applicable" />
+              <div className="flex flex-wrap gap-2">
+                <ActChip label="PF Act" on={wage.data.isPfActApplicable} />
+                <ActChip label="ESIC Act" on={wage.data.isEsicActApplicable} />
+                <ActChip label="PT Act" on={wage.data.isPtActApplicable} />
+                <ActChip label="LWF Act" on={wage.data.isLwfActApplicable} />
+                <ActChip label="TDS Act" on={wage.data.isTdsActApplicable} />
+                <ActChip label="Overtime" on={wage.data.isOvertimeApplicable} />
+              </div>
+
+              {wage.data.isPfActApplicable && (
+                <ActCard icon={ShieldCheck} title="PF Act Settings">
+                  <DetailItem
+                    label="Deduction Type"
+                    value={wage.data.pfDeductionType || null}
+                  />
+                  <DetailItem
+                    label="Deduction Amount"
+                    value={
+                      wage.data.pfDeductionAmount === null
+                        ? null
+                        : String(wage.data.pfDeductionAmount)
+                    }
+                  />
+                  <div>
+                    <BoolChip
+                      label="Employee PF on Wage Limit"
+                      value={wage.data.isEmployeePfContributionOnWageLimit}
+                    />
+                  </div>
+                  <div>
+                    <BoolChip
+                      label="Employer PF on Wage Limit"
+                      value={wage.data.isEmployerPfContributionOnWageLimit}
+                    />
+                  </div>
+                </ActCard>
+              )}
+
+              {wage.data.isEsicActApplicable && (
+                <ActCard icon={ShieldCheck} title="ESIC Act Settings">
+                  <DetailItem
+                    label="Deduction Basis"
+                    value={wage.data.esicDeductionBasis || null}
+                  />
+                </ActCard>
+              )}
+
+              {wage.data.isPtActApplicable && (
+                <ActCard icon={ShieldCheck} title="PT Act Settings">
+                  <DetailItem label="PT Type" value={wage.data.ptActType || null} />
+                  <DetailItem
+                    label="PT Amount"
+                    value={wage.data.ptAmount === null ? null : formatAmount(wage.data.ptAmount)}
+                  />
+                </ActCard>
+              )}
+
+              {wage.data.isLwfActApplicable && (
+                <ActCard icon={ShieldCheck} title="LWF Act Settings">
+                  <DetailItem label="LWF Type" value={wage.data.lwfActType || null} />
+                  <DetailItem
+                    label="LWF Amount"
+                    value={
+                      wage.data.lwfAmount === null
+                        ? null
+                        : formatAmount(wage.data.lwfAmount)
+                    }
+                  />
+                  <div>
+                    <BoolChip
+                      label="Deduct from Wages"
+                      value={wage.data.isLwfDeductFromWages}
+                    />
+                  </div>
+                </ActCard>
+              )}
+
+              {wage.data.isOvertimeApplicable && (
+                <ActCard icon={CalendarDays} title="Overtime Settings">
+                  <DetailItem
+                    label="Rate Per Hour"
+                    value={
+                      wage.data.overtimeRatePerHour === null
+                        ? null
+                        : formatAmount(wage.data.overtimeRatePerHour)
+                    }
+                  />
+                  <div>
+                    <BoolChip label="PF on OT" value={wage.data.isPfApplicableOnOvertime} />
+                  </div>
+                  <div>
+                    <BoolChip
+                      label="ESIC on OT"
+                      value={wage.data.isEsicApplicableOnOvertime}
+                    />
+                  </div>
+                  <div>
+                    <BoolChip label="PT on OT" value={wage.data.isPtApplicableOnOvertime} />
+                  </div>
+                </ActCard>
+              )}
+
+              {wage.data.salaryComponents.length > 0 && (
+                <>
+                  <SubHeading icon={Banknote} title="Salary Components" />
+                  <div className="divide-y divide-border">
+                    {wage.data.salaryComponents.map((component) => (
+                      <Row
+                        key={`${component.payComponentId}-${component.sortOrder}`}
+                        primary={component.componentType || 'Component'}
+                        secondary={component.amountType || '—'}
+                        trailing={
+                          <span className="text-sm font-semibold text-foreground">
+                            {formatAmount(component.amount)}
+                          </span>
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
-        </Section>
+        </CollapsibleSection>
 
-        {/* ── The collections ──────────────────────────────────────────── */}
+        {/* ── The registers ──────────────────────────────────────────────── */}
 
-        <ListSection
+        <CollapsibleSection
           icon={Users}
-          title="Family"
+          title="Family Details"
+          defaultOpen={false}
           isLoading={family.isLoading}
-          isEmpty={(family.data ?? []).length === 0}
-          emptyMessage="No family members recorded."
+          badge={<CountBadge count={familyRows.length} />}
         >
-          {(family.data ?? []).map((member) => (
-            <Row
-              key={member.id}
-              primary={member.fullName}
-              secondary={member.relation || '—'}
-              trailing={
-                <div className="flex items-center gap-2">
-                  {member.isNominee && <Badge variant="success">Nominee</Badge>}
-                  <span className="text-xs text-muted-foreground">
-                    {member.birthDate ? formatDate(member.birthDate) : ''}
-                  </span>
-                </div>
-              }
-            />
-          ))}
-        </ListSection>
+          {familyRows.length === 0 ? (
+            <EmptyState icon={Users} title="No family members recorded." />
+          ) : (
+            <div className="divide-y divide-border">
+              {familyRows.map((member) => (
+                <Row
+                  key={member.id}
+                  primary={member.fullName}
+                  secondary={[member.relation, member.aadharNumber]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  trailing={
+                    <div className="flex items-center gap-2">
+                      {member.isNominee && <Badge variant="success">Nominee</Badge>}
+                      <span className="text-xs text-muted-foreground">
+                        {onDate(member.birthDate) ?? ''}
+                      </span>
+                    </div>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
 
-        <ListSection
+        <CollapsibleSection
           icon={GraduationCap}
-          title="Education"
-          isLoading={educations.isLoading}
-          isEmpty={(educations.data ?? []).length === 0}
-          emptyMessage="No qualifications recorded."
+          title="Education & Experience"
+          defaultOpen={false}
+          isLoading={educations.isLoading || experiences.isLoading}
+          badge={<CountBadge count={educationRows.length + experienceRows.length} />}
         >
-          {(educations.data ?? []).map((education) => (
-            <Row
-              key={education.id}
-              primary={education.educationName}
-              secondary={education.board || '—'}
-              trailing={
-                <div className="flex items-center gap-2">
-                  {education.passingYear && (
-                    <Badge variant="secondary">{education.passingYear}</Badge>
-                  )}
-                  {education.percentage && (
+          <SubHeading icon={GraduationCap} title="Education" />
+          {educationRows.length === 0 ? (
+            <p className="text-sm italic text-muted-foreground">
+              No qualifications recorded.
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {educationRows.map((education) => (
+                <Row
+                  key={education.id}
+                  primary={education.educationName}
+                  secondary={education.board || '—'}
+                  trailing={
+                    <div className="flex items-center gap-2">
+                      {education.passingYear && (
+                        <Badge variant="secondary">{education.passingYear}</Badge>
+                      )}
+                      {education.percentage && (
+                        <span className="text-xs text-muted-foreground">
+                          {education.percentage}%
+                        </span>
+                      )}
+                    </div>
+                  }
+                />
+              ))}
+            </div>
+          )}
+
+          <SubHeading icon={Briefcase} title="Work Experience" />
+          {experienceRows.length === 0 ? (
+            <p className="text-sm italic text-muted-foreground">
+              No experience records.
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {experienceRows.map((experience) => (
+                <Row
+                  key={experience.id}
+                  primary={experience.companyName}
+                  secondary={experience.designation || '—'}
+                  trailing={
                     <span className="text-xs text-muted-foreground">
-                      {education.percentage}%
+                      {experience.fromDate || '—'} → {experience.toDate || '—'}
                     </span>
-                  )}
-                </div>
-              }
-            />
-          ))}
-        </ListSection>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
 
-        <ListSection
-          icon={Briefcase}
-          title="Experience"
-          isLoading={experiences.isLoading}
-          isEmpty={(experiences.data ?? []).length === 0}
-          emptyMessage="No prior employment — a fresher."
-        >
-          {(experiences.data ?? []).map((experience) => (
-            <Row
-              key={experience.id}
-              primary={experience.companyName}
-              secondary={experience.designation || '—'}
-              trailing={
-                <span className="text-xs text-muted-foreground">
-                  {experience.fromDate} → {experience.toDate}
-                </span>
-              }
-            />
-          ))}
-        </ListSection>
-
-        <ListSection
+        <CollapsibleSection
           icon={FileStack}
           title="Documents"
+          defaultOpen={false}
           isLoading={documents.isLoading}
-          isEmpty={(documents.data ?? []).length === 0}
-          emptyMessage="No documents attached."
+          badge={<CountBadge count={documentRows.length} />}
         >
-          {(documents.data ?? []).map((document) => (
-            <Row
-              key={document.id}
-              primary={document.documentName || 'Attachment'}
-              secondary={document.documentTypeName || '—'}
-              trailing={
-                <div className="flex items-center gap-2">
-                  {document.expiryDate && (
-                    <span
-                      className={
-                        isDocumentExpired(document)
-                          ? 'text-xs text-destructive'
-                          : 'text-xs text-muted-foreground'
-                      }
-                    >
-                      {formatDate(document.expiryDate)}
-                    </span>
-                  )}
-                  {isDocumentExpired(document) && (
-                    <Badge variant="destructive">Expired</Badge>
-                  )}
-                  {document.document && (
-                    <a
-                      href={resolveMedia(document.document)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <ExternalLink className="size-3.5" />
-                      Open
-                    </a>
-                  )}
-                </div>
-              }
-            />
-          ))}
-        </ListSection>
+          {documentRows.length === 0 ? (
+            <EmptyState icon={FileStack} title="No documents attached." />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {documentRows.map((document) => {
+                const expired = isDocumentExpired(document)
+                const href = resolveMedia(document.document)
+                return (
+                  <div
+                    key={document.id}
+                    className="overflow-hidden rounded-xl border bg-card"
+                  >
+                    <div
+                      className={cn(
+                        'h-1 w-full',
+                        expired ? 'bg-destructive' : 'bg-success',
+                      )}
+                    />
+                    <div className="flex items-start gap-3 p-4">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <FileText className="size-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold uppercase text-foreground">
+                          {document.documentName || 'Attachment'}
+                        </p>
+                        {document.documentTypeName && (
+                          <Badge variant="default" className="mt-1">
+                            {document.documentTypeName}
+                          </Badge>
+                        )}
+                        {document.expiryDate && (
+                          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            Expires
+                            <span
+                              className={cn(
+                                'font-semibold',
+                                expired ? 'text-destructive' : 'text-foreground',
+                              )}
+                            >
+                              {onDate(document.expiryDate)}
+                            </span>
+                            {expired && <Badge variant="destructive">Expired</Badge>}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {document.document && (
+                      <div className="grid grid-cols-2 gap-2 border-t p-3">
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                        >
+                          <Eye className="size-4" />
+                          Preview
+                        </a>
+                        <a
+                          href={href}
+                          download
+                          className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+                        >
+                          <Download className="size-4" />
+                          Download
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CollapsibleSection>
 
-        <ListSection
+        <CollapsibleSection
           icon={Boxes}
           title="Assets"
+          defaultOpen={false}
           isLoading={assets.isLoading}
-          isEmpty={(assets.data ?? []).length === 0}
-          emptyMessage="No assets issued."
+          badge={<CountBadge count={assetRows.length} />}
         >
-          {(assets.data ?? []).map((asset) => (
-            <Row
-              key={asset.id}
-              primary={asset.assetName || 'Asset'}
-              secondary={
-                asset.assignedDate ? `Issued ${formatDate(asset.assignedDate)}` : '—'
-              }
-              trailing={
-                <Badge variant={asset.status === 'ASSIGNED' ? 'success' : 'secondary'}>
-                  {asset.status || '—'}
-                </Badge>
-              }
-            />
-          ))}
-        </ListSection>
+          {assetRows.length === 0 ? (
+            <EmptyState icon={Boxes} title="No assets issued." />
+          ) : (
+            <div className="divide-y divide-border">
+              {assetRows.map((asset) => (
+                <Row
+                  key={asset.id}
+                  primary={asset.assetName || 'Asset'}
+                  secondary={
+                    asset.assignedDate ? `Issued ${onDate(asset.assignedDate)}` : '—'
+                  }
+                  trailing={
+                    <Badge variant={asset.status === 'ASSIGNED' ? 'success' : 'secondary'}>
+                      {asset.status || '—'}
+                    </Badge>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
 
-        <ListSection
+        <CollapsibleSection
           icon={ArrowRightLeft}
           title="Posting History"
+          defaultOpen={false}
           isLoading={transfers.isLoading}
-          isEmpty={(transfers.data ?? []).length === 0}
-          emptyMessage="No postings recorded."
+          badge={<CountBadge count={transferRows.length} />}
         >
-          {(transfers.data ?? []).map((transfer) => (
-            <Row
-              key={transfer.id}
-              primary={`${transfer.companyName || '—'} · ${transfer.designationName || '—'}`}
-              secondary={[transfer.branchName, transfer.departmentName]
-                .filter(Boolean)
-                .join(' · ')}
-              trailing={
-                <span className="text-xs text-muted-foreground">
-                  {transfer.joiningDate ? formatDate(transfer.joiningDate) : '—'} →{' '}
-                  {transfer.leavingDate ? formatDate(transfer.leavingDate) : 'present'}
-                </span>
-              }
-            />
-          ))}
-        </ListSection>
+          {transferRows.length === 0 ? (
+            <EmptyState icon={ArrowRightLeft} title="No postings recorded." />
+          ) : (
+            <div className="divide-y divide-border">
+              {transferRows.map((transfer) => (
+                <Row
+                  key={transfer.id}
+                  primary={`${transfer.designationName || '—'} · ${transfer.companyName || '—'}`}
+                  secondary={
+                    [transfer.branchName, transfer.departmentName]
+                      .filter(Boolean)
+                      .join(' · ') || '—'
+                  }
+                  trailing={
+                    <div className="flex items-center gap-2">
+                      {transfer.isCurrent && <Badge variant="success">Current</Badge>}
+                      <span className="text-xs text-muted-foreground">
+                        {onDate(transfer.joiningDate) ?? '—'} →{' '}
+                        {onDate(transfer.leavingDate) ?? 'present'}
+                      </span>
+                    </div>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
 
-        <ListSection
-          icon={CalendarDays}
-          title="Recent Leave"
-          description="The five most recent records — the full register is under Leave Management"
-          isLoading={leaves.isLoading}
-          isEmpty={(leaves.data?.items ?? []).length === 0}
-          emptyMessage="No leave recorded."
+        <CollapsibleSection
+          icon={ScanFace}
+          title="Registered Faces"
+          description="Captured in the mobile app for attendance recognition"
+          defaultOpen={false}
+          badge={<CountBadge count={faces.length} />}
         >
-          {(leaves.data?.items ?? []).map((leave) => (
-            <Row
-              key={leave.id}
-              primary={leave.leaveTypeName || leave.leaveType || 'Leave'}
-              secondary={`${leave.fromDate ? formatDate(leave.fromDate) : '—'} → ${
-                leave.toDate ? formatDate(leave.toDate) : '—'
-              }`}
-              trailing={
-                <div className="flex items-center gap-2">
-                  <Badge variant={leave.payType === 'PAID' ? 'default' : 'warning'}>
-                    {leave.payType}
-                  </Badge>
-                  <Badge
-                    variant={
-                      leave.status === 'APPROVED'
-                        ? 'success'
-                        : leave.status === 'PENDING'
-                          ? 'warning'
-                          : 'destructive'
-                    }
-                  >
-                    {leave.status}
-                  </Badge>
-                </div>
-              }
-            />
-          ))}
-        </ListSection>
+          {faces.length === 0 ? (
+            <EmptyState icon={ScanFace} title="No face images registered." />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {faces.map((face, index) => (
+                <figure
+                  key={face.id}
+                  className="overflow-hidden rounded-xl border bg-muted/30"
+                >
+                  <div className="relative">
+                    {/* The capture order is what an admin refers to a shot by. */}
+                    <span className="absolute left-2 top-2 z-10 grid size-6 place-items-center rounded-full bg-foreground/70 text-xs font-semibold text-background">
+                      {index + 1}
+                    </span>
+                    <ImageWithFallback
+                      src={resolveMedia(face.url || face.key)}
+                      alt={`Face ${index + 1}`}
+                      wrapperClassName="aspect-square w-full bg-muted"
+                      className="object-cover"
+                    />
+                  </div>
+                  <figcaption className="truncate px-3 py-2 text-xs text-muted-foreground">
+                    Face {index + 1}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          icon={CalendarDays}
+          title="Leave History"
+          description="The five most recent records — the full register is under Leave Management"
+          defaultOpen={false}
+          isLoading={leaves.isLoading}
+          badge={<CountBadge count={leaveRows.length} />}
+        >
+          {leaveRows.length === 0 ? (
+            <EmptyState icon={CalendarDays} title="No leave recorded." />
+          ) : (
+            <div className="divide-y divide-border">
+              {leaveRows.map((leave) => (
+                <Row
+                  key={leave.id}
+                  primary={leave.leaveTypeName || leave.leaveType || 'Leave'}
+                  secondary={`${onDate(leave.fromDate) ?? '—'} → ${
+                    onDate(leave.toDate) ?? '—'
+                  }`}
+                  trailing={
+                    <div className="flex items-center gap-2">
+                      <Badge variant={leave.payType === 'PAID' ? 'default' : 'warning'}>
+                        {leave.payType}
+                      </Badge>
+                      <Badge
+                        variant={
+                          leave.status === 'APPROVED'
+                            ? 'success'
+                            : leave.status === 'PENDING'
+                              ? 'warning'
+                              : 'destructive'
+                        }
+                      >
+                        {leave.status}
+                      </Badge>
+                    </div>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleSection>
       </div>
     </div>
   )
 }
 
-/** Photo, name, code and how complete the record is. */
-function EmployeeHero({ employee }: { employee: Employee }) {
+/**
+ * Who this record is, above the fold: the photo, the name, where they sit, and
+ * the two things a caller reaches for — the joining date and a phone number.
+ */
+function EmployeeHero({
+  employee,
+  posting,
+  isActive,
+}: {
+  employee: Employee
+  posting: EmployeeTransfer | null
+  isActive: boolean
+}) {
   const photoUrl = useMediaUrl(employee.photo)
-  const { completed, total, percent } = stepProgress(
-    employee.completedSteps,
-    EMPLOYEE_PROGRESS_STEPS.map((step) => step.flag),
-  )
-  const leavingDate = employee.service?.leavingDate ?? ''
-  const isActive = employee.service !== null && leavingDate === ''
+  const fullName = [employee.prefix, employee.name].filter(Boolean).join(' ') || 'Unnamed'
+  const initial = (employee.name || '?').trim().charAt(0).toUpperCase()
+  const where = [posting?.designationName, posting?.departmentName, posting?.branchName]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center gap-5 p-5">
-        <ImageWithFallback
-          src={photoUrl}
-          alt={employee.name || 'Employee photo'}
-          wrapperClassName="size-20 shrink-0 rounded-xl ring-1 ring-border"
-          className="object-cover"
-        />
+    <Card className="overflow-hidden border-primary/20 bg-linear-to-r from-primary/10 via-primary/5 to-transparent">
+      <CardContent className="flex flex-wrap items-start gap-5 p-5">
+        {employee.photo ? (
+          <ImageWithFallback
+            src={photoUrl}
+            alt={fullName}
+            wrapperClassName="size-16 shrink-0 rounded-2xl ring-1 ring-primary/20"
+            className="object-cover"
+          />
+        ) : (
+          <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-primary/15 text-2xl font-semibold text-primary ring-1 ring-primary/20">
+            {initial}
+          </span>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-heading text-xl font-semibold text-foreground">
-              {[employee.prefix, employee.name].filter(Boolean).join(' ') || 'Unnamed'}
+              {fullName}
             </h2>
+            {employee.code && (
+              <Badge variant="default" className="font-mono">
+                #{employee.code}
+              </Badge>
+            )}
+          </div>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            {where || 'No posting on record'}
+          </p>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant={isActive ? 'success' : 'secondary'}>
               {isActive ? 'Active' : 'Inactive'}
             </Badge>
+            {employee.service?.employmentType && (
+              <Badge variant="secondary">
+                {labelOf(EMPLOYMENT_TYPE_OPTIONS, employee.service.employmentType)}
+              </Badge>
+            )}
+            {employee.service?.grade && (
+              <Badge variant="warning">Grade {employee.service.grade}</Badge>
+            )}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {employee.code || 'No code assigned'}
-            {leavingDate ? ` · Left on ${formatDate(toFormDate(leavingDate))}` : ''}
-          </p>
-          {employee.remarks && (
-            <p className="mt-2 text-sm text-muted-foreground">{employee.remarks}</p>
+        </div>
+
+        <div className="shrink-0 space-y-1.5 text-sm text-muted-foreground">
+          {employee.service?.joiningDate && (
+            <p className="flex items-center gap-2">
+              <CalendarDays className="size-4" />
+              Joined {onDate(employee.service.joiningDate)}
+            </p>
           )}
-        </div>
-
-        <div className="shrink-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Record complete
-          </p>
-          <p className="mt-1 text-lg font-semibold text-foreground">
-            {completed}/{total}{' '}
-            <span className="text-sm font-normal text-muted-foreground">({percent}%)</span>
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/** A titled block of `DetailItem`s. */
-function Section({
-  icon,
-  title,
-  description,
-  isLoading = false,
-  first = false,
-  children,
-}: {
-  icon: typeof UserRound
-  title: string
-  description?: string
-  isLoading?: boolean
-  first?: boolean
-  children: ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <FormSection
-          icon={icon}
-          title={title}
-          description={description}
-          className={first ? 'mt-0' : 'mt-0'}
-        />
-        <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {isLoading
-            ? Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton key={index} className="h-14 w-full" />
-              ))
-            : children}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-/** A titled block of collection rows, with its own loading and empty states. */
-function ListSection({
-  icon,
-  title,
-  description,
-  isLoading,
-  isEmpty,
-  emptyMessage,
-  children,
-}: {
-  icon: typeof UserRound
-  title: string
-  description?: string
-  isLoading: boolean
-  isEmpty: boolean
-  emptyMessage: string
-  children: ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <FormSection
-          icon={icon}
-          title={title}
-          description={description}
-          className="mt-0"
-        />
-        <div className="mt-4">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 2 }).map((_, index) => (
-                <Skeleton key={index} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : isEmpty ? (
-            <EmptyState icon={icon} title={emptyMessage} />
-          ) : (
-            <div className="divide-y divide-border">{children}</div>
+          {employee.mobileNumber1 && (
+            <p className="flex items-center gap-2">
+              <Phone className="size-4" />
+              {employee.mobileNumber1}
+            </p>
           )}
         </div>
       </CardContent>
@@ -795,7 +983,108 @@ function ListSection({
   )
 }
 
-/** One collection row: a heading, a subtitle and whatever sits on the right. */
+/** The four-up grid every section's fields sit in. */
+function Grid({ children }: { children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+      {children}
+    </div>
+  )
+}
+
+/** A labelled divider inside a section — "Current Address", "Bank Details". */
+function SubHeading({
+  icon: Icon,
+  title,
+  tone = 'primary',
+}: {
+  icon: LucideIcon
+  title: string
+  tone?: 'primary' | 'destructive'
+}) {
+  return (
+    <div
+      className={cn(
+        'mb-3 mt-6 flex items-center gap-1.5 border-t border-dashed pt-4 text-xs font-semibold uppercase tracking-wide first:mt-0 first:border-0 first:pt-0',
+        tone === 'destructive' ? 'text-destructive' : 'text-primary',
+      )}
+    >
+      <Icon className="size-3.5" />
+      {title}
+    </div>
+  )
+}
+
+/** A yes/no field, shown as a chip rather than the word on its own. */
+function BoolChip({ label, value }: { label: string; value: boolean }) {
+  return (
+    <div>
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <span
+        className={cn(
+          'mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+          value ? 'bg-success/12 text-success' : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {value ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
+        {value ? 'Yes' : 'No'}
+      </span>
+    </div>
+  )
+}
+
+/** One act in the applicable/not-applicable strip. */
+function ActChip({ label, on }: { label: string; on: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium',
+        on
+          ? 'border-primary/30 bg-primary/10 text-primary'
+          : 'border-border bg-muted/50 text-muted-foreground',
+      )}
+    >
+      {on ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
+      {label}
+    </span>
+  )
+}
+
+/** The settings behind one applicable act, boxed off from the rest. */
+function ActCard({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <div className="mt-4 rounded-xl border border-primary/20 bg-primary/4 p-4">
+      <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-foreground">
+        <Icon className="size-4 text-primary" />
+        {title}
+      </p>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** The count a closed section shows, so it says what's inside before it opens. */
+function CountBadge({ count }: { count: number }) {
+  return count === 0 ? (
+    <Badge variant="warning">No data</Badge>
+  ) : (
+    <Badge variant="secondary">{count}</Badge>
+  )
+}
+
+/** One register row: a heading, a subtitle and whatever sits on the right. */
 function Row({
   primary,
   secondary,

@@ -33,4 +33,10 @@ export interface Company extends AuditFields {
   mobile1: string
   mobile2: string
   email: string
+  /**
+   * Hours one shift may run before an unclosed check-in counts as abandoned —
+   * the site-wide policy, which a department may override for its own staff.
+   * '' when unset, and the API then applies its default of 18.
+   */
+  shiftHours: string
 }

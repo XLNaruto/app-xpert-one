@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   CalendarHeart,
+  Calculator,
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
   // CalendarHeart,
@@ -54,6 +55,14 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "Employee Management", to: "/hr/employee", icon: UserRoundCog },
       { label: "Leave Management", to: "/hr/leave", icon: CalendarDays },
+      {
+        label: "Salary Management",
+        icon: Wallet,
+        children: [
+          { label: "Bulk Update Wage", to: "/hr/bulk-wage", icon: HandCoins },
+          { label: "Calculate Salary", to: "/hr/salary", icon: Calculator },
+        ],
+      },
     ],
   },
   {

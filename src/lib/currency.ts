@@ -62,3 +62,17 @@ export function formatAmount(value: number): string {
 export function formatDecimal(value: number): string {
   return Number(value.toFixed(2)).toLocaleString('en-IN')
 }
+
+/**
+ * An amount rounded to two decimals, and none on a whole number — the raw
+ * number, not a formatted string.
+ *
+ * Every figure a dense wage grid prints goes through here, because most of them
+ * are one division away from a repeating decimal — a monthly basic spread over
+ * the paid days, an hourly rate off that again — and a grid cell is far too
+ * narrow to show `144.23076923076923`. Two decimals is also all the API accepts
+ * back, so nothing is lost by never showing more.
+ */
+export function gridAmount(value: number): number {
+  return Math.round(value * 100) / 100
+}

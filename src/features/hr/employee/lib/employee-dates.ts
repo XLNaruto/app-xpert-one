@@ -1,11 +1,11 @@
 /**
  * Date translation between the form and the API.
  *
- * Forms hold a plain `yyyy-MM-dd` (that's what `<DatePicker>` gives and takes)
- * while the API's date columns are declared `date-time`. Converting in one place
- * keeps every mapper from re-deriving it — and keeps the conversion off local
- * time, which is what would otherwise shift a joining date by a day for anyone
- * east or west of UTC.
+ * Both sides speak plain `yyyy-MM-dd` — that's what `<DatePicker>` gives and
+ * takes, and what the API's date fields expect. What travels is therefore a
+ * calendar day and never an instant: no timezone is applied in either direction,
+ * so a joining date can't shift by a day for anyone east or west of UTC.
+ * Responses may still carry a full timestamp, which is trimmed back to its date.
  */
 
 /** How many characters of an ISO timestamp make up its date. */
@@ -15,13 +15,14 @@ const DATE_LENGTH = 10
 const MONTH_LENGTH = 7
 
 /**
- * `yyyy-MM-dd` → the ISO instant the API stores, pinned to UTC midnight. A blank
- * field answers `null`, which is how the API records "not set".
+ * A form date → the `yyyy-MM-dd` the API takes. A blank field answers `null`,
+ * which is how the API records "not set". Anything longer (a value seeded
+ * straight off a timestamped response) is trimmed back to its date.
  */
 export function toApiDate(value: string): string | null {
   const trimmed = value.trim()
   if (!trimmed) return null
-  return `${trimmed.slice(0, DATE_LENGTH)}T00:00:00.000Z`
+  return trimmed.slice(0, DATE_LENGTH)
 }
 
 /**

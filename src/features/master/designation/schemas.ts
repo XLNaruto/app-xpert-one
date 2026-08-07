@@ -135,81 +135,106 @@ const wageDeductionRowSchema = z.object({
 })
 
 /**
- * One new effective-dated wage structure row. Everything bar the effective
- * month and the wage the salary type asks for is optional — an act left off
- * simply doesn't apply, and its settings are dropped on save.
+ * Every field a wage structure row carries, before the cross-field rule below.
+ *
+ * Split out as a plain object schema because the HR bulk wage screen configures
+ * the same forty columns on a row of its own — one per designation, against one
+ * effective month for the whole screen — and builds its row by omitting the two
+ * fields that are the history's alone (`wageStructureId`, `effectiveFrom`) and
+ * adding the designation it belongs to. `.superRefine()` returns a `ZodEffects`,
+ * which can't be reshaped, so the refinement is applied separately by each.
  */
-export const wageStructureRowSchema = z
-  .object({
-    /**
-     * The stored version this row edits, when the user opened a saved row for
-     * correction — a PATCH of that version rather than a new one. Absent on a
-     * row drafted from scratch, which is a POST.
-     *
-     * Not called `id`: `useFieldArray` puts its own generated `id` on every field
-     * entry, and a value field of that name would be shadowed by it.
-     */
-    wageStructureId: z.number().optional(),
-    effectiveFrom: z.string().trim().min(1, 'Pick an effective month'),
-
-    workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
-    weeklyOff: text,
-    workingDays: optionalMatch(DIGITS_RE, 'Enter a whole number'),
-    salaryType: z.enum(['Daily', 'Monthly']),
-    /*
-     * One of these two is captured and the other derived, per the salary type —
-     * see the cross-field rule below. Both are optional here so the rule can say
-     * which one is missing.
-     */
-    basicPay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-    wagePerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-    extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-
-    allowances: z.array(wageAllowanceRowSchema),
-    deductions: z.array(wageDeductionRowSchema),
-
-    overtimeApplicable: z.boolean(),
-    overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
-
-    pfActApplicable: z.boolean(),
-    employeePfContributionOnWageLimit: z.boolean(),
-    employerPfContributionOnWageLimit: z.boolean(),
-    pfValueType: z.enum(['Percentage', 'Fixed']),
-    pfValue: optionalMatch(AMOUNT_RE, 'Enter a valid value'),
-
-    esicActApplicable: z.boolean(),
-    esicDeductionBasis: text,
-
-    ptActApplicable: z.boolean(),
-    ptActType: z.enum(['', 'As Per Act', 'Manual']),
-    ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-
-    lwfActApplicable: z.boolean(),
-    lwfActType: z.enum(['', 'As Per Act', 'Manual']),
-    lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-  })
-  /*
-   * The salary type decides which of the two wage figures is captured; the other
-   * is derived and shown disabled, so only the captured one is demanded. Every
-   * act setting stays optional — a half-configured row is allowed to save, and a
-   * blank statutory amount falls back to the act's own rate at payroll time.
+export const wageStructureRowBaseSchema = z.object({
+  /**
+   * The stored version this row edits, when the user opened a saved row for
+   * correction — a PATCH of that version rather than a new one. Absent on a
+   * row drafted from scratch, which is a POST.
+   *
+   * Not called `id`: `useFieldArray` puts its own generated `id` on every field
+   * entry, and a value field of that name would be shadowed by it.
    */
-  .superRefine((row, ctx) => {
-    if (row.salaryType === 'Monthly' && row.basicPay === '') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['basicPay'],
-        message: 'Basic pay is required for a monthly wage',
-      })
+  wageStructureId: z.number().optional(),
+  effectiveFrom: z.string().trim().min(1, 'Pick an effective month'),
+
+  workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
+  weeklyOff: text,
+  workingDays: optionalMatch(DIGITS_RE, 'Enter a whole number'),
+  salaryType: z.enum(['Daily', 'Monthly']),
+  /*
+   * One of these two is captured and the other derived, per the salary type —
+   * see the cross-field rule below. Both are optional here so the rule can say
+   * which one is missing.
+   */
+  basicPay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  wagePerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+
+  allowances: z.array(wageAllowanceRowSchema),
+  deductions: z.array(wageDeductionRowSchema),
+
+  overtimeApplicable: z.boolean(),
+  overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
+
+  pfActApplicable: z.boolean(),
+  employeePfContributionOnWageLimit: z.boolean(),
+  employerPfContributionOnWageLimit: z.boolean(),
+  pfValueType: z.enum(['Percentage', 'Fixed']),
+  pfValue: optionalMatch(AMOUNT_RE, 'Enter a valid value'),
+
+  esicActApplicable: z.boolean(),
+  esicDeductionBasis: text,
+
+  ptActApplicable: z.boolean(),
+  ptActType: z.enum(['', 'As Per Act', 'Manual']),
+  ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+
+  lwfActApplicable: z.boolean(),
+  lwfActType: z.enum(['', 'As Per Act', 'Manual']),
+  lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+})
+
+/**
+ * The one cross-field rule every wage row obeys, wherever it's configured: the
+ * salary type decides which of the two wage figures is captured, the other is
+ * derived and shown disabled, so only the captured one is demanded. Answers
+ * which field is missing, or `null` when the row is complete.
+ *
+ * Every act setting stays optional — a half-configured row is allowed to save,
+ * and a blank statutory amount falls back to the act's own rate at payroll time.
+ *
+ * A plain predicate rather than a refinement, because the bulk wage screen has
+ * to apply it to *some* of its rows: every designation of the company is on that
+ * grid whether or not it has ever been configured, and only the rows actually
+ * being saved are held to this. It runs it at submit time; the history tab, whose
+ * rows are all being saved, wires it into the schema below.
+ */
+export function missingWageField(
+  row: Pick<
+    z.infer<typeof wageStructureRowBaseSchema>,
+    'salaryType' | 'basicPay' | 'wagePerDay'
+  >,
+): { path: 'basicPay' | 'wagePerDay'; message: string } | null {
+  if (row.salaryType === 'Monthly' && row.basicPay.trim() === '') {
+    return { path: 'basicPay', message: 'Basic pay is required for a monthly wage' }
+  }
+  if (row.salaryType === 'Daily' && row.wagePerDay.trim() === '') {
+    return { path: 'wagePerDay', message: 'Wage per day is required for a daily wage' }
+  }
+  return null
+}
+
+/**
+ * One new effective-dated wage structure row, as the designation's history tab
+ * captures it.
+ */
+export const wageStructureRowSchema = wageStructureRowBaseSchema.superRefine(
+  (row, ctx) => {
+    const missing = missingWageField(row)
+    if (missing) {
+      ctx.addIssue({ code: 'custom', path: [missing.path], message: missing.message })
     }
-    if (row.salaryType === 'Daily' && row.wagePerDay === '') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['wagePerDay'],
-        message: 'Wage per day is required for a daily wage',
-      })
-    }
-  })
+  },
+)
 
 /**
  * The wage structure tab's form — the rows being added this visit. Stored
@@ -230,7 +255,7 @@ export type WageStructureRow = WageStructureFormValues['rows'][number]
  * `type` in the pay-component catalog decides which side it belongs to —
  * `component_type` echoes it back on a read, and the request never says which.
  */
-const salaryComponentResponseSchema = z.object({
+export const salaryComponentResponseSchema = z.object({
   id: z.number(),
   pay_component_id: z.number(),
   component_type: z.string().nullable(),

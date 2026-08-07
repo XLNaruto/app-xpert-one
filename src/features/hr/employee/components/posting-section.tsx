@@ -63,13 +63,30 @@ export function PostingSection({
 
   const employmentType = watch('employmentType')
   const joiningDate = watch('joiningDate')
+  const confirmationDate = watch('confirmationDate')
+  const renewalDate = watch('renewalDate')
 
   /*
-   * Confirmation and renewal are only valid relative to the joining date, but a
-   * resolver-backed form refreshes the error of the field the user just changed
-   * and no other. So moving the joining date up to meet a confirmation date
-   * leaves that field still showing "cannot be before the joining date" against
-   * two dates that now match. Re-check the dependants whenever it moves.
+   * Confirmation and renewal only make sense from the joining date onward, so a
+   * joining date moved past them drags them along rather than leaving the form
+   * in a state the user has to repair by hand.
+   */
+  useEffect(() => {
+    if (!showDates || !joiningDate) return
+    if (confirmationDate && confirmationDate < joiningDate) {
+      setValue('confirmationDate', joiningDate, { shouldValidate: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joiningDate])
+
+  /*
+   * Those two are validated *against* the joining date, but a resolver-backed
+   * form refreshes the error of the field that just changed and no other. So
+   * moving the joining date up to meet a confirmation date leaves that field
+   * still showing "cannot be before the joining date" against two dates that now
+   * match. Re-check the dependants whenever any of the three moves — including
+   * the dependant itself, since the value written above lands a render later
+   * than the joining date that prompted it.
    */
   useEffect(() => {
     const stale = (['confirmationDate', 'renewalDate'] as const).filter(
@@ -77,7 +94,7 @@ export function PostingSection({
     )
     if (stale.length) void trigger(stale)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [joiningDate])
+  }, [joiningDate, confirmationDate, renewalDate])
   // A permanent posting has no period to run out, so the contract block and the
   // renewal date have nothing to say — and the mappers drop them from the body.
   const isContractual = employmentType !== PERMANENT_EMPLOYMENT_TYPE

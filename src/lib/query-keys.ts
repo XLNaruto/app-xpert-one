@@ -96,6 +96,20 @@ export const queryKeys = {
     /** Effective-dated wage structure history for one designation. */
     wageStructures: (designationId: number) =>
       [...queryKeys.designation.all, 'wage-structures', designationId] as const,
+    /**
+     * The bulk wage grid — every designation of one company with the version of
+     * its wage structure in force. The company is the screen's own pick rather
+     * than the session's, so it's always in the key.
+     */
+    bulkWageGrid: (companyId: number) =>
+      [...queryKeys.designation.all, 'bulk-wage-grid', companyId] as const,
+    /**
+     * The bulk wage history — every designation of one company with every
+     * version it has ever been paid on. Paged over the designations, so the page
+     * params ride in the key alongside the company.
+     */
+    bulkWageHistory: (companyId: number, params: PageParams) =>
+      [...queryKeys.designation.all, 'bulk-wage-history', companyId, params] as const,
   },
   pfRate: {
     all: ['pf-rate'] as const,
@@ -275,6 +289,22 @@ export const queryKeys = {
           ] as const)
         : ([...queryKeys.leave.all, 'list', employeeId ?? 0] as const),
     detail: (id: number) => [...queryKeys.leave.all, 'detail', id] as const,
+  },
+  /**
+   * Payroll — the salary register, read one designation-month at a time.
+   *
+   * Everything that picks the register out is in the key: the company, the
+   * period, the designation the columns are built for, the pending/complete side
+   * and the page. Each combination is a different register rather than a refetch
+   * of this one, so switching any of them must not show the previous answer's
+   * rows under the new heading.
+   */
+  salary: {
+    all: ['salary'] as const,
+    register: (filters: Record<string, unknown>, params?: PageParams) =>
+      params
+        ? ([...queryKeys.salary.all, 'register', filters, params] as const)
+        : ([...queryKeys.salary.all, 'register', filters] as const),
   },
   bank: {
     all: ['bank'] as const,

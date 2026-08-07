@@ -5,7 +5,11 @@ import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { activeCompanyId } from '@/lib/active-company'
 import { uploadFile, IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { EMPLOYEE_DEFAULT_SORT } from '../constants'
-import { employeeResponseSchema, employeesResponseSchema } from '../schemas'
+import {
+  deleteFaceResponseSchema,
+  employeeResponseSchema,
+  employeesResponseSchema,
+} from '../schemas'
 import { employeeBasicToPayload, toEmployee } from '../lib/employee-mappers'
 import type {
   EmployeeBasicFormValues,
@@ -146,6 +150,23 @@ export async function updateEmployee(
     return toEmployee(employeeResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't update the employee.")
+  }
+}
+
+/**
+ * DELETE /user/employees/:id/face — de-register the employee's face, answering
+ * how many captured images went with it.
+ *
+ * Everything goes: the face record and its image rows are soft-deleted and the
+ * stored images purged, so the person registers again in the mobile app rather
+ * than just re-capturing.
+ */
+export async function deleteEmployeeFace(id: number): Promise<number> {
+  try {
+    const raw = await http.delete<unknown>(endpoints.EMPLOYEES.DELETE_FACE(id))
+    return deleteFaceResponseSchema.parse(raw).deleted_images
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the registered face.")
   }
 }
 

@@ -238,10 +238,17 @@ export function useEmployeeTransferTab(employeeId: number) {
     const posting = postingToFollow
     if (!posting) return
 
-    const leavingDate = isRejoining ? toFormDate(posting.leavingDate) : todayIso()
+    /*
+     * Today, but never before the posting opened — that joining date is the
+     * field's own floor, and a seed below it would be clamped for display while
+     * the form kept (and sent) the earlier day.
+     */
+    const leavingDate = isRejoining
+      ? toFormDate(posting.leavingDate)
+      : maxIso(todayIso(), toFormDate(posting.joiningDate))
     const startDate = isRejoining
       ? maxIso(todayIso(), nextDayIso(leavingDate))
-      : nextDayIso(todayIso())
+      : nextDayIso(leavingDate)
 
     setActiveServiceId(posting.id)
     transferForm.reset({
@@ -266,7 +273,10 @@ export function useEmployeeTransferTab(employeeId: number) {
     const posting = openPosting
     if (!posting) return
     setActiveServiceId(posting.id)
-    leaveForm.reset({ leavingDate: todayIso(), leavingReason: '' })
+    leaveForm.reset({
+      leavingDate: maxIso(todayIso(), toFormDate(posting.joiningDate)),
+      leavingReason: '',
+    })
     setDialog('leave')
   }
 

@@ -137,6 +137,21 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                   {...register('panNumber')}
                 />
               </Field>
+              {/* Blank inherits the platform default of 18 hours. */}
+              <Field
+                label="Shift Hours"
+                error={errors.shiftHours?.message}
+                hint="Hours a shift may run before an open check-in is abandoned. Leave blank for the default (18)."
+              >
+                <Input
+                  type="number"
+                  min={0.5}
+                  max={24}
+                  step={0.5}
+                  placeholder="Shift Hours"
+                  {...register('shiftHours')}
+                />
+              </Field>
 
               {/* Address Details */}
               <FormSection

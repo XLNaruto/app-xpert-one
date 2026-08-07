@@ -45,7 +45,7 @@ import {
   TogglePill,
   UnitAmountField,
   NO_VALUE,
-} from './wage-grid-fields'
+} from '@/components/common/wage-grid-fields'
 
 type WageForm = ReturnType<typeof useDesignationWageForm>
 type Ctl = Control<WageStructureFormValues>
@@ -603,7 +603,7 @@ const GridHead = memo(function GridHead({ layout }: { layout: GridLayout }) {
                   style={pinStyle(cell.column)}
                   className={cn(
                     'wage-head-cell sticky top-0 border-b border-r border-border px-2 py-2 text-center align-middle text-[11px] font-semibold uppercase leading-tight tracking-wide text-muted-foreground',
-                    pinned ? 'z-50' : 'z-40',
+                    pinned ? 'z-[25]' : 'z-[20]',
                   )}
                 >
                   {cell.column.label}
@@ -619,7 +619,7 @@ const GridHead = memo(function GridHead({ layout }: { layout: GridLayout }) {
                 colSpan={cell.span}
                 style={{ height: BANNER_HEIGHT }}
                 className={cn(
-                  'wage-head-cell sticky top-0 z-40 whitespace-nowrap border-b border-r border-border px-2 text-center text-[11px] font-bold uppercase leading-none tracking-wide',
+                  'wage-head-cell sticky top-0 z-[20] whitespace-nowrap border-b border-r border-border px-2 text-center text-[11px] font-bold uppercase leading-none tracking-wide',
                   meta.tone,
                 )}
               >
@@ -638,7 +638,7 @@ const GridHead = memo(function GridHead({ layout }: { layout: GridLayout }) {
               style={{ top: COLUMN_ROW_TOP }}
               className={cn(
                 CELL,
-                'wage-head-cell sticky z-30 whitespace-nowrap text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground',
+                'wage-head-cell sticky z-[15] whitespace-nowrap text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground',
               )}
             >
               {column.label}
@@ -1128,19 +1128,28 @@ function OtRateCell({ index, control, register }: CellProps) {
   const basicPay = useWatch({ control, name: `rows.${index}.basicPay` })
   const wagePerDay = useWatch({ control, name: `rows.${index}.wagePerDay` })
 
-  if (!applicable) return <DerivedValue value={null} />
+  const derived = applicable
+    ? deriveOvertimeRate({
+        salaryType,
+        basicPay,
+        wagePerDay,
+        overtimeApplicable: applicable,
+        overtimeRatePerHour: '',
+      })
+    : null
 
-  const derived = deriveOvertimeRate({
-    salaryType,
-    basicPay,
-    wagePerDay,
-    overtimeApplicable: applicable,
-    overtimeRatePerHour: '',
-  })
-
+  /*
+   * Disabled rather than swapped for a read-only stand-in: react-hook-form drops
+   * a field's value when its input unmounts, so replacing the element would
+   * delete a rate the row was opened with — and toggling overtime back on would
+   * then save one derived from the wage instead of the one on record.
+   */
   return (
     <GridAmountInput
-      placeholder={derived === null ? '0.00' : String(gridAmount(derived))}
+      disabled={!applicable}
+      placeholder={
+        !applicable ? NO_VALUE : derived === null ? '0.00' : String(gridAmount(derived))
+      }
       {...register(`rows.${index}.overtimeRatePerHour`)}
     />
   )
@@ -1265,8 +1274,17 @@ function ActAmountCell({
   const applicable = useWatch({ control, name: `rows.${index}.${appliesTo}` })
   const actType = useWatch({ control, name: `rows.${index}.${typeField}` })
 
-  if (!applicable || actType !== 'Manual') return <DerivedValue value={null} />
-  return <GridAmountInput placeholder="0.00" {...register(amountName)} />
+  const asked = applicable && actType === 'Manual'
+
+  /* Mounted either way — see `OtRateCell` on why an unmounted input loses its
+     value, and what that would cost a stored statutory amount. */
+  return (
+    <GridAmountInput
+      disabled={!asked}
+      placeholder={asked ? '0.00' : NO_VALUE}
+      {...register(amountName)}
+    />
+  )
 }
 
 /** One allowance head in a draft row — its value, then the acts it counts to. */
@@ -1381,17 +1399,6 @@ function DerivedAmount({ value }: { value: number | null }) {
   )
 }
 
-/**
- * A figure the row rules out altogether — an act switched off, a statutory
- * amount that follows the act's own rate. Nothing to show and nothing to derive.
- */
-function DerivedValue({ value }: { value: number | null }) {
-  return (
-    <span className="flex h-7 items-center justify-end pr-1 text-xs text-muted-foreground">
-      {value === null ? NO_VALUE : gridAmount(value)}
-    </span>
-  )
-}
 
 /* ── Saved rows ─────────────────────────────────────────────────────────── */
 

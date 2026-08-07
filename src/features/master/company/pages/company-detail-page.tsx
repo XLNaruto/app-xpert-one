@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Building2,
   CalendarDays,
+  Clock,
   FileText,
   Hash,
   Mail,
@@ -98,6 +99,12 @@ export function CompanyDetailPage({ data }: { data?: string }) {
             />
             <DetailItem icon={FileText} label="PAN Number" value={company.panNumber} />
             <DetailItem icon={FileText} label="GST Number" value={company.gstNumber} />
+            {/* Unset reads as the platform default rather than a blank. */}
+            <DetailItem
+              icon={Clock}
+              label="Shift Hours"
+              value={company.shiftHours ? `${company.shiftHours} hrs` : '18 hrs (default)'}
+            />
 
             <FormSection icon={MapPin} title="Address Details" />
             <DetailItem

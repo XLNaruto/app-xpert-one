@@ -134,25 +134,32 @@ export function YearPicker({
       />
 
       {/*
-        The host only exists while the calendar is open — a closed picker keeping a
-        portal on `document.body` costs a node and a mount per field, and a card
-        list can hold a dozen of them.
+        The host is mounted whether or not the calendar is open, and deliberately.
+        It used to be created only on opening, to save a node per field — but the
+        host is what `portalContainer` points at, and on the render that opens the
+        calendar it did not exist yet. `react-date-picker` fell back to rendering
+        the panel unportalled and unpositioned, which put it at the end of the
+        body's flow — a calendar floating below the page instead of under its
+        field, correcting itself a frame later. An empty div per field is the
+        cheaper of the two.
       */}
-      {open &&
-        createPortal(
-          <div
-            ref={setHost}
-            className="sa-datepicker-portal"
-            style={{
-              position: 'fixed',
-              left: coords?.left ?? 0,
-              top: coords && !coords.dropUp ? coords.top : undefined,
-              bottom: coords?.dropUp ? window.innerHeight - coords.top : undefined,
-              zIndex: 60,
-            }}
-          />,
-          document.body,
-        )}
+      {createPortal(
+        <div
+          ref={setHost}
+          className="sa-datepicker-portal"
+          style={{
+            position: 'fixed',
+            left: coords?.left ?? 0,
+            top: coords && !coords.dropUp ? coords.top : undefined,
+            bottom: coords?.dropUp ? window.innerHeight - coords.top : undefined,
+            /* Never show the panel at a position that hasn't been measured yet —
+               the first frame of an open would otherwise flash it at `left: 0`. */
+            visibility: coords ? undefined : 'hidden',
+            zIndex: 60,
+          }}
+        />,
+        document.body,
+      )}
     </div>
   )
 }

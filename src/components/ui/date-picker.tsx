@@ -93,6 +93,28 @@ export function DatePicker({
   // itself unmounts (e.g. switching tabs) — reset on teardown.
   useEffect(() => () => setOpen(false), [])
 
+  /*
+   * `react-date-picker` clamps a value outside [minDate, maxDate] for DISPLAY
+   * only — it never reports the clamp through onChange. A form seeded with an
+   * out-of-range date would then show one day and submit another, silently.
+   * Push the clamped day back up so the field and the form always agree.
+   */
+  const minTime = minDate?.getTime()
+  const maxTime = maxDate?.getTime()
+
+  useEffect(() => {
+    if (!selected) return
+    const time = selected.getTime()
+    const clamped =
+      minTime !== undefined && time < minTime
+        ? minDate
+        : maxTime !== undefined && time > maxTime
+          ? maxDate
+          : null
+    if (clamped) onChange(format(clamped, ISO_DATE))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, minTime, maxTime])
+
   return (
     <div ref={wrapRef} className={cn('relative', className)}>
       <ReactDatePicker
@@ -127,6 +149,9 @@ export function DatePicker({
             left: coords?.left ?? 0,
             top: coords && !coords.dropUp ? coords.top : undefined,
             bottom: coords?.dropUp ? window.innerHeight - coords.top : undefined,
+            /* Never show the panel at a position that hasn't been measured yet —
+               the first frame of an open would otherwise flash it at `left: 0`. */
+            visibility: coords ? undefined : 'hidden',
             zIndex: 60,
           }}
         />,

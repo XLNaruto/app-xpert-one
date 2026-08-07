@@ -29,4 +29,5 @@ export const EMPTY_DEPARTMENT_FORM: DepartmentFormValues = {
   branchId: '',
   departmentName: '',
   monthStartDay: '1',
+  shiftHours: '',
 }

@@ -35,6 +35,7 @@ export const EMPTY_COMPANY_FORM: CompanyFormValues = {
   registrationNumber: '',
   panNumber: '',
   gstNumber: '',
+  shiftHours: '',
   addressLine1: '',
   addressLine2: '',
   addressLine3: '',

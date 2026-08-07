@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { useBanks } from '@/features/master/bank'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
@@ -34,6 +36,14 @@ export function useEmployeeList() {
   } = usePagination(DEFAULT_PAGE_SIZE, EMPLOYEE_DEFAULT_SORT)
 
   const { data, isLoading, isError, error } = useEmployees(params)
+
+  // A row carries `bank_id`, not the bank's name. The master is small and
+  // session-stable, so it's read once and turned into a lookup for the column.
+  const { data: banks } = useBanks()
+  const bankNames = useMemo(
+    () => new Map((banks?.items ?? []).map((bank) => [bank.id, bank.bankName])),
+    [banks],
+  )
 
   const goToCreate = () => navigate({ to: '/hr/employee/create' })
 
@@ -76,5 +86,10 @@ export function useEmployeeList() {
     goToCreate,
     goToEdit,
     goToDetail,
+    /**
+     * `bank_id` → bank name, empty until the master has loaded. Memoised, so the
+     * column definitions can list it as a dependency and rebuild when it fills.
+     */
+    bankNames,
   }
 }

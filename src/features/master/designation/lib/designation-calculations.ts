@@ -4,15 +4,22 @@ import type { DesignationFormValues } from '../schemas'
 /** Overtime hours in a working day — the divisor behind the derived OT rate. */
 const HOURS_PER_DAY = 8
 
-/** Parse a numeric form input; blank / malformed reads as 0. */
-export function toAmount(value: string): number {
-  const parsed = Number(value)
+/**
+ * Parse a numeric form input; blank, absent or malformed reads as 0.
+ *
+ * Absent as well as blank: react-hook-form drops a field's value when its input
+ * unmounts, so a cell the row conditionally hides can reach a mapper as
+ * `undefined` rather than `''`. A parser is the wrong place to throw over that —
+ * "no figure" is an answer these fields have.
+ */
+export function toAmount(value: string | null | undefined): number {
+  const parsed = Number(value ?? '')
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-/** Parse an optional numeric form input; blank reads as `null`. */
-export function toOptionalAmount(value: string): number | null {
-  if (value.trim() === '') return null
+/** Parse an optional numeric form input; blank or absent reads as `null`. */
+export function toOptionalAmount(value: string | null | undefined): number | null {
+  if (value == null || value.trim() === '') return null
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null
 }

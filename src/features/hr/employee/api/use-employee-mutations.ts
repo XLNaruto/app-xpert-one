@@ -1,7 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import type { EmployeeBasicFormValues } from '../schemas'
-import { createEmployee, updateEmployee, uploadEmployeePhoto } from './employee-api'
+import {
+  createEmployee,
+  deleteEmployeeFace,
+  updateEmployee,
+  uploadEmployeePhoto,
+} from './employee-api'
 
 /**
  * Step 1's mutations.
@@ -32,6 +37,21 @@ export function useUpdateEmployee(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (values: EmployeeBasicFormValues) => updateEmployee(id, values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.employee.all })
+    },
+  })
+}
+
+/**
+ * DELETE /user/employees/:id/face — de-register the employee's face and its
+ * captured images. `employee_faces` rides on the list row itself, so the whole
+ * employee scope is invalidated and the row's face count drops on the next read.
+ */
+export function useDeleteEmployeeFace() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteEmployeeFace(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.employee.all })
     },

@@ -131,6 +131,22 @@ export function toEmployee(response: EmployeeResponse): Employee {
 
     completedSteps: toCompletedSteps(response.completed_steps),
     service: toService(response.service),
+    kyc: {
+      pfNumber: response.pf_number ?? '',
+      uanNumber: response.uan_number ?? '',
+      esicNumber: response.esic_number ?? '',
+      bankId: response.bank_id ?? null,
+      bankAccountNumber: response.bank_account_number ?? '',
+      bankBranchName: response.bank_branch_name ?? '',
+      ifscCode: response.ifsc_code ?? '',
+      aadharNumber: response.aadhar_number ?? '',
+    },
+    faces: (response.employee_faces ?? []).map((face) => ({
+      id: face.id,
+      key: face.key ?? '',
+      url: face.url ?? '',
+      type: face.type ?? '',
+    })),
 
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',

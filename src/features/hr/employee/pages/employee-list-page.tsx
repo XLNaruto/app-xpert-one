@@ -1,27 +1,26 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Plus, UsersRound } from 'lucide-react'
+import { Plus, Trash2, UsersRound } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { formatDate } from '@/lib/utils'
 import { EMPLOYEE_SORT } from '../constants'
 import { useEmployeeList } from '../hooks/use-employee-list'
-import {
-  EmployeeIdentityCell,
-  EmployeeProgressCell,
-  EmployeeRowActions,
-} from '../components/employee-cells'
+import { useEmployeeFaces } from '../hooks/use-employee-faces'
+import { EmployeeFacesDialog } from '../components/employee-faces-dialog'
+import { EmployeeIdentityCell, EmployeeRowActions } from '../components/employee-cells'
 import type { Employee } from '../types'
 
 /**
  * Employee Management — the module's entry point.
  *
- * A row is one person plus their current posting, and the Progress column says
- * how much of the eight-step record is filled in, so a half-entered employee is
- * visible at a glance rather than only once you open them.
+ * A row is one person: who they are, how to reach them, and the actions menu into
+ * their record. How far through the eight-step wizard they are isn't shown here —
+ * the detail screen and the wizard's own nav carry that.
  *
  * `GET /user/employees` searches the name, the employee code and either mobile
  * number server-side, and sorts by name, code or either audit stamp — those four
@@ -47,7 +46,20 @@ export function EmployeeListPage() {
     goToCreate,
     goToEdit,
     goToDetail,
+    bankNames,
   } = useEmployeeList()
+
+  // The faces dialog reads the row out of `rows`, so a clear is reflected in it.
+  const {
+    facesEmployee,
+    openFaces,
+    closeFaces,
+    clearEmployee,
+    askClearFaces,
+    cancelClearFaces,
+    confirmDeleteFaces,
+    isDeletingFaces,
+  } = useEmployeeFaces(rows)
 
   const columns = useMemo<ColumnDef<Employee>[]>(
     () => [
@@ -69,6 +81,9 @@ export function EmployeeListPage() {
           <EmployeeRowActions
             onView={() => goToDetail(row.original.id)}
             onEdit={() => goToEdit(row.original.id)}
+            faceCount={row.original.faces.length}
+            onViewFaces={() => openFaces(row.original)}
+            onDeleteFaces={() => askClearFaces(row.original)}
           />
         ),
       },
@@ -82,16 +97,9 @@ export function EmployeeListPage() {
         cell: ({ row }) => <EmployeeIdentityCell employee={row.original} />,
       },
       {
-        id: 'progress',
-        header: 'Progress',
-        enableSorting: false,
-        meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => <EmployeeProgressCell employee={row.original} />,
-      },
-      {
         id: 'mobile',
         accessorKey: 'mobileNumber1',
-        header: 'Mobile',
+        header: 'Phone Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => row.original.mobileNumber1 || '—',
@@ -101,17 +109,74 @@ export function EmployeeListPage() {
         accessorKey: 'email',
         header: 'Email',
         enableSorting: false,
+        meta: { className: 'min-w-64 whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-muted-foreground">{row.original.email || '—'}</span>
         ),
       },
       {
         id: 'birthDate',
-        header: 'Date of Birth',
+        header: 'DOB',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
           row.original.birthDate ? formatDate(row.original.birthDate) : '—',
+      },
+      // The statutory and bank identifiers, straight off the row — they're
+      // columns of the employee record, so no extra read is needed for them.
+      {
+        id: 'aadharNumber',
+        header: 'Aadhaar No',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.aadharNumber || '—',
+      },
+      {
+        id: 'uanNumber',
+        header: 'UAN Number',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.uanNumber || '—',
+      },
+      {
+        id: 'pfNumber',
+        header: 'PF Number',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.pfNumber || '—',
+      },
+      {
+        id: 'esicNumber',
+        header: 'ESIC Number',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.esicNumber || '—',
+      },
+      {
+        id: 'bankName',
+        header: 'Bank Name',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        // The row holds `bank_id`; the name comes from the bank master, which the
+        // list hook loads once.
+        cell: ({ row }) => {
+          const { bankId } = row.original.kyc
+          return (bankId ? bankNames.get(bankId) : '') || '—'
+        },
+      },
+      {
+        id: 'bankAccountNumber',
+        header: 'Account Number',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.bankAccountNumber || '—',
+      },
+      {
+        id: 'ifscCode',
+        header: 'IFSC Code',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => row.original.kyc.ifscCode || '—',
       },
       // The endpoint sorts by either audit stamp, so both headers keep the control.
       ...auditColumns<Employee>({
@@ -119,8 +184,10 @@ export function EmployeeListPage() {
         updatedAt: EMPLOYEE_SORT.updatedAt,
       }),
     ],
+    // `bankNames` arrives after the first render, so the Bank Name column has to
+    // be rebuilt when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [offset],
+    [offset, bankNames],
   )
 
   // Reading the list was refused — show the 403 screen, not a broken table.
@@ -176,6 +243,35 @@ export function EmployeeListPage() {
           }
         />
       )}
+
+      <EmployeeFacesDialog
+        employee={facesEmployee}
+        onClose={closeFaces}
+        onClearFaces={() => facesEmployee && askClearFaces(facesEmployee)}
+        isClearing={isDeletingFaces}
+      />
+
+      {/* Reached from the row menu or from inside the dialog. The API de-registers
+          the face and purges every image in one call, so the confirm names the
+          count and spells out that the employee has to register again. */}
+      <ConfirmDialog
+        open={clearEmployee !== null}
+        onOpenChange={(open) => !open && cancelClearFaces()}
+        variant="destructive"
+        icon={Trash2}
+        title="Delete registered faces?"
+        description={
+          clearEmployee
+            ? `All ${clearEmployee.faces.length} face image${
+                clearEmployee.faces.length === 1 ? '' : 's'
+              } for ${clearEmployee.name} will be removed and their face de-registered. They will need to register their face again in the mobile app.`
+            : undefined
+        }
+        confirmLabel="Delete faces"
+        loading={isDeletingFaces}
+        keepOpenOnConfirm
+        onConfirm={confirmDeleteFaces}
+      />
     </div>
   )
 }

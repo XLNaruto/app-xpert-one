@@ -5,6 +5,7 @@
  * scroll-lazy dropdown adapter over it.
  */
 export { useBanksInfinite } from './api/use-banks-infinite'
+export { useBanks } from './api/use-banks'
 export { useBankSelect, type BankSelect } from './hooks/use-bank-select'
 export { fetchBank, fetchBanks } from './api/bank-api'
 export type { BankRecord } from './types'

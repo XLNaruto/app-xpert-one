@@ -131,6 +131,16 @@ export const endpoints = {
    *   `YYYY-MM` month, and `WAGE_STRUCTURE` patches one existing version in
    *   place (correcting a row rather than superseding it).
    *
+   * The last two are the bulk wage screen's, which configures every designation
+   * of a company at once against one effective month:
+   *
+   * - `BULK_WAGE_GRID` reads the whole grid — every designation with the version
+   *   of its structure in force. Unpaginated: the screen is saved as a whole.
+   * - `BULK_UPDATE` writes it back in one transaction — either every row lands
+   *   or none does. Per row, a structure already effective from that exact month
+   *   is updated and any other month adds a version, keeping the earlier ones as
+   *   history.
+   *
    * Tenant-scoped: a required `company_id` on reads and in the create body.
    */
   DESIGNATIONS: {
@@ -142,6 +152,14 @@ export const endpoints = {
     WAGE_STRUCTURES: (id: number) => `/user/designations/${id}/wage-structures`,
     WAGE_STRUCTURE: (id: number, wageStructureId: number) =>
       `/user/designations/${id}/wage-structures/${wageStructureId}`,
+    BULK_WAGE_GRID: '/user/designations/wage-structures',
+    /**
+     * Every designation of a company with *all* its wage versions — the bulk
+     * grid's read-only history twin. Paged over the designations, so a title's
+     * versions are never split across two pages.
+     */
+    BULK_WAGE_HISTORY: '/user/designations/wage-structures/history',
+    BULK_UPDATE: '/user/designations/bulk-update',
   },
   /**
    * The company's leave catalog. Every read is scoped by a required
@@ -236,6 +254,15 @@ export const endpoints = {
     PATCH: (id: number) => `/user/employees/${id}`,
 
     /**
+     * DELETE — de-register the employee's face: the face record and its captured
+     * images are soft-deleted and the stored images purged, answering how many
+     * went. The person is re-registered from the mobile app afterwards, not just
+     * re-captured. (`DELETE …/delete-faces` drops only the pictures and keeps the
+     * enrolment; the portal doesn't use it.)
+     */
+    DELETE_FACE: (id: number) => `/user/employees/${id}/face`,
+
+    /**
      * Step 2 — KYC. Every field is a column on the employee, so an untouched
      * step reads back as a record of `null`s rather than a 404. The first save
      * is a POST (a full overwrite: an omitted field is stored as `null`), and
@@ -304,6 +331,29 @@ export const endpoints = {
     PATCH: (id: number) => `/user/employee-leaves/${id}`,
     DELETE: (id: number) => `/user/employee-leaves/${id}`,
     STATUS: (id: number) => `/user/employee-leaves/${id}/status`,
+  },
+  /**
+   * Payroll — the salary register and the writes that process a month.
+   *
+   * `REGISTER` is the screen: one page of postings open inside the period, each
+   * carrying the attendance the month would be paid on, the wage structure in
+   * force for its designation and `computed` — the pay that would be saved if the
+   * row were committed as it stands. `?status=pending|complete` splits it into
+   * the month's queue and the month already processed.
+   *
+   * `BULK_SAVE` commits the run. **The server computes the pay**: a row sends
+   * only the days it is paid for (`present_days`, and optional `working_days` /
+   * `ot_hours` overrides), never a gross or a per-head amount, so a stale screen
+   * can't write pay from a wage structure that has since been revised.
+   *
+   * `BULK_DELETE` is the register's "discard selected" — a POST because the ids
+   * travel in a body. It soft-deletes, which is what lets the month be run
+   * again; an already-paid salary is refused and reported back in `skipped`.
+   */
+  SALARY: {
+    REGISTER: '/user/salary/register',
+    BULK_SAVE: '/user/salary/bulk-save',
+    BULK_DELETE: '/user/salary/bulk-delete',
   },
   /**
    * Presigned PUT handshakes. Each answers `{ upload_url, key }`: PUT the file

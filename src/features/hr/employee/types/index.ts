@@ -113,6 +113,47 @@ export interface Employee extends AuditFields {
   completedSteps: EmployeeCompletedSteps
   /** The current posting — `null` on a record whose postings are all closed. */
   service: EmployeeService | null
+  /**
+   * The KYC identifiers carried on every employee read. Step 2 edits the full
+   * `EmployeeKyc` through its own endpoint; this is what the list can show
+   * without a request per row.
+   */
+  kyc: EmployeeKycSummary
+  /**
+   * Face images captured for attendance recognition — empty when the employee
+   * has never enrolled, which is what the list's "View Faces" action keys off.
+   */
+  faces: EmployeeFace[]
+}
+
+/**
+ * The statutory and bank identifiers that sit on the employee row itself — the
+ * subset of step 2 that comes back with the list, and all the list column set
+ * needs.
+ */
+export interface EmployeeKycSummary {
+  pfNumber: string
+  uanNumber: string
+  esicNumber: string
+  /** Resolve against the bank master for a name; the row carries only the id. */
+  bankId: number | null
+  bankAccountNumber: string
+  bankBranchName: string
+  ifscCode: string
+  aadharNumber: string
+}
+
+/**
+ * One enrolled face image. Captured in the mobile app, never from this portal —
+ * the admin can look at them and clear them, nothing more.
+ */
+export interface EmployeeFace {
+  id: number
+  /** Storage key; `url` is the resolvable address to render. */
+  key: string
+  url: string
+  /** `pose_vector` (primary enrolment) or `secondary_vector` (re-registration). */
+  type: string
 }
 
 /* ── Step 2 — KYC ────────────────────────────────────────────────────────── */

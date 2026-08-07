@@ -69,6 +69,10 @@
   --sidebar-accent-foreground: #0369a1; /* active nav text */
   --sidebar-border: #e2e8f0;
   --sidebar-ring: #0ea5e9;
+
+  /* Solid stand-in for the (semi-transparent) input surface — used to
+     overpaint Chrome's autofill highlight. Must be opaque. */
+  --autofill: #ffffff;
 }
 
 .dark {
@@ -114,6 +118,9 @@
   --sidebar-accent-foreground: #7dd3fc;
   --sidebar-border: #262f38;
   --sidebar-ring: #38bdf8;
+
+  /* white/5 flattened over the dark card surface */
+  --autofill: #1b2227;
 }
 
 @theme inline {
@@ -182,15 +189,21 @@
     font-family: var(--font-heading);
   }
 
-  /* Kill the browser autofill white/yellow background so themed (glassy)
-     inputs keep their look; only recolor the text + caret. */
+  /* Kill the browser autofill blue/yellow background so themed (glassy)
+     inputs keep their look. Chrome paints the autofill highlight through an
+     internal background that `background-color` can't touch, so overpaint it
+     with a large inset shadow and recolor the text + caret. */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
     -webkit-text-fill-color: var(--color-foreground);
     caret-color: var(--color-foreground);
-    /* Long transition keeps the injected background from ever painting. */
+    -webkit-box-shadow: inset 0 0 0 1000px var(--autofill) !important;
+    box-shadow: inset 0 0 0 1000px var(--autofill) !important;
+    /* Belt-and-braces: also stalls the injected background from painting. */
     transition: background-color 9999s ease-in-out 0s;
   }
 }
@@ -706,22 +719,24 @@
   padding: 2px;
 }
 
-/* Month view of the year-only picker (<MonthPicker>) — three tiles a row, so
-   the panel can be narrower than the day calendar's. */
-.react-calendar__year-view {
-  width: 15rem;
-}
-.react-calendar__year-view__months__month {
-  padding: 0.6rem 0;
-}
+/* The three-a-row grids: months (<MonthPicker>, and <DatePicker> drilled up one
+   level) and years (<YearPicker>, or up two).
 
-/* Decade view of the year-only picker (<YearPicker>) — same three-a-row grid, so
-   a year tile is as easy to hit as a month one. */
-.react-calendar__decade-view {
-  width: 15rem;
-}
-.react-calendar__decade-view__years__year {
-  padding: 0.6rem 0;
+   react-calendar ships `padding: 2em 0.5em` on these tiles — four times what a
+   day tile gets, which made a month read as a block rather than as an option.
+   That rule is written as `.react-calendar__year-view .react-calendar__tile`,
+   two classes, so the single-class overrides that used to live here never
+   applied at all. Matched selector for selector here, and sized to sit level
+   with the day grid's tiles so every picker's panel reads the same.
+
+   No width of their own either: the panel is `.react-calendar`'s 18rem in every
+   view, so drilling from days to months to years can't resize the popup under
+   the cursor. */
+.react-calendar__year-view .react-calendar__tile,
+.react-calendar__decade-view .react-calendar__tile,
+.react-calendar__century-view .react-calendar__tile {
+  padding: 0.65rem 0.25rem;
+  font-size: 0.85rem;
 }
 
 /* The calendar is portalled into a host that <DatePicker> positions itself, so
@@ -761,8 +776,12 @@
   opacity: 0.4;
   background: transparent;
 }
+/* `:focus-visible`, not `:focus` — clicking the label to drill from days up to
+   months left it tinted for as long as the panel stayed open, which reads as a
+   selected value rather than as the thing you just pressed. Keyboard focus still
+   shows. */
 .react-calendar__navigation button:enabled:hover,
-.react-calendar__navigation button:enabled:focus {
+.react-calendar__navigation button:enabled:focus-visible {
   background: var(--accent);
 }
 .react-calendar__month-view__weekdays__weekday {
@@ -783,18 +802,40 @@
   font-size: 0.85rem;
 }
 .react-calendar__tile:enabled:hover,
-.react-calendar__tile:enabled:focus {
+.react-calendar__tile:enabled:focus-visible {
   background: var(--accent);
 }
-.react-calendar__tile--now {
+/* Today. react-calendar paints this `#ffff76` — a highlighter-yellow cell in the
+   middle of a themed panel — so the background is taken back off and today is
+   marked the way the rest of the app marks a current value: in the accent colour,
+   with a ring rather than a fill, so it can't be mistaken for the selection. */
+.react-calendar__tile--now,
+.react-calendar__tile--now:enabled:hover,
+.react-calendar__tile--now:enabled:focus {
+  background: transparent;
   color: var(--primary);
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent);
 }
+
+/* The selection.
+
+   Two classes, not one. `--active` is the tile that *is* the value; `--hasActive`
+   is a tile whose range *contains* it — which is what a year tile gets whenever
+   the value is finer than the view, i.e. every month picked in <MonthPicker> and
+   every date in <DatePicker>'s year view. Left to the library that second state
+   is `#76baff`, a washed-out blue that reads as disabled next to the real
+   selection. They mean the same thing to the user, so they look the same. */
 .react-calendar__tile--active,
 .react-calendar__tile--active:enabled:hover,
-.react-calendar__tile--active:enabled:focus {
+.react-calendar__tile--active:enabled:focus,
+.react-calendar__tile--hasActive,
+.react-calendar__tile--hasActive:enabled:hover,
+.react-calendar__tile--hasActive:enabled:focus {
   background: var(--primary);
-  color: #fff;
+  color: var(--primary-foreground);
+  font-weight: 600;
+  box-shadow: none;
 }
 .react-calendar__month-view__days__day--neighboringMonth {
   color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
@@ -833,6 +874,12 @@
 }
 .wage-head-cell {
   background: color-mix(in oklab, var(--muted) 60%, var(--card));
+}
+/* The salary register's pinned grand-total row — same reasoning as above: it sits
+   at the bottom of the scrollport while the rows pass under it. */
+.wage-total-row,
+.wage-total-row > .wage-sticky {
+  background: color-mix(in oklab, var(--muted) 45%, var(--card));
 }
 
 /* ── Org-chart hierarchy tree ──────────────────────────────────
@@ -935,3 +982,15 @@
   z-index: 100 !important;
 }
 
+
+/* Number inputs: drop the native spinner arrows everywhere. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

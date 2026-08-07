@@ -26,6 +26,10 @@ export function toCompany(response: CompanyResponse): Company {
     registrationNumber: response.registration_number ?? '',
     panNumber: response.pan_number ?? '',
     gstNumber: response.gst_number ?? '',
+    shiftHours:
+      response.shift_hours === null || response.shift_hours === undefined
+        ? ''
+        : String(response.shift_hours),
     addressLine1: response.address1 ?? '',
     addressLine2: response.address2 ?? '',
     addressLine3: response.address3 ?? '',
@@ -54,6 +58,7 @@ export function companyToPayload(values: CompanyFormValues): CompanyPayload {
     registration_number: orNull(values.registrationNumber),
     pan_number: orNull(values.panNumber.toUpperCase()),
     gst_number: orNull(values.gstNumber.toUpperCase()),
+    shift_hours: values.shiftHours.trim() ? Number(values.shiftHours) : null,
     address1: orNull(values.addressLine1),
     address2: orNull(values.addressLine2),
     address3: orNull(values.addressLine3),
@@ -76,6 +81,7 @@ export function companyToFormValues(company: Company): CompanyFormValues {
     registrationNumber: company.registrationNumber,
     panNumber: company.panNumber,
     gstNumber: company.gstNumber,
+    shiftHours: company.shiftHours,
     addressLine1: company.addressLine1,
     addressLine2: company.addressLine2,
     addressLine3: company.addressLine3,

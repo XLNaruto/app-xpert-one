@@ -20,4 +20,10 @@ export interface Department extends AuditFields {
   departmentCode: string
   /** Day of the month the department's cycle starts (1–31), or `null` to follow the calendar month. */
   monthStartDay: number | null
+  /**
+   * Hours one shift may run before an unclosed check-in counts as abandoned.
+   * Overrides the company's value for this department's staff; `null` inherits
+   * it (and the platform default of 18 when the company has none).
+   */
+  shiftHours: number | null
 }

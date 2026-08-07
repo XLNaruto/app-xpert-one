@@ -58,12 +58,8 @@ export function deriveOvertimeRate(
 /**
  * Two decimals at most, and none on a whole number.
  *
- * Every figure the wage grid prints goes through here, because most of them are
- * one division away from a repeating decimal — a monthly basic spread over the
- * paid days, an hourly rate off that again — and a cell is far too narrow to show
- * `144.23076923076923`. Two decimals is also all the API accepts back, so nothing
- * is lost by never showing more.
+ * Lives in `lib/currency` now that the bulk wage screen prints the same figures
+ * through the same cells; re-exported here so the wage structure's own callers
+ * keep reading it off the calculations they sit next to.
  */
-export function gridAmount(value: number): number {
-  return Math.round(value * 100) / 100
-}
+export { gridAmount } from '@/lib/currency'

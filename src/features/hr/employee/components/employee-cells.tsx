@@ -1,11 +1,7 @@
-import { Eye, Pencil } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { CalendarDays, Eye, Mail, Pencil, ScanFace, Trash2, UserMinus } from 'lucide-react'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
+import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { useMediaUrl } from '@/hooks/use-media-url'
-import { cn } from '@/lib/utils'
-import { EMPLOYEE_PROGRESS_STEPS } from '../constants'
-import { stepProgress } from '../lib/employee-mappers'
 import type { Employee } from '../types'
 
 /** The list's presentational cells, kept out of the page's column definitions. */
@@ -38,105 +34,69 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
 }
 
 /**
- * How far through the wizard this employee is — `n/7`, tinted by how complete the
- * record is. Only the seven counted steps are in the total: transfer history and
- * leave management are ongoing registers, not steps you finish.
- */
-export function EmployeeProgressCell({ employee }: { employee: Employee }) {
-  const { completed, total, percent } = stepProgress(
-    employee.completedSteps,
-    EMPLOYEE_PROGRESS_STEPS.map((step) => step.flag),
-  )
-
-  const variant = completed === total ? 'success' : completed > 0 ? 'warning' : 'secondary'
-  const missing = EMPLOYEE_PROGRESS_STEPS.filter(
-    (step) => !employee.completedSteps[step.flag],
-  )
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex cursor-help">
-          <Badge variant={variant}>
-            {completed}/{total} · {percent}%
-          </Badge>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-64 font-normal">
-        {missing.length === 0
-          ? 'Every step is complete.'
-          : `Still to do: ${missing.map((step) => step.tab).join(', ')}`}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-/** A soft-tinted square icon button, matching the shared `TableRowActions` look. */
-function ActionButton({
-  label,
-  icon: Icon,
-  onClick,
-  disabled,
-  className,
-}: {
-  label: string
-  icon: typeof Eye
-  onClick: () => void
-  disabled?: boolean
-  className?: string
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          onClick={onClick}
-          disabled={disabled}
-          className={cn(
-            'grid size-8 place-items-center rounded-lg transition-colors',
-            disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
-            className,
-          )}
-        >
-          <Icon className="size-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  )
-}
-
-/**
- * The list's row actions — View and Edit, the two ways into the record.
+ * The list's row actions, collapsed behind one "Actions" dropdown so the column
+ * stays one button wide however many entries the row grows.
  *
- * There is no Delete: the API exposes no `DELETE /user/employees/:id`, and
- * deliberately so — payroll, attendance and leave history all reference the row,
- * so removing it would orphan them. Taking someone off strength means closing
- * their open posting, which is done from the Service History tab where the
- * leaving date and reason are chosen.
+ * View and Edit are the two ways into the record and are always there. The rest
+ * are optional: each renders only when its handler is passed, so nothing dead
+ * shows in the menu. There is no Delete on this screen — the API exposes no
+ * `DELETE /user/employees/:id`, and deliberately so, since payroll, attendance
+ * and leave history all reference the row. Taking someone off strength means
+ * closing their open posting, which is done from the Service History tab where
+ * the leaving date and reason are chosen.
  */
 export function EmployeeRowActions({
   onView,
   onEdit,
+  onViewFaces,
+  onDeleteFaces,
+  faceCount = 0,
+  onDelete,
+  onDeactivate,
+  onViewAttendance,
+  onAppointmentLetter,
 }: {
   onView: () => void
   onEdit: () => void
+  /** Both shown only when the row actually carries face images. */
+  onViewFaces?: () => void
+  onDeleteFaces?: () => void
+  faceCount?: number
+  onDelete?: () => void
+  onDeactivate?: () => void
+  onViewAttendance?: () => void
+  onAppointmentLetter?: () => void
 }) {
-  return (
-    <div className="flex items-center gap-2">
-      <ActionButton
-        label="View"
-        icon={Eye}
-        onClick={onView}
-        className="bg-muted text-muted-foreground hover:bg-muted-foreground/20"
-      />
-      <ActionButton
-        label="Edit"
-        icon={Pencil}
-        onClick={onEdit}
-        className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
-      />
-    </div>
-  )
+  const actions: RowAction[] = [
+    { label: 'View Details', icon: Eye, onSelect: onView },
+    { label: 'Edit Details', icon: Pencil, onSelect: onEdit },
+  ]
+
+  // An employee with no enrolled face has nothing to show and nothing to clear,
+  // so both entries are absent rather than disabled.
+  if (faceCount > 0) {
+    if (onViewFaces)
+      actions.push({
+        label: `View Faces (${faceCount})`,
+        icon: ScanFace,
+        onSelect: onViewFaces,
+      })
+    // Clearing is reachable without opening the dialog first — the confirm names
+    // the count, so the menu is a safe place for it.
+    if (onDeleteFaces)
+      actions.push({
+        label: 'Delete Faces',
+        icon: Trash2,
+        onSelect: onDeleteFaces,
+        destructive: true,
+      })
+  }
+
+  if (onDelete) actions.push({ label: 'Delete', icon: Trash2, onSelect: onDelete, destructive: true })
+  if (onDeactivate) actions.push({ label: 'Deactive Employee', icon: UserMinus, onSelect: onDeactivate })
+  if (onViewAttendance) actions.push({ label: 'View Attendance', icon: CalendarDays, onSelect: onViewAttendance })
+  if (onAppointmentLetter)
+    actions.push({ label: 'Appointment Letter', icon: Mail, onSelect: onAppointmentLetter })
+
+  return <RowActionsMenu actions={actions} />
 }

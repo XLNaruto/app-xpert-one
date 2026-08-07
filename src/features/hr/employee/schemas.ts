@@ -205,6 +205,18 @@ export const completedStepsResponseSchema = z.object({
   assets: z.boolean(),
 })
 
+/**
+ * One captured face image on an employee row. `type` says which vector the shot
+ * was captured for — `pose_vector` is the primary enrolment set, and
+ * `secondary_vector` the re-registration set.
+ */
+export const employeeFaceResponseSchema = z.object({
+  id: z.number(),
+  key: z.string().nullish(),
+  url: z.string().nullish(),
+  type: z.string().nullish(),
+})
+
 /** The current posting, as it rides on an employee response. */
 export const employeeServiceResponseSchema = z.object({
   id: z.number(),
@@ -223,8 +235,9 @@ export const employeeServiceResponseSchema = z.object({
 })
 
 /**
- * One employee. The KYC columns come back here too (they live on the same table)
- * but the KYC screen reads its own endpoint, so they're ignored on this shape.
+ * One employee. The KYC columns come back here too (they live on the same table);
+ * the KYC screen still reads its own endpoint, but the list renders them from
+ * here rather than asking per row.
  *
  * `service` is absent on a list row and present on the detail read — which is
  * why every field below the person is `nullish`: the two responses share this
@@ -279,8 +292,23 @@ export const employeeResponseSchema = z.object({
   is_police_verified: z.boolean().nullish(),
   is_stamp_agreement: z.boolean().nullish(),
 
+  /**
+   * KYC columns. They live on the employee table, so they ride on every read —
+   * the KYC *screen* still uses its own endpoint, but the list shows these.
+   */
+  pf_number: z.string().nullish(),
+  uan_number: z.string().nullish(),
+  esic_number: z.string().nullish(),
+  bank_id: z.number().nullish(),
+  bank_account_number: z.string().nullish(),
+  bank_branch_name: z.string().nullish(),
+  ifsc_code: z.string().nullish(),
+  aadhar_number: z.string().nullish(),
+
   completed_steps: completedStepsResponseSchema.nullish(),
   service: employeeServiceResponseSchema.nullish(),
+  /** Every face image captured for this employee — empty when none is enrolled. */
+  employee_faces: z.array(employeeFaceResponseSchema).nullish(),
 
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
@@ -293,6 +321,13 @@ export type EmployeeResponse = z.infer<typeof employeeResponseSchema>
 export const employeesResponseSchema = z.object({
   items: z.array(employeeResponseSchema),
   total: z.number(),
+})
+
+/** What `DELETE /user/employees/:id/face` answers. */
+export const deleteFaceResponseSchema = z.object({
+  employee_id: z.number(),
+  face_id: z.number(),
+  deleted_images: z.number(),
 })
 
 /**
@@ -1106,7 +1141,7 @@ export const employeeTransferSchema = z
 
     companyId: z.string().trim().min(1, 'Please select the company'),
 
-    branchId: z.string().trim().min(1, 'Please select the branch'),
+    branchId: z.string(),
     departmentId: z.string(),
     designationId: z.string().trim().min(1, 'Please select a designation'),
     grade: z.string().trim().min(1, 'Please select a grade'),

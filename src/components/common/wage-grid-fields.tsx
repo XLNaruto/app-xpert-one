@@ -4,16 +4,16 @@ import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatAmount, formatDecimal } from '@/lib/currency'
+import { formatAmount, formatDecimal, gridAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
-import { gridAmount } from '../lib/wage-structure-calculations'
 
 /**
- * The controls the wage structure grid is built from. Every one of them is a
- * compact, borderless-ish variant sized to sit inside a table cell — the grid
- * has forty columns, so nothing here can afford the padding a normal form field
- * gets. Read-only twins (`Read*`) render the same values for saved rows, which
- * are never editable.
+ * The controls a wage grid is built from — shared by the designation master's
+ * wage structure history and the HR bulk wage screen, which show the same forty
+ * columns from two different angles. Every one of them is a compact,
+ * borderless-ish variant sized to sit inside a table cell: at that width nothing
+ * here can afford the padding a normal form field gets. Read-only twins
+ * (`Read*`) render the same values for rows that aren't editable.
  */
 
 /**

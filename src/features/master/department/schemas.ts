@@ -15,6 +15,19 @@ export const departmentSchema = z.object({
     .max(200, 'Department name cannot exceed 200 characters'),
   /** Day of the month (1–31) the attendance/salary cycle starts. */
   monthStartDay: z.string().trim().min(1, 'Month start date is required'),
+  /**
+   * Shift length for this department's staff, held as a string (that's what the
+   * input gives us) and parsed to a number by the mappers. Optional: blank
+   * inherits the company's value, and the platform default of 18 when it has
+   * none. A value must land in (0, 24].
+   */
+  shiftHours: z
+    .string()
+    .trim()
+    .refine(
+      (v) => v === '' || (Number(v) > 0 && Number(v) <= 24),
+      'Enter hours greater than 0 and up to 24',
+    ),
 })
 
 export type DepartmentFormValues = z.infer<typeof departmentSchema>
@@ -40,6 +53,12 @@ export const departmentResponseSchema = z.object({
   code: z.string().nullable(),
   geo_fence: z.array(geoFencePointSchema).nullish(),
   month_start_day: z.number().nullable(),
+  /**
+   * Hours a shift may run before an unclosed check-in counts as abandoned.
+   * `null` inherits the company's value. Nullish rather than nullable — older
+   * records answered before the column existed omit it.
+   */
+  shift_hours: z.number().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -64,6 +83,8 @@ export interface DepartmentPayload {
   branch_id: number | null
   name: string
   month_start_day: number | null
+  /** `null` inherits the company's shift hours (and the default of 18). */
+  shift_hours: number | null
 }
 
 /**

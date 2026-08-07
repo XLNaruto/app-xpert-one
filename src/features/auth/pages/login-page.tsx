@@ -32,7 +32,7 @@ export function LoginPage() {
       <form
         onSubmit={onSubmit}
         noValidate
-        autoComplete="off"
+        autoComplete="on"
         className="mt-7 space-y-5"
       >
         {isError && (
@@ -57,7 +57,7 @@ export function LoginPage() {
             <Input
               id="email"
               type="email"
-              autoComplete="off"
+              autoComplete="username"
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
@@ -84,7 +84,7 @@ export function LoginPage() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="off"
+              autoComplete="current-password"
               placeholder="Enter your password"
               className={cn(fieldClasses, 'pr-10')}
               {...register('password')}
