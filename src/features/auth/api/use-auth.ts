@@ -10,13 +10,12 @@ import type { AuthSession } from '../types'
 /** Demo session for `VITE_USE_MOCK_API=true` (no backend reachable). */
 async function mockLogin({
   email,
-  companyCode,
+  isOwner,
 }: LoginValues): Promise<AuthSession> {
   await mockDelay(undefined, 600)
   const handle = email.split('@')[0]
-  // Mirrors the API's two forms: a company code means a tenant-created admin,
-  // who is already bound to that company, so the gate never asks.
-  const isOwner = companyCode.trim() === ''
+  // Mirrors the API's two forms: the User tab means a tenant-created admin, who
+  // is already bound to that company, so the gate never asks.
   return {
     user: {
       id: 0,

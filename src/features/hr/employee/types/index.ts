@@ -1,4 +1,5 @@
 import type { AuditFields } from '@/types/audit'
+import type { Shift } from '@/features/master/shift'
 
 /**
  * UI-facing records for the employee module.
@@ -385,4 +386,68 @@ export interface EmployeeTransferWageStructure {
 export interface EmployeeTransferDetail {
   wageStructure: EmployeeTransferWageStructure
   serviceDetail: EmployeeServiceDetail
+}
+
+/* ── Step 9 — shift & roster ─────────────────────────────────────────────── */
+
+/**
+ * One entry of the assignment timeline.
+ *
+ * Both ids `null` is meaningful, not empty: it says "back to the department or
+ * company default from this date", which is how an assignment is ENDED. The
+ * timeline is append-only for that reason — deleting the old entry instead would
+ * rewrite which shift the employee was judged against on days already closed.
+ */
+export interface EmployeeShiftAssignment extends AuditFields {
+  id: number
+  employeeId: number
+  /** The posting the entry hangs off — the API resolves it from the date. */
+  employeeServiceId: number
+  shiftId: number | null
+  shiftName: string
+  rotationId: number | null
+  rotationName: string
+  /** `YYYY-MM-DD`. For a rotation this is also the cycle's anchor: week 1 starts here. */
+  effectiveDate: string
+}
+
+/** Where a roster row came from — a manual override, or one the system laid down. */
+export type RosterSourceType = 'MANUAL' | 'ROTATION' | 'POLICY'
+
+/**
+ * One per-date shift override. The highest-priority answer in the resolution
+ * chain, and the only part of it that's safe to delete: a roster row says nothing
+ * about history, it just outranks the rotation and the defaults for its one date.
+ */
+export interface EmployeeRosterEntry extends AuditFields {
+  id: number
+  employeeId: number
+  employeeServiceId: number
+  /** `YYYY-MM-DD`. */
+  workDate: string
+  shiftId: number
+  shiftName: string
+  sourceType: RosterSourceType
+}
+
+/**
+ * Which link of the precedence chain answered for a date. Reading it is the only
+ * way to tell "General, because it's the company default" (nothing to undo) from
+ * "General, because somebody rostered it onto this date" (one row to remove).
+ */
+export type ShiftSource = 'roster' | 'rotation' | 'assignment' | 'department' | 'company'
+
+/**
+ * The shift an employee works on one date, and why.
+ *
+ * A `null` shift means the tenant has configured none at all — attendance then
+ * falls back to its pre-shift behaviour, which is a different statement from "the
+ * day is off".
+ */
+export interface EmployeeShiftOnDay {
+  /** The date answered for, `YYYY-MM-DD`. */
+  day: string
+  shift: Shift | null
+  source: ShiftSource | null
+  isWeekOff: boolean
 }

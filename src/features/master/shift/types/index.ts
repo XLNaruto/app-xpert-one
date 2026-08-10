@@ -28,5 +28,11 @@ export interface Shift extends AuditFields {
   minFullDayHours: number
   /** Worked hours at or above this, but under a full day, are a half day. */
   minHalfDayHours: number
+  /**
+   * The week-off policy this shift names, or `null` when it names none — in which
+   * case the department's default answers, then the company's, then the platform's
+   * Sunday-only constant.
+   */
+  weekoffPolicyId: number | null
   status: boolean
 }

@@ -17,16 +17,33 @@ export function useLogin() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
+      isOwner: true,
       companyCode: '',
       remember: false,
     },
   })
+
+  const isOwner = watch('isOwner')
+
+  /**
+   * Switching tabs swaps which API login form the submit uses, so the company
+   * code is dropped along with any error it left behind — the owner form never
+   * sends it.
+   */
+  const setIsOwner = (next: boolean) => {
+    setValue('isOwner', next)
+    setValue('companyCode', '')
+    clearErrors('companyCode')
+  }
 
   const onSubmit = handleSubmit((v) =>
     login.mutate(v, {
@@ -40,6 +57,8 @@ export function useLogin() {
   return {
     register,
     errors,
+    isOwner,
+    setIsOwner,
     onSubmit,
     isPending: login.isPending,
     isError: login.isError,

@@ -149,6 +149,64 @@ export const endpoints = {
     CLEAR_DEFAULT: '/user/shifts/clear-default',
   },
   /**
+   * Rotation cycles — a named ring of shifts an employee walks week by week
+   * (nights one week, mornings the next).
+   *
+   * Tenant-scoped like the shifts they name: a required `company_id` on reads and
+   * in the create body, and every shift in the cycle must belong to that same
+   * company.
+   *
+   * `weeks` is the WHOLE cycle, not a patchable list: it has to cover weeks
+   * `1..cycle_length_weeks` exactly once, because an employee landing on a missing
+   * week would silently fall through to the department default. On a PATCH,
+   * omitting `weeks` leaves the cycle alone and sending it replaces every week —
+   * so `cycle_length_weeks` and `weeks` are validated against each other whichever
+   * of the two moved.
+   *
+   * The cycle is anchored per assignment, not globally: week 1 starts at each
+   * employee's own `effective_date`, so two people assigned a week apart are
+   * legitimately out of phase.
+   *
+   * A DELETE is refused with 409 while employees are still assigned to it.
+   */
+  SHIFT_ROTATIONS: {
+    LIST: '/user/shift-rotations',
+    POST: '/user/shift-rotations',
+    GET: (id: number) => `/user/shift-rotations/${id}`,
+    PATCH: (id: number) => `/user/shift-rotations/${id}`,
+    DELETE: (id: number) => `/user/shift-rotations/${id}`,
+  },
+  /**
+   * Week-off policies — which days of the week don't count as working days.
+   *
+   * `days` is a list of RULES rather than a list of weekdays, which is what makes
+   * the interesting patterns expressible: `week_day` is 0 = Sunday … 6 = Saturday
+   * and `week_number` names WHICH occurrence of that weekday in the month (1–5),
+   * `null` meaning every one. Alternate Saturdays are therefore two rules with
+   * `week_number` 2 and 4, and because a dated rule beats an every-week rule,
+   * `is_off: false` carves an exception out of a broad one.
+   *
+   * Like the rotation's cycle, the rule set is replaced wholesale: omitting `days`
+   * on a PATCH leaves the rules alone and sending it replaces them all — "which
+   * days are off" only makes sense read together, so there is no per-rule patch.
+   *
+   * `SET_DEFAULT` / `CLEAR_DEFAULT` take exactly one of `company_id` or
+   * `department_id` (the department wins). A shift may name its own policy, but
+   * most don't — and without a default at one of those two levels every such shift
+   * falls back to the platform's Sunday-only constant.
+   *
+   * A DELETE is refused with 409 while a shift, company or department points at it.
+   */
+  WEEKOFF_POLICIES: {
+    LIST: '/user/weekoff-policies',
+    POST: '/user/weekoff-policies',
+    GET: (id: number) => `/user/weekoff-policies/${id}`,
+    PATCH: (id: number) => `/user/weekoff-policies/${id}`,
+    DELETE: (id: number) => `/user/weekoff-policies/${id}`,
+    SET_DEFAULT: (id: number) => `/user/weekoff-policies/${id}/set-default`,
+    CLEAR_DEFAULT: '/user/weekoff-policies/clear-default',
+  },
+  /**
    * The company's designations — a title plus an effective-dated wage structure
    * behind it. The two are separate resources on purpose:
    *
@@ -344,6 +402,38 @@ export const endpoints = {
       `/user/employees/${id}/transfers/${serviceId}`,
     LEAVE_SERVICE: (id: number, serviceId: number) =>
       `/user/employees/${id}/transfers/${serviceId}/leave-service`,
+
+    /**
+     * Step 9 — which shift the employee works, and why.
+     *
+     * `SHIFT_ON_DAY` walks the whole precedence chain (roster → rotation →
+     * assignment → department default → company default) for one date and reports
+     * which link answered in `source`. That's the only way to tell "General,
+     * because it's the company default" (nothing to undo) from "General, because
+     * somebody rostered it onto this date" (one row a manager can remove). It
+     * answers for any day, past or future, so a rotation can be walked forward
+     * without materialising anything.
+     *
+     * `SHIFTS` is the assignment TIMELINE — append-only and unpaginated, since a
+     * career collects a handful of entries. An EMPTY timeline is the ordinary,
+     * healthy state: it means the employee is on their department's or company's
+     * default. A POST with NEITHER `shift_id` nor `rotation_id` is how an
+     * assignment ENDS ("back to the default from this date"); `SHIFT_ENTRY`'s
+     * DELETE is only for an entry typed by mistake, because removing one rewrites
+     * which shift the employee was judged against on days already closed.
+     *
+     * `ROSTER` is the per-date override — the highest-priority answer in the
+     * chain. Only the dates a manager explicitly overrode are rows; re-rostering
+     * a date REPLACES its entry rather than conflicting, and unlike a timeline
+     * entry a roster row IS safe to delete, since it says nothing about history.
+     */
+    SHIFT_ON_DAY: (id: number) => `/user/employees/${id}/shift`,
+    SHIFTS: (id: number) => `/user/employees/${id}/shifts`,
+    SHIFT_ENTRY: (id: number, entryId: number) =>
+      `/user/employees/${id}/shifts/${entryId}`,
+    ROSTER: (id: number) => `/user/employees/${id}/roster`,
+    ROSTER_ENTRY: (id: number, entryId: number) =>
+      `/user/employees/${id}/roster/${entryId}`,
   },
   /**
    * Step 9 — leave records. A top-level collection rather than a sub-resource:

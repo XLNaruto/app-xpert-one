@@ -33,7 +33,7 @@ export interface EmployeeWizardStep {
 }
 
 /**
- * Owns the eight-step wizard: which step is open, which are reachable, and how
+ * Owns the nine-step wizard: which step is open, which are reachable, and how
  * complete the record is.
  *
  * **Why every step but the first is locked on a new employee.** The API creates

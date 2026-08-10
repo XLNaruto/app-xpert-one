@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { usePagination } from '@/hooks/use-pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { useWeekoffPolicies } from '@/features/master/weekoff-policy'
 import { SHIFT_DEFAULT_SORT, SHIFT_PAGE_SIZE } from '../constants'
 import { useShifts } from '../api/use-shifts'
 import { useDeleteShift } from '../api/use-shift-mutations'
@@ -34,6 +35,18 @@ export function useShiftList(companyId?: number) {
   const { data, isLoading, isError, error } = useShifts(params, companyId)
   const deleteShift = useDeleteShift()
 
+  // A shift row carries `weekoff_policy_id` and nothing else, so the master is read
+  // alongside it to turn that id into the pattern's name. Same query key as the
+  // form's dropdown, so the two share one request.
+  const weekoffPolicies = useWeekoffPolicies(undefined, companyId)
+  const weekoffPolicyNames = useMemo(
+    () =>
+      new Map(
+        (weekoffPolicies.data?.items ?? []).map((policy) => [policy.id, policy.name]),
+      ),
+    [weekoffPolicies.data],
+  )
+
   /** The row the form above the list is editing, or `null` while it's adding. */
   const [editing, setEditing] = useState<Shift | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Shift | null>(null)
@@ -60,6 +73,8 @@ export function useShiftList(companyId?: number) {
 
   return {
     rows: data?.items ?? [],
+    /** Policy id → its name, for the Week-Off column. */
+    weekoffPolicyNames,
     // Server pagination — the table reports pages back as limit/offset.
     total: data?.total ?? 0,
     limit,

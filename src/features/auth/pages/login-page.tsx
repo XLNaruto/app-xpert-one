@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Building2, Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Building2, Eye, EyeOff, Lock, Mail, ShieldCheck, UserRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -10,9 +10,24 @@ import { useLogin } from '../hooks/use-login'
 const fieldClasses =
   'h-11 border border-border bg-white/80 pl-10 text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 dark:border-white/15 dark:bg-white/5 dark:focus-visible:border-primary'
 
+/** The two API login forms, as the segmented switch renders them. */
+const ROLE_TABS = [
+  { value: 'owner', label: 'Owner', icon: ShieldCheck },
+  { value: 'user', label: 'User', icon: UserRound },
+] as const
+
 /** Email · password sign-in. */
 export function LoginPage() {
-  const { register, errors, onSubmit, isPending, isError, error } = useLogin()
+  const {
+    register,
+    errors,
+    isOwner,
+    setIsOwner,
+    onSubmit,
+    isPending,
+    isError,
+    error,
+  } = useLogin()
   const [showPassword, setShowPassword] = useState(false)
 
   return (
@@ -43,6 +58,44 @@ export function LoginPage() {
             {error?.message}
           </p>
         )}
+
+        {/* Which API login form to use — Owner sends `is_owner: true` and no
+            company code, User sends `is_owner: false` plus the code. */}
+        <div
+          role="tablist"
+          aria-label="Sign-in as"
+          className="relative grid h-12 grid-cols-2 rounded-lg border border-border bg-white/80 p-1 shadow-sm backdrop-blur-sm dark:border-white/15 dark:bg-white/5"
+        >
+          {/* Sliding thumb — one element that travels between the two halves. */}
+          <span
+            aria-hidden
+            className={cn(
+              'pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-md bg-linear-to-r from-primary to-primary-hover shadow-sm shadow-primary/25 transition-transform duration-300 ease-out',
+              !isOwner && 'translate-x-full',
+            )}
+          />
+          {ROLE_TABS.map(({ value, label, icon: Icon }) => {
+            const active = isOwner === (value === 'owner')
+            return (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setIsOwner(value === 'owner')}
+                className={cn(
+                  'relative z-10 inline-flex cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors duration-200',
+                  active
+                    ? 'text-white'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Icon className="size-4" strokeWidth={2.25} />
+                {label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Email */}
         <div className="space-y-2">
@@ -107,8 +160,8 @@ export function LoginPage() {
           )}
         </div>
 
-        {/* Company code — tenant-admin sign-in; owners leave it blank */}
-        <div className="space-y-2">
+        {/* Company code — tenant-admin sign-in only */}
+        <div className={cn('space-y-2', isOwner && 'hidden')}>
           <Label htmlFor="companyCode" className="block text-foreground/90">
             Company Code
           </Label>
@@ -130,13 +183,9 @@ export function LoginPage() {
               {...register('companyCode')}
             />
           </div>
-          {errors.companyCode ? (
+          {errors.companyCode && (
             <p className="text-xs text-destructive">
               {errors.companyCode.message}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              Required for company users. Account owners can leave this blank.
             </p>
           )}
         </div>

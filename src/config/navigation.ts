@@ -6,7 +6,9 @@ import {
   Building2,
   CalendarDays,
   CalendarHeart,
+  CalendarOff,
   Calculator,
+  Clock,
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
   // CalendarHeart,
@@ -20,6 +22,7 @@ import {
   MapPinned,
   Percent,
   ReceiptIndianRupee,
+  RefreshCw,
   Settings2,
   SlidersHorizontal,
   UserRoundCog,
@@ -126,6 +129,21 @@ export const navGroups: NavGroup[] = [
             to: "/master/allowance-deduction",
             icon: Wallet,
           },
+        ],
+      },
+      {
+        /*
+          Shift Management sits under Master because all three of its records are
+          configuration the rest of the app points at. The shifts themselves are
+          created on the company's Shift tab (they hang off a company id), so what
+          lives here is what has no home of its own: the rotation cycles built from
+          those shifts, and the week-off patterns they fall back on.
+        */
+        label: "Shift Management",
+        icon: Clock,
+        children: [
+          { label: "Shift Rotation", to: "/master/shift-rotation", icon: RefreshCw },
+          { label: "Week-Off Policy", to: "/master/weekoff-policy", icon: CalendarOff },
         ],
       },
       {

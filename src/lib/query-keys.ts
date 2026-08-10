@@ -94,6 +94,31 @@ export const queryKeys = {
         : ([...queryKeys.shift.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.shift.all, 'detail', id] as const,
   },
+  /**
+   * Rotation cycles — read on their own master screen and, as a dropdown, when an
+   * employee is put on a rotation. `companyId` is in the key for the same reason
+   * it is on the shifts: the tenant a page read for identifies the result set.
+   */
+  shiftRotation: {
+    all: ['shift-rotation'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.shiftRotation.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.shiftRotation.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.shiftRotation.all, 'detail', id] as const,
+  },
+  /**
+   * Week-off policies — the master screen, plus the dropdown on the shift form
+   * that points one shift at its own pattern.
+   */
+  weekoffPolicy: {
+    all: ['weekoff-policy'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.weekoffPolicy.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.weekoffPolicy.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.weekoffPolicy.all, 'detail', id] as const,
+  },
   designation: {
     all: ['designation'] as const,
     /**
@@ -280,6 +305,21 @@ export const queryKeys = {
     /** Step 8 — one posting expanded: service detail + its wage structure. */
     transfer: (id: number, serviceId: number) =>
       [...queryKeys.employee.all, 'transfer', id, serviceId] as const,
+    /**
+     * Step 9 — the shift resolved for ONE date, with the link of the precedence
+     * chain that answered. The date is in the key: a different day is a different
+     * answer, not a refetch of this one.
+     */
+    shiftOnDay: (id: number, date: string) =>
+      [...queryKeys.employee.all, 'shift-on-day', id, date] as const,
+    /** Step 9 — the assignment timeline, newest first. Unpaginated. */
+    shiftTimeline: (id: number) =>
+      [...queryKeys.employee.all, 'shift-timeline', id] as const,
+    /** Step 9 — the per-date roster overrides inside one window. */
+    roster: (id: number, from: string, to: string, params?: PageParams) =>
+      params
+        ? ([...queryKeys.employee.all, 'roster', id, from, to, params] as const)
+        : ([...queryKeys.employee.all, 'roster', id, from, to] as const),
   },
   /**
    * Leave Management — the company-wide leave register. `employeeId` scopes the

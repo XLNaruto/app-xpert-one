@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { shiftResponseSchema } from '@/features/master/shift'
 import { MINIMUM_EMPLOYEE_AGE, PERMANENT_EMPLOYMENT_TYPE } from './constants'
 
 /**
@@ -1320,4 +1321,148 @@ export interface EmployeeServiceEditPayload {
 export interface LeaveServicePayload {
   leaving_date: string
   leaving_reason: string
+}
+
+/* ── Step 9 — shift & roster ─────────────────────────────────────────────── */
+
+/**
+ * Put the employee on a shift or a rotation from a date.
+ *
+ * All three cases go through this one form, and which one is meant is read off the
+ * mode: a shift, a rotation, or NEITHER — the last being how an assignment ends
+ * ("back to the department or company default from this date"). The API takes the
+ * absence of both ids as that instruction, so "default" is a deliberate choice on
+ * the form rather than an empty one.
+ */
+export const employeeShiftAssignmentSchema = z
+  .object({
+    /** Which kind of assignment is being written. */
+    mode: z.enum(['shift', 'rotation', 'default']),
+    /** A shift id as the dropdown's string; empty in the other two modes. */
+    shiftId: z.string().trim(),
+    /** A rotation id as the dropdown's string; empty in the other two modes. */
+    rotationId: z.string().trim(),
+    effectiveDate: z
+      .string()
+      .trim()
+      .min(1, 'Effective date is required')
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a date as YYYY-MM-DD'),
+  })
+  .superRefine((values, ctx) => {
+    if (values.mode === 'shift' && !values.shiftId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['shiftId'],
+        message: 'Pick the shift to assign',
+      })
+    }
+    if (values.mode === 'rotation' && !values.rotationId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['rotationId'],
+        message: 'Pick the rotation to assign',
+      })
+    }
+  })
+
+export type EmployeeShiftAssignmentFormValues = z.infer<
+  typeof employeeShiftAssignmentSchema
+>
+
+/** Override the employee's shift for one date. Both fields are required. */
+export const employeeRosterSchema = z.object({
+  workDate: z
+    .string()
+    .trim()
+    .min(1, 'Date is required')
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a date as YYYY-MM-DD'),
+  shiftId: z.string().trim().min(1, 'Pick the shift for this date'),
+})
+
+export type EmployeeRosterFormValues = z.infer<typeof employeeRosterSchema>
+
+/** One entry of the assignment timeline as the API returns it. */
+export const employeeShiftAssignmentResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number(),
+  employee_service_id: z.number(),
+  shift_id: z.number().nullish(),
+  shift_name: z.string().nullish(),
+  rotation_id: z.number().nullish(),
+  rotation_name: z.string().nullish(),
+  effective_date: z.string(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeShiftAssignmentResponse = z.infer<
+  typeof employeeShiftAssignmentResponseSchema
+>
+
+/** `GET /user/employees/:id/shifts` — the whole timeline, newest first. */
+export const employeeShiftAssignmentsResponseSchema = z.object({
+  items: z.array(employeeShiftAssignmentResponseSchema),
+  total: z.number(),
+})
+
+/** One roster override as the API returns it. */
+export const employeeRosterEntryResponseSchema = z.object({
+  id: z.number(),
+  employee_id: z.number(),
+  employee_service_id: z.number(),
+  work_date: z.string(),
+  shift_id: z.number(),
+  shift_name: z.string().nullish(),
+  source_type: z.string(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type EmployeeRosterEntryResponse = z.infer<
+  typeof employeeRosterEntryResponseSchema
+>
+
+/** `GET /user/employees/:id/roster` — one page of overrides inside a window. */
+export const employeeRosterResponseSchema = z.object({
+  items: z.array(employeeRosterEntryResponseSchema),
+  total: z.number(),
+})
+
+/**
+ * `GET /user/employees/:id/shift` — the resolved shift for one date.
+ *
+ * The nested shift is the full record, so it's parsed with the shift master's own
+ * response schema rather than a copy of it. `source` is left as a plain string and
+ * narrowed by the mapper: an unfamiliar link in the chain shouldn't fail the page.
+ */
+export const employeeShiftOnDayResponseSchema = z.object({
+  day: z.string(),
+  shift: shiftResponseSchema.nullable(),
+  source: z.string().nullish(),
+  is_week_off: z.boolean(),
+})
+
+export type EmployeeShiftOnDayResponse = z.infer<
+  typeof employeeShiftOnDayResponseSchema
+>
+
+/**
+ * The assignment body. Sending NEITHER id is the meaningful way to end an
+ * assignment, so both are optional — and `null` travels rather than the key being
+ * dropped, to say it outright.
+ */
+export interface EmployeeShiftAssignmentPayload {
+  shift_id: number | null
+  rotation_id: number | null
+  effective_date: string
+}
+
+/** The roster body — re-posting the same date replaces its entry. */
+export interface EmployeeRosterPayload {
+  work_date: string
+  shift_id: number
 }

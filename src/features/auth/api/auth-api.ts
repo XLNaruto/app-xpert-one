@@ -21,8 +21,8 @@ import type { AuthSession } from '../types'
  * tenant created and additionally requires `company_code` — the code of the
  * company that user belongs to. There is no fallback between the two, so an
  * address sent through the wrong form answers 401 with the same message as a
- * wrong password. The sign-in screen carries one optional Company Code field:
- * blank means the owner form, filled means the tenant-admin form.
+ * wrong password. The sign-in screen picks the form with an Owner/User tab,
+ * which is what `isOwner` carries here.
  *
  * `source: 'WEB'` is what makes this a browser session: the API keeps exactly
  * one, so signing in again elsewhere on the web signs the previous browser out
@@ -33,8 +33,12 @@ import type { AuthSession } from '../types'
 export async function loginRequest({
   email,
   password,
+  isOwner,
   companyCode,
-}: Pick<LoginValues, 'email' | 'password' | 'companyCode'>): Promise<AuthSession> {
+}: Pick<
+  LoginValues,
+  'email' | 'password' | 'isOwner' | 'companyCode'
+>): Promise<AuthSession> {
   const code = companyCode.trim()
   try {
     const raw = await http.post<
@@ -51,8 +55,8 @@ export async function loginRequest({
       password,
       // `company_code` is ignored by the API on the owner form, so it's only
       // sent alongside `is_owner: false`.
-      is_owner: code === '',
-      ...(code === '' ? {} : { company_code: code }),
+      is_owner: isOwner,
+      ...(isOwner ? {} : { company_code: code }),
       source: 'WEB',
     })
     const data = loginResponseSchema.parse(raw)

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Controller } from 'react-hook-form'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Clock, Moon } from 'lucide-react'
 import { EmptyState } from '@/components/common/empty-state'
@@ -9,7 +10,9 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { TimeField } from '@/components/common/time-field'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { SHIFT_SORT } from '../constants'
 import { formatShiftWindow } from '../lib/shift-mappers'
@@ -116,6 +119,24 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         ),
       },
       {
+        id: 'weekoffPolicy',
+        header: 'Week-Off',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        // Naming no policy is the ordinary case, and it isn't "none" — the
+        // department's default answers, then the company's. The cell says which
+        // situation the row is in rather than leaving a blank.
+        cell: ({ row }) =>
+          row.original.weekoffPolicyId === null ? (
+            <span className="text-xs text-muted-foreground">Follows default</span>
+          ) : (
+            <Badge variant="secondary">
+              {list.weekoffPolicyNames.get(row.original.weekoffPolicyId) ??
+                `#${row.original.weekoffPolicyId}`}
+            </Badge>
+          ),
+      },
+      {
         accessorKey: 'status',
         header: 'Status',
         enableSorting: false,
@@ -129,7 +150,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
       ...auditColumns<Shift>({ createdAt: SHIFT_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [list.weekoffPolicyNames],
   )
 
   return (
@@ -195,22 +216,9 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           />
         </Field>
         <Field
-          label="Early Exit Grace (minutes)"
-          error={form.errors.earlyExitGraceMinutes?.message}
-          hint="The mirror of the concession at the end of the shift."
-        >
-          <Input
-            type="number"
-            min={0}
-            max={720}
-            placeholder="15"
-            {...form.register('earlyExitGraceMinutes')}
-          />
-        </Field>
-        <Field
           label="Full Day Hours"
           error={form.errors.minFullDayHours?.message}
-          hint="Worked hours at or above this count as a full day."
+          hint="Worked hours at or above this count as a full day. Filled in from the shift window minus the break — type over it if yours differs."
         >
           <Input
             type="number"
@@ -224,7 +232,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         <Field
           label="Half Day Hours"
           error={form.errors.minHalfDayHours?.message}
-          hint="Worked hours at or above this, but under a full day, count as a half day."
+          hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it if yours differs."
         >
           <Input
             type="number"
@@ -234,6 +242,60 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             placeholder="4"
             {...form.register('minHalfDayHours')}
           />
+        </Field>
+
+        {/*
+          Clearable, and blank by default: most shifts name no pattern of their own
+          and fall back to the department's default, then the company's, then the
+          platform's Sunday-only constant. Naming one here overrides all three for
+          this shift alone.
+        */}
+        <Field
+          label="Week-Off Policy"
+          hint="Leave blank to follow the department's or company's default pattern. Set one only for a shift whose off days differ from everyone else's."
+        >
+          <Controller
+            control={form.control}
+            name="weekoffPolicyId"
+            render={({ field }) => (
+              <Combobox
+                className="w-full"
+                value={field.value}
+                onChange={field.onChange}
+                options={form.weekoffPolicySelectOptions}
+                clearable
+                panelMinWidth={340}
+                placeholder={
+                  form.isWeekoffPoliciesLoading ? 'Loading…' : 'Follows default'
+                }
+                searchPlaceholder="Search policy"
+              />
+            )}
+          />
+        </Field>
+
+        <Field
+          label="Status"
+          hint="An inactive shift stays on record but shouldn't be rostered against going forward."
+        >
+          <div className="flex h-9 items-center gap-2">
+            <Controller
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label="Shift active"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {field.value ? 'Active' : 'Inactive'}
+                  </span>
+                </>
+              )}
+            />
+          </div>
         </Field>
 
         <div className="col-span-full flex items-center justify-end gap-3 border-t border-border pt-5">

@@ -19,6 +19,7 @@ import { EducationExperienceTab } from '../components/education-experience-tab'
 import { DocumentDetailTab } from '../components/document-detail-tab'
 import { AssetDetailTab } from '../components/asset-detail-tab'
 import { TransferHistoryTab } from '../components/transfer-history-tab'
+import { ShiftRosterTab } from '../components/shift-roster-tab'
 
 interface EmployeeCreatePageProps {
   /**
@@ -30,7 +31,7 @@ interface EmployeeCreatePageProps {
 }
 
 /**
- * Add / edit an employee: one screen, eight steps.
+ * Add / edit an employee: one screen, nine steps.
  *
  * The wizard's shape is the API's shape. `POST /user/employees` creates the person
  * *and* their first posting together, and every later step is a sub-resource
@@ -42,10 +43,10 @@ interface EmployeeCreatePageProps {
  * time — there is no whole-step endpoint — so those saves diff the list into the
  * inserts, updates and deletes that make the server match (`lib/save-rows.ts`).
  *
- * Two steps have no save of their own. Step 3 is read-only: the wage structure is
- * inherited from the designation and stored nowhere on the employee. Step 8 writes
- * only through its dialogs, because the posting history is append-only and each
- * write is a deliberate, irreversible act.
+ * Three steps have no save of their own. Step 3 is read-only: the wage structure is
+ * inherited from the designation and stored nowhere on the employee. Steps 8 and 9
+ * write only through their dialogs, because the posting history and the shift
+ * timeline are append-only and each write is a deliberate, irreversible act.
  */
 export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
   // Decrypt the params from the URL; missing/malformed → create mode. The token
@@ -62,7 +63,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
   const title = employeeId === undefined ? 'Add Employee' : 'Edit Employee'
   const description =
     employeeId === undefined
-      ? 'Save Basic Detail first — the other seven steps hang off the saved employee.'
+      ? 'Save Basic Detail first — the other eight steps hang off the saved employee.'
       : [employee?.name, employee?.code].filter(Boolean).join(' · ') ||
         'Complete the employee record'
 
@@ -127,7 +128,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
  * The open step's body.
  *
  * Only the active step is mounted — a hidden tab would otherwise fire its own read
- * on the first render, and eight of those at once is eight requests for one step the
+ * on the first render, and nine of those at once is nine requests for one step the
  * user is looking at.
  */
 function StepBody({
@@ -212,6 +213,14 @@ function StepBody({
     case 'transfers':
       return (
         <TransferHistoryTab
+          employeeId={employeeId}
+          onContinue={goToNextTab}
+          onBack={goToPrevTab}
+        />
+      )
+    case 'shifts':
+      return (
+        <ShiftRosterTab
           employeeId={employeeId}
           onContinue={goToNextTab}
           onBack={goToPrevTab}

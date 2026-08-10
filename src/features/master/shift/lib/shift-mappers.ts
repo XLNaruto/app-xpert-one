@@ -28,6 +28,7 @@ export function toShift(response: ShiftResponse): Shift {
     earlyExitGraceMinutes: response.early_exit_grace_minutes,
     minFullDayHours: response.min_full_day_hours,
     minHalfDayHours: response.min_half_day_hours,
+    weekoffPolicyId: response.weekoff_policy_id ?? null,
     status: response.status,
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',
@@ -57,9 +58,13 @@ export function shiftToPayload(values: ShiftFormValues): ShiftUpdatePayload {
     end_time: values.endTime,
     ...sent('break_minutes', values.breakMinutes),
     ...sent('concession_minutes', values.concessionMinutes),
-    ...sent('early_exit_grace_minutes', values.earlyExitGraceMinutes),
+    // Not on the form any more — every shift is saved with no end-of-shift grace.
+    early_exit_grace_minutes: 0,
     ...sent('min_full_day_hours', values.minFullDayHours),
     ...sent('min_half_day_hours', values.minHalfDayHours),
+    // Always sent, unlike the tolerances: clearing the picker means "follow the
+    // default pattern", which only takes effect if the null overwrites the old id.
+    weekoff_policy_id: values.weekoffPolicyId ? Number(values.weekoffPolicyId) : null,
     status: values.status,
   }
 }
@@ -72,11 +77,45 @@ export function shiftToFormValues(shift: Shift): ShiftFormValues {
     endTime: shift.endTime,
     breakMinutes: String(shift.breakMinutes),
     concessionMinutes: String(shift.concessionMinutes),
-    earlyExitGraceMinutes: String(shift.earlyExitGraceMinutes),
     minFullDayHours: String(shift.minFullDayHours),
     minHalfDayHours: String(shift.minHalfDayHours),
+    weekoffPolicyId: shift.weekoffPolicyId ? String(shift.weekoffPolicyId) : '',
     status: shift.status,
   }
+}
+
+/** `HH:MM` → minutes past midnight, or `null` when the string isn't a time yet. */
+function toMinutes(time: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim())
+  if (!match) return null
+  const hours = Number(match[1])
+  const mins = Number(match[2])
+  if (hours > 23 || mins > 59) return null
+  return hours * 60 + mins
+}
+
+/**
+ * Paid hours in the shift window: end − start, minus the unpaid break, rounded
+ * to the nearest half hour so it lands on the form's 0.5 step.
+ *
+ * An end at or before the start crosses midnight, so a day is added — the same
+ * rule the API uses to derive `is_night_shift`. Returns `null` while either time
+ * is blank or half-typed, and when the break swallows the whole window.
+ */
+export function shiftPaidHours(
+  startTime: string,
+  endTime: string,
+  breakMinutes: string,
+): number | null {
+  const start = toMinutes(startTime)
+  const end = toMinutes(endTime)
+  if (start === null || end === null) return null
+
+  const span = end > start ? end - start : end + 1440 - start
+  const paid = span - (Number(breakMinutes.trim()) || 0)
+  if (paid <= 0) return null
+
+  return Math.round(paid / 30) / 2
 }
 
 /** `09:00` → `09:00 AM` — how a time reads on a list row. */

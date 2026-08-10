@@ -33,8 +33,9 @@ export const EMPTY_SHIFT_FORM: ShiftFormValues = {
   endTime: '',
   breakMinutes: '',
   concessionMinutes: '',
-  earlyExitGraceMinutes: '',
   minFullDayHours: '',
   minHalfDayHours: '',
+  // No pattern of its own — the shift follows the department's or company's default.
+  weekoffPolicyId: '',
   status: true,
 }

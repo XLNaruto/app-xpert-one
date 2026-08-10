@@ -14,7 +14,7 @@ import type {
 /* ── The wizard ──────────────────────────────────────────────────────────── */
 
 /**
- * The eight steps, in order. The values double as the `tab` carried inside the
+ * The nine steps, in order. The values double as the `tab` carried inside the
  * screen's encrypted `?data=` token, so a refresh comes back to the tab that was
  * open — and `nextTab()` walks this list after a save.
  */
@@ -27,6 +27,7 @@ export const EMPLOYEE_TABS = [
   'documents',
   'assets',
   'transfers',
+  'shifts',
 ] as const
 
 export type EmployeeTab = (typeof EMPLOYEE_TABS)[number]
@@ -41,15 +42,30 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
   documents: 'Documents',
   assets: 'Assets',
   transfers: 'Employee Service History',
+  shifts: 'Shift & Roster',
 }
+
+/**
+ * What a timeline entry is being written for. The API tells the three apart by
+ * which ids the body carries — a shift, a rotation, or neither — and "neither" is
+ * the meaningful way to END an assignment, so it's an option here rather than a
+ * missing selection.
+ */
+export const ASSIGNMENT_MODE_OPTIONS: ComboboxOption[] = [
+  { label: 'A single shift', value: 'shift' },
+  { label: 'A rotation cycle', value: 'rotation' },
+  { label: 'Back to the default (ends the assignment)', value: 'default' },
+]
 
 /**
  * The seven steps that count toward completion, paired with the flag on the
  * employee record's `completed_steps` that reports each one.
  *
- * Transfer history is deliberately absent: it's an ongoing register rather than
- * a step you finish, and the API tracks no flag for it — so the progress ring
- * reads `n/7`, not `n/8`.
+ * Transfer history and Shift & Roster are deliberately absent: both are ongoing
+ * registers rather than steps you finish, and the API tracks no flag for either —
+ * so the progress ring reads `n/7`, not `n/9`. An employee on their department's
+ * default shift needs no shift row at all, so counting it would mark a complete
+ * record incomplete.
  */
 export const EMPLOYEE_PROGRESS_STEPS = [
   { tab: 'basic', flag: 'basicDetail' },

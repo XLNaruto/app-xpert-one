@@ -14,9 +14,15 @@ export function EmployeeWizardProgress({
 }) {
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      {/* Service history is an ongoing register, not a step to finish. */}
+      {/*
+        Service History and Shift & Roster are ongoing registers, not steps to
+        finish — an employee on their department's default shift has nothing to
+        record there at all, so counting them would mark a complete record
+        incomplete.
+      */}
       <p className="text-xs text-muted-foreground">
-        Service History is an ongoing register and isn't counted.
+        Service History and Shift &amp; Roster are ongoing registers and aren't
+        counted.
       </p>
 
       <div className="flex items-center gap-3">
@@ -45,15 +51,15 @@ export function EmployeeWizardProgress({
 }
 
 /**
- * The eight-step nav — a strip that sits above the step's card rather than
+ * The nine-step nav — a strip that sits above the step's card rather than
  * inside it, so the card holds only the step being filled in.
  *
  * Not built on `<Tabs>` on purpose: a step can be locked, and the shared
  * `TabsTrigger` has no disabled state — a locked step needs to look and behave
  * differently rather than silently ignore a click.
  *
- * The same row of eight serves every width. It scrolls sideways when it doesn't
- * fit rather than collapsing into a dropdown: the eight steps and which of them
+ * The same row of nine serves every width. It scrolls sideways when it doesn't
+ * fit rather than collapsing into a dropdown: the nine steps and which of them
  * are done is the wizard's whole map, and a closed select hides it. The active
  * step is scrolled into view so a narrow screen never opens on an invisible tab.
  */
@@ -117,7 +123,7 @@ export function EmployeeWizardNav({
                   One badge carries the step number and its state: a tick once the
                   step is saved, a padlock while it can't be opened, the number
                   otherwise. That keeps the strip to a single glyph per step, which
-                  is what lets eight of them fit a phone.
+                  is what lets nine of them fit a phone.
                 */}
                 <span
                   className={cn(

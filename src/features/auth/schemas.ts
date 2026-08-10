@@ -1,27 +1,38 @@
 import { z } from 'zod'
 
 /** Email + password sign-in (mirrors the login request body). */
-export const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required')
-    .max(255)
-    .email('Enter a valid email address'),
-  password: z.string().min(1, 'Password is required'),
-  /**
-   * The company's code, as shown on the company screen. The API takes two login
-   * forms picked by `is_owner`: the account owner signs in with email +
-   * password alone, while an admin user the tenant created must also send the
-   * code of the company they belong to. One field serves both here — left
-   * blank it's an owner sign-in, filled it's a tenant admin.
-   */
-  companyCode: z
-    .string()
-    .trim()
-    .max(50, 'Company code must be 50 characters or less'),
-  remember: z.boolean(),
-})
+export const loginSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .min(1, 'Email is required')
+      .max(255)
+      .email('Enter a valid email address'),
+    password: z.string().min(1, 'Password is required'),
+    /**
+     * Which of the API's two login forms this is, sent as `is_owner`. The
+     * account owner signs in with email + password alone; an admin user the
+     * tenant created must also send the code of the company they belong to.
+     * The sign-in screen picks it with a tab.
+     */
+    isOwner: z.boolean(),
+    /** The company's code, as shown on the company screen. Users only. */
+    companyCode: z
+      .string()
+      .trim()
+      .max(50, 'Company code must be 50 characters or less'),
+    remember: z.boolean(),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.isOwner && v.companyCode === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['companyCode'],
+        message: 'Company code is required',
+      })
+    }
+  })
 
 export type LoginValues = z.infer<typeof loginSchema>
 
