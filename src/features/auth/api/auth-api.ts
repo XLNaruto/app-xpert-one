@@ -14,9 +14,15 @@ import type { AuthSession } from '../types'
 
 /**
  * POST /user/auth/login — exchange email + password for an access/refresh pair
- * plus the signed-in user. `email` is unique platform-wide, so an account owner
- * and a tenant-created admin sign in through the same form (there is no
- * `is_owner` flag or company code to disambiguate).
+ * plus the signed-in user.
+ *
+ * The API takes two login forms, picked by the required `is_owner` flag: `true`
+ * is the account owner (email + password alone), `false` is an admin user the
+ * tenant created and additionally requires `company_code` — the code of the
+ * company that user belongs to. There is no fallback between the two, so an
+ * address sent through the wrong form answers 401 with the same message as a
+ * wrong password. The sign-in screen carries one optional Company Code field:
+ * blank means the owner form, filled means the tenant-admin form.
  *
  * `source: 'WEB'` is what makes this a browser session: the API keeps exactly
  * one, so signing in again elsewhere on the web signs the previous browser out
@@ -27,12 +33,28 @@ import type { AuthSession } from '../types'
 export async function loginRequest({
   email,
   password,
-}: Pick<LoginValues, 'email' | 'password'>): Promise<AuthSession> {
+  companyCode,
+}: Pick<LoginValues, 'email' | 'password' | 'companyCode'>): Promise<AuthSession> {
+  const code = companyCode.trim()
   try {
     const raw = await http.post<
       unknown,
-      { email: string; password: string; source: 'WEB' }
-    >(endpoints.AUTH.LOGIN, { email, password, source: 'WEB' })
+      {
+        email: string
+        password: string
+        is_owner: boolean
+        company_code?: string
+        source: 'WEB'
+      }
+    >(endpoints.AUTH.LOGIN, {
+      email,
+      password,
+      // `company_code` is ignored by the API on the owner form, so it's only
+      // sent alongside `is_owner: false`.
+      is_owner: code === '',
+      ...(code === '' ? {} : { company_code: code }),
+      source: 'WEB',
+    })
     const data = loginResponseSchema.parse(raw)
     return {
       user: toAuthUser(data.user),

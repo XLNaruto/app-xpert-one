@@ -103,6 +103,9 @@ export const EMPTY_DESIGNATION_FORM: DesignationFormValues = {
   ptActType: 'As Per Act',
   ptAmount: '',
 
+  tdsActApplicable: false,
+  tdsPercentage: '',
+
   lwfActApplicable: false,
   lwfActType: 'As Per Act',
   lwfAmount: '',
@@ -181,6 +184,9 @@ export const EMPTY_WAGE_STRUCTURE_ROW: WageStructureRow = {
   ptActApplicable: false,
   ptActType: 'As Per Act',
   ptAmount: '',
+
+  tdsActApplicable: false,
+  tdsPercentage: '',
 
   lwfActApplicable: false,
   lwfActType: 'As Per Act',

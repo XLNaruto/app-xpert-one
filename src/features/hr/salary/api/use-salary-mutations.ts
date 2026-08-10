@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
-import { deleteSalaries, saveSalaries } from './salary-api'
+import {
+  deleteSalaries,
+  downloadSalaryImportTemplate,
+  importSalaries,
+  saveSalaries,
+} from './salary-api'
 import type { SalarySavePayload } from '../schemas'
 
 /**
@@ -19,6 +24,54 @@ export function useSaveSalaries() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.salary.all })
     },
+  })
+}
+
+/**
+ * Import a month from a filled-in sheet: upload, then process.
+ *
+ * Invalidated like a save, and for the same reason — every row the sheet created
+ * has moved from the pending side of the register to the processed one. It is
+ * invalidated even on a *partly* refused import, because whatever did land is
+ * already stale on screen.
+ */
+export function useImportSalaries() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      file,
+      companyId,
+      month,
+      year,
+    }: {
+      file: File
+      companyId: number
+      month: number
+      year: number
+    }) => importSalaries(file, { companyId, month, year }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.salary.all })
+    },
+  })
+}
+
+/**
+ * Download the sheet to fill in for the month on screen.
+ *
+ * A mutation rather than a query although it only reads: it is a click with a
+ * file as its effect, not state the screen holds, and nothing about it should be
+ * cached or refetched — the register moves under it, and yesterday's sheet is
+ * the wrong one to hand back.
+ */
+export function useDownloadSalaryTemplate() {
+  return useMutation({
+    mutationFn: (filters: {
+      companyId: number
+      month: number
+      year: number
+      designationId?: number | null
+    }) => downloadSalaryImportTemplate(filters),
   })
 }
 

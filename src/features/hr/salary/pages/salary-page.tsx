@@ -1,4 +1,4 @@
-import { IndianRupee, RotateCcw, Save, Trash2 } from 'lucide-react'
+import { IndianRupee, RotateCcw, Save, Trash2, Upload } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button'
 import { formatMonth } from '@/features/master/designation'
 import { useSalaryForm } from '../hooks/use-salary-form'
 import { SalaryToolbar } from '../components/salary-toolbar'
+import { SalaryRegisterControls } from '../components/salary-register-controls'
 import { SalaryRegisterGrid } from '../components/salary-register-grid'
+import { SalaryImportDialog } from '../components/salary-import-dialog'
+import { SalaryImportResultDialog } from '../components/salary-import-result-dialog'
 import { SalaryPager } from '../components/salary-pager'
 
 /**
@@ -19,14 +22,15 @@ import { SalaryPager } from '../components/salary-pager'
  *
  * Two things shape the screen, both from the API:
  *
- * - **The server computes the pay.** A row sends the days it is paid for and
- *   nothing else — no gross, no net, no per-head amount — so the figures always
- *   come from the wage structure in force at the cycle's close. A screen left open
- *   through a wage revision cannot write pay from the structure it was opened
- *   with, which is why every money column here is read-only.
+ * - **The client decides the pay.** `bulk-save` takes the full snapshot a row is
+ *   priced at and stores every figure as sent, because payroll may override any of
+ *   it at salary time and no override survives in the designation's wage structure
+ *   afterwards. So the grid computes — days in, pay out — and an allowance can be
+ *   double-clicked and typed over.
  * - **It is read one designation at a time.** The allowance and deduction columns
- *   are the designation's own heads; payroll is set up per designation, so the
- *   register is too, and nothing loads until a title is picked.
+ *   are the designation's own heads, and it is that designation's wage structure
+ *   that says which of them are percentages; payroll is set up per designation, so
+ *   the register is too, and nothing loads until a title is picked.
  *
  * The processed side of the register is not a receipt: a month already run can be
  * revised by saving it again, or discarded so it can be run afresh. Only a *paid*
@@ -42,7 +46,7 @@ export function SalaryPage() {
     <>
       <PageHeader
         title="Calculate Salary"
-        description="Process the month for a designation — days in, pay computed and saved by the server."
+        description="Process the month for a designation — set the days, adjust the heads that need it, and save the month."
         actions={
           <>
             <Button
@@ -91,22 +95,39 @@ export function SalaryPage() {
                 ? 'Saving…'
                 : `Save Salary${form.saveCount ? ` (${form.saveCount})` : ''}`}
             </Button>
+            {/*
+              The other way to process a month: a filled-in sheet instead of the
+              grid. It sits after Save because it does the same thing — it is the
+              bulk route to it, not a different screen.
+            */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => form.setImportOpen(true)}
+              disabled={form.isImporting}
+              title="Import a month from a filled-in salary sheet"
+            >
+              <Upload className="size-4" />
+              Import
+            </Button>
           </>
         }
       />
 
       <SalaryToolbar
-        designationId={form.designationId}
+        /* The pickers show the *draft* — what will be run, not what is on
+           screen — and only Calculate Salary moves one to the other. */
+        designationId={form.draftDesignationId}
         designationOptions={form.designationOptions}
         designationsLoading={form.designationsLoading}
         onDesignationChange={form.changeDesignation}
-        month={form.month}
+        month={form.draftMonth}
         monthBounds={form.monthBounds}
         onMonthChange={form.changeMonth}
-        status={form.status}
-        onStatusChange={form.changeStatus}
-        search={form.search}
-        onSearchChange={form.setSearch}
+        onCalculate={form.calculate}
+        hasPendingFilters={form.hasPendingFilters}
+        isCalculating={form.isLoading || form.isFetching}
         period={form.period}
         companyTotals={form.companyTotals}
       />
@@ -123,17 +144,30 @@ export function SalaryPage() {
                 Salary Register — {formatMonth(form.month)}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Days are yours to set; every amount is computed by the server from the
-                wage structure in force. Edit a row and its figures are recomputed when
-                you save.
+                Present days and overtime hours are yours to set; the pay follows them.
+                Double-click an allowance or deduction to type an amount over it — the
+                head is then fixed for that row and saved exactly as typed.
               </p>
             </div>
           </div>
-          {selectedCount > 0 && (
-            <p className="text-xs font-medium text-primary">
-              {selectedCount} {selectedCount === 1 ? 'row' : 'rows'} selected
-            </p>
-          )}
+          {/* Which side of the register, and who on it — both re-reads of the
+              register already chosen, so they sit with the rows they act on
+              rather than up in the toolbar that decides which register to run. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <SalaryRegisterControls
+              status={form.status}
+              onStatusChange={form.changeStatus}
+              search={form.search}
+              onSearchChange={form.setSearch}
+            />
+            {/* The count stays where it has always been — the far right of the
+                header, read after the controls rather than in front of them. */}
+            {selectedCount > 0 && (
+              <p className="text-xs font-medium text-primary">
+                {selectedCount} {selectedCount === 1 ? 'row' : 'rows'} selected
+              </p>
+            )}
+          </div>
         </div>
 
         <RegisterBody form={form} />
@@ -150,6 +184,27 @@ export function SalaryPage() {
       </div>
 
       {/*
+        The import is the same write from a spreadsheet: the sheet goes to storage
+        on a presigned PUT, the API prices and saves every row in one transaction,
+        and the report it answers with is shown as it came back — a sheet can be
+        part created, part skipped and part refused, which no toast can say.
+      */}
+      <SalaryImportDialog
+        open={form.importOpen}
+        onOpenChange={form.setImportOpen}
+        onImport={form.runImport}
+        isImporting={form.isImporting}
+        onDownloadTemplate={form.downloadTemplate}
+        isDownloadingTemplate={form.isDownloadingTemplate}
+        monthLabel={formatMonth(form.month)}
+      />
+
+      <SalaryImportResultDialog
+        result={form.importResult}
+        onClose={form.clearImportResult}
+      />
+
+      {/*
         Both writes ask first. A save processes a month across a page of people in
         one transaction, and a discard removes salaries that were already
         processed — neither is taken back from this screen.
@@ -162,7 +217,9 @@ export function SalaryPage() {
         title="Process the salary?"
         description={`${form.saveCount} ${
           form.saveCount === 1 ? 'employee' : 'employees'
-        } will be processed for ${formatMonth(form.month)}. The server computes the pay from the wage structure in force; a row already processed is revised, and a paid month is left alone.`}
+        } will be processed for ${formatMonth(
+          form.month,
+        )} — each saved at the figures shown on its row, including any amount typed over a head. A row already processed is revised, and a paid month is left alone.`}
         confirmLabel="Save Salary"
         cancelLabel="Cancel"
         loading={form.isSaving}
@@ -245,12 +302,16 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
       heads={form.heads}
       control={form.control}
       register={form.register}
+      setValue={form.setValue}
+      headConfigs={form.headConfigs}
+      statutoryIds={form.statutoryIds}
+      rates={form.rates}
+      periodMonth={form.periodMonth}
       dirtyRows={form.dirtyRows}
       selected={form.selected}
       onToggleRow={form.toggleRow}
       onToggleAll={form.toggleAll}
       selectableCount={form.selectableCount}
-      totals={form.totals}
     />
   )
 }

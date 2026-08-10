@@ -42,7 +42,7 @@ export function useMyCompanies() {
   const active = companies.find((c) => c.id === selectedCompanyId)
   useEffect(() => {
     if (selectedCompanyId == null || !active) return
-    setSelectedCompany(selectedCompanyId, active.name)
+    setSelectedCompany(selectedCompanyId, active.name, active.logo)
   }, [selectedCompanyId, active, setSelectedCompany])
 
   const state: MyCompaniesState = { companies, selectedCompanyId, requiresSelection }

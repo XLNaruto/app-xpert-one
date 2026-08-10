@@ -10,6 +10,7 @@ import {
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
   // CalendarHeart,
+  FileSpreadsheet,
   FileText,
   FileType2,
   HandCoins,
@@ -61,6 +62,7 @@ export const navGroups: NavGroup[] = [
         children: [
           { label: "Bulk Update Wage", to: "/hr/bulk-wage", icon: HandCoins },
           { label: "Calculate Salary", to: "/hr/salary", icon: Calculator },
+          { label: "View Salary", to: "/hr/salary-view", icon: FileSpreadsheet },
         ],
       },
     ],

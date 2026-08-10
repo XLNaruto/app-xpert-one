@@ -1,5 +1,5 @@
 import { Controller } from 'react-hook-form'
-import { ArrowLeft, Building } from 'lucide-react'
+import { ArrowLeft, Building, Clock, Lock } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
@@ -9,9 +9,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Forbidden } from '@/features/error'
+import { DepartmentShiftTab } from '@/features/master/shift'
 import { MONTH_DAY_OPTIONS } from '../constants'
-import { useDepartmentForm } from '../hooks/use-department-form'
+import {
+  useDepartmentForm,
+  type DepartmentFormTab,
+} from '../hooks/use-department-form'
 
 interface DepartmentCreatePageProps {
   /**
@@ -33,6 +38,12 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
     register,
     control,
     errors,
+    tab,
+    selectTab,
+    canEditShift,
+    departmentId: savedDepartmentId,
+    companyId,
+    defaultShiftId,
     branchOptions,
     isBranchesLoading,
     onSubmit,
@@ -81,91 +92,121 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                 : "Couldn't load this department."}
             </p>
           ) : (
-            <form
-              onSubmit={onSubmit}
-              noValidate
-              className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            <Tabs
+              value={tab}
+              onValueChange={(value) => selectTab(value as DepartmentFormTab)}
             >
-              <FormSection
-                icon={Building}
-                title="Department Detail"
-                description="Branch and department identity"
-                className="mt-0"
-              />
-
-              <Field label="Branch" required error={errors.branchId?.message}>
-                <Controller
-                  control={control}
-                  name="branchId"
-                  render={({ field }) => (
-                    <Combobox
-                      className="w-full"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={branchOptions}
-                      placeholder={isBranchesLoading ? 'Loading…' : 'Select Branch'}
-                      searchPlaceholder="Search branch"
-                    />
-                  )}
-                />
-              </Field>
-              <Field
-                label="Department Name"
-                required
-                error={errors.departmentName?.message}
-              >
-                <Input placeholder="Department Name" {...register('departmentName')} />
-              </Field>
-              <Field
-                label="Month Start Date"
-                required
-                error={errors.monthStartDay?.message}
-              >
-                <Controller
-                  control={control}
-                  name="monthStartDay"
-                  render={({ field }) => (
-                    <Combobox
-                      className="w-full"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={MONTH_DAY_OPTIONS}
-                      placeholder="Select Day"
-                      searchPlaceholder="Search day"
-                    />
-                  )}
-                />
-              </Field>
-              {/* Blank inherits the company's shift hours. */}
-              <Field
-                label="Shift Hours"
-                error={errors.shiftHours?.message}
-                hint="Hours a shift may run before an open check-in is abandoned. Leave blank to inherit the company's."
-              >
-                <Input
-                  type="number"
-                  min={0.5}
-                  max={24}
-                  step={0.5}
-                  placeholder="Shift Hours"
-                  {...register('shiftHours')}
-                />
-              </Field>
-
-              <div className="col-span-full mt-4 flex items-center justify-end gap-3 border-t border-border pt-5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goToList}
-                  disabled={isPending}
+              <TabsList>
+                <TabsTrigger value="detail">
+                  <Building className="mr-1.5 size-4" />
+                  Department Details
+                </TabsTrigger>
+                {/*
+                  A default shift is pinned to a department id, so the tab stays
+                  shut until the department has been saved. Locked rather than
+                  `disabled`: a disabled trigger swallows the click, and a click
+                  that says nothing is worse than one that says why.
+                */}
+                <TabsTrigger
+                  value="shift"
+                  className={canEditShift ? undefined : 'text-muted-foreground'}
                 >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isPending}>
-                  {isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Department'}
-                </Button>
-              </div>
-            </form>
+                  {canEditShift ? (
+                    <Clock className="mr-1.5 size-4" />
+                  ) : (
+                    <Lock className="mr-1.5 size-4" />
+                  )}
+                  Shift
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="detail">
+              <form
+                onSubmit={onSubmit}
+                noValidate
+                className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              >
+                <FormSection
+                  icon={Building}
+                  title="Department Detail"
+                  description="Branch and department identity"
+                  className="mt-0"
+                />
+
+                <Field label="Branch" required error={errors.branchId?.message}>
+                  <Controller
+                    control={control}
+                    name="branchId"
+                    render={({ field }) => (
+                      <Combobox
+                        className="w-full"
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={branchOptions}
+                        placeholder={isBranchesLoading ? 'Loading…' : 'Select Branch'}
+                        searchPlaceholder="Search branch"
+                      />
+                    )}
+                  />
+                </Field>
+                <Field
+                  label="Department Name"
+                  required
+                  error={errors.departmentName?.message}
+                >
+                  <Input placeholder="Department Name" {...register('departmentName')} />
+                </Field>
+                <Field
+                  label="Month Start Date"
+                  required
+                  error={errors.monthStartDay?.message}
+                >
+                  <Controller
+                    control={control}
+                    name="monthStartDay"
+                    render={({ field }) => (
+                      <Combobox
+                        className="w-full"
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={MONTH_DAY_OPTIONS}
+                        placeholder="Select Day"
+                        searchPlaceholder="Search day"
+                      />
+                    )}
+                  />
+                </Field>
+
+                <div className="col-span-full mt-4 flex items-center justify-end gap-3 border-t border-border pt-5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={goToList}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Department'}
+                  </Button>
+                </div>
+              </form>
+              </TabsContent>
+
+              {/*
+                The default shift is its own write, so the tab only mounts once
+                the department id it's pinned to is known.
+              */}
+              <TabsContent value="shift">
+                {savedDepartmentId !== undefined && (
+                  <DepartmentShiftTab
+                    companyId={companyId}
+                    departmentId={savedDepartmentId}
+                    currentShiftId={defaultShiftId}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>

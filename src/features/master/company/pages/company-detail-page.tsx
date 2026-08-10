@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   Building2,
   CalendarDays,
-  Clock,
   FileText,
   Hash,
   Mail,
@@ -20,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
 import { decryptId } from '@/lib/crypto'
 import { Forbidden } from '@/features/error'
+import { CompanyLogo } from '../components/company-logo'
 import { useCompanyDetail } from '../hooks/use-company-detail'
 
 /**
@@ -85,6 +85,12 @@ export function CompanyDetailPage({ data }: { data?: string }) {
         <Card>
           <CardContent className="grid grid-cols-1 gap-x-6 gap-y-5 pt-6 sm:grid-cols-2">
             <FormSection icon={Building2} title="Company Information" className="mt-0" />
+            {/* The logo is a picture, not a field — it leads the section rather
+                than sitting in a `DetailItem` as a storage path. */}
+            <div className="sm:col-span-2">
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Logo</p>
+              <CompanyLogo logo={company.logo} />
+            </div>
             <DetailItem icon={Building2} label="Company Name" value={company.companyName} />
             <DetailItem icon={Hash} label="Company Code" value={company.companyCode} />
             <DetailItem
@@ -99,12 +105,6 @@ export function CompanyDetailPage({ data }: { data?: string }) {
             />
             <DetailItem icon={FileText} label="PAN Number" value={company.panNumber} />
             <DetailItem icon={FileText} label="GST Number" value={company.gstNumber} />
-            {/* Unset reads as the platform default rather than a blank. */}
-            <DetailItem
-              icon={Clock}
-              label="Shift Hours"
-              value={company.shiftHours ? `${company.shiftHours} hrs` : '18 hrs (default)'}
-            />
 
             <FormSection icon={MapPin} title="Address Details" />
             <DetailItem

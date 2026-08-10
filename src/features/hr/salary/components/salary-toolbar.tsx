@@ -1,24 +1,32 @@
-import { Briefcase, CalendarRange, CheckCircle2, Clock, Search, UsersRound } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import {
+  Briefcase,
+  Calculator,
+  CalendarRange,
+  CheckCircle2,
+  Clock,
+  UsersRound,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { cn, formatDate } from '@/lib/utils'
-import { SALARY_STATUS_TABS } from '../constants'
-import type { SalaryStatus } from '../schemas'
 import type { SalaryPeriod, SalaryTotals } from '../types'
 
 interface SalaryToolbarProps {
+  /** What the picker holds — staged, not what the register was read for. */
   designationId: number | null
   designationOptions: ComboboxOption[]
   designationsLoading: boolean
   onDesignationChange: (value: number | null) => void
+  /** Likewise staged. */
   month: string
   monthBounds: { minDate: Date; maxDate: Date }
   onMonthChange: (value: string) => void
-  status: SalaryStatus
-  onStatusChange: (value: SalaryStatus) => void
-  search: string
-  onSearchChange: (value: string) => void
+  /** Run the register for what the two pickers hold. */
+  onCalculate: () => void
+  /** The pickers hold something the register on screen wasn't read for. */
+  hasPendingFilters: boolean
+  isCalculating: boolean
   /** The cycle the register was read for — `null` before the first read. */
   period: SalaryPeriod | null
   /** The whole company's month, whatever the register is filtered to. */
@@ -33,6 +41,16 @@ interface SalaryToolbarProps {
  * designation at a time and there is nothing to show until one is picked. Payroll
  * is set up per designation anyway: the wage structure, the heads and the acts all
  * hang off the title rather than off the person.
+ *
+ * **The two pickers stage; Calculate Salary reads.** Picking a designation is a
+ * decision to run a payroll rather than a filter over something already on
+ * screen — it re-seeds every row of the form — so it waits for the button.
+ *
+ * What this toolbar deliberately no longer holds is the search box and the
+ * status tabs. Those are reads of the register *already chosen* — a different
+ * side of it, or the same side narrowed to a name — answered as they are typed,
+ * so they live on the grid's own header beside the rows they act on. See
+ * `SalaryRegisterControls`.
  *
  * The company isn't asked for. The register is the active company's, the one the
  * session is already working in, and switching company is the switcher's job.
@@ -49,17 +67,21 @@ export function SalaryToolbar({
   month,
   monthBounds,
   onMonthChange,
-  status,
-  onStatusChange,
-  search,
-  onSearchChange,
+  onCalculate,
+  hasPendingFilters,
+  isCalculating,
   period,
   companyTotals,
 }: SalaryToolbarProps) {
   return (
     <div className="mb-4 space-y-3 rounded-xl border border-border bg-card p-4">
+      {/*
+        What register to run. Each control is sized to what it holds — the
+        designation combobox gets room for long job titles, the month picker and
+        button only what they need — rather than stretched to fill the row.
+      */}
       <div className="flex flex-wrap items-end gap-3">
-        <Field label="Designation" className="min-w-56 flex-1">
+        <Field label="Designation" className="w-lg">
           <Combobox
             value={designationId === null ? '' : String(designationId)}
             onChange={(value) => onDesignationChange(value ? Number(value) : null)}
@@ -71,7 +93,7 @@ export function SalaryToolbar({
           />
         </Field>
 
-        <Field label="Salary Month" className="w-48">
+        <Field label="Salary Month" className="w-44">
           <MonthPicker
             value={month}
             onChange={onMonthChange}
@@ -80,69 +102,55 @@ export function SalaryToolbar({
           />
         </Field>
 
-        <Field label="Search Employee" className="min-w-52 flex-1">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Name or employee code…"
-              className="pl-8"
-            />
-          </div>
-        </Field>
+        <Button
+          type="button"
+          onClick={onCalculate}
+          disabled={designationId === null || isCalculating}
+          className="gap-1.5"
+        >
+          <Calculator className="size-4" />
+          {isCalculating ? 'Calculating…' : 'Calculate Salary'}
+        </Button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* The two sides of the register — a different read, not a client filter. */}
-        <div className="inline-flex rounded-lg border border-border p-0.5">
-          {SALARY_STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => onStatusChange(tab.value)}
-              className={cn(
-                'cursor-pointer rounded-md px-3 py-1 text-xs font-medium transition-colors',
-                status === tab.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Said once, beside the button, rather than as a badge on it. */}
+      {hasPendingFilters && (
+        <p className="text-xs text-amber-600 dark:text-amber-500">
+          The designation or month has changed — press Calculate Salary to run it.
+        </p>
+      )}
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
-          {period && (
-            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-              <CalendarRange className="size-3.5" />
-              Cycle {formatDate(period.from)} — {formatDate(period.to)}
-            </span>
-          )}
-          {companyTotals && (
-            <>
-              <Chip
-                icon={UsersRound}
-                tone="text-foreground"
-                value={companyTotals.totalEmployees}
-                label="total"
-              />
-              <Chip
-                icon={CheckCircle2}
-                tone="text-emerald-600 dark:text-emerald-400"
-                value={companyTotals.salaryDone}
-                label="processed"
-              />
-              <Chip
-                icon={Clock}
-                tone="text-amber-600 dark:text-amber-500"
-                value={companyTotals.salaryPending}
-                label="pending"
-              />
-            </>
-          )}
-        </div>
+      {/* The month at a glance. The status tabs used to sit here; they belong on
+          the grid's own header, beside the rows they re-read. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+        {period && (
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <CalendarRange className="size-3.5" />
+            Cycle {formatDate(period.from)} — {formatDate(period.to)}
+          </span>
+        )}
+        {companyTotals && (
+          <>
+            <Chip
+              icon={UsersRound}
+              tone="text-foreground"
+              value={companyTotals.totalEmployees}
+              label="total"
+            />
+            <Chip
+              icon={CheckCircle2}
+              tone="text-emerald-600 dark:text-emerald-400"
+              value={companyTotals.salaryDone}
+              label="processed"
+            />
+            <Chip
+              icon={Clock}
+              tone="text-amber-600 dark:text-amber-500"
+              value={companyTotals.salaryPending}
+              label="pending"
+            />
+          </>
+        )}
       </div>
     </div>
   )

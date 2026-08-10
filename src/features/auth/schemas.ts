@@ -9,6 +9,17 @@ export const loginSchema = z.object({
     .max(255)
     .email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  /**
+   * The company's code, as shown on the company screen. The API takes two login
+   * forms picked by `is_owner`: the account owner signs in with email +
+   * password alone, while an admin user the tenant created must also send the
+   * code of the company they belong to. One field serves both here — left
+   * blank it's an owner sign-in, filled it's a tenant admin.
+   */
+  companyCode: z
+    .string()
+    .trim()
+    .max(50, 'Company code must be 50 characters or less'),
   remember: z.boolean(),
 })
 

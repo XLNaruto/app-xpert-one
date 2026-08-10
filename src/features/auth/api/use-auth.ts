@@ -8,9 +8,15 @@ import type { LoginValues } from '../schemas'
 import type { AuthSession } from '../types'
 
 /** Demo session for `VITE_USE_MOCK_API=true` (no backend reachable). */
-async function mockLogin({ email }: LoginValues): Promise<AuthSession> {
+async function mockLogin({
+  email,
+  companyCode,
+}: LoginValues): Promise<AuthSession> {
   await mockDelay(undefined, 600)
   const handle = email.split('@')[0]
+  // Mirrors the API's two forms: a company code means a tenant-created admin,
+  // who is already bound to that company, so the gate never asks.
+  const isOwner = companyCode.trim() === ''
   return {
     user: {
       id: 0,
@@ -18,8 +24,8 @@ async function mockLogin({ email }: LoginValues): Promise<AuthSession> {
       email,
       name: handle.charAt(0).toUpperCase() + handle.slice(1),
       roleId: null,
-      companyId: null,
-      isOwner: true,
+      companyId: isOwner ? null : 1,
+      isOwner,
       // Mirrors an owner who last worked in the second demo tenant — the gate
       // still asks, with that one pre-highlighted.
       lastSelectedCompanyId: 2,

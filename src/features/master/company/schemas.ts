@@ -20,19 +20,6 @@ const text = (max: number) =>
   z.string().trim().max(max, `Cannot exceed ${max} characters`)
 
 /**
- * Shift hours — held as a string (that's what the input gives us) and parsed to
- * a number by the mappers. Optional: blank means "not set", and the API then
- * falls back to its own default of 18. A value must land in (0, 24].
- */
-const shiftHoursField = z
-  .string()
-  .trim()
-  .refine(
-    (v) => v === '' || (Number(v) > 0 && Number(v) <= 24),
-    'Enter hours greater than 0 and up to 24',
-  )
-
-/**
  * Create/edit form for a company master record. The state and district are held
  * as id strings (that's what the combobox gives us) and parsed to numbers by the
  * mappers. `company_code` isn't on the form — the server generates it.
@@ -45,6 +32,12 @@ export const companySchema = z.object({
     .min(1, 'Company name is required')
     .max(200, 'Cannot exceed 200 characters'),
   establishYear: z.string().trim().min(1, 'Establish year is required'),
+  /**
+   * The logo's **object key**, never the file — the bytes go to storage on a
+   * presigned PUT and only the key the upload answers is stored here. Blank
+   * means no logo.
+   */
+  logo: z.string().trim().max(500, 'Cannot exceed 500 characters'),
   registrationNumber: text(100),
   panNumber: z
     .string()
@@ -53,8 +46,6 @@ export const companySchema = z.object({
     .toUpperCase()
     .regex(PAN_RE, 'Enter a valid PAN (e.g. ABCDE1234F)'),
   gstNumber: optionalMatch(GST_RE, 'Enter a valid 15-character GST number'),
-  /** Site-wide shift length; a department may override it for its own staff. */
-  shiftHours: shiftHoursField,
 
   // Address details
   addressLine1: z
@@ -153,6 +144,8 @@ export const companiesResponseSchema = z.object({
  */
 export interface CompanyPayload {
   company_name: string
+  /** Object key from the logo presign — never the file, and `null` for none. */
+  logo: string | null
   establish_year: number | null
   registration_number: string | null
   pan_number: string | null
@@ -168,6 +161,4 @@ export interface CompanyPayload {
   mobile_number1: string | null
   mobile_number2: string | null
   email: string | null
-  /** `null` falls back to the platform default of 18 hours. */
-  shift_hours: number | null
 }

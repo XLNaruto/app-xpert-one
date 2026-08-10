@@ -2,6 +2,7 @@ import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
+import { IMAGE_CONTENT_TYPES, uploadFile } from '@/lib/uploads'
 import { COMPANY_DEFAULT_SORT } from '../constants'
 import { companiesResponseSchema, companyResponseSchema } from '../schemas'
 import { companyToPayload, toCompany } from '../lib/company-mappers'
@@ -132,6 +133,19 @@ export async function updateCompany(
   } catch (error) {
     throw toApiError(error, "Couldn't update the company.")
   }
+}
+
+/**
+ * Upload a logo and answer the object key to store as `logo`.
+ *
+ * `POST /user/uploads/company-logo` signs a PUT for the file's own content type,
+ * the bytes go straight to storage, and only the key it answers is written to
+ * the company — on the create/update that follows. Nothing is recorded by the
+ * upload itself, so an abandoned form leaves a stray object and no half-saved
+ * row.
+ */
+export async function uploadCompanyLogo(file: File): Promise<string> {
+  return uploadFile(endpoints.UPLOADS.COMPANY_LOGO, file, IMAGE_CONTENT_TYPES)
 }
 
 /** DELETE /user/companies/:id */

@@ -15,19 +15,6 @@ export const departmentSchema = z.object({
     .max(200, 'Department name cannot exceed 200 characters'),
   /** Day of the month (1–31) the attendance/salary cycle starts. */
   monthStartDay: z.string().trim().min(1, 'Month start date is required'),
-  /**
-   * Shift length for this department's staff, held as a string (that's what the
-   * input gives us) and parsed to a number by the mappers. Optional: blank
-   * inherits the company's value, and the platform default of 18 when it has
-   * none. A value must land in (0, 24].
-   */
-  shiftHours: z
-    .string()
-    .trim()
-    .refine(
-      (v) => v === '' || (Number(v) > 0 && Number(v) <= 24),
-      'Enter hours greater than 0 and up to 24',
-    ),
 })
 
 export type DepartmentFormValues = z.infer<typeof departmentSchema>
@@ -59,6 +46,16 @@ export const departmentResponseSchema = z.object({
    * records answered before the column existed omit it.
    */
   shift_hours: z.number().nullish(),
+  /**
+   * The department's default shift — what the Shift tab opens on.
+   *
+   * Both spellings are accepted because the published contract carries neither
+   * yet: `POST /user/shifts/:id/set-default` writes the department's default,
+   * but no documented read sends it back. Nullish either way, so a response
+   * without it parses fine and the tab simply opens unselected.
+   */
+  shift_id: z.number().nullish(),
+  default_shift_id: z.number().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -83,8 +80,6 @@ export interface DepartmentPayload {
   branch_id: number | null
   name: string
   month_start_day: number | null
-  /** `null` inherits the company's shift hours (and the default of 18). */
-  shift_hours: number | null
 }
 
 /**

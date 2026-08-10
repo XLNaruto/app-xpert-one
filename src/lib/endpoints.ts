@@ -121,6 +121,34 @@ export const endpoints = {
     DELETE: (id: number) => `/user/departments/${id}`,
   },
   /**
+   * The company's shifts — a named window of the clock, plus the tolerances
+   * attendance is judged against (the concession period, the early-exit grace,
+   * and the hours that make a full or a half day).
+   *
+   * Tenant-scoped: a required `company_id` on reads and in the create body. A
+   * shift is never moved between companies, so the PATCH body leaves it out.
+   * `is_night_shift` is DERIVED from the two times (an `end_time` earlier than
+   * `start_time` makes it one) and is never sent.
+   *
+   * `SET_DEFAULT` / `CLEAR_DEFAULT` are what make per-employee assignment
+   * unnecessary: with a default in place an ordinary employee needs no
+   * assignment row at all. Both take exactly one of `company_id` or
+   * `department_id` — a department's default wins over its company's, and a
+   * department with none falls back to the company's.
+   *
+   * A DELETE is refused with 409 while the shift is still a default anywhere or
+   * referenced by a rotation, an assignment or a roster entry.
+   */
+  SHIFTS: {
+    LIST: '/user/shifts',
+    POST: '/user/shifts',
+    GET: (id: number) => `/user/shifts/${id}`,
+    PATCH: (id: number) => `/user/shifts/${id}`,
+    DELETE: (id: number) => `/user/shifts/${id}`,
+    SET_DEFAULT: (id: number) => `/user/shifts/${id}/set-default`,
+    CLEAR_DEFAULT: '/user/shifts/clear-default',
+  },
+  /**
    * The company's designations — a title plus an effective-dated wage structure
    * behind it. The two are separate resources on purpose:
    *
@@ -352,8 +380,44 @@ export const endpoints = {
    */
   SALARY: {
     REGISTER: '/user/salary/register',
+    /**
+     * The month already processed, as a MATRIX — the "View Salary" screen.
+     *
+     * One row per *stored* salary of the period, each with the employee's
+     * particulars, statutory numbers and bank details plus its per-head
+     * allowance and deduction lines. `allowance_heads` / `deduction_heads` are
+     * the union of head names across the whole result, in catalog order, and are
+     * the column set to pivot on — a row simply carries no line for a head it
+     * doesn't have, which reads as zero. Pivoting on one row's own components
+     * instead would give a table whose columns shift per row.
+     *
+     * `totals` is the footer for the ROWS RETURNED, so a paged screen's total
+     * adds up to the column above it. Unlike the register there is no `sort`:
+     * the endpoint fixes the order, so the screen's columns aren't sortable.
+     */
+    REPORT: '/user/salary/report',
     BULK_SAVE: '/user/salary/bulk-save',
     BULK_DELETE: '/user/salary/bulk-delete',
+    /**
+     * Step 2 of the spreadsheet import: read the workbook already uploaded at
+     * `file_key`, price every row and save it. Rows are only ever *created* — a
+     * period already processed for a posting comes back in `skipped`, never
+     * overwritten. **The period written inside the sheet wins** over the one
+     * sent, and the response says which one actually landed.
+     */
+    IMPORTS: '/user/salary/imports',
+    /**
+     * Step 0 of the same import: the sheet to fill in. It answers the workbook
+     * itself as an attachment — one pre-filled row per posting **not yet
+     * processed** for the period, Present Days already filled in from
+     * attendance and every other cell locked, because the import matches rows
+     * by employee code and service id.
+     *
+     * Takes the register's own filters (`company_id`, `month`, `year`, and
+     * optionally `designation_id` / `department_id`), so the sheet that comes
+     * down is the register that is on screen.
+     */
+    IMPORT_TEMPLATE: '/user/salary/exports/import-template',
   },
   /**
    * Presigned PUT handshakes. Each answers `{ upload_url, key }`: PUT the file
@@ -362,9 +426,16 @@ export const endpoints = {
    * DB row is touched here — an abandoned upload just leaves a stray object.
    */
   UPLOADS: {
+    /**
+     * The company logo — signs a PUT for a JPG/PNG/WebP. The bytes go straight
+     * to storage and the returned `key` is what `logo` holds on the company.
+     */
+    COMPANY_LOGO: '/user/uploads/company-logo',
     EMPLOYEE_PHOTO: '/user/uploads/employee-photo',
     EMPLOYEE_DOCUMENT: '/user/uploads/employee-document',
     LEAVE_ATTACHMENT: '/user/uploads/leave-attachment',
+    /** The salary import workbook — `.xlsx` or `.csv`, signed for those two only. */
+    SALARY_IMPORT: '/user/uploads/salary-import',
   },
   /** Read-only lookup — the bank master is maintained by the super admin. */
   BANKS: {

@@ -1,5 +1,21 @@
 import { addMonths, startOfMonth } from 'date-fns'
 import type { SalaryStatus } from './schemas'
+import type { SalaryRates } from './types'
+
+/**
+ * No statutory rate in force — what the screen prices against before the
+ * register has answered, and the same thing it prices against for an act whose
+ * master has no rate covering the period: nothing is deducted.
+ *
+ * A frozen constant rather than a fresh object per render, so the memo that
+ * feeds `rowFigures` doesn't invalidate every row on every keystroke.
+ */
+export const EMPTY_SALARY_RATES: SalaryRates = {
+  pf: null,
+  esic: null,
+  pt: null,
+  lwf: null,
+}
 
 /**
  * The two sides of the register, as the tabs above the grid label them. The
@@ -14,7 +30,11 @@ export const SALARY_STATUS_TABS: { value: SalaryStatus; label: string }[] = [
 /**
  * Rows per page. Higher than the app's default of five, because this screen is
  * worked down a page at a time — a payroll run of forty people shouldn't take
- * eight saves. The API caps `limit` at 200, so that's the last option offered.
+ * eight saves.
+ *
+ * `GET /user/salary/register` caps `limit` at 200 and defaults to 20, so 200 is
+ * the last size offered and there is no "All": the endpoint has no way to answer
+ * one, and a size it would refuse doesn't belong in the selector.
  */
 export const SALARY_PAGE_SIZE = 20
 export const SALARY_PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200]

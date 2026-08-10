@@ -80,6 +80,7 @@ function CreateView() {
           esicActApplicable={form.esicActApplicable}
           ptActApplicable={form.ptActApplicable}
           ptActType={form.ptActType}
+          tdsActApplicable={form.tdsActApplicable}
           lwfActApplicable={form.lwfActApplicable}
           lwfActType={form.lwfActType}
           overtimeApplicable={form.overtimeApplicable}

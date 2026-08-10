@@ -21,7 +21,8 @@ export function toDepartment(response: DepartmentResponse): Department {
     departmentName: response.name,
     departmentCode: response.code ?? '',
     monthStartDay: response.month_start_day,
-    shiftHours: response.shift_hours ?? null,
+    // Whichever spelling the endpoint sends — see the schema.
+    defaultShiftId: response.shift_id ?? response.default_shift_id ?? null,
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',
     updatedBy: response.updated_by_name ?? null,
@@ -41,7 +42,6 @@ export function departmentToPayload(
     branch_id: values.branchId ? Number(values.branchId) : null,
     name: values.departmentName.trim(),
     month_start_day: values.monthStartDay ? Number(values.monthStartDay) : null,
-    shift_hours: values.shiftHours.trim() ? Number(values.shiftHours) : null,
   }
 }
 
@@ -51,7 +51,6 @@ export function departmentToFormValues(department: Department): DepartmentFormVa
     branchId: department.branchId === null ? '' : String(department.branchId),
     departmentName: department.departmentName,
     monthStartDay: department.monthStartDay === null ? '' : String(department.monthStartDay),
-    shiftHours: department.shiftHours === null ? '' : String(department.shiftHours),
   }
 }
 

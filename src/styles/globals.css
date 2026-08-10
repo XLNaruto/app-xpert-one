@@ -731,12 +731,21 @@
 
    No width of their own either: the panel is `.react-calendar`'s 18rem in every
    view, so drilling from days to months to years can't resize the popup under
-   the cursor. */
+   the cursor.
+
+   The gutter is a transparent border rather than a margin or a `gap`: the
+   library writes `flex: 0 0 33.3333%` inline on every tile, so any width the
+   spacing costs has to come out of the tile's own box. Backgrounds are clipped
+   to the padding box so the fill stops at the gutter — without which a selected
+   month sits flush against the ringed current month, as if the two were one
+   block. */
 .react-calendar__year-view .react-calendar__tile,
 .react-calendar__decade-view .react-calendar__tile,
 .react-calendar__century-view .react-calendar__tile {
   padding: 0.65rem 0.25rem;
   font-size: 0.85rem;
+  border: 0.2rem solid transparent;
+  background-clip: padding-box;
 }
 
 /* The calendar is portalled into a host that <DatePicker> positions itself, so

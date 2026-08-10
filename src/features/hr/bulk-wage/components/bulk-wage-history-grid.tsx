@@ -42,6 +42,7 @@ type WageGroup =
   | 'pf'
   | 'esic'
   | 'pt'
+  | 'tds'
   | 'lwf'
 
 interface WageColumn {
@@ -96,6 +97,11 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
     label: 'PT',
     tone: 'text-violet-600 dark:text-violet-400',
     hint: 'Professional tax — from the act’s slab, or a fixed amount.',
+  },
+  tds: {
+    label: 'TDS',
+    tone: 'text-rose-600 dark:text-rose-400',
+    hint: 'Tax deducted at source — no slab behind it, so the version carries the rate itself.',
   },
   lwf: {
     label: 'LWF',
@@ -217,6 +223,10 @@ function buildColumns(heads: WageHeads): WageColumn[] {
     { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT act applicable.' },
     { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
     { key: 'ptAmt', label: amountLabel('Amt'), group: 'pt', width: 94 },
+
+    /* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */
+    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS act applicable.' },
+    { key: 'tdsPct', label: 'Rate %', group: 'tds', width: 94 },
 
     { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
     { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
@@ -647,6 +657,16 @@ function VersionCell({
       )
     case 'ptAmt':
       return <ReadMoney value={version.ptAmount} />
+
+    case 'tds':
+      return (
+        <ReadBoolean
+          value={version.tdsActApplicable}
+          tone="bg-rose-500/15 text-rose-700 dark:text-rose-400"
+        />
+      )
+    case 'tdsPct':
+      return <ReadAmount amount={version.tdsPercentage} valueType="Percentage" />
 
     case 'lwf':
       return (

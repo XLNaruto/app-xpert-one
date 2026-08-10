@@ -74,6 +74,53 @@ export function blankWageStructureRow(heads: WageHeads): WageStructureRow {
   }
 }
 
+/**
+ * The very first row of a designation that has never been configured — the blank
+ * row with every numeric cell standing at `0` rather than empty. With no earlier
+ * version to carry forward from there is nothing to prefill it with, and a grid
+ * of empty boxes reads as "nothing decided yet"; a zero reads as a figure to type
+ * over, and it's what the row would mean anyway if it were saved untouched.
+ *
+ * The PF value keeps its `12` — that's the statutory rate, a real default rather
+ * than a placeholder, and zeroing it would quietly turn PF off on the first row.
+ */
+export function zeroedWageStructureRow(heads: WageHeads): WageStructureRow {
+  const row = blankWageStructureRow(heads)
+
+  return {
+    ...row,
+    workingDays: '0',
+    basicPay: '0',
+    wagePerDay: '0',
+    extraDayAmountPerDay: '0',
+    overtimeRatePerHour: '0',
+    ptAmount: '0',
+    tdsPercentage: '0',
+    lwfAmount: '0',
+    allowances: row.allowances.map((allowance) => ({ ...allowance, amount: '0' })),
+    deductions: row.deductions.map((deduction) => ({ ...deduction, amount: '0' })),
+  }
+}
+
+/**
+ * A row → a fresh draft row carrying the same settings. What makes it a new
+ * version rather than a copy of an old one: the stored version's id is dropped,
+ * so the save is a POST, and the effective month is cleared, because the one
+ * thing a revision can't inherit is the month it applies from.
+ *
+ * The head arrays are copied entry by entry rather than by reference — two
+ * field-array rows sharing one allowance object would edit each other's cells.
+ */
+export function carryForwardWageRow(row: WageStructureRow): WageStructureRow {
+  return {
+    ...row,
+    wageStructureId: undefined,
+    effectiveFrom: '',
+    allowances: row.allowances.map((allowance) => ({ ...allowance })),
+    deductions: row.deductions.map((deduction) => ({ ...deduction })),
+  }
+}
+
 /** The month half of the API's `applicable_date`, as the grid's `yyyy-MM`. */
 function toEffectiveMonth(applicableDate: string): string {
   return applicableDate.slice(0, 7)
@@ -132,6 +179,9 @@ export function wageRowToPayload(
       row.ptActApplicable && row.ptActType === 'Manual'
         ? toOptionalAmount(row.ptAmount)
         : null,
+
+    is_tds_act_applicable: row.tdsActApplicable,
+    tds_percentage: row.tdsActApplicable ? toOptionalAmount(row.tdsPercentage) : null,
 
     is_lwf_act_applicable: row.lwfActApplicable,
     lwf_act_type: row.lwfActApplicable ? toApiActAmountType(row.lwfActType) : null,
@@ -269,6 +319,9 @@ export function toWageStructure(
     ptActType: fromApiActAmountType(response.pt_act_type),
     ptAmount: response.pt_amount,
 
+    tdsActApplicable: response.is_tds_act_applicable ?? false,
+    tdsPercentage: response.tds_percentage ?? null,
+
     lwfActApplicable: response.is_lwf_act_applicable ?? false,
     lwfActType: fromApiActAmountType(response.lwf_act_type),
     lwfAmount: response.lwf_amount,
@@ -337,6 +390,9 @@ export function wageStructureToRow(
     ptActApplicable: structure.ptActApplicable,
     ptActType: chosen(structure.ptActType),
     ptAmount: optional(structure.ptAmount),
+
+    tdsActApplicable: structure.tdsActApplicable,
+    tdsPercentage: optional(structure.tdsPercentage),
 
     lwfActApplicable: structure.lwfActApplicable,
     lwfActType: chosen(structure.lwfActType),

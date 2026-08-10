@@ -82,6 +82,7 @@ export function useDesignationForm() {
   const esicActApplicable = useWatch({ control, name: 'esicActApplicable' })
   const ptActApplicable = useWatch({ control, name: 'ptActApplicable' })
   const ptActType = useWatch({ control, name: 'ptActType' })
+  const tdsActApplicable = useWatch({ control, name: 'tdsActApplicable' })
   const lwfActApplicable = useWatch({ control, name: 'lwfActApplicable' })
   const lwfActType = useWatch({ control, name: 'lwfActType' })
   const overtimeApplicable = useWatch({ control, name: 'overtimeApplicable' })
@@ -135,6 +136,7 @@ export function useDesignationForm() {
     esicActApplicable,
     ptActApplicable,
     ptActType,
+    tdsActApplicable,
     lwfActApplicable,
     lwfActType,
     overtimeApplicable,

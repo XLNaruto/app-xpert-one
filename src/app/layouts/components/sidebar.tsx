@@ -5,7 +5,7 @@ import { navGroups, type NavItem } from '@/config/navigation'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
-import { BrandLogo } from '@/components/common/brand-logo'
+import { SidebarBrand } from '@/components/common/sidebar-brand'
 
 function isActivePath(to: string | undefined, pathname: string) {
   if (!to) return false
@@ -104,7 +104,8 @@ export function Sidebar() {
               aria-label="XpertOne home"
               className="absolute left-1/2 -translate-x-1/2"
             >
-              <BrandLogo className="h-11 w-36" />
+              {/* The active company's logo when it has one, else the wordmark. */}
+              <SidebarBrand className="h-11 w-36" />
             </Link>
           )}
           {/* Desktop collapse toggle */}

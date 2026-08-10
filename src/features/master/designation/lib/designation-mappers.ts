@@ -65,6 +65,9 @@ const NO_WAGE_STRUCTURE = {
   ptActType: null,
   ptAmount: null,
 
+  tdsActApplicable: false,
+  tdsPercentage: null,
+
   lwfActApplicable: false,
   lwfActType: null,
   lwfAmount: null,
@@ -158,6 +161,9 @@ function wageFieldsOf(wage: WageStructureResponse) {
     ptActType: fromApiActAmountType(wage.pt_act_type),
     ptAmount: wage.pt_amount,
 
+    tdsActApplicable: wage.is_tds_act_applicable ?? false,
+    tdsPercentage: wage.tds_percentage ?? null,
+
     lwfActApplicable: wage.is_lwf_act_applicable ?? false,
     lwfActType: fromApiActAmountType(wage.lwf_act_type),
     lwfAmount: wage.lwf_amount,
@@ -234,6 +240,9 @@ export function designationToFormValues(
     ptActType: chosen(designation.ptActType),
     ptAmount: optional(designation.ptAmount),
 
+    tdsActApplicable: designation.tdsActApplicable,
+    tdsPercentage: optional(designation.tdsPercentage),
+
     lwfActApplicable: designation.lwfActApplicable,
     lwfActType: chosen(designation.lwfActType),
     lwfAmount: optional(designation.lwfAmount),
@@ -308,6 +317,11 @@ export function designationToPayload(
       values.ptActApplicable && values.ptActType === 'Manual'
         ? toOptionalAmount(values.ptAmount)
         : null,
+
+    is_tds_act_applicable: values.tdsActApplicable,
+    tds_percentage: values.tdsActApplicable
+      ? toOptionalAmount(values.tdsPercentage)
+      : null,
 
     is_lwf_act_applicable: values.lwfActApplicable,
     lwf_act_type: values.lwfActApplicable ? toApiActAmountType(values.lwfActType) : null,

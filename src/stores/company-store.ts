@@ -12,8 +12,18 @@ interface CompanyState {
    */
   selectedCompanyId: number | null
   selectedCompanyName: string | null
+  /**
+   * The active company's logo as a bare storage path, `null` when it has none.
+   * Mirrored alongside the name so the sidebar can brand itself on first paint
+   * instead of flashing the XpertOne wordmark until `/my/companies` returns.
+   */
+  selectedCompanyLogo: string | null
   /** Mirror the server's active selection. */
-  setSelectedCompany: (id: number | null, name: string | null) => void
+  setSelectedCompany: (
+    id: number | null,
+    name: string | null,
+    logo?: string | null,
+  ) => void
   /** Clear on logout so the next user doesn't inherit a stale tenant. */
   clear: () => void
 }
@@ -28,9 +38,15 @@ export const useCompanyStore = create<CompanyState>()(
     (set) => ({
       selectedCompanyId: null,
       selectedCompanyName: null,
-      setSelectedCompany: (selectedCompanyId, selectedCompanyName) =>
-        set({ selectedCompanyId, selectedCompanyName }),
-      clear: () => set({ selectedCompanyId: null, selectedCompanyName: null }),
+      selectedCompanyLogo: null,
+      setSelectedCompany: (selectedCompanyId, selectedCompanyName, logo = null) =>
+        set({ selectedCompanyId, selectedCompanyName, selectedCompanyLogo: logo }),
+      clear: () =>
+        set({
+          selectedCompanyId: null,
+          selectedCompanyName: null,
+          selectedCompanyLogo: null,
+        }),
     }),
     {
       name: 'xpertone-company',

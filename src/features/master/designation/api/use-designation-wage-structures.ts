@@ -16,7 +16,9 @@ export function useDesignationWageStructures(designationId: number) {
   const query = useQuery({
     queryKey: queryKeys.designation.wageStructures(designationId),
     queryFn: () => fetchDesignationWageStructures(designationId, heads),
-    enabled: Number.isFinite(designationId) && isReady,
+    /* `> 0` rather than merely finite: callers stand in a `0` for "no
+       designation picked yet", and that would otherwise read a history for it. */
+    enabled: Number.isFinite(designationId) && designationId > 0 && isReady,
   })
 
   // While the catalog loads the query is disabled, which reads as idle rather

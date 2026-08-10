@@ -5,6 +5,7 @@ import {
   HandCoins,
   HeartPulse,
   IndianRupee,
+  Receipt,
   Scale,
   ShieldCheck,
   Wallet,
@@ -45,6 +46,7 @@ type DesignationSalarySectionProps = Pick<
   | 'esicActApplicable'
   | 'ptActApplicable'
   | 'ptActType'
+  | 'tdsActApplicable'
   | 'lwfActApplicable'
   | 'lwfActType'
   | 'overtimeApplicable'
@@ -68,6 +70,7 @@ export function DesignationSalarySection({
   esicActApplicable,
   ptActApplicable,
   ptActType,
+  tdsActApplicable,
   lwfActApplicable,
   lwfActType,
   overtimeApplicable,
@@ -247,6 +250,22 @@ export function DesignationSalarySection({
             />
           )}
         />
+        {/* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */}
+        <Controller
+          control={control}
+          name="tdsActApplicable"
+          render={({ field }) => (
+            <ActToggleTile
+              icon={Receipt}
+              title="TDS Act Applicable"
+              description="Enable tax deducted at source"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              tone="border-rose-500/30 bg-rose-500/5"
+              iconTone="text-rose-600 dark:text-rose-400"
+            />
+          )}
+        />
         <Controller
           control={control}
           name="lwfActApplicable"
@@ -412,6 +431,29 @@ export function DesignationSalarySection({
                 />
               </Field>
             )}
+          </ActSectionCard>
+        )}
+
+        {tdsActApplicable && (
+          <ActSectionCard
+            icon={Receipt}
+            title="TDS Act Settings"
+            tone="border-rose-500/20 bg-rose-500/5"
+            iconTone="text-rose-600 dark:text-rose-400"
+          >
+            {/* No slab to fall back on, unlike PT and LWF — the rate is the
+                designation's own, so there is no "As Per Act" to choose. */}
+            <Field
+              label="TDS Percentage (%)"
+              hint="Deducted from the gross pay each month, at this rate."
+              error={errors.tdsPercentage?.message}
+            >
+              <Input
+                inputMode="decimal"
+                placeholder="TDS Percentage (%)"
+                {...register('tdsPercentage')}
+              />
+            </Field>
           </ActSectionCard>
         )}
 

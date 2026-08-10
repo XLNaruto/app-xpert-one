@@ -36,7 +36,7 @@ export function useSelectCompany() {
     },
     onSuccess: (company) => {
       setActiveCompany(company.id)
-      setSelectedCompany(company.id, company.name)
+      setSelectedCompany(company.id, company.name, company.logo)
 
       // Everything else is tenant-scoped — drop it so it refetches for the new
       // company. The companies list itself is unaffected by the switch.

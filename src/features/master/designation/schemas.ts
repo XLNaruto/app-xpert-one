@@ -15,6 +15,18 @@ const optionalMatch = (re: RegExp, message: string) =>
     .refine((v) => v === '' || re.test(v), message)
 
 /**
+ * A rate rather than a sum: the same two decimals as an amount, capped at 100.
+ * Blank is allowed — the act can be on with its rate still to be decided.
+ */
+const optionalPercent = z
+  .string()
+  .trim()
+  .refine(
+    (v) => v === '' || (AMOUNT_RE.test(v) && Number(v) <= 100),
+    'Enter a percentage between 0 and 100',
+  )
+
+/**
  * One head as configured on this designation. The head itself is fixed — every
  * head in the master gets a row — so only its value and act markers are
  * captured, and a blank value simply means it doesn't apply.
@@ -71,6 +83,13 @@ export const designationSchema = z
     ptActApplicable: z.boolean(),
     ptActType: z.enum(['', 'As Per Act', 'Manual']),
     ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+
+    /*
+     * TDS act. Unlike PT and LWF there is no slab to fall back on — the rate is
+     * the designation's own, so the act carries a percentage and nothing else.
+     */
+    tdsActApplicable: z.boolean(),
+    tdsPercentage: optionalPercent,
 
     // Labour welfare fund act
     lwfActApplicable: z.boolean(),
@@ -187,6 +206,10 @@ export const wageStructureRowBaseSchema = z.object({
   ptActApplicable: z.boolean(),
   ptActType: z.enum(['', 'As Per Act', 'Manual']),
   ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+
+  /* No slab behind it — TDS carries the row's own rate, so one cell, no type. */
+  tdsActApplicable: z.boolean(),
+  tdsPercentage: optionalPercent,
 
   lwfActApplicable: z.boolean(),
   lwfActType: z.enum(['', 'As Per Act', 'Manual']),
@@ -309,6 +332,12 @@ export const wageStructureResponseSchema = z.object({
   is_pt_applicable_on_overtime: z.boolean().nullable(),
 
   is_tds_act_applicable: z.boolean().nullable(),
+  /**
+   * The rate deducted when the TDS act applies. Optional as well as nullable:
+   * the field is newer than the rest of the version, so a read taken before the
+   * API carried it simply has no key here rather than a `null`.
+   */
+  tds_percentage: z.number().nullable().optional(),
 
   /** Absent on the version nested in the designation detail. */
   salary_components: z.array(salaryComponentResponseSchema).optional(),
@@ -400,6 +429,18 @@ export interface WageStructurePayload {
   is_pt_act_applicable?: boolean
   pt_act_type?: 'AUTO' | 'FIXED' | null
   pt_amount?: number | null
+
+  /**
+   * The TDS act and the rate it deducts at.
+   *
+   * `is_tds_act_applicable` is the API's own field. `tds_percentage` is not yet
+   * on the endpoint — the wage-structure bodies are `additionalProperties: false`,
+   * so the write is rejected until the backend adds the column. It is sent
+   * regardless because the rate is what makes the toggle mean anything, and
+   * nothing in the payload can carry it otherwise.
+   */
+  is_tds_act_applicable?: boolean
+  tds_percentage?: number | null
 
   is_lwf_act_applicable?: boolean
   lwf_act_type?: 'AUTO' | 'FIXED' | null

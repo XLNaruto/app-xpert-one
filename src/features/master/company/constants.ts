@@ -28,14 +28,17 @@ export const YEAR_OPTIONS: ComboboxOption[] = Array.from(
   },
 )
 
+/** What the logo picker advertises — the three types the presign signs for. */
+export const LOGO_ACCEPT = '.jpg,.jpeg,.png,.webp'
+
 /** Blank form values for a brand-new company. */
 export const EMPTY_COMPANY_FORM: CompanyFormValues = {
   companyName: '',
+  logo: '',
   establishYear: '',
   registrationNumber: '',
   panNumber: '',
   gstNumber: '',
-  shiftHours: '',
   addressLine1: '',
   addressLine2: '',
   addressLine3: '',

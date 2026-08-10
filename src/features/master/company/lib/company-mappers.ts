@@ -26,10 +26,6 @@ export function toCompany(response: CompanyResponse): Company {
     registrationNumber: response.registration_number ?? '',
     panNumber: response.pan_number ?? '',
     gstNumber: response.gst_number ?? '',
-    shiftHours:
-      response.shift_hours === null || response.shift_hours === undefined
-        ? ''
-        : String(response.shift_hours),
     addressLine1: response.address1 ?? '',
     addressLine2: response.address2 ?? '',
     addressLine3: response.address3 ?? '',
@@ -54,11 +50,11 @@ export function toCompany(response: CompanyResponse): Company {
 export function companyToPayload(values: CompanyFormValues): CompanyPayload {
   return {
     company_name: values.companyName.trim(),
+    logo: orNull(values.logo),
     establish_year: values.establishYear ? Number(values.establishYear) : null,
     registration_number: orNull(values.registrationNumber),
     pan_number: orNull(values.panNumber.toUpperCase()),
     gst_number: orNull(values.gstNumber.toUpperCase()),
-    shift_hours: values.shiftHours.trim() ? Number(values.shiftHours) : null,
     address1: orNull(values.addressLine1),
     address2: orNull(values.addressLine2),
     address3: orNull(values.addressLine3),
@@ -77,11 +73,11 @@ export function companyToPayload(values: CompanyFormValues): CompanyPayload {
 export function companyToFormValues(company: Company): CompanyFormValues {
   return {
     companyName: company.companyName,
+    logo: company.logo,
     establishYear: company.establishYear,
     registrationNumber: company.registrationNumber,
     panNumber: company.panNumber,
     gstNumber: company.gstNumber,
-    shiftHours: company.shiftHours,
     addressLine1: company.addressLine1,
     addressLine2: company.addressLine2,
     addressLine3: company.addressLine3,

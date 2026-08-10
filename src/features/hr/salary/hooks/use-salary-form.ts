@@ -5,19 +5,39 @@ import { format, parse } from 'date-fns'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { usePagination } from '@/hooks/use-pagination'
-import { useDesignations } from '@/features/master/designation'
+import { useDesignations, useWageHeads } from '@/features/master/designation'
 import { useSalaryRegister } from '../api/use-salary-register'
-import { useDeleteSalaries, useSaveSalaries } from '../api/use-salary-mutations'
-import { salaryColumnTotals } from '../lib/salary-calculations'
-import { salaryHeadColumns, salaryRowToPayload, toSalaryRow } from '../lib/salary-mappers'
-import { SALARY_PAGE_SIZE, salaryMonthBounds } from '../constants'
+import {
+  useDeleteSalaries,
+  useDownloadSalaryTemplate,
+  useImportSalaries,
+  useSaveSalaries,
+} from '../api/use-salary-mutations'
+import {
+  liveRow,
+  rowFigures,
+  STATUTORY_ALIASES,
+  type StatutoryComponentIds,
+} from '../lib/salary-calculations'
+import {
+  salaryHeadColumnsFromRegister,
+  salaryHeadConfigsFromRegister,
+  salaryRowToPayload,
+  toSalaryRow,
+  type SalaryHeadColumn,
+} from '../lib/salary-mappers'
+import {
+  EMPTY_SALARY_RATES,
+  SALARY_PAGE_SIZE,
+  salaryMonthBounds,
+} from '../constants'
 import {
   salaryFormSchema,
   type SalaryFormValues,
   type SalaryRegisterFilters,
   type SalaryStatus,
 } from '../schemas'
-import type { SalaryRegisterRow } from '../types'
+import type { SalaryImportResult, SalaryRates, SalaryRegisterRow } from '../types'
 
 /** The wire format the month picker speaks. */
 const ISO_MONTH = 'yyyy-MM'
@@ -34,20 +54,57 @@ function monthParts(value: string): { month: number; year: number } {
 }
 
 /**
+ * Whether react-hook-form's dirty map says anything under here has been touched.
+ *
+ * It has to walk, not glance at the top level. `dirtyFields` mirrors the shape of
+ * the values, so a row's `allowances` is an *array* — always truthy, whether or
+ * not a single head in it has been typed into. Testing the row's own keys for
+ * truthiness would therefore call every row on the page edited the moment the
+ * head cells existed, and every row would be recomputed and re-saved.
+ */
+function isDirty(node: unknown): boolean {
+  if (Array.isArray(node)) return node.some(isDirty)
+  if (node && typeof node === 'object') return Object.values(node).some(isDirty)
+  return node === true
+}
+
+/**
+ * A page of register rows as the form holds them.
+ *
+ * Every row is seeded against the *columns* rather than against its own heads, so
+ * cell *n* of each row is the same head all the way down the page — which is what
+ * lets the grid address a head cell by its column index instead of searching the
+ * row for it on every render. A row that doesn't carry one of the columns opens
+ * it at zero.
+ */
+function seedRows(
+  items: SalaryRegisterRow[],
+  heads: { allowances: SalaryHeadColumn[]; deductions: SalaryHeadColumn[] },
+) {
+  return items.map((item) => toSalaryRow(item, heads))
+}
+
+/**
  * Owns Calculate Salary: which register is on screen, the three cells per row
  * that can be typed into, and the two writes.
  *
- * The shape of the screen follows the endpoints. `GET /salary/register` hands
- * over the attendance, the wage structure in force and `computed` — the pay that
- * *would* be saved — and `POST /salary/bulk-save` takes back only the days each
- * posting is paid for. So there is no pay to hold in form state and nothing to
- * recalculate here: the grid is a register with three editable columns, and the
- * server is the calculator.
+ * The shape of the screen follows the endpoints. `GET /salary/register` hands over
+ * the attendance, the wage structure in force and `computed` — the pay that
+ * *would* be saved — and `POST /salary/bulk-save` takes back the full snapshot
+ * each row is priced at, storing every figure as sent. So the pay *is* in form
+ * state: present days and overtime hours are typed, each allowance and deduction
+ * head is carried as its own cell, and `salary-calculations` joins them up.
  *
- * It's read **one designation at a time**. The grid's allowance and deduction
- * columns are the designation's own heads, so a company-wide read would head
- * columns with heads that don't belong to the row underneath them. That's why the
- * query waits on a designation rather than defaulting to all of them.
+ * A head's amount is on the register and so is the rule behind it: each row
+ * carries the `salary_components` of the structure it was priced on, which is
+ * what decides whether the head moves with the days. Nothing is fetched to find
+ * that out, and a back-dated month is read through its own configuration rather
+ * than through the one in force today.
+ *
+ * It's read **one designation at a time**, because the wage structure that says
+ * how each head is configured is a designation's. The columns are the company's
+ * whole allowance / deduction master — plus anything the register names that the
+ * master doesn't — so they don't move when the designation does.
  *
  * On performance: this hook subscribes to `dirtyFields` and nothing else, so a
  * keystroke in a cell re-renders that cell's row and no other — the same
@@ -63,8 +120,28 @@ export function useSalaryForm() {
 
   /* ── What register is on screen ─────────────────────────────────────────── */
 
+  /**
+   * The two filters that pick a register are **staged**, not live.
+   *
+   * `draftMonth` / `draftDesignationId` are what the pickers hold; `month` /
+   * `designationId` are what the register on screen was actually read for, and
+   * only Calculate Salary moves one to the other.
+   *
+   * Reading on change was wrong here in a way the other list screens aren't.
+   * Picking a designation is a *decision to run a payroll*, not a filter over
+   * something already on screen: it re-seeds every row of the form, so a
+   * mis-click while rows had days typed into them threw that work away, and
+   * scrolling a combobox with the keyboard fired a register read per title
+   * passed. Staging them makes the read a thing someone asks for.
+   *
+   * The status tab, the search box and the pager stay live. Those are all reads
+   * *of the register already chosen* — a different page or side of the same
+   * question — and nothing typed is lost by answering them straight away.
+   */
   const [month, setMonth] = useState(currentMonth)
   const [designationId, setDesignationId] = useState<number | null>(null)
+  const [draftMonth, setDraftMonth] = useState(currentMonth)
+  const [draftDesignationId, setDraftDesignationId] = useState<number | null>(null)
   const [status, setStatus] = useState<SalaryStatus>('pending')
 
   const pagination = usePagination(SALARY_PAGE_SIZE)
@@ -82,26 +159,133 @@ export function useSalaryForm() {
   }, [companyId, month, designationId, status])
 
   const ready = companyId !== null && designationId !== null
+
   const register = useSalaryRegister(filters, params, ready)
 
   /** Designation titles for the toolbar — the whole master, it's a dropdown. */
   const designations = useDesignations()
 
-  /* A different register starts at its first page; so does a different tab. */
-  const changeMonth = useCallback(
-    (value: string) => {
-      setMonth(value)
-      onPaginationChange({ limit, offset: 0 })
-    },
-    [onPaginationChange, limit],
+  /* ── How the designation's heads are configured ────────────────────────── */
+
+  /**
+   * A head's amount is on the register; the rule behind it — 10% of pay, or a
+   * flat ₹2,600 — is what a typed present-days figure has to be re-read through,
+   * and that comes from the row's own `salary_components`.
+   *
+   * The register carries those itself, off the very structure each row was priced
+   * on, so nothing extra is fetched and a back-dated month is read through the
+   * configuration it was actually run on rather than through today's.
+   */
+  const headConfigs = useMemo(
+    () => salaryHeadConfigsFromRegister(register.data?.items ?? []),
+    [register.data],
   )
+
+  /** The same components as *columns* — which head, on which side, in what order. */
+  const registerHeads = useMemo(
+    () => salaryHeadColumnsFromRegister(register.data?.items ?? []),
+    [register.data],
+  )
+
+  /**
+   * The pay-component ids PF / ESIC / PT / LWF are known by in the company's
+   * catalog. A save sends them as deduction lines — that's how the API routes
+   * them onto the salary row's own columns — so without an id for one, it can be
+   * neither sent nor counted, and `rowFigures` leaves it out of both.
+   */
+  const {
+    heads: catalog,
+    isReady: catalogReady,
+    isLoading: catalogLoading,
+  } = useWageHeads()
+
+  /**
+   * The grid's allowance and deduction columns: **every head the company has**,
+   * from the allowance / deduction master, in the master's own order.
+   *
+   * Taken from the master rather than only from the heads on screen, so the
+   * register reads like the bulk wage grid — the same columns in the same places
+   * whichever designation, month or tab is open. A head this designation doesn't
+   * pay simply sits at zero, which is a column worth having: it is where an
+   * amount gets typed when this month is the exception.
+   *
+   * Anything the register's own `salary_components` names and the master doesn't
+   * is appended rather than dropped. A head the row is actually priced on has to
+   * have a column — it carries an amount, and a save sends it — so the master
+   * decides the order and the register decides the floor.
+   */
+  const heads = useMemo(() => {
+    const fromCatalog = (side: typeof catalog.allowances) =>
+      side.map((head) => ({
+        payComponentId: head.id,
+        code: head.code,
+        name: head.name,
+      }))
+
+    const merge = (columns: SalaryHeadColumn[], extra: SalaryHeadColumn[]) => {
+      const known = new Set(columns.map((column) => column.payComponentId))
+      return [...columns, ...extra.filter((column) => !known.has(column.payComponentId))]
+    }
+
+    return {
+      allowances: merge(fromCatalog(catalog.allowances), registerHeads.allowances),
+      deductions: merge(fromCatalog(catalog.deductions), registerHeads.deductions),
+    }
+  }, [catalog, registerHeads])
+
+  /**
+   * The PF / ESIC / PT / LWF masters in force for the period, off the register.
+   *
+   * The screen prices the statutory deductions from these — see
+   * `salary-statutory` — so they have to reach `rowFigures` for every row. An
+   * empty set while the register is still loading is the right neutral: no rate
+   * in force means the act deducts nothing, which is also what a half-loaded
+   * screen should show rather than a figure it is about to change.
+   */
+  const rates = useMemo<SalaryRates>(
+    () => register.data?.rates ?? EMPTY_SALARY_RATES,
+    [register.data],
+  )
+
+  const statutoryIds = useMemo<StatutoryComponentIds>(() => {
+    const ids: StatutoryComponentIds = new Map()
+    Object.entries(STATUTORY_ALIASES).forEach(([code, aliases]) => {
+      const match = catalog.deductions.find((head) =>
+        aliases.includes(head.code.trim().toUpperCase()),
+      )
+      if (match) ids.set(code, match.id)
+    })
+    return ids
+  }, [catalog])
+
+  /* The pickers only stage — nothing is read until Calculate Salary is pressed. */
+  const changeMonth = useCallback((value: string) => setDraftMonth(value), [])
   const changeDesignation = useCallback(
-    (value: number | null) => {
-      setDesignationId(value)
-      onPaginationChange({ limit, offset: 0 })
-    },
-    [onPaginationChange, limit],
+    (value: number | null) => setDraftDesignationId(value),
+    [],
   )
+
+  /** Whether the pickers are showing something the register hasn't been read for. */
+  const hasPendingFilters =
+    draftDesignationId !== designationId || draftMonth !== month
+
+  /**
+   * Run the register for what the pickers currently hold.
+   *
+   * This is the only thing that moves the draft across, and it starts the result
+   * at page one — a different register can't inherit the last one's offset, and
+   * landing on "page 3 of 1" would read as an empty month.
+   */
+  const calculate = useCallback(() => {
+    if (draftDesignationId === null) {
+      toast.error('Select a designation to calculate salary for')
+      return
+    }
+    setDesignationId(draftDesignationId)
+    setMonth(draftMonth)
+    onPaginationChange({ limit, offset: 0 })
+  }, [draftDesignationId, draftMonth, onPaginationChange, limit])
+
   const changeStatus = useCallback(
     (value: SalaryStatus) => {
       setStatus(value)
@@ -112,7 +296,7 @@ export function useSalaryForm() {
 
   /* ── The rows ──────────────────────────────────────────────────────────── */
 
-  const { register: registerField, control, getValues, reset, trigger } =
+  const { register: registerField, control, getValues, setValue, reset, trigger } =
     useForm<SalaryFormValues>({
       resolver: zodResolver(salaryFormSchema),
       defaultValues: { rows: [] },
@@ -145,25 +329,59 @@ export function useSalaryForm() {
 
   const [selected, setSelected] = useState<Set<number>>(new Set())
 
+  /**
+   * What a freshly loaded page starts out selected.
+   *
+   * On **To Process**, running a month means running everyone on it, so the page
+   * arrives with every runnable row ticked — the checkboxes now say so rather
+   * than leaving "all of them" implied by an empty selection.
+   *
+   * On **Processed** nothing is ticked: those months are already computed and
+   * stored, and re-sending an untouched one would revise a salary nobody asked
+   * to change. There the save still falls back to the rows typed into.
+   *
+   * A paid row is never included — the API refuses both a re-save and a discard.
+   */
+  const defaultSelection = useCallback(
+    (items: SalaryRegisterRow[]) =>
+      status === 'complete'
+        ? new Set<number>()
+        : new Set(items.filter((row) => !row.isPaid).map((row) => row.employeeServiceId)),
+    [status],
+  )
+
   useEffect(() => {
-    if (!register.data || register.isPlaceholderData) return
+    const data = register.data
+    if (!data || register.isPlaceholderData) return
+    /* The head cells are seeded against the master's columns, so there is nothing
+       to seed until the master is in. The effect runs again when it arrives. */
+    if (!catalogReady) return
+
     if (seededKey.current === registerKey) return
     seededKey.current = registerKey
 
-    setRows(register.data.items)
-    reset({ rows: register.data.items.map(toSalaryRow) })
+    setRows(data.items)
+    reset({ rows: seedRows(data.items, heads) })
     /* A different page of rows can't carry the last page's selection. */
-    setSelected(new Set())
-  }, [register.data, register.isPlaceholderData, registerKey, reset])
+    setSelected(defaultSelection(data.items))
+  }, [
+    register.data,
+    register.isPlaceholderData,
+    catalogReady,
+    heads,
+    registerKey,
+    reset,
+    defaultSelection,
+  ])
 
   /** Take the register as stored, discarding whatever has been typed. */
   const reload = useCallback(() => {
     if (!register.data) return
     setRows(register.data.items)
-    reset({ rows: register.data.items.map(toSalaryRow) })
-    setSelected(new Set())
+    reset({ rows: seedRows(register.data.items, heads) })
+    setSelected(defaultSelection(register.data.items))
     toast.info('Reloaded — unsaved changes discarded')
-  }, [register.data, reset])
+  }, [register.data, heads, reset, defaultSelection])
 
   /* ── Which rows have been typed into ───────────────────────────────────── */
 
@@ -183,7 +401,7 @@ export function useSalaryForm() {
    */
   const dirtyRows = new Set<number>()
   ;(dirtyFields.rows ?? []).forEach((row, index) => {
-    if (row && Object.values(row).some(Boolean)) dirtyRows.add(index)
+    if (isDirty(row)) dirtyRows.add(index)
   })
 
   /* ── Selection ─────────────────────────────────────────────────────────── */
@@ -273,14 +491,36 @@ export function useSalaryForm() {
     }
 
     const values = getValues()
-    const sending = saveTargets.map((index) => values.rows[index]).filter(Boolean)
+    const sending = saveTargets.filter((index) => values.rows[index] && rows[index])
+
+    /*
+     * Each row goes out as the full snapshot it is priced at on screen — the
+     * figures, the per-head breakdown and the settings behind them — because the
+     * API stores every figure as sent and checks that the totals agree with the
+     * parts. An untouched row is sent at exactly what the register answered; an
+     * edited one at what its cells now come to.
+     */
+    const salaries = sending.map((index) =>
+      salaryRowToPayload(
+        rows[index],
+        rowFigures(
+          rows[index],
+          values.rows[index],
+          headConfigs,
+          statutoryIds,
+          liveRow(rows[index], dirtyRows.has(index)),
+          rates,
+          filters.month,
+        ),
+      ),
+    )
 
     save.mutate(
       {
         company_id: companyId,
         month: filters.month,
         year: filters.year,
-        salaries: sending.map(salaryRowToPayload),
+        salaries,
       },
       {
         onSuccess: (result) => {
@@ -292,7 +532,9 @@ export function useSalaryForm() {
           if (result.saved.length > 0) {
             toast.success(
               result.saved.length === 1
-                ? `Salary processed for ${sending[0]?.employeeName || '1 employee'}`
+                ? `Salary processed for ${
+                    rows[sending[0]]?.employeeName || '1 employee'
+                  }`
                 : `Salary processed for ${result.saved.length} employees`,
             )
           }
@@ -315,7 +557,12 @@ export function useSalaryForm() {
   }, [
     companyId,
     status,
+    rows,
     saveTargets,
+    dirtyRows,
+    headConfigs,
+    statutoryIds,
+    rates,
     trigger,
     getValues,
     save,
@@ -386,13 +633,86 @@ export function useSalaryForm() {
     runDiscard()
   }, [runDiscard])
 
+  /* ── Importing a month from a sheet ────────────────────────────────────── */
+
+  /**
+   * The sheet import: pick a file, and read back what it did.
+   *
+   * The register on screen decides the month sent, but only as a fallback — the
+   * period written in the sheet wins server-side, and `result.period` is the one
+   * that actually ran. Nothing here is overwritten: a posting already processed
+   * for the period comes back in `skipped`, which is why the report is shown
+   * rather than reduced to a toast.
+   */
+  const importSheet = useImportSalaries()
+  const [importOpen, setImportOpen] = useState(false)
+  const [importResult, setImportResult] = useState<SalaryImportResult | null>(null)
+
+  const runImport = useCallback(
+    (file: File) => {
+      if (companyId === null) {
+        toast.error('Pick a company before importing a salary sheet')
+        return
+      }
+
+      importSheet.mutate(
+        { file, companyId, month: filters.month, year: filters.year },
+        {
+          onSuccess: (result) => {
+            setImportOpen(false)
+            setImportResult(result)
+            /* Whatever landed is on the register now — reseed from the server
+               rather than leave the page showing the month as it was. */
+            setSeedToken((token) => token + 1)
+
+            if (result.saved.length > 0) {
+              toast.success(
+                result.saved.length === 1
+                  ? '1 salary imported'
+                  : `${result.saved.length} salaries imported`,
+              )
+            }
+          },
+          onError: (error) =>
+            toast.error(
+              error instanceof Error ? error.message : 'Failed to import the salary sheet',
+            ),
+        },
+      )
+    },
+    [importSheet, companyId, filters.month, filters.year],
+  )
+
+  const clearImportResult = useCallback(() => setImportResult(null), [])
+
+  /**
+   * The other half of that dialog: the sheet to fill in.
+   *
+   * Sent for the register the screen was *run* for — the same company, month and
+   * designation the grid is showing — so the file that comes down is the page,
+   * not whatever the pickers have been left on since.
+   */
+  const template = useDownloadSalaryTemplate()
+
+  const downloadTemplate = useCallback(() => {
+    if (companyId === null) {
+      toast.error('Pick a company before downloading the salary sheet')
+      return
+    }
+
+    template.mutate(
+      { companyId, month: filters.month, year: filters.year, designationId },
+      {
+        onSuccess: () => toast.success('Salary import sheet downloaded'),
+        onError: (error) =>
+          toast.error(
+            error instanceof Error ? error.message : 'Failed to download the sheet',
+          ),
+      },
+    )
+  }, [template, companyId, filters.month, filters.year, designationId])
+
   /* ── What the screen renders from ──────────────────────────────────────── */
-
-  /** The columns: this designation's allowance and deduction heads. */
-  const heads = useMemo(() => salaryHeadColumns(rows), [rows])
-
-  /** The footer's grand total, down the page as the server currently has it. */
-  const totals = useMemo(() => salaryColumnTotals(rows), [rows])
 
   const designationOptions = useMemo(
     () =>
@@ -408,14 +728,22 @@ export function useSalaryForm() {
   return {
     register: registerField,
     control,
+    setValue,
 
     companyId,
-    /* Filters. */
+    /* Filters. The pickers read the draft; everything else reads what the
+       register was actually run for. */
     month,
+    draftMonth,
     changeMonth,
     monthBounds,
     designationId,
+    draftDesignationId,
     changeDesignation,
+    /** Run the register for what the pickers hold — the Calculate Salary click. */
+    calculate,
+    /** The pickers hold something the register on screen wasn't read for. */
+    hasPendingFilters,
     designationOptions,
     designationsLoading: designations.isLoading,
     status,
@@ -426,7 +754,13 @@ export function useSalaryForm() {
     /* The register. */
     rows,
     heads,
-    totals,
+    /** How the designation configures each head — percentage, or a flat amount. */
+    headConfigs,
+    statutoryIds,
+    /** The rate masters PF / ESIC / PT / LWF are priced from for this period. */
+    rates,
+    /** 1–12 — which month's PT and LWF collection rules apply. */
+    periodMonth: filters.month,
     period: register.data?.period ?? null,
     companyTotals: register.data?.totals ?? null,
     total: register.data?.total ?? 0,
@@ -436,7 +770,9 @@ export function useSalaryForm() {
 
     /** False until a designation is chosen — the register isn't read before it. */
     ready,
-    isLoading: register.isLoading,
+    /* The master is part of the load: it is what the grid's columns are, so a
+       register drawn before it arrives would open with none of them. */
+    isLoading: register.isLoading || catalogLoading,
     isFetching: register.isFetching,
     isError: register.isError,
     error: register.error,
@@ -456,6 +792,18 @@ export function useSalaryForm() {
     askSave,
     confirmSave,
     isSaving: save.isPending,
+
+    /* Importing a month from a sheet. */
+    importOpen,
+    setImportOpen,
+    runImport,
+    isImporting: importSheet.isPending,
+    /** The last import's report — what the result dialog is showing. */
+    importResult,
+    clearImportResult,
+    /** Download the sheet to fill in for the register on screen. */
+    downloadTemplate,
+    isDownloadingTemplate: template.isPending,
 
     discardCount: discardTargets.length,
     discardConfirmOpen,

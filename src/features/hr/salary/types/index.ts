@@ -2,12 +2,13 @@
  * The salary register as the screen reads it — one designation's people against
  * one payroll month.
  *
- * The API answers two versions of the same figures: `computed`, the pay that
- * *would* be saved if the row were committed as it stands, and `salary` +
- * `components`, the pay that *was* saved once the month is processed. A screen
- * that had to choose between them per cell would say "stored ?? computed" forty
- * times, so the mapper chooses once and hands the grid a single `figures` block.
- * `isProcessed` says which of the two it came from.
+ * **The client prices the row.** `GET /salary/register` no longer answers what a
+ * pending row would be paid; it answers the four inputs — the attendance, the
+ * wage structure in force, that structure's head configuration and the PF / ESIC
+ * / PT / LWF rate masters — and `salary-calculations` does the arithmetic. Only
+ * a *processed* row carries money of its own, in `salary` + `components`, and
+ * that is the pay actually committed. `isProcessed` says which of the two a row
+ * is, and `figures` is empty rather than a preview while it is pending.
  */
 
 /**
@@ -50,14 +51,23 @@ export interface SalaryAttendance {
   workingDays: number
 }
 
-/** The wage structure in force for the row's designation — the parts shown. */
+/**
+ * The wage structure in force for the row's designation.
+ *
+ * The whole act configuration, not a few flags for display: this is what the
+ * statutory deductions are priced from — see `salary-statutory` — and what the
+ * save echoes back as the settings the month was worked out on.
+ */
 export interface SalaryWageStructure {
   id: number
   designationId: number
+  /** The month this version took effect, `yyyy-MM-dd`. */
+  applicableDate: string | null
   /** `Monthly` or `Daily` — which of the two wage figures is the quoted one. */
   salaryType: string
   basicPay: number | null
   wagesPerDay: number | null
+  workingDayCalculationType: string | null
   workingDays: number | null
   weeklyOff: string | null
   extraDayAmountPerDay: number | null
@@ -68,6 +78,101 @@ export interface SalaryWageStructure {
   isPtActApplicable: boolean
   isLwfActApplicable: boolean
   isTdsActApplicable: boolean
+  /** `Percentage` takes its rate from `pfDeductionAmount`, `Fixed` its rupees. */
+  pfDeductionType: string | null
+  pfDeductionAmount: number | null
+  /** `Wage Ceiling`, `Gross Salary` or `As Per Act` — what ESIC is charged on. */
+  esicDeductionBasis: string | null
+  /** `As Per Act` follows the rate master's slabs; `Manual` uses `ptAmount`. */
+  ptActType: string | null
+  ptAmount: number | null
+  /** `As Per Act` follows the rate master; `Manual` uses `lwfAmount`. */
+  lwfActType: string | null
+  lwfAmount: number | null
+  tdsPercentage: number | null
+}
+
+/**
+ * The statutory rate masters in force for the period, as the register hands them
+ * over — the rates the screen prices PF, ESIC, PT and LWF from.
+ *
+ * Any of the four is `null` when the master has no rate covering the period. The
+ * act then deducts nothing: falling back to a stale rate would price a month at
+ * a percentage that was not in force for it.
+ */
+export interface SalaryRates {
+  pf: {
+    id: number
+    effectiveDate: string | null
+    /** The combined statutory rate, kept for display. */
+    deduction: number | null
+    /** EPF wages are capped here where the designation says to cap them. */
+    wageCeilingLimit: number | null
+    /** The employee's share, as a percentage. */
+    employeeContribution: number | null
+    employerContribution: number | null
+  } | null
+  esic: {
+    id: number
+    effectiveDate: string | null
+    wageCeilingLimit: number | null
+    employeeContribution: number | null
+    employerContribution: number | null
+  } | null
+  pt: {
+    id: number
+    stateId: number | null
+    effectiveDate: string | null
+    slabs: SalaryPtSlab[]
+  } | null
+  lwf: {
+    id: number
+    stateId: number | null
+    effectiveDate: string | null
+    /** `'0'` is every month, otherwise `'01'`–`'12'`. */
+    month: string
+    employeeContribution: number | null
+    employerContribution: number | null
+  } | null
+}
+
+/** One band of the PT master — a flat amount for a salary range. */
+export interface SalaryPtSlab {
+  id: number
+  minSalary: number | null
+  /** `null` is open-ended — the "and above" band. */
+  maxSalary: number | null
+  /** `'0'` is every month, otherwise `'01'`–`'12'`. */
+  month: string
+  /** `Male`, `Female` or `Both`. */
+  gender: string
+  minAge: number | null
+  amount: number
+}
+
+/**
+ * One head as the structure the row was priced on configures it — the register's
+ * own `salary_components`, which rides on the row beside the wage structure.
+ *
+ * This is the rule behind a head's amount, and so the thing a typed present-days
+ * figure has to be re-read through: a `Percentage` head earns its share of the
+ * earned basic and moves with the days, a `Fixed` one stays where it is.
+ */
+export interface SalaryComponent {
+  payComponentId: number
+  /** Short code, falling back to the name — the same label the columns use. */
+  code: string
+  name: string
+  /** `ALLOWANCE` or `DEDUCTION`, as the pay-component master spells it. */
+  componentType: 'ALLOWANCE' | 'DEDUCTION' | ''
+  /** The master's own ordering, kept so a head lands where it belongs. */
+  sortOrder: number
+  valueType: 'Percentage' | 'Fixed'
+  /** The percent, or the flat rupee amount, per `valueType`. */
+  value: number
+  pfApplicable: boolean
+  esicApplicable: boolean
+  ptApplicable: boolean
 }
 
 /** One allowance or deduction head against a row, at the amount it carries. */
@@ -78,12 +183,42 @@ export interface SalaryHead {
   /** The full name, for the column's tooltip. */
   name: string
   amount: number
+  /** Which acts the head counts towards — sent back on the save's breakdown. */
+  pfApplicable: boolean
+  esicApplicable: boolean
+  ptApplicable: boolean
 }
 
 /**
- * A row's money, from whichever side of the register it came from. Every figure
- * is the server's: the screen sends days, never amounts, so nothing here is
- * arrived at on the client except the two previews in `salary-calculations`.
+ * How one head is *configured* on the designation, which is what decides whether
+ * its amount moves with the days.
+ *
+ * The register answers each head's amount and the rule behind it: this is
+ * `salary_components` off the rows themselves, collapsed to one map for the page.
+ * Nothing extra is fetched to find out what a head is.
+ */
+export interface SalaryHeadConfig {
+  /** `Percentage` earns a share of the earned basic; `Fixed` is a flat amount. */
+  valueType: 'Percentage' | 'Fixed'
+  /** The percent, or the rupee amount, as configured. */
+  value: number
+  pfApplicable: boolean
+  esicApplicable: boolean
+  ptApplicable: boolean
+}
+
+/** The designation's head configuration, by pay component id. */
+export type SalaryHeadConfigs = Map<number, SalaryHeadConfig>
+
+/**
+ * A **stored** row's money — the pay a processed month was actually committed
+ * at, read back off `salary` + `components`.
+ *
+ * A pending row has none of this. The register stopped answering a preview when
+ * it started answering `rates` instead, so a pending row's figures are zeros
+ * here and the real ones come from `rowFigures`, which prices the cells. Keeping
+ * the block rather than making it nullable is what lets `rowFigures` fall back
+ * to "as registered" for an untouched processed row without a second shape.
  */
 export interface SalaryFigures {
   basicPay: number
@@ -111,6 +246,28 @@ export interface SalaryFigures {
   otAmount: number
 }
 
+/**
+ * The act settings stored against a processed month — the configuration its
+ * statutory figures were worked out from, kept so a revision round-trips them
+ * unchanged instead of re-deriving them from today's wage structure.
+ */
+export interface SalaryStoredActs {
+  isPfActApplicable: boolean | null
+  pfDeductionType: string | null
+  pfDeductionAmount: number | null
+  isEsicActApplicable: boolean | null
+  esicDeductionBasis: string | null
+  employeeEsicPercentage: number | null
+  employerEsicPercentage: number | null
+  isPtActApplicable: boolean | null
+  ptActType: string | null
+  isLwfActApplicable: boolean | null
+  isTdsActApplicable: boolean | null
+  tdsPercentage: number | null
+  isOvertimeApplicable: boolean | null
+  weeklyOff: string | null
+}
+
 /** One row of the register: a person's posting, and the month against it. */
 export interface SalaryRegisterRow {
   employeeId: number
@@ -131,6 +288,12 @@ export interface SalaryRegisterRow {
   attendance: SalaryAttendance
   /** `null` on a posting whose designation has no wage structure in force. */
   wageStructure: SalaryWageStructure | null
+  /**
+   * How that structure configures each of the row's heads — the register's
+   * `salary_components`. Empty when the posting has no structure in force, which
+   * is the same case that leaves `wageStructure` null.
+   */
+  salaryComponents: SalaryComponent[]
   /** Stored figures when the month is processed, the preview otherwise. */
   figures: SalaryFigures
   /**
@@ -141,6 +304,14 @@ export interface SalaryRegisterRow {
    */
   storedPresentDays: number | null
   storedWorkingDays: number | null
+  storedWorkingHour: number | null
+  /**
+   * The act settings a processed month was priced on. A revision echoes these
+   * rather than the designation's current ones — the wage structure may have
+   * been versioned since, and a back-dated month is owed at its own rates.
+   * `null` while the row is pending, where the structure in force is the answer.
+   */
+  storedActs: SalaryStoredActs | null
   /** Whether the month has already been saved for this posting. */
   isProcessed: boolean
   /** The stored salary's own id — what a discard sends. `null` when pending. */
@@ -159,6 +330,8 @@ export interface SalaryRegisterRow {
 export interface SalaryRegister {
   period: SalaryPeriod
   totals: SalaryTotals
+  /** The PF / ESIC / PT / LWF masters the statutory deductions are priced from. */
+  rates: SalaryRates
   items: SalaryRegisterRow[]
   /** Rows on the side being shown (`pending` or `complete`), across all pages. */
   total: number
@@ -169,6 +342,31 @@ export interface SalarySaveResult {
   saved: { employeeServiceId: number; salaryId: number; action: string }[]
   /** Refused rows — a paid month, or a posting with no wage structure. */
   skipped: { employeeServiceId: number; reason: string }[]
+}
+
+/** One row of an import's report — the code the sheet carried, and what happened. */
+export interface SalaryImportRow {
+  employeeCode: string
+  /** Why it was skipped or failed; empty on a saved row. */
+  reason: string
+  /** Only on a saved row. */
+  salaryId?: number
+}
+
+/**
+ * What `POST /user/salary/imports` reports back.
+ *
+ * `period` is the cycle the sheet was actually processed for, which is the
+ * sheet's own period whenever it carries one — not necessarily the month the
+ * register was showing when the file was picked.
+ */
+export interface SalaryImportResult {
+  period: SalaryPeriod
+  saved: SalaryImportRow[]
+  /** Refused rows — already processed, unknown code, an ambiguous posting. */
+  skipped: SalaryImportRow[]
+  /** Rows the sheet itself got wrong — missing or unreadable values. */
+  errors: SalaryImportRow[]
 }
 
 /** What `POST /user/salary/bulk-delete` reports back. */

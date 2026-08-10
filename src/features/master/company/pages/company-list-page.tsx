@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { COMPANY_SORT } from '../constants'
+import { CompanyLogo } from '../components/company-logo'
 import { useCompanyList } from '../hooks/use-company-list'
 import type { Company } from '../types'
 
@@ -70,9 +71,14 @@ export function CompanyListPage() {
         ),
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium text-foreground">{row.original.companyName}</span>
-            <span className="text-xs text-muted-foreground">{row.original.email}</span>
+          <div className="flex items-center gap-2.5">
+            <CompanyLogo logo={row.original.logo} className="size-9 rounded-md" />
+            <div className="flex flex-col">
+              <span className="font-medium text-foreground">
+                {row.original.companyName}
+              </span>
+              <span className="text-xs text-muted-foreground">{row.original.email}</span>
+            </div>
           </div>
         ),
       },

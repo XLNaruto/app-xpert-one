@@ -81,6 +81,11 @@ export interface Designation extends AuditFields {
   ptActType: ActAmountType | null
   ptAmount: number | null
 
+  // TDS act
+  tdsActApplicable: boolean
+  /** The rate deducted, set only when the TDS act applies. */
+  tdsPercentage: number | null
+
   // Labour welfare fund act
   lwfActApplicable: boolean
   lwfActType: ActAmountType | null
@@ -175,6 +180,11 @@ export interface DesignationWageStructure extends AuditFields {
   ptActType: ActAmountType | null
   /** Set only when `ptActType` is "Manual". */
   ptAmount: number | null
+
+  // TDS act
+  tdsActApplicable: boolean
+  /** The rate deducted — set only when the TDS act applies. */
+  tdsPercentage: number | null
 
   // Labour welfare fund act
   lwfActApplicable: boolean

@@ -7,7 +7,11 @@ import { useDesignationWageStructures } from '../api/use-designation-wage-struct
 import { useSaveDesignationWageStructures } from '../api/use-designation-wage-mutations'
 import { useWageHeads } from '../api/use-wage-heads'
 import { effectiveMonthBounds } from '../lib/effective-month'
-import { blankWageStructureRow, wageStructureToRow } from '../lib/wage-structure-mappers'
+import {
+  carryForwardWageRow,
+  wageStructureToRow,
+  zeroedWageStructureRow,
+} from '../lib/wage-structure-mappers'
 import type { DesignationWageStructure } from '../types'
 
 /**
@@ -47,12 +51,25 @@ export function useDesignationWageForm(designationId: number) {
 
   const { fields, append, remove } = useFieldArray({ control, name: 'rows' })
 
-  const blankRow = useCallback(() => blankWageStructureRow(heads), [heads])
-
   const existing = useMemo(() => history.data ?? [], [history.data])
 
+  /**
+   * The version in force — the one a new row carries its settings forward from.
+   * Read as the latest effective month rather than trusting the list's order, so
+   * the wrong row can't become the template if the sort ever changes.
+   */
+  const latest = useMemo(
+    () =>
+      existing.reduce<DesignationWageStructure | undefined>(
+        (newest, row) =>
+          !newest || row.effectiveFrom > newest.effectiveFrom ? row : newest,
+        undefined,
+      ),
+    [existing],
+  )
+
   /*
-   * One blank row, and only when the grid would otherwise be empty — nothing
+   * One zeroed row, and only when the grid would otherwise be empty — nothing
    * saved and nothing drafted. A designation with a history opens on that history
    * with no row waiting to be filled in: a revision is added deliberately, and a
    * correction opens the saved row itself.
@@ -66,7 +83,7 @@ export function useDesignationWageForm(designationId: number) {
   useEffect(() => {
     if (!headsReady || history.isLoading) return
     if (existing.length > 0 || fields.length > 0) return
-    append(blankWageStructureRow(heads))
+    append(zeroedWageStructureRow(heads))
   }, [headsReady, heads, history.isLoading, existing.length, fields.length, append])
 
   const monthBounds = useMemo(() => effectiveMonthBounds(), [])
@@ -77,7 +94,24 @@ export function useDesignationWageForm(designationId: number) {
     [existing],
   )
 
-  const addRow = useCallback(() => append(blankRow()), [append, blankRow])
+  /**
+   * Add a row to draft a new version. A revision is nearly always the previous
+   * settings with a figure or two moved, so the row opens on those rather than
+   * empty: the row already on the grid if there is one — that's what the user is
+   * working from — otherwise the version in force. Only a designation with no
+   * history and nothing drafted gets a row from scratch, and that one opens
+   * zeroed.
+   *
+   * Either way it's a *new* row: `carryForwardWageRow` drops the stored id so the
+   * save is a POST, and clears the month, which is the one thing a revision has
+   * to be told.
+   */
+  const addRow = useCallback(() => {
+    const last = getValues('rows').at(-1)
+    if (last) return append(carryForwardWageRow(last))
+    if (latest) return append(carryForwardWageRow(wageStructureToRow(latest)))
+    append(zeroedWageStructureRow(heads))
+  }, [append, getValues, heads, latest])
 
   /**
    * Open a stored version for correction. The row carries the version's id, which

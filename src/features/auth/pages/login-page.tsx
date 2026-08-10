@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Building2, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -104,6 +104,40 @@ export function LoginPage() {
           </div>
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>
+          )}
+        </div>
+
+        {/* Company code — tenant-admin sign-in; owners leave it blank */}
+        <div className="space-y-2">
+          <Label htmlFor="companyCode" className="block text-foreground/90">
+            Company Code
+          </Label>
+          <div className="group relative">
+            <Building2
+              strokeWidth={2.25}
+              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary"
+            />
+            <Input
+              id="companyCode"
+              type="text"
+              autoComplete="organization"
+              autoCorrect="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={50}
+              placeholder="Enter your company code"
+              className={fieldClasses}
+              {...register('companyCode')}
+            />
+          </div>
+          {errors.companyCode ? (
+            <p className="text-xs text-destructive">
+              {errors.companyCode.message}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Required for company users. Account owners can leave this blank.
+            </p>
           )}
         </div>
 

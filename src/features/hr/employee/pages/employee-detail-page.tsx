@@ -20,7 +20,7 @@ import {
   Pencil,
   Phone,
   Plane,
-  ScanFace,
+  // ScanFace, // Registered Faces section is hidden for now.
   ShieldCheck,
   UserRound,
   Users,
@@ -126,7 +126,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
   const assetRows = assets.data ?? []
   const transferRows = transfers.data ?? []
   const leaveRows = leaves.data?.items ?? []
-  const faces = employee.faces
+  // const faces = employee.faces // Registered Faces section is hidden for now.
 
   return (
     <div>
@@ -813,6 +813,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           )}
         </CollapsibleSection>
 
+        {/* Registered Faces — hidden for now.
         <CollapsibleSection
           icon={ScanFace}
           title="Registered Faces"
@@ -830,7 +831,6 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                   className="overflow-hidden rounded-xl border bg-muted/30"
                 >
                   <div className="relative">
-                    {/* The capture order is what an admin refers to a shot by. */}
                     <span className="absolute left-2 top-2 z-10 grid size-6 place-items-center rounded-full bg-foreground/70 text-xs font-semibold text-background">
                       {index + 1}
                     </span>
@@ -849,6 +849,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             </div>
           )}
         </CollapsibleSection>
+        */}
 
         <CollapsibleSection
           icon={CalendarDays}

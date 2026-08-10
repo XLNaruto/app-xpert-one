@@ -61,6 +61,7 @@ type WageGroup =
   | 'pf'
   | 'esic'
   | 'pt'
+  | 'tds'
   | 'lwf'
 
 interface WageColumn {
@@ -116,6 +117,11 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
     label: 'PT',
     tone: 'text-violet-600 dark:text-violet-400',
     hint: 'Professional tax — from the act’s slab, or a fixed amount.',
+  },
+  tds: {
+    label: 'TDS',
+    tone: 'text-rose-600 dark:text-rose-400',
+    hint: 'Tax deducted at source — no slab behind it, so the row carries the rate itself.',
   },
   lwf: {
     label: 'LWF',
@@ -258,6 +264,16 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       group: 'pt',
       width: 94,
       hint: 'Asked only when the type is “Manual”.',
+    },
+
+    /* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */
+    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS act applicable.' },
+    {
+      key: 'tdsPct',
+      label: 'Rate %',
+      group: 'tds',
+      width: 94,
+      hint: 'The rate deducted from gross pay — asked only while the act is on.',
     },
 
     { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
@@ -730,6 +746,17 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         />
       )
 
+    case 'tds':
+      return (
+        <ActSwitch
+          control={control}
+          name={`rows.${index}.tdsActApplicable`}
+          label="TDS act applicable"
+        />
+      )
+    case 'tdsPct':
+      return <TdsPercentCell index={index} control={control} register={register} />
+
     case 'lwf':
       return (
         <ActSwitch
@@ -790,6 +817,7 @@ function ActSwitch({
     | `rows.${number}.pfActApplicable`
     | `rows.${number}.esicActApplicable`
     | `rows.${number}.ptActApplicable`
+    | `rows.${number}.tdsActApplicable`
     | `rows.${number}.lwfActApplicable`
   label: string
 }) {
@@ -1048,6 +1076,23 @@ function ActAmountCell({
       disabled={!asked}
       placeholder={asked ? '0.00' : NO_VALUE}
       {...register(amountName)}
+    />
+  )
+}
+
+/**
+ * The TDS rate. One cell rather than the type-plus-amount pair PT and LWF carry:
+ * there is no slab to defer to, so the row either deducts at its own rate or the
+ * act is off. Mounted while it's off as well, so switching the act back on can't
+ * lose a stored rate.
+ */
+function TdsPercentCell({ index, control, register }: CellProps) {
+  const applicable = useWatch({ control, name: `rows.${index}.tdsActApplicable` })
+  return (
+    <GridAmountInput
+      disabled={!applicable}
+      placeholder={applicable ? '0.00' : NO_VALUE}
+      {...register(`rows.${index}.tdsPercentage`)}
     />
   )
 }

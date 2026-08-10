@@ -80,6 +80,20 @@ export const queryKeys = {
         : ([...queryKeys.department.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
   },
+  /**
+   * The company's shifts — read on the Shift tab of the company screen and, as
+   * a dropdown, on the department screen. `companyId` is always in the key: the
+   * masters screens edit a company other than the session's active one, so the
+   * tenant a page read for is part of what identifies the result set.
+   */
+  shift: {
+    all: ['shift'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.shift.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.shift.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.shift.all, 'detail', id] as const,
+  },
   designation: {
     all: ['designation'] as const,
     /**
@@ -305,6 +319,16 @@ export const queryKeys = {
       params
         ? ([...queryKeys.salary.all, 'register', filters, params] as const)
         : ([...queryKeys.salary.all, 'register', filters] as const),
+    /**
+     * The processed month as the View Salary screen reads it — the same family
+     * as the register, so a discard invalidating `salary.all` refreshes both.
+     * The company, period, department and search term all pick a different
+     * report out, so they're all in the key alongside the page.
+     */
+    report: (filters: Record<string, unknown>, params?: PageParams) =>
+      params
+        ? ([...queryKeys.salary.all, 'report', filters, params] as const)
+        : ([...queryKeys.salary.all, 'report', filters] as const),
   },
   bank: {
     all: ['bank'] as const,
