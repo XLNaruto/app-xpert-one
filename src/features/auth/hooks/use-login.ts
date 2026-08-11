@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { isEmailVerificationRequired } from '../api/auth-api'
 import { useLogin as useLoginMutation } from '../api/use-auth'
 import { loginSchema, type LoginValues } from '../schemas'
 
@@ -63,5 +64,11 @@ export function useLogin() {
     isPending: login.isPending,
     isError: login.isError,
     error: login.error,
+    /**
+     * The credentials were accepted but the address is unverified — the API's
+     * message is guidance ("we sent you a code"), not a failure, so the page
+     * shows it as a notice rather than a red error.
+     */
+    needsEmailVerification: isEmailVerificationRequired(login.error),
   }
 }

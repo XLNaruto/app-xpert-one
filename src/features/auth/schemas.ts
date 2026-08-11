@@ -71,9 +71,25 @@ export const loginResponseSchema = tokenPairSchema.extend({
   user: authUserResponseSchema,
 })
 
+/**
+ * The other `200` a login can answer with: the credentials were right but the
+ * address was never verified, so no token pair is minted — the API mailed an
+ * OTP instead and says so in `message`. Told apart from a real session by the
+ * `status` key, which a successful login never carries.
+ */
+export const loginPendingResponseSchema = z.object({
+  status: z.literal('email_verification_required'),
+  /** OTP lifetime in seconds. */
+  otp_expires_in: z.number().optional(),
+  /** The address the code went to, partly hidden — e.g. `xp****@gmail.com`. */
+  masked_email: z.string().optional(),
+  message: z.string().optional(),
+})
+
 /** `POST /user/auth/refresh` — a rotated token pair, no user object. */
 export const tokenResponseSchema = tokenPairSchema
 
 export type AuthUserResponse = z.infer<typeof authUserResponseSchema>
 export type LoginResponse = z.infer<typeof loginResponseSchema>
+export type LoginPendingResponse = z.infer<typeof loginPendingResponseSchema>
 export type TokenResponse = z.infer<typeof tokenResponseSchema>

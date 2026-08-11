@@ -1,7 +1,7 @@
 import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
-import { getApiErrorMessage } from '@/lib/api-error'
-import { loginResponseSchema } from '../schemas'
+import { ApiError, toApiError } from '@/lib/api-error'
+import { loginPendingResponseSchema, loginResponseSchema } from '../schemas'
 import { toAuthUser } from '../lib/auth-mappers'
 import type { LoginValues } from '../schemas'
 import type { AuthSession } from '../types'
@@ -30,6 +30,18 @@ import type { AuthSession } from '../types'
  * also decides the permission the login is checked against (`web:access`), so a
  * user without panel access gets a 403 rather than a 401.
  */
+/**
+ * `code` on the `ApiError` thrown when the credentials were right but the email
+ * is unverified, so a screen can branch to an OTP step instead of only showing
+ * the message.
+ */
+export const EMAIL_VERIFICATION_REQUIRED = 'EMAIL_VERIFICATION_REQUIRED'
+
+/** Did this sign-in fail only because the address is still unverified? */
+export function isEmailVerificationRequired(error: unknown): boolean {
+  return error instanceof ApiError && error.code === EMAIL_VERIFICATION_REQUIRED
+}
+
 export async function loginRequest({
   email,
   password,
@@ -59,6 +71,19 @@ export async function loginRequest({
       ...(isOwner ? {} : { company_code: code }),
       source: 'WEB',
     })
+    // A login can answer `200` without a session: right credentials, unverified
+    // address. It carries the API's own message, which is what the caller shows
+    // — parsing it as a session would only surface a schema dump instead.
+    const pending = loginPendingResponseSchema.safeParse(raw)
+    if (pending.success) {
+      throw new ApiError(
+        pending.data.message ??
+          `Your email address is not verified yet. We have sent a verification code to ${pending.data.masked_email ?? email}.`,
+        undefined,
+        EMAIL_VERIFICATION_REQUIRED,
+      )
+    }
+
     const data = loginResponseSchema.parse(raw)
     return {
       user: toAuthUser(data.user),
@@ -67,9 +92,7 @@ export async function loginRequest({
       expiresIn: data.expires_in,
     }
   } catch (error) {
-    throw new Error(
-      getApiErrorMessage(error, 'Sign-in failed. Please check your credentials.'),
-    )
+    throw toApiError(error, 'Sign-in failed. Please check your credentials.')
   }
 }
 

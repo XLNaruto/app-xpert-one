@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import { ZodError } from 'zod'
 
 /**
  * The API's error body — e.g.
@@ -48,6 +49,10 @@ export function getApiErrorMessage(
     const data = error.response?.data as ApiErrorBody | undefined
     return data?.message || data?.error || error.message || fallback
   }
+  // A response that didn't match its schema is a developer-facing problem: its
+  // `message` is a JSON dump of every failed path, never something to show a
+  // user, so it degrades to the caller's fallback.
+  if (error instanceof ZodError) return fallback
   if (error instanceof Error) return error.message || fallback
   return fallback
 }

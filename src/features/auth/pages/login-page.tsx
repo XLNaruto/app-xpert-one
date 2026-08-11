@@ -27,6 +27,7 @@ export function LoginPage() {
     isPending,
     isError,
     error,
+    needsEmailVerification,
   } = useLogin()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -53,7 +54,12 @@ export function LoginPage() {
         {isError && (
           <p
             role="alert"
-            className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            className={cn(
+              'rounded-lg border px-3 py-2 text-sm',
+              needsEmailVerification
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-destructive/30 bg-destructive/10 text-destructive',
+            )}
           >
             {error?.message}
           </p>
