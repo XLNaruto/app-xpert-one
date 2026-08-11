@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { DOCUMENT_LABELS, DOCUMENT_SORT } from '../constants'
 import { useDocumentList } from '../hooks/use-document-list'
 import type { Document } from '../types'
@@ -42,6 +43,9 @@ export function DocumentListPage() {
     isDeleting,
   } = useDocumentList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.documents)
+
   const columns = useMemo<ColumnDef<Document>[]>(
     () => [
       {
@@ -58,8 +62,8 @@ export function DocumentListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -103,7 +107,7 @@ export function DocumentListPage() {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -118,10 +122,12 @@ export function DocumentListPage() {
         title="Documents"
         description="Manage your document master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Document
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Document
+            </Button>
+          )
         }
       />
 
@@ -179,10 +185,12 @@ export function DocumentListPage() {
               title="No documents yet"
               description="Create your first document to get started."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Document
-                </Button>
+                canCreate && (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Document
+                  </Button>
+                )
               }
             />
           }

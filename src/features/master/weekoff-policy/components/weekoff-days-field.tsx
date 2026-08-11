@@ -37,18 +37,28 @@ export function WeekoffDaysField({
           Start from a common pattern
         </p>
         <div className="flex flex-wrap gap-2">
-          {WEEKOFF_PRESETS.map((preset, index) => (
-            <Button
-              key={preset.label}
-              type="button"
-              size="sm"
-              variant="outline"
-              title={preset.description}
-              onClick={() => form.applyPreset(index)}
-            >
-              {preset.label}
-            </Button>
-          ))}
+          {WEEKOFF_PRESETS.map((preset, index) => {
+            // The preset the pattern currently *is* — highlighted so the chips
+            // read as the current state, not just three buttons.
+            const active = form.activePreset === index
+            return (
+              <Button
+                key={preset.label}
+                type="button"
+                size="sm"
+                variant="outline"
+                aria-pressed={active}
+                title={preset.description}
+                onClick={() => form.applyPreset(index)}
+                className={cn(
+                  active &&
+                    'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary',
+                )}
+              >
+                {preset.label}
+              </Button>
+            )
+          })}
         </div>
       </div>
 

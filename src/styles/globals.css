@@ -681,6 +681,47 @@
 .sa-datepicker .react-date-picker__inputGroup__input::placeholder {
   color: var(--muted-foreground);
 }
+/* `<MonthPicker display="long">` — the read-only, month-as-a-heading variant.
+
+   The format asks for `MMMM`, and at that point `react-date-picker` swaps the
+   typed month segment for a native `<select>` of month names. That select is a
+   second picker inside a field that already has one: clicking the word opened
+   the OS dropdown while the icon opened the app's panel, two different controls
+   for one value. The segments are made inert here and the wrapper sends a click
+   on them to the calendar instead, so the panel is the only way in.
+
+   `pointer-events` rather than the `disabled` attribute: disabling the segments
+   would grey the text, and this text is the heading of the screen. */
+.sa-datepicker--readonly .react-date-picker__inputGroup {
+  pointer-events: none;
+  cursor: pointer;
+}
+/* And it sits on the page rather than inside a form, so it takes the card
+   surface every other block on that page stands on — a transparent field over
+   the slate page background reads as a gap between two buttons. */
+.sa-datepicker--readonly .react-date-picker__wrapper {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+.sa-datepicker--readonly:not(.react-date-picker--disabled)
+  .react-date-picker__wrapper:hover {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--input));
+}
+.sa-datepicker--readonly .react-date-picker__inputGroup select,
+.sa-datepicker--readonly .react-date-picker__inputGroup input {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--foreground);
+  outline: none;
+}
+.sa-datepicker--readonly .react-date-picker__wrapper {
+  cursor: pointer;
+}
 .sa-datepicker .react-date-picker__button {
   padding: 4px;
 }
@@ -864,6 +905,172 @@
   font-weight: 600;
 }
 
+/* ── Attendance month board ────────────────────────────────────
+   `<AttendanceMonthCalendar>`'s variant. The same react-calendar that draws the
+   18rem date-picker popup, stretched into a full-width month board: a row of
+   weekday labels over a grid of rounded cells, each holding the day's date, its
+   status bar and its punch times rather than just a number.
+
+   Everything here is scoped to `.sa-attendance-calendar` so the pickers keep the
+   compact popup untouched.
+
+   Note the tile *fills* are not painted here — they arrive as Tailwind classes
+   from `DAY_STATUS_TONE`. react-calendar's own stylesheet is imported unlayered,
+   so its `background: none` outranks any layered utility no matter how specific;
+   the tone classes carry `!` for exactly that reason. Which is why no rule below
+   sets `background` on an enabled in-month tile.                               */
+.sa-attendance-calendar.react-calendar {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--card);
+  box-shadow: none;
+  line-height: 1.35;
+}
+.sa-attendance-calendar .react-calendar__month-view__days {
+  padding-top: 0.05rem;
+}
+
+/* Weekday header — plain type on the card, ruled off from the grid. The side
+   padding matches a cell's gutter so a label sits centred over its column. */
+.sa-attendance-calendar .react-calendar__month-view__weekdays {
+  padding: 0 0.1875rem 0.2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+.sa-attendance-calendar .react-calendar__month-view__weekdays__weekday {
+  padding: 0.55rem 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+/* The cells — each its own rounded card rather than a box in a ruled grid. */
+.sa-attendance-calendar .react-calendar__tile {
+  display: flex;
+  flex-direction: column;
+  min-height: 7.75rem;
+  padding: 0.45rem 0.45rem 0.55rem;
+  /* react-calendar writes `flex: 0 0 14.2857%` inline on every tile, but a flex
+     item's `min-width: auto` still lets its content push it past that basis —
+     which is what let a long punch-time line widen its own column, shove the
+     week's last day onto a row of its own and slide the status bars out from
+     under their dates. Pinned to zero, a cell is one seventh and its content
+     truncates inside it. */
+  min-width: 0;
+  /* The gutter is a transparent border rather than a margin or a `gap`: seven
+     cells at 14.2857% already claim the whole row, so any spacing has to come
+     out of a cell's own box. The fill is clipped to the padding box so it stops
+     at the gutter, and the hairline is an outline pulled inward by the width of
+     that border so it traces the fill rather than the gutter — which is also why
+     focus and hover recolour `outline-color` rather than adding a ring. */
+  border: 0.1875rem solid transparent;
+  border-radius: 0.75rem;
+  background-clip: padding-box;
+  outline: 1px solid var(--border);
+  outline-offset: -0.1875rem;
+  font-size: 0.8rem;
+  text-align: left;
+  color: var(--foreground);
+  overflow: hidden;
+}
+
+/* The date, as a chip in the top-right corner.
+
+   Every day of the month carries one, including the days with nothing on them —
+   a chip on some dates and a bare numeral on others reads as a distinction being
+   drawn, and the only distinction here is the status bar below. Today and an off
+   day override the fill (below), because their cells make a neutral one either
+   invisible or illegible; days outside the month drop it, since they are outside
+   the read. */
+.sa-attendance-calendar .react-calendar__tile > abbr {
+  align-self: flex-end;
+  min-width: 1.55rem;
+  height: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
+  /* Square with the corners taken off, not a pill — a round chip reads as a
+     badge, and the status bar under it is the only badge in the cell. */
+  border-radius: 0.35rem;
+  /* Mixed from the ink, not from `--muted`: `--muted` is itself a near-white
+     slate, so a chip mixed out of it lands within a per-cent of the card and
+     disappears on the status washes it has to sit on. */
+  background: color-mix(in oklab, var(--muted-foreground) 18%, var(--card));
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+/* Weekends are `#d10000` out of the box — a red date reads as a status here,
+   and status is the bar's job. */
+.sa-attendance-calendar .react-calendar__month-view__days__day--weekend {
+  color: var(--foreground);
+}
+
+/* Days either side of the month: shown for the grid's shape, faint because the
+   read covers one month and there is nothing to report on them. */
+.sa-attendance-calendar
+  .react-calendar__month-view__days__day--neighboringMonth
+  > abbr {
+  background: transparent;
+  color: color-mix(in oklab, var(--muted-foreground) 55%, transparent);
+  font-weight: 500;
+}
+.sa-attendance-calendar .react-calendar__tile:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* Today. Marked on the date itself rather than around the whole cell — a ring
+   the size of a cell is the loudest thing on the board, and today is context,
+   not the finding. */
+.sa-attendance-calendar .react-calendar__tile--now {
+  color: var(--foreground);
+  box-shadow: none;
+}
+/* Today.
+
+   Ink rather than the sky accent it used to be: every status now owns a hue —
+   sky is On Leave — and a today marked in one of them reads as a seventh status.
+   The page's own foreground belongs to none of them, inverts cleanly in dark
+   mode, and is the darkest thing on the board, which is what today should be.
+
+   No `!important` and no ring: the cell withholds the status tint from today
+   (see `tileClassName`), so there is nothing left here to outrank. */
+.sa-attendance-calendar .react-calendar__tile--now > abbr {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* Hover / keyboard focus.
+
+   The background has to be restated, not just left alone: react-calendar's own
+   unlayered `:hover { background-color: #e6e6e6 }` — themed to `var(--accent)`
+   further up — is what turned a hovered cell into a flat blue box. A washed cell
+   keeps its own fill regardless, since those carry `!important`; this is what an
+   untinted future day gets. */
+.sa-attendance-calendar .react-calendar__tile:enabled:hover,
+.sa-attendance-calendar .react-calendar__tile:enabled:focus-visible {
+  background: color-mix(in oklab, var(--muted) 45%, var(--card));
+  outline-color: color-mix(in oklab, var(--primary) 60%, transparent);
+}
+
+@media (max-width: 640px) {
+  .sa-attendance-calendar .react-calendar__tile {
+    min-height: 6.5rem;
+    padding: 0.3rem 0.35rem 0.4rem;
+  }
+}
+
 /* ── Wage-structure grid row surfaces ──────────────────────────
    Opaque, single-paint backgrounds. The grid pins both its header and its first
    column, and a translucent background on a sticky element has to be re-blended
@@ -1002,4 +1209,92 @@ input[type='number']::-webkit-inner-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* ── Image lightbox ────────────────────────────────────────────────────────
+   The library ships bare square buttons on a flat black sheet. These pull it
+   back to the app's own language: a blurred backdrop, circular glass controls
+   that only assert themselves on hover, and a rounded, shadowed slide so the
+   image reads as a card on the backdrop rather than a hole punched in it. */
+.xl-lightbox {
+  --yarl__color_backdrop: rgba(9, 9, 11, 0.86);
+  --yarl__slide_captions_container_background: transparent;
+  backdrop-filter: blur(12px);
+}
+
+/* Toolbar and navigation share one control shape. */
+.xl-lightbox .yarl__button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  line-height: 0;
+  border-radius: 9999px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  filter: none;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+.xl-lightbox .yarl__button:hover,
+.xl-lightbox .yarl__button:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+.xl-lightbox .yarl__button:active {
+  transform: scale(0.94);
+}
+.xl-lightbox .yarl__button:disabled {
+  opacity: 0.3;
+}
+
+.xl-lightbox .yarl__toolbar {
+  gap: 8px;
+  padding: 16px;
+}
+/* The arrows ARE buttons, not wrappers around one — give them their distance
+   from the edge as margin, never padding, or the icon slides off centre. */
+.xl-lightbox .yarl__navigation_prev,
+.xl-lightbox .yarl__navigation_next {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0 16px;
+}
+
+/* The image as a card: rounded, lifted off the backdrop. */
+.xl-lightbox .yarl__slide_image {
+  border-radius: 14px;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Counter: a pill in the corner, not loose text on the backdrop. */
+.xl-lightbox .xl-lightbox__counter {
+  top: unset;
+  bottom: 16px;
+  left: 16px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+/* The caption sits under the image, clear of it. */
+.xl-lightbox .xl-lightbox__footer {
+  position: absolute;
+  bottom: -56px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
 }

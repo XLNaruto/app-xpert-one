@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { DEPARTMENT_SORT } from '../constants'
 import { useDepartmentList } from '../hooks/use-department-list'
 import type { Department } from '../types'
@@ -37,6 +38,9 @@ export function DepartmentListPage() {
     isDeleting,
   } = useDepartmentList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.departments)
+
   const columns = useMemo<ColumnDef<Department>[]>(
     () => [
       {
@@ -53,8 +57,8 @@ export function DepartmentListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -67,7 +71,9 @@ export function DepartmentListPage() {
           <DataTableColumnHeader column={column} title="Department Name" />
         ),
         cell: ({ row }) => (
-          <span className="font-medium text-foreground">{row.original.departmentName}</span>
+          <span className="font-medium text-foreground">
+            {row.original.departmentName}
+          </span>
         ),
       },
       {
@@ -95,7 +101,7 @@ export function DepartmentListPage() {
       ...auditColumns<Department>({ createdAt: DEPARTMENT_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   // Reading the master was refused — show the 403 screen, not an error line.
@@ -109,10 +115,12 @@ export function DepartmentListPage() {
         title="Department"
         description="Manage your department master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add New Department
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add New Department
+            </Button>
+          )
         }
       />
 
@@ -148,12 +156,14 @@ export function DepartmentListPage() {
                   : 'Create your first department to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add New Department
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add New Department
+                      </Button>
+                    )
               }
             />
           }

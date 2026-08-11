@@ -25,6 +25,34 @@ export const queryKeys = {
     me: () => [...queryKeys.profile.all, 'me'] as const,
   },
   /**
+   * The signed-in user's own role + permission codes (`GET /user/my-role`) —
+   * `features/permissions`. Read once per session and cached forever: it only
+   * changes when the user or the active company does, and the company switch
+   * invalidates everything outside `myCompany`.
+   */
+  permissions: {
+    all: ['permissions'] as const,
+    myRole: () => [...queryKeys.permissions.all, 'my-role'] as const,
+  },
+  /**
+   * Roles — `features/administration/role`. Roles are authored per company, so
+   * the list key carries the tenant it was read for like every other master.
+   *
+   * `assignablePermissions` is the builder catalog: one per account, never
+   * paged, and only changing when the subscription does — the query holds it for
+   * the session.
+   */
+  role: {
+    all: ['role'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.role.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.role.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.role.all, 'detail', id] as const,
+    assignablePermissions: () =>
+      [...queryKeys.role.all, 'assignable-permissions'] as const,
+  },
+  /**
    * The signed-in user's own companies (tenants) + active selection —
    * `features/company`. Kept separate from the `company` master list below so a
    * tenant switch can invalidate everything *except* this key.
@@ -241,8 +269,7 @@ export const queryKeys = {
       params
         ? ([...queryKeys.allowanceDeduction.all, 'list', params] as const)
         : ([...queryKeys.allowanceDeduction.all, 'list'] as const),
-    detail: (id: number) =>
-      [...queryKeys.allowanceDeduction.all, 'detail', id] as const,
+    detail: (id: number) => [...queryKeys.allowanceDeduction.all, 'detail', id] as const,
   },
   documentType: {
     all: ['document-type'] as const,
@@ -369,6 +396,40 @@ export const queryKeys = {
       params
         ? ([...queryKeys.salary.all, 'report', filters, params] as const)
         : ([...queryKeys.salary.all, 'report', filters] as const),
+  },
+  /**
+   * Attendance Management — one company day at a time.
+   *
+   * The date is what picks a read out, so it sits in every key: yesterday's
+   * cards must never be shown under today's heading while the new day loads.
+   * `groups` is the card screen (company tiles + one page of cards, narrowed by
+   * the group-name search); `groupEmployees` is one card opened, keyed by the
+   * level it belongs to as well as the id — a department 4 and a designation 4
+   * are different groups.
+   */
+  attendance: {
+    all: ['attendance'] as const,
+    groups: (date: string, params: PageParams) =>
+      [...queryKeys.attendance.all, 'groups', date, params] as const,
+    groupEmployees: (
+      groupBy: string,
+      groupId: number,
+      date: string,
+      status: string,
+      params: PageParams,
+    ) =>
+      [
+        ...queryKeys.attendance.all,
+        'group-employees',
+        groupBy,
+        groupId,
+        date,
+        status,
+        params,
+      ] as const,
+    /** One employee's month grid, keyed by the month it answers for. */
+    employeeMonth: (employeeId: number, month: string) =>
+      [...queryKeys.attendance.all, 'employee-month', employeeId, month] as const,
   },
   bank: {
     all: ['bank'] as const,

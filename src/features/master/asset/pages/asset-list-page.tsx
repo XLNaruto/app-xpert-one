@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ASSET_SORT } from '../constants'
 import { useAssetList } from '../hooks/use-asset-list'
 import { AssetFormDialog } from '../components/asset-form-dialog'
@@ -38,6 +39,9 @@ export function AssetListPage() {
     isDeleting,
   } = useAssetList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.assets)
+
   const columns = useMemo<ColumnDef<AssetRecord>[]>(
     () => [
       {
@@ -54,8 +58,8 @@ export function AssetListPage() {
         meta: { className: 'w-px whitespace-nowrap w-40 min-w-40 max-w-40' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => openEdit(row.original)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => openEdit(row.original) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -64,7 +68,9 @@ export function AssetListPage() {
         // click travels to `?sort=` untranslated.
         id: ASSET_SORT.assetName,
         accessorKey: 'assetName',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Asset Name" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Asset Name" />
+        ),
         cell: ({ row }) => (
           <span className="font-medium text-foreground">{row.original.assetName}</span>
         ),
@@ -73,7 +79,7 @@ export function AssetListPage() {
       ...auditColumns<AssetRecord>({ createdAt: ASSET_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -82,10 +88,12 @@ export function AssetListPage() {
         title="Assets"
         description="Manage your asset master records."
         actions={
-          <Button onClick={openCreate}>
-            <Plus className="size-4" />
-            Add Asset
-          </Button>
+          canCreate && (
+            <Button onClick={openCreate}>
+              <Plus className="size-4" />
+              Add Asset
+            </Button>
+          )
         }
       />
 
@@ -121,12 +129,14 @@ export function AssetListPage() {
                   : 'Add your first asset to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={openCreate}>
-                    <Plus className="size-4" />
-                    Add Asset
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={openCreate}>
+                        <Plus className="size-4" />
+                        Add Asset
+                      </Button>
+                    )
               }
             />
           }
@@ -142,7 +152,9 @@ export function AssetListPage() {
         icon={Boxes}
         title="Delete asset?"
         description={
-          pendingDelete ? `"${pendingDelete.assetName}" will be permanently removed.` : undefined
+          pendingDelete
+            ? `"${pendingDelete.assetName}" will be permanently removed.`
+            : undefined
         }
         confirmLabel="Delete"
         cancelLabel="Cancel"

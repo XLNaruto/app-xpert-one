@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   ESIC_RATE_SORT,
   ESIC_RATE_VALUE_FIELDS,
@@ -43,6 +44,9 @@ export function EsicRateListPage() {
     isDeleting,
   } = useEsicRateList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.esicRates)
+
   const columns = useMemo<ColumnDef<EsicRate>[]>(
     () => [
       {
@@ -59,8 +63,8 @@ export function EsicRateListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -112,7 +116,7 @@ export function EsicRateListPage() {
       ...auditColumns<EsicRate>({ createdAt: ESIC_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -121,10 +125,12 @@ export function EsicRateListPage() {
         title="ESIC Rate Setting"
         description="Manage Employees' State Insurance rate slabs by effective date."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add ESIC Rate
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add ESIC Rate
+            </Button>
+          )
         }
       />
 
@@ -161,12 +167,14 @@ export function EsicRateListPage() {
                   : 'Add your first ESIC rate slab to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add ESIC Rate
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add ESIC Rate
+                      </Button>
+                    )
               }
             />
           }

@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, PanelLeft, PanelLeftClose, X } from 'lucide-react'
-import { navGroups, type NavItem } from '@/config/navigation'
+import { filterNavByPermission, navGroups, type NavItem } from '@/config/navigation'
+import { useCan } from '@/features/permissions'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
@@ -54,6 +55,10 @@ export function Sidebar() {
   const mobileOpen = useUiStore((s) => s.sidebarMobileOpen)
   const setMobileSidebar = useUiStore((s) => s.setMobileSidebar)
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { can, isLoading: roleLoading } = useCan()
+
+  // Only the menu rows this user's role reaches — `GET /user/my-role`.
+  const visibleGroups = useMemo(() => filterNavByPermission(navGroups, can), [can])
 
   // Rail-collapse only applies on desktop; the mobile drawer is always full width.
   const collapsed = isDesktop && collapsedRaw
@@ -138,49 +143,75 @@ export function Sidebar() {
         {/* `overflow-x-hidden` hides the rows that are still wider than the rail
             mid-transition instead of showing a horizontal scrollbar. */}
         <nav className="sidebar-scroll flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2 py-2">
-          {navGroups.map((group) => (
-            <div
-              key={group.title}
-              className={cn(
-                'space-y-0.5',
-                // Expanded rows are laid out at their final width (18rem panel
-                // minus the nav's px-2) from the first frame, so labels are
-                // revealed by the widening panel instead of re-wrapping from
-                // three lines down to one as it animates.
-                !collapsed && 'w-68',
-              )}
-            >
-              <p
+          {/* Until the role answers we can't tell which rows this user has, and
+              guessing either way flashes the wrong menu — placeholders instead. */}
+          {roleLoading && <NavSkeleton collapsed={collapsed} />}
+          {!roleLoading &&
+            visibleGroups.map((group) => (
+              <div
+                key={group.title}
                 className={cn(
-                  'px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40',
-                  collapsed && 'hidden',
+                  'space-y-0.5',
+                  // Expanded rows are laid out at their final width (18rem panel
+                  // minus the nav's px-2) from the first frame, so labels are
+                  // revealed by the widening panel instead of re-wrapping from
+                  // three lines down to one as it animates.
+                  !collapsed && 'w-68',
                 )}
               >
-                {group.title}
-              </p>
-              {group.items.map((item) =>
-                item.children?.length ? (
-                  <NavParent
-                    key={item.label}
-                    item={item}
-                    collapsed={collapsed}
-                    pathname={pathname}
-                    onNavigate={closeMobile}
-                  />
-                ) : (
-                  <NavLeaf
-                    key={item.to}
-                    item={item}
-                    collapsed={collapsed}
-                    onNavigate={closeMobile}
-                  />
-                ),
-              )}
-            </div>
-          ))}
+                <p
+                  className={cn(
+                    'px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40',
+                    collapsed && 'hidden',
+                  )}
+                >
+                  {group.title}
+                </p>
+                {group.items.map((item) =>
+                  item.children?.length ? (
+                    <NavParent
+                      key={item.label}
+                      item={item}
+                      collapsed={collapsed}
+                      pathname={pathname}
+                      onNavigate={closeMobile}
+                    />
+                  ) : (
+                    <NavLeaf
+                      key={item.to}
+                      item={item}
+                      collapsed={collapsed}
+                      onNavigate={closeMobile}
+                    />
+                  ),
+                )}
+              </div>
+            ))}
         </nav>
       </aside>
     </>
+  )
+}
+
+/** Placeholder rows shown while `GET /user/my-role` decides what this user sees. */
+function NavSkeleton({ collapsed }: { collapsed: boolean }) {
+  return (
+    <div className={cn('space-y-0.5', !collapsed && 'w-68')} aria-hidden>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2',
+            collapsed && 'justify-center px-0',
+          )}
+        >
+          <span className="size-4.5 shrink-0 animate-pulse rounded bg-sidebar-foreground/10" />
+          {!collapsed && (
+            <span className="h-3.5 flex-1 animate-pulse rounded bg-sidebar-foreground/10" />
+          )}
+        </div>
+      ))}
+    </div>
   )
 }
 

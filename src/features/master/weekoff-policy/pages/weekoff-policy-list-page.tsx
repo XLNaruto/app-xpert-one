@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { WEEKOFF_POLICY_SORT } from '../constants'
 import { ruleLabel } from '../lib/weekoff-policy-mappers'
 import { useWeekoffPolicyList } from '../hooks/use-weekoff-policy-list'
@@ -29,6 +30,11 @@ import type { WeekoffPolicy } from '../types'
  */
 export function WeekoffPolicyListPage() {
   const list = useWeekoffPolicyList()
+
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(
+    PERMISSIONS.weekoffPolicies,
+  )
 
   const columns = useMemo<ColumnDef<WeekoffPolicy>[]>(
     () => [
@@ -64,8 +70,8 @@ export function WeekoffPolicyListPage() {
               <TooltipContent>Set as default</TooltipContent>
             </Tooltip>
             <TableRowActions
-              onEdit={() => list.goToEdit(row.original.id)}
-              onDelete={() => list.setPendingDelete(row.original)}
+              onEdit={canUpdate ? () => list.goToEdit(row.original.id) : undefined}
+              onDelete={canDelete ? () => list.setPendingDelete(row.original) : undefined}
             />
           </div>
         ),
@@ -119,7 +125,7 @@ export function WeekoffPolicyListPage() {
       ...auditColumns<WeekoffPolicy>({ createdAt: WEEKOFF_POLICY_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.offset],
+    [list.offset, canUpdate, canDelete],
   )
 
   if (list.isForbidden) return <Forbidden description={list.forbiddenMessage} />
@@ -130,10 +136,12 @@ export function WeekoffPolicyListPage() {
         title="Week-Off Policy"
         description="The days that don't count as working days — per week, or per occurrence in the month."
         actions={
-          <Button onClick={list.goToCreate}>
-            <Plus className="size-4" />
-            Add Week-Off Policy
-          </Button>
+          canCreate && (
+            <Button onClick={list.goToCreate}>
+              <Plus className="size-4" />
+              Add Week-Off Policy
+            </Button>
+          )
         }
       />
 
@@ -171,12 +179,14 @@ export function WeekoffPolicyListPage() {
                   : "Without one, every shift falls back to the platform's Sunday-only pattern."
               }
               action={
-                list.search ? undefined : (
-                  <Button onClick={list.goToCreate}>
-                    <Plus className="size-4" />
-                    Add Week-Off Policy
-                  </Button>
-                )
+                list.search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={list.goToCreate}>
+                        <Plus className="size-4" />
+                        Add Week-Off Policy
+                      </Button>
+                    )
               }
             />
           }

@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { DESIGNATION_SORT } from '../constants'
 import { useDesignationList } from '../hooks/use-designation-list'
 import type { Designation } from '../types'
@@ -41,6 +42,9 @@ export function DesignationListPage() {
     isDeleting,
   } = useDesignationList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.designations)
+
   const columns = useMemo<ColumnDef<Designation>[]>(
     () => [
       {
@@ -57,8 +61,8 @@ export function DesignationListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -80,7 +84,7 @@ export function DesignationListPage() {
       ...auditColumns<Designation>({ createdAt: DESIGNATION_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -89,10 +93,12 @@ export function DesignationListPage() {
         title="Designation"
         description="Manage your designation master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add New Designation
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add New Designation
+            </Button>
+          )
         }
       />
 
@@ -124,10 +130,12 @@ export function DesignationListPage() {
               title="No designations yet"
               description="Create your first designation to get started."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add New Designation
-                </Button>
+                canCreate && (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add New Designation
+                  </Button>
+                )
               }
             />
           }

@@ -25,6 +25,37 @@ export const endpoints = {
   ME: {
     GET: '/user/me',
     COMPANIES: '/user/my/companies',
+    /**
+     * The caller's own role + everything the front end needs to draw itself:
+     * the flat `permission_codes` every route policy checks and the same set
+     * rendered as a menu tree. The only role route that needs no permission.
+     */
+    MY_ROLE: '/user/my-role',
+  },
+  /**
+   * Roles — what a web-panel user may do, authored per company.
+   *
+   * `ASSIGNABLE_PERMISSIONS` is the builder's checkbox matrix: the web panel's
+   * catalog narrowed to what the account's plan unlocked and minus `roles:*`,
+   * which is never delegatable. An action absent from it can never be saved, so
+   * the screen renders exactly what comes back rather than the full catalog.
+   *
+   * `permission_codes` on POST / PATCH is the COMPLETE ticked set and REPLACES
+   * what's stored — unticking a box means omitting its code, never sending a
+   * diff. Each action carries `requires`, the codes it doesn't work without, and
+   * the server does not repair a selection: an incomplete one answers 400 naming
+   * what's missing, so the builder maintains that closure itself.
+   *
+   * A DELETE is refused with 409 while a live user still holds the role.
+   */
+  ROLES: {
+    LIST: '/user/roles',
+    POST: '/user/roles',
+    GET: (id: number) => `/user/roles/${id}`,
+    PATCH: (id: number) => `/user/roles/${id}`,
+    DELETE: (id: number) => `/user/roles/${id}`,
+    ASSIGNABLE_PERMISSIONS: '/user/roles/assignable-permissions',
+    ASSIGN: '/user/roles/assign',
   },
   /**
    * The company master — every company under the caller's account. Unlike the
@@ -508,6 +539,37 @@ export const endpoints = {
      * down is the register that is on screen.
      */
     IMPORT_TEMPLATE: '/user/salary/exports/import-template',
+  },
+  /**
+   * Attendance Management — the company's day, read top-down.
+   *
+   * `GROUPS` is the landing screen in one call: the three company tiles plus one
+   * page of cards. Which level the cards sit at is the *server's* answer
+   * (`group_by`: `department` when the company has departments, `designation`
+   * when it has none), never a parameter — the ids in `items` belong to that
+   * level and go back to `GROUP_EMPLOYEES` under the matching id.
+   *
+   * `GROUP_EMPLOYEES` opens one card: the same three tiles for that group, and
+   * the people behind them. Exactly one of `department_id` / `designation_id`
+   * goes up, matching the `group_by` the cards answered with — both, neither or
+   * the wrong one is a 400/404 rather than a quietly-preferred reading.
+   *
+   * Omit `date` for the day the *server* is in: the business day is bucketed in
+   * the server's attendance timezone, so the client can't compute it. The
+   * response echoes both the `date` it reported on and the server's `today`.
+   */
+  ATTENDANCE: {
+    GROUPS: '/user/attendance/groups',
+    GROUP_EMPLOYEES: '/user/attendance/groups/employees',
+    /**
+     * One employee's month grid — an entry for EVERY day of the month, each
+     * carrying the rollup, the punches that produced it and the coordinates they
+     * reported. Addressed by query (`employee_id`, `year`, `month`) rather than
+     * by path, which is why it can back a screen that holds the employee as a
+     * filter. `company_id` is asserted, not filtered: an employee outside it is
+     * a 404 rather than an empty month.
+     */
+    EMPLOYEE_DETAIL: '/user/attendance/employee-detail',
   },
   /**
    * Presigned PUT handshakes. Each answers `{ upload_url, key }`: PUT the file

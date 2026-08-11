@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { LEAVE_TYPE_SORT, PAY_TYPE_LABELS } from '../constants'
 import { useLeaveTypeList } from '../hooks/use-leave-type-list'
 import type { LeaveType } from '../types'
@@ -34,6 +35,9 @@ export function LeaveTypeListPage() {
     isDeleting,
   } = useLeaveTypeList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.leaveTypes)
+
   const columns = useMemo<ColumnDef<LeaveType>[]>(
     () => [
       {
@@ -50,8 +54,8 @@ export function LeaveTypeListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -88,7 +92,7 @@ export function LeaveTypeListPage() {
       ...auditColumns<LeaveType>({ createdAt: LEAVE_TYPE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -97,10 +101,12 @@ export function LeaveTypeListPage() {
         title="Leave Types"
         description="Manage your leave type master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Leave Type
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Leave Type
+            </Button>
+          )
         }
       />
 
@@ -136,12 +142,14 @@ export function LeaveTypeListPage() {
                   : 'Create your first leave type to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add Leave Type
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add Leave Type
+                      </Button>
+                    )
               }
             />
           }

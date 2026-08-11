@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
 import { HOLIDAY_LABELS, HOLIDAY_SORT } from '../constants'
 import { useHolidayList } from '../hooks/use-holiday-list'
@@ -35,6 +36,9 @@ export function HolidayListPage() {
     isDeleting,
   } = useHolidayList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.holidays)
+
   const columns = useMemo<ColumnDef<Holiday>[]>(
     () => [
       {
@@ -51,8 +55,8 @@ export function HolidayListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -90,7 +94,7 @@ export function HolidayListPage() {
       ...auditColumns<Holiday>({ createdAt: HOLIDAY_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -99,10 +103,12 @@ export function HolidayListPage() {
         title="Holidays"
         description="Manage your holiday master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Holiday
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Holiday
+            </Button>
+          )
         }
       />
 
@@ -138,12 +144,14 @@ export function HolidayListPage() {
                   : 'Create your first holiday to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add Holiday
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add Holiday
+                      </Button>
+                    )
               }
             />
           }

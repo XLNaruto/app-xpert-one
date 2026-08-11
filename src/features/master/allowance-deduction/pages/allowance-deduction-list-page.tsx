@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   ALLOWANCE_DEDUCTION_LABELS,
   ALLOWANCE_DEDUCTION_SORT,
@@ -38,6 +39,9 @@ export function AllowanceDeductionListPage() {
     isDeleting,
   } = useAllowanceDeductionList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.payComponents)
+
   const columns = useMemo<ColumnDef<AllowanceDeduction>[]>(
     () => [
       {
@@ -54,8 +58,8 @@ export function AllowanceDeductionListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -100,7 +104,7 @@ export function AllowanceDeductionListPage() {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -109,10 +113,12 @@ export function AllowanceDeductionListPage() {
         title="Allowance & Deduction"
         description="Manage your allowance and deduction master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Allowance / Deduction
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Allowance / Deduction
+            </Button>
+          )
         }
       />
 
@@ -148,12 +154,14 @@ export function AllowanceDeductionListPage() {
                   : 'Create your first allowance or deduction to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add Allowance / Deduction
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add Allowance / Deduction
+                      </Button>
+                    )
               }
             />
           }

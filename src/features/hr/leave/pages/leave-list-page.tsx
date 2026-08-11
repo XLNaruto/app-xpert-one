@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { cn, formatDate } from '@/lib/utils'
 import { LEAVE_SORT, LEAVE_STATUS_FILTER_OPTIONS } from '../constants'
 import { useLeaveList } from '../hooks/use-leave-list'
@@ -37,6 +38,9 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
 export function LeaveListPage() {
   const leave = useLeaveList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.leaves)
+
   const columns = useMemo<ColumnDef<Leave>[]>(
     () => [
       {
@@ -62,7 +66,7 @@ export function LeaveListPage() {
               rejected the decision is final — the API answers a second one with a
               400 — so the buttons go rather than sit there greyed out.
             */}
-            {row.original.status === 'PENDING' && (
+            {canUpdate && row.original.status === 'PENDING' && (
               <>
                 <DecisionButton
                   label="Approve"
@@ -79,8 +83,10 @@ export function LeaveListPage() {
               </>
             )}
             <TableRowActions
-              onEdit={() => leave.goToEdit(row.original.id)}
-              onDelete={() => leave.setPendingDelete(row.original)}
+              onEdit={canUpdate ? () => leave.goToEdit(row.original.id) : undefined}
+              onDelete={
+                canDelete ? () => leave.setPendingDelete(row.original) : undefined
+              }
             />
           </div>
         ),
@@ -184,7 +190,7 @@ export function LeaveListPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [leave.offset],
+    [leave.offset, canUpdate, canDelete],
   )
 
   if (leave.isForbidden) return <Forbidden description={leave.forbiddenMessage} />
@@ -204,10 +210,12 @@ export function LeaveListPage() {
               options={LEAVE_STATUS_FILTER_OPTIONS}
               placeholder="All statuses"
             />
-            <Button onClick={leave.goToCreate}>
-              <Plus className="size-4" />
-              Add Leave
-            </Button>
+            {canCreate && (
+              <Button onClick={leave.goToCreate}>
+                <Plus className="size-4" />
+                Add Leave
+              </Button>
+            )}
           </div>
         }
       />
@@ -246,12 +254,14 @@ export function LeaveListPage() {
                   : 'Record a leave against an employee to get started.'
               }
               action={
-                leave.search ? undefined : (
-                  <Button onClick={leave.goToCreate}>
-                    <Plus className="size-4" />
-                    Add Leave
-                  </Button>
-                )
+                leave.search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={leave.goToCreate}>
+                        <Plus className="size-4" />
+                        Add Leave
+                      </Button>
+                    )
               }
             />
           }

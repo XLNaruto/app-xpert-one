@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
 import { RowActionsMenu } from '@/components/common/row-actions-menu'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useCan } from '@/features/permissions'
 import { formatAmount } from '@/lib/currency'
 import { cn, formatDate } from '@/lib/utils'
 import {
@@ -45,30 +46,41 @@ import type { SalaryViewRow } from '../types'
 export function SalaryViewListPage() {
   const view = useSalaryViewList()
 
+  // Reading the month back is this screen's own permission; discarding a salary
+  // undoes what Calculate Salary committed, so the selection column, the row's
+  // Delete and the toolbar's bulk Delete all hang off that screen's delete code.
+  const { can } = useCan()
+  const canDiscard = can(`${PERMISSIONS.calculateSalary}:delete`)
+
   const columns = useMemo<ColumnDef<SalaryViewRow>[]>(
     () => [
-      {
-        id: 'select',
-        enableSorting: false,
-        meta: { className: 'w-px whitespace-nowrap' },
-        header: () => (
-          <Checkbox
-            checked={view.allSelected}
-            onChange={view.toggleAll}
-            disabled={view.selectableCount === 0}
-            aria-label="Select every discardable salary on this page"
-          />
-        ),
-        cell: ({ row }) =>
-          /* A paid salary can't be discarded, so it isn't selectable. */
-          row.original.isPaid ? null : (
-            <Checkbox
-              checked={view.selected.has(row.original.salaryId)}
-              onChange={() => view.toggleRow(row.original.salaryId)}
-              aria-label={`Select ${row.original.employeeName}`}
-            />
-          ),
-      },
+      // Selection exists only to discard, so it goes with the permission.
+      ...(canDiscard
+        ? [
+            {
+              id: 'select',
+              enableSorting: false,
+              meta: { className: 'w-px whitespace-nowrap' },
+              header: () => (
+                <Checkbox
+                  checked={view.allSelected}
+                  onChange={view.toggleAll}
+                  disabled={view.selectableCount === 0}
+                  aria-label="Select every discardable salary on this page"
+                />
+              ),
+              cell: ({ row }) =>
+                /* A paid salary can't be discarded, so it isn't selectable. */
+                row.original.isPaid ? null : (
+                  <Checkbox
+                    checked={view.selected.has(row.original.salaryId)}
+                    onChange={() => view.toggleRow(row.original.salaryId)}
+                    aria-label={`Select ${row.original.employeeName}`}
+                  />
+                ),
+            } satisfies ColumnDef<SalaryViewRow>,
+          ]
+        : []),
       {
         id: 'serial',
         header: 'Sr No.',
@@ -89,16 +101,20 @@ export function SalaryViewListPage() {
           <RowActionsMenu
             actions={[
               { label: 'View', icon: Eye, onSelect: () => view.goToDetail(row.original) },
-              {
-                label: 'Delete',
-                icon: Trash2,
-                destructive: true,
-                /* Runs the toolbar's discard against this row alone — one
-                   confirmation and one request, not a second delete flow. */
-                onSelect: () => view.askDiscardRow(row.original),
-                /* A paid salary is frozen: the API refuses to discard it. */
-                disabled: row.original.isPaid,
-              },
+              ...(canDiscard
+                ? [
+                    {
+                      label: 'Delete',
+                      icon: Trash2,
+                      destructive: true,
+                      /* Runs the toolbar's discard against this row alone — one
+                         confirmation and one request, not a second delete flow. */
+                      onSelect: () => view.askDiscardRow(row.original),
+                      /* A paid salary is frozen: the API refuses to discard it. */
+                      disabled: row.original.isPaid,
+                    },
+                  ]
+                : []),
             ]}
           />
         ),
@@ -205,7 +221,7 @@ export function SalaryViewListPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [view.offset, view.selected, view.allSelected, view.selectableCount],
+    [view.offset, view.selected, view.allSelected, view.selectableCount, canDiscard],
   )
 
   if (view.isForbidden) return <Forbidden description={view.forbiddenMessage} />
@@ -221,7 +237,8 @@ export function SalaryViewListPage() {
       departmentOptions={view.departmentChoices}
       departmentsLoading={view.departmentsLoading}
       onDepartmentChange={view.changeDepartment}
-      selectedCount={view.selectedCount}
+      // Without the delete permission there is no selection to act on.
+      selectedCount={canDiscard ? view.selectedCount : 0}
       onDiscard={() => view.setDiscardOpen(true)}
       isDiscarding={view.isDiscarding}
     />
@@ -303,7 +320,12 @@ export function SalaryViewListPage() {
         <div className="w-full space-y-4">
           {toolbar}
           <div className="rounded-xl border border-border/50 bg-card shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]">
-            <div className={cn('overflow-hidden', view.rows.length ? 'rounded-t-xl' : 'rounded-xl')}>
+            <div
+              className={cn(
+                'overflow-hidden',
+                view.rows.length ? 'rounded-t-xl' : 'rounded-xl',
+              )}
+            >
               {view.isLoading ? (
                 <p className="px-4 py-16 text-center text-sm text-muted-foreground">
                   Loading the processed salaries…

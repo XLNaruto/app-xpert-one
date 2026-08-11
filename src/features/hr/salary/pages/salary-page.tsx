@@ -1,5 +1,6 @@
 import { IndianRupee, RotateCcw, Save, Trash2, Upload } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
+import { PERMISSIONS, useCan } from '@/features/permissions'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,16 @@ import { SalaryPager } from '../components/salary-pager'
 export function SalaryPage() {
   const form = useSalaryForm()
 
+  // Processing a month is a create/update on this screen; discarding one is its
+  // delete, and the sheet route has its own `import` code.
+  const { can, canSome } = useCan()
+  const canProcess = canSome(
+    `${PERMISSIONS.calculateSalary}:create`,
+    `${PERMISSIONS.calculateSalary}:update`,
+  )
+  const canDiscard = can(`${PERMISSIONS.calculateSalary}:delete`)
+  const canImport = can(`${PERMISSIONS.calculateSalary}:import`)
+
   const selectedCount = form.selected.size
 
   return (
@@ -64,7 +75,7 @@ export function SalaryPage() {
               Save rather than in a row menu — it is done to a selection, like the
               save is.
             */}
-            {form.status === 'complete' && (
+            {canDiscard && form.status === 'complete' && (
               <Button
                 type="button"
                 variant="outline"
@@ -79,38 +90,42 @@ export function SalaryPage() {
                   : `Discard${form.discardCount ? ` (${form.discardCount})` : ''}`}
               </Button>
             )}
-            <Button
-              type="button"
-              size="sm"
-              onClick={form.askSave}
-              disabled={!form.ready || form.isSaving || form.saveCount === 0}
-              title={
-                selectedCount > 0
-                  ? `Process the ${selectedCount} selected ${selectedCount === 1 ? 'row' : 'rows'}`
-                  : 'Process every row on this page'
-              }
-            >
-              <Save className="size-4" />
-              {form.isSaving
-                ? 'Saving…'
-                : `Save Salary${form.saveCount ? ` (${form.saveCount})` : ''}`}
-            </Button>
+            {canProcess && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={form.askSave}
+                disabled={!form.ready || form.isSaving || form.saveCount === 0}
+                title={
+                  selectedCount > 0
+                    ? `Process the ${selectedCount} selected ${selectedCount === 1 ? 'row' : 'rows'}`
+                    : 'Process every row on this page'
+                }
+              >
+                <Save className="size-4" />
+                {form.isSaving
+                  ? 'Saving…'
+                  : `Save Salary${form.saveCount ? ` (${form.saveCount})` : ''}`}
+              </Button>
+            )}
             {/*
               The other way to process a month: a filled-in sheet instead of the
               grid. It sits after Save because it does the same thing — it is the
               bulk route to it, not a different screen.
             */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => form.setImportOpen(true)}
-              disabled={form.isImporting}
-              title="Import a month from a filled-in salary sheet"
-            >
-              <Upload className="size-4" />
-              Import
-            </Button>
+            {canImport && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => form.setImportOpen(true)}
+                disabled={form.isImporting}
+                title="Import a month from a filled-in salary sheet"
+              >
+                <Upload className="size-4" />
+                Import
+              </Button>
+            )}
           </>
         }
       />

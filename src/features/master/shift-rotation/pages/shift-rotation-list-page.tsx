@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { SHIFT_ROTATION_SORT } from '../constants'
 import { useShiftRotationList } from '../hooks/use-shift-rotation-list'
 import type { ShiftRotation } from '../types'
@@ -22,6 +23,11 @@ import type { ShiftRotation } from '../types'
  */
 export function ShiftRotationListPage() {
   const list = useShiftRotationList()
+
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(
+    PERMISSIONS.shiftRotations,
+  )
 
   const columns = useMemo<ColumnDef<ShiftRotation>[]>(() => {
     /** `shift_id` → its name, for the cycle chips. */
@@ -46,8 +52,8 @@ export function ShiftRotationListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => list.goToEdit(row.original.id)}
-            onDelete={() => list.setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => list.goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => list.setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -108,7 +114,7 @@ export function ShiftRotationListPage() {
       ...auditColumns<ShiftRotation>({ createdAt: SHIFT_ROTATION_SORT.createdAt }),
     ]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list.offset, list.shifts])
+  }, [list.offset, list.shifts, canUpdate, canDelete])
 
   if (list.isForbidden) return <Forbidden description={list.forbiddenMessage} />
 
@@ -118,10 +124,12 @@ export function ShiftRotationListPage() {
         title="Shift Rotation"
         description="A named ring of shifts an employee walks a week at a time — nights one week, mornings the next."
         actions={
-          <Button onClick={list.goToCreate}>
-            <Plus className="size-4" />
-            Add Shift Rotation
-          </Button>
+          canCreate && (
+            <Button onClick={list.goToCreate}>
+              <Plus className="size-4" />
+              Add Shift Rotation
+            </Button>
+          )
         }
       />
 
@@ -159,12 +167,14 @@ export function ShiftRotationListPage() {
                   : 'Build a cycle from the company’s shifts, then assign it to the employees who work it.'
               }
               action={
-                list.search ? undefined : (
-                  <Button onClick={list.goToCreate}>
-                    <Plus className="size-4" />
-                    Add Shift Rotation
-                  </Button>
-                )
+                list.search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={list.goToCreate}>
+                        <Plus className="size-4" />
+                        Add Shift Rotation
+                      </Button>
+                    )
               }
             />
           }

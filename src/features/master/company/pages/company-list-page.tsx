@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { COMPANY_SORT } from '../constants'
 import { CompanyLogo } from '../components/company-logo'
 import { useCompanyList } from '../hooks/use-company-list'
@@ -39,6 +40,11 @@ export function CompanyListPage() {
     isDeleting,
   } = useCompanyList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canView, canDelete } = useResourceAccess(
+    PERMISSIONS.companies,
+  )
+
   const columns = useMemo<ColumnDef<Company>[]>(
     () => [
       {
@@ -55,9 +61,9 @@ export function CompanyListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onView={() => goToDetail(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onView={canView ? () => goToDetail(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -101,7 +107,9 @@ export function CompanyListPage() {
       {
         id: COMPANY_SORT.city,
         accessorKey: 'city',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Location" />
+        ),
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const parts = [row.original.city, row.original.stateName].filter(
@@ -121,7 +129,7 @@ export function CompanyListPage() {
       ...auditColumns<Company>({ createdAt: COMPANY_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canView, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -136,10 +144,12 @@ export function CompanyListPage() {
         title="Company"
         description="Manage your company master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add New Company
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add New Company
+            </Button>
+          )
         }
       />
 
@@ -171,10 +181,12 @@ export function CompanyListPage() {
               title="No companies yet"
               description="Create your first company to get started."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add New Company
-                </Button>
+                canCreate && (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add New Company
+                  </Button>
+                )
               }
             />
           }

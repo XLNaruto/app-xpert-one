@@ -99,6 +99,39 @@
  * Code: `features/company/api/company-api.ts` → `fetchMyCompanies`
  *
  * ───────────────────────────────────────────────────────────────────────────
+ * ME.MY_ROLE — GET /user/my-role                            (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * ←  {
+ *      "user_id": 7, "role_id": 3 | null, "role_name": "HR Manager",
+ *      "is_owner": false,
+ *      "permission_codes": [ "web:access", "employees:read", "employees:create" ],
+ *      "modules": [ {                       // the same set as a menu tree
+ *        "key": "hr", "label": "Human Resource",
+ *        "panel": "user", "panel_label": "Web Panel", "icon": "Users",
+ *        "permissions": [ "employees:read", … ],   // everything at/below the node
+ *        "granted": false,                         // true only if ALL are held
+ *        "actions": [ { "permission": "employees:read", "label": "View",
+ *                       "icon": "Eye", "granted": true } ],
+ *        "children": [ … ]                         // same shape, any depth
+ *      } ],
+ *      "access_level": "GLOBAL" | "COMPANY",
+ *      "company_ids": [ 5 ],                // empty on GLOBAL → every company
+ *      "talk_enabled": false, "talk_access": [ { "company_id": 5,
+ *                                                "department_id": null } ],
+ *      "access": { "web": true, "app": false, "talk": false, "attendance": true }
+ *    }
+ * Notes: `permission_codes` is the EXACT set every route policy checks — the
+ * role's list plus the default-granted codes that have no checkbox (for an
+ * owner, the subscription's plan permissions narrowed to the web panel). A
+ * screen missing from it answers 403, which is why the client uses it to hide
+ * the menu entry and block the route up front. The answer follows the token's
+ * login source: a WEB token gets the web panel, an APP token only the
+ * Supervisor app's two screens. Read once per session and per company switch.
+ * Code: `features/permissions/api/permissions-api.ts` → `fetchMyRole`,
+ *       `features/permissions/api/use-permissions.ts`,
+ *       `features/permissions/lib/route-guard.ts`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
  * PF_RATES — /user/pf-rates                                 (bearer)
  * Master → Statutory Setup → PF Rate Setting. Slabs are versioned by
  * `effective_date`; a new row supersedes the previous one from that date.
@@ -159,6 +192,94 @@
  * `created_at` is the only audit field, so the Updated column reads as a dash.
  * Code: `features/master/esic-rate/api/esic-rate-api.ts`
  * Schema: `esicRateResponseSchema`, `esicRatesResponseSchema`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ATTENDANCE — the company's day, read top-down
+ * ───────────────────────────────────────────────────────────────────────────
+ * GET /user/attendance/groups
+ *   ?company_id=5 &date=2026-08-11 &search=rmc &limit=12 &offset=0
+ * ←  { "date": "2026-08-11", "today": "2026-08-11",
+ *      "group_by": "department" | "designation",
+ *      "totals": { "total": 35242, "present": 0, "absent": 35242,
+ *                  "attendance_rate": 0 },
+ *      "items": [ { "id": 4, "name": "RMC WARD NO 17, RAJKOT", "code": null,
+ *                   "total": 72, "present": 0, "absent": 72,
+ *                   "attendance_rate": 0 } ],
+ *      "total": 41 }
+ * Notes: `group_by` is the SERVER's answer, never a parameter — a company with
+ * departments is carded by department, one with none by designation, and the
+ * ids in `items` belong to THAT level. Omit `date` for the day the server is
+ * in: the business day is bucketed in its attendance timezone, so a client that
+ * computed "today" would ask for the wrong day either side of midnight; the
+ * response echoes both the day reported on and the server's own. `search`
+ * matches the GROUP name and a department code — never an employee — and
+ * narrows `items`/`total` only: `totals` is the COMPANY's day and must not move
+ * while somebody types. The cards therefore sum to at most `totals.total`, and
+ * the gap is exactly the employees with no posting at that level. `absent`
+ * means DID NOT PUNCH and nothing more — leave, holidays and weekly offs are
+ * three registers this read does not consult.
+ *
+ * GET /user/attendance/groups/employees
+ *   ?company_id=5 &department_id=4 &date=… &status=absent &term=kaur
+ *   &limit=20 &offset=0
+ * ←  { "date": …, "today": …, "group_by": …,
+ *      "group": <same shape as an `items` card>,
+ *      "totals": { … },
+ *      "items": [ { "employee_id": 91, "prefix": "Mr.", "name": "Ajay Hans",
+ *                   "employee_full_name": "Mr. Ajay Hans", "code": "0063687",
+ *                   "photo": "employees/…jpg", "status": "present" | "absent",
+ *                   "attendance_id": 12 | null, "day_status": "leave" | null,
+ *                   "check_in": "09:04", "check_out": "", "total_hour": "",
+ *                   "check_in_at": … , "check_out_at": … } ],
+ *      "total": 407 }
+ * Notes: send EXACTLY ONE of `department_id` / `designation_id`, matching the
+ * `group_by` the card list answered with — both, neither or the wrong one is a
+ * 400/404. `company_id` is checked, not filtered: a neighbouring company's group
+ * is a 404, never an empty list a client would render as "everyone absent".
+ * `status` narrows the LIST only — `total` counts that filtered side while
+ * `totals`/`group` always cover the whole group's day. Branch each row on
+ * `status`: an absent row carries `""` for the three time fields, meaning
+ * nothing on record. `total_hour` is the stored rollup, so it counts CLOSED
+ * sessions only and reads low while somebody is still checked in. `photo` is an
+ * object KEY, not a url.
+ *
+ * GET /user/attendance/employee-detail
+ *   ?company_id=5 &employee_id=91 &year=2026 &month=8 [&department_id=4]
+ * ←  { "data": { "month": "2026-08", "employee_id": 91, "today": …,
+ *                "weekly_off": "Sunday", "geo_fence": [ … ] | null,
+ *                "list": [ { "shift_date": "2026-08-03",
+ *                            "status": "present" | "half_day" | "absent" |
+ *                                      "leave" | "holiday" | "weekly_off" |
+ *                                      "future",
+ *                            "check_in": "09:04:11", "check_out": "",
+ *                            "total_hour": "", "total_time": { "display": … },
+ *                            "weekly_off": false, "holiday_name": null,
+ *                            "leave_type": null,
+ *                            "log": [ { "id": 7, "event_type": "check_in",
+ *                                       "time": "09:04", "captured_image": …,
+ *                                       "captured_image_url": …, "latitude": …,
+ *                                       "longitude": …, "device": … } ],
+ *                            "geo_locations": [ … ] } ],
+ *                "counts": { "present": 12, "half_day": 0, "absent": 8,
+ *                            "leave": 1, "holiday": 1, "weekly_off": 4,
+ *                            "future": 5, "elapsed": 26, "working": 22 } } }
+ * Notes: the one read in this feature that wraps its answer in `data` — it is
+ * the same payload `POST /user/employees/:id/attendance/view` returns, rather
+ * than a shape written for this screen. `year` and `month` go up as separate
+ * numbers and are joined server-side into the one `YYYY-MM` every month read
+ * takes, so a figure here can never disagree with the employee record's. There
+ * is an entry for EVERY day of the month. Branch the badge on `status`, never
+ * on an empty `check_in`: a blank day may be a weekly off, a holiday or an
+ * approved leave, and only the server holds all three registers — which is what
+ * makes this the screen that explains an "absent" the group list could only
+ * count. `company_id` (and `department_id`, when sent) are asserted against the
+ * employee's posting: an employee outside them is a 404, never an empty month.
+ * Times are `HH:MM:SS` in the SERVER's attendance timezone, so a night shift is
+ * not shifted by the reviewer's browser.
+ * Code: `features/hr/attendance/api/attendance-api.ts`
+ * Schema: `attendanceGroupsResponseSchema`,
+ *         `attendanceGroupEmployeesResponseSchema`,
+ *         `attendanceMonthResponseSchema` (`features/hr/attendance/schemas.ts`)
  *
  * ───────────────────────────────────────────────────────────────────────────
  * TYPICAL SIGN-IN FLOW

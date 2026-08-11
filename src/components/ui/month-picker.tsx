@@ -13,6 +13,16 @@ const PANEL_MAX = 300
 const GAP = 4
 const VIEWPORT_PADDING = 8
 
+/*
+ * The panel's own width — `.react-calendar` is `18rem` in `globals.css`.
+ *
+ * The horizontal clamp below has to be measured against THIS, not against the
+ * field: a field narrower than the panel (a `w-44` filter control, say) sitting
+ * at the right edge of the page would otherwise be told it had room, and the
+ * panel would hang off the viewport and be clipped.
+ */
+const PANEL_WIDTH = 288
+
 interface MonthPickerProps {
   /** Selected month as `yyyy-MM`, or `''` when nothing is picked. */
   value: string
@@ -25,6 +35,22 @@ interface MonthPickerProps {
   invalid?: boolean
   /** Compact height, for a dense grid cell. */
   size?: 'default' | 'sm'
+  /**
+   * How the picked month reads in the field.
+   *
+   * `numeric` (the default) is `06/2026` — two typed segments, which is what a
+   * form field wants: it is quick to key and it lines up with every other date
+   * field in the app.
+   *
+   * `long` is `June 2026`, for the few places where the month is a heading
+   * rather than an entry — a calendar's own month control, say. The field goes
+   * read-only there and the whole of it opens the calendar: `react-date-picker`
+   * renders the month as a native `<select>` once the format asks for names, and
+   * left alone that gives one field two different pickers — the OS dropdown on
+   * the word, the app's panel on the icon. Reading is what this mode is for, so
+   * the panel is made the only way to set the value.
+   */
+  display?: 'numeric' | 'long'
   /** Width utility for the control (defaults to full width). */
   className?: string
 }
@@ -55,6 +81,7 @@ export function MonthPicker({
   disabled = false,
   invalid = false,
   size = 'default',
+  display = 'numeric',
   className,
 }: MonthPickerProps) {
   const parsed = value ? parse(value, ISO_MONTH, new Date()) : null
@@ -76,7 +103,9 @@ export function MonthPicker({
       const rect = wrap.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
       const dropUp = spaceBelow < PANEL_MAX && rect.top > spaceBelow
-      const maxLeft = window.innerWidth - rect.width - VIEWPORT_PADDING
+      // Wide enough for the panel, whatever the field measures.
+      const panelWidth = Math.max(rect.width, PANEL_WIDTH)
+      const maxLeft = window.innerWidth - panelWidth - VIEWPORT_PADDING
       const left = Math.min(
         Math.max(VIEWPORT_PADDING, rect.left),
         Math.max(VIEWPORT_PADDING, maxLeft),
@@ -98,11 +127,28 @@ export function MonthPicker({
   useEffect(() => () => setOpen(false), [])
 
   return (
-    <div ref={wrapRef} className={cn('relative', className)}>
+    <div
+      ref={wrapRef}
+      className={cn('relative', className)}
+      /* In `long` mode the segments are inert (see the CSS), so a click that
+         lands on the text would otherwise do nothing at all — send it to the
+         calendar. The icons keep their own jobs: clear still clears. */
+      onClick={
+        display === 'long' && !disabled
+          ? (event) => {
+              const onButton = (event.target as HTMLElement).closest(
+                '.react-date-picker__button',
+              )
+              if (!onButton) setOpen(true)
+            }
+          : undefined
+      }
+    >
       <ReactDatePicker
         className={cn(
           'sa-datepicker',
           size === 'sm' && 'sa-datepicker--sm',
+          display === 'long' && 'sa-datepicker--readonly',
           invalid && 'sa-datepicker--error',
         )}
         value={selected}
@@ -115,7 +161,7 @@ export function MonthPicker({
         portalContainer={host}
         /* Year view is the deepest the calendar goes, so a tile is a month. */
         maxDetail="year"
-        format="MM/yyyy"
+        format={display === 'long' ? 'MMMM yyyy' : 'MM/yyyy'}
         monthPlaceholder="mm"
         yearPlaceholder="yyyy"
         minDate={minDate}
@@ -124,8 +170,12 @@ export function MonthPicker({
         calendarAriaLabel="Open month picker"
         clearAriaLabel="Clear month"
         calendarIcon={<CalendarDays className={size === 'sm' ? 'size-3.5' : 'size-4'} />}
+        /* No clear in `long` mode: the month is a heading there, and a screen
+           titled by it has nowhere to go once it's blank. */
         clearIcon={
-          value ? <X className={size === 'sm' ? 'size-3.5' : 'size-4'} /> : null
+          value && display !== 'long' ? (
+            <X className={size === 'sm' ? 'size-3.5' : 'size-4'} />
+          ) : null
         }
       />
 

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { formatAmount } from '@/lib/currency'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { LWF_LABELS, LWF_RATE_SORT } from '../constants'
 import { formatEffectiveDate, formatMonth } from '../lib/lwf-rate-mappers'
 import { useLwfRateList } from '../hooks/use-lwf-rate-list'
@@ -39,6 +40,9 @@ export function LwfRateListPage() {
     forbiddenMessage,
   } = useLwfRateList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.lwfRates)
+
   const columns = useMemo<ColumnDef<LwfRate>[]>(
     () => [
       {
@@ -55,8 +59,8 @@ export function LwfRateListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -112,7 +116,7 @@ export function LwfRateListPage() {
       ...auditColumns<LwfRate>({ createdAt: LWF_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -127,10 +131,12 @@ export function LwfRateListPage() {
         title="LWF Rate Setting"
         description="Manage Labour Welfare Fund contributions by state and effective date."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add LWF Rate
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add LWF Rate
+            </Button>
+          )
         }
       />
 
@@ -167,12 +173,14 @@ export function LwfRateListPage() {
                   : 'Add your first Labour Welfare Fund contribution to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add LWF Rate
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add LWF Rate
+                      </Button>
+                    )
               }
             />
           }

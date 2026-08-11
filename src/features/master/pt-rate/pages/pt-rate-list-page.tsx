@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { PT_RATE_SORT } from '../constants'
 import { formatEffectiveDate } from '../lib/pt-rate-mappers'
 import { usePtRateList } from '../hooks/use-pt-rate-list'
@@ -35,6 +36,9 @@ export function PtRateListPage() {
     isDeleting,
   } = usePtRateList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.ptRates)
+
   const columns = useMemo<ColumnDef<PtRate>[]>(
     () => [
       {
@@ -51,8 +55,8 @@ export function PtRateListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -87,7 +91,7 @@ export function PtRateListPage() {
       ...auditColumns<PtRate>({ createdAt: PT_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   return (
@@ -96,10 +100,12 @@ export function PtRateListPage() {
         title="PT Rate Setting"
         description="Manage Professional Tax slabs by state and effective date."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add PT Rate
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add PT Rate
+            </Button>
+          )
         }
       />
 
@@ -135,12 +141,14 @@ export function PtRateListPage() {
                   : 'Add your first Professional Tax slab set to get started.'
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    Add PT Rate
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        Add PT Rate
+                      </Button>
+                    )
               }
             />
           }

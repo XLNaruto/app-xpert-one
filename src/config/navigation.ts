@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
+import { PERMISSIONS, type PermissionSpec } from "@/features/permissions";
 import {
   Boxes,
   Briefcase,
   Building,
   Building2,
+  CalendarCheck,
   CalendarDays,
   CalendarHeart,
   CalendarOff,
@@ -24,6 +26,7 @@ import {
   ReceiptIndianRupee,
   RefreshCw,
   Settings2,
+  ShieldCheck,
   SlidersHorizontal,
   UserRoundCog,
   UsersRound,
@@ -40,6 +43,14 @@ export interface NavItem {
   children?: NavItem[];
   /** Match the active highlight only on an exact path (use when a sibling route extends this one). */
   exact?: boolean;
+  /**
+   * What the user must hold for this row to appear — a `PERMISSIONS` entry from
+   * `features/permissions` (a resource, or an array of candidate spellings).
+   * Omit for rows everyone signed in can reach (Dashboard, My Profile). The
+   * sidebar filters on it; the matching route guards on the same entry, so a
+   * hidden row can't be reached by typing its URL either.
+   */
+  permission?: PermissionSpec;
 }
 
 export interface NavGroup {
@@ -52,20 +63,56 @@ export interface NavGroup {
 export const navGroups: NavGroup[] = [
   {
     title: "Overview",
-    items: [{ label: "Dashboard", to: "/dashboard", icon: LayoutDashboard }],
-  }, 
+    items: [{
+        label: "Dashboard",
+        to: "/dashboard",
+        icon: LayoutDashboard,
+        permission: PERMISSIONS.dashboard,
+      }],
+  },
   {
     title: "Human Resource",
     items: [
-      { label: "Employee Management", to: "/hr/employee", icon: UserRoundCog },
-      { label: "Leave Management", to: "/hr/leave", icon: CalendarDays },
+      {
+        label: "Employee Management",
+        to: "/hr/employee",
+        icon: UserRoundCog,
+        permission: PERMISSIONS.employees,
+      },
+      {
+        label: "Attendance Management",
+        to: "/hr/attendance",
+        icon: CalendarCheck,
+        permission: PERMISSIONS.attendance,
+      },
+      {
+        label: "Leave Management",
+        to: "/hr/leave",
+        icon: CalendarDays,
+        permission: PERMISSIONS.leaves,
+      },
       {
         label: "Salary Management",
         icon: Wallet,
         children: [
-          { label: "Bulk Update Wage", to: "/hr/bulk-wage", icon: HandCoins },
-          { label: "Calculate Salary", to: "/hr/salary", icon: Calculator },
-          { label: "View Salary", to: "/hr/salary-view", icon: FileSpreadsheet },
+          {
+            label: "Bulk Update Wage",
+            to: "/hr/bulk-wage",
+            icon: HandCoins,
+            permission: PERMISSIONS.bulkWage,
+          },
+          {
+            label: "Calculate Salary",
+            to: "/hr/salary",
+            icon: Calculator,
+            permission: PERMISSIONS.calculateSalary,
+          },
+          {
+            label: "View Salary",
+            to: "/hr/salary-view",
+            icon: FileSpreadsheet,
+            permission: PERMISSIONS.salaryView,
+          },
         ],
       },
     ],
@@ -77,44 +124,91 @@ export const navGroups: NavGroup[] = [
         label: "Company Setup",
         icon: Settings2,
         children: [
-          { label: "Company", to: "/master/company", icon: Building2 },
-          { label: "Branch", to: "/master/branch", icon: Building },
-          { label: "Department", to: "/master/department", icon: Building },
-          { label: "Designation", to: "/master/designation", icon: Briefcase },
+          {
+            label: "Company",
+            to: "/master/company",
+            icon: Building2,
+            permission: PERMISSIONS.companies,
+          },
+          {
+            label: "Branch",
+            to: "/master/branch",
+            icon: Building,
+            permission: PERMISSIONS.branches,
+          },
+          {
+            label: "Department",
+            to: "/master/department",
+            icon: Building,
+            permission: PERMISSIONS.departments,
+          },
+          {
+            label: "Designation",
+            to: "/master/designation",
+            icon: Briefcase,
+            permission: PERMISSIONS.designations,
+          },
         ],
       },
       {
         label: "Statutory Setup",
         icon: Landmark,
         children: [
-          { label: "PF Rate Setting", to: "/master/pf-rate", icon: Percent },
-          { label: "ESIC Rate Setting", to: "/master/esic-rate", icon: HeartPulse },
-          { label: "PT Rate Setting", to: "/master/pt-rate", icon: ReceiptIndianRupee },
-          { label: "LWF Rate Setting", to: "/master/lwf-rate", icon: HandCoins },
+          {
+            label: "PF Rate Setting",
+            to: "/master/pf-rate",
+            icon: Percent,
+            permission: PERMISSIONS.pfRates,
+          },
+          {
+            label: "ESIC Rate Setting",
+            to: "/master/esic-rate",
+            icon: HeartPulse,
+            permission: PERMISSIONS.esicRates,
+          },
+          {
+            label: "PT Rate Setting",
+            to: "/master/pt-rate",
+            icon: ReceiptIndianRupee,
+            permission: PERMISSIONS.ptRates,
+          },
+          {
+            label: "LWF Rate Setting",
+            to: "/master/lwf-rate",
+            icon: HandCoins,
+            permission: PERMISSIONS.lwfRates,
+          },
+          // All five address screens are one resource on the API, so they stand
+          // or fall together.
           {
             label: "PF Office Address",
             to: "/master/pf-office-address",
             icon: MapPinned,
+            permission: PERMISSIONS.officeAddresses,
           },
           {
             label: "ESIC Office Address",
             to: "/master/esic-office-address",
             icon: MapPinned,
+            permission: PERMISSIONS.officeAddresses,
           },
           {
             label: "LWF Office Address",
             to: "/master/lwf-office-address",
             icon: MapPinned,
+            permission: PERMISSIONS.officeAddresses,
           },
           {
             label: "Factory / Statutory Office Address",
             to: "/master/factory-office-address",
             icon: MapPinned,
+            permission: PERMISSIONS.officeAddresses,
           },
           {
             label: "Employment Exchange Office Address",
             to: "/master/employment-exchange-office-address",
             icon: MapPinned,
+            permission: PERMISSIONS.officeAddresses,
           },
         ],
       },
@@ -122,12 +216,23 @@ export const navGroups: NavGroup[] = [
         label: "HR Setup",
         icon: UsersRound,
         children: [
-          { label: "Leave Types", to: "/master/leave-type", icon: CalendarDays },
-          { label: "Holidays", to: "/master/holiday", icon: CalendarHeart },
+          {
+            label: "Leave Types",
+            to: "/master/leave-type",
+            icon: CalendarDays,
+            permission: PERMISSIONS.leaveTypes,
+          },
+          {
+            label: "Holidays",
+            to: "/master/holiday",
+            icon: CalendarHeart,
+            permission: PERMISSIONS.holidays,
+          },
           {
             label: "Allowance & Deduction",
             to: "/master/allowance-deduction",
             icon: Wallet,
+            permission: PERMISSIONS.payComponents,
           },
         ],
       },
@@ -142,23 +247,92 @@ export const navGroups: NavGroup[] = [
         label: "Shift Management",
         icon: Clock,
         children: [
-          { label: "Shift Rotation", to: "/master/shift-rotation", icon: RefreshCw },
-          { label: "Week-Off Policy", to: "/master/weekoff-policy", icon: CalendarOff },
+          {
+            label: "Shift Rotation",
+            to: "/master/shift-rotation",
+            icon: RefreshCw,
+            permission: PERMISSIONS.shiftRotations,
+          },
+          {
+            label: "Week-Off Policy",
+            to: "/master/weekoff-policy",
+            icon: CalendarOff,
+            permission: PERMISSIONS.weekoffPolicies,
+          },
         ],
       },
       {
         label: "General Setup",
         icon: SlidersHorizontal,
         children: [
-          { label: "Assets", to: "/master/asset", icon: Boxes },
-          { label: "Document Type", to: "/master/document-type", icon: FileType2 },
-          { label: "Documents", to: "/master/document", icon: FileText },
+          {
+            label: "Assets",
+            to: "/master/asset",
+            icon: Boxes,
+            permission: PERMISSIONS.assets,
+          },
+          {
+            label: "Document Type",
+            to: "/master/document-type",
+            icon: FileType2,
+            permission: PERMISSIONS.documentTypes,
+          },
+          {
+            label: "Documents",
+            to: "/master/document",
+            icon: FileText,
+            permission: PERMISSIONS.documents,
+          },
         ],
       },
     ],
   },
- 
+  {
+    title: "Administration",
+    items: [
+      {
+        label: "Roles & Permissions",
+        to: "/administration/role",
+        icon: ShieldCheck,
+        permission: PERMISSIONS.roles,
+      },
+    ],
+  },
 ];
+
+/**
+ * Drop the rows the signed-in user can't reach, keeping order and structure.
+ *
+ * An item survives when it has no `permission` gate or the user holds it; a
+ * submenu parent survives only if it has at least one surviving child (a parent
+ * is just a disclosure — an empty one would expand to nothing), and a section
+ * with no items left disappears with its heading.
+ *
+ * Pass `can` from `useCan()`. Breadcrumbs and page titles deliberately keep
+ * reading the unfiltered `navGroups`: a route the user reached anyway should
+ * still be named properly rather than fall back to title-cased URL segments.
+ */
+export function filterNavByPermission(
+  groups: NavGroup[],
+  can: (spec?: PermissionSpec | null) => boolean,
+): NavGroup[] {
+  const keepItem = (item: NavItem): NavItem | null => {
+    if (item.permission && !can(item.permission)) return null;
+    if (!item.children?.length) return item;
+    const children = item.children
+      .map(keepItem)
+      .filter((child): child is NavItem => child !== null);
+    if (!children.length) return item.to ? { ...item, children } : null;
+    return { ...item, children };
+  };
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.map(keepItem).filter((item): item is NavItem => item !== null),
+    }))
+    .filter((group) => group.items.length > 0);
+}
 
 /** Page names for routes that don't appear in the sidebar (auth, errors, etc.). */
 const extraTitles: Record<string, string> = {
@@ -177,9 +351,7 @@ const routableNavItems = navGroups
 function navItemForPath(pathname: string): (NavItem & { to: string }) | undefined {
   return (
     routableNavItems.find((item) => item.to === pathname) ??
-    routableNavItems.find(
-      (item) => item.to !== "/" && pathname.startsWith(item.to),
-    )
+    routableNavItems.find((item) => item.to !== "/" && pathname.startsWith(item.to))
   );
 }
 

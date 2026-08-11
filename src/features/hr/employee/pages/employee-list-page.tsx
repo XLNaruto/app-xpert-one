@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
 import { EMPLOYEE_SORT } from '../constants'
 import { useEmployeeList } from '../hooks/use-employee-list'
@@ -49,6 +50,9 @@ export function EmployeeListPage() {
     bankNames,
   } = useEmployeeList()
 
+  // Which of this screen's actions this role may see.
+  const { canCreate, canView, canUpdate } = useResourceAccess(PERMISSIONS.employees)
+
   // The faces dialog reads the row out of `rows`, so a clear is reflected in it.
   const {
     facesEmployee,
@@ -79,11 +83,12 @@ export function EmployeeListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <EmployeeRowActions
-            onView={() => goToDetail(row.original.id)}
-            onEdit={() => goToEdit(row.original.id)}
+            onView={canView ? () => goToDetail(row.original.id) : undefined}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
             faceCount={row.original.faces.length}
-            onViewFaces={() => openFaces(row.original)}
-            onDeleteFaces={() => askClearFaces(row.original)}
+            onViewFaces={canView ? () => openFaces(row.original) : undefined}
+            // Clearing faces edits the employee record rather than removing it.
+            onDeleteFaces={canUpdate ? () => askClearFaces(row.original) : undefined}
           />
         ),
       },
@@ -92,7 +97,9 @@ export function EmployeeListPage() {
         // click travels to `?sort=` untranslated.
         id: EMPLOYEE_SORT.name,
         accessorKey: 'name',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Employee" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Employee" />
+        ),
         meta: { className: 'min-w-56' },
         cell: ({ row }) => <EmployeeIdentityCell employee={row.original} />,
       },
@@ -187,7 +194,7 @@ export function EmployeeListPage() {
     // `bankNames` arrives after the first render, so the Bank Name column has to
     // be rebuilt when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [offset, bankNames],
+    [offset, bankNames, canView, canUpdate],
   )
 
   // Reading the list was refused — show the 403 screen, not a broken table.
@@ -199,10 +206,12 @@ export function EmployeeListPage() {
         title="Employee Management"
         description="Add employees and complete their eight-step record."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Employee
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Employee
+            </Button>
+          )
         }
       />
 
@@ -234,10 +243,12 @@ export function EmployeeListPage() {
               title="No employees yet"
               description="Add your first employee to start building the register."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Employee
-                </Button>
+                canCreate ? (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Employee
+                  </Button>
+                ) : undefined
               }
             />
           }

@@ -7,6 +7,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   PF_RATE_SORT,
   PF_RATE_VALUE_FIELDS,
@@ -41,6 +42,9 @@ export function PfRateListPage() {
     forbiddenMessage,
   } = usePfRateList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.pfRates)
+
   const columns = useMemo<ColumnDef<PfRate>[]>(
     () => [
       {
@@ -57,8 +61,8 @@ export function PfRateListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -96,7 +100,7 @@ export function PfRateListPage() {
       ...auditColumns<PfRate>({ createdAt: PF_RATE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -111,10 +115,12 @@ export function PfRateListPage() {
         title="PF Rate Setting"
         description="Manage Provident Fund rate slabs by effective date."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add PF Rate
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add PF Rate
+            </Button>
+          )
         }
       />
 
@@ -159,7 +165,7 @@ export function PfRateListPage() {
                     : 'Add your first PF rate slab to get started.'}
               </p>
             </div>
-            {!isError && !search && (
+            {!isError && !search && canCreate && (
               <Button onClick={goToCreate}>
                 <Plus className="size-4" />
                 Add PF Rate

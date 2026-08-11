@@ -1,4 +1,12 @@
-import { CalendarDays, Eye, Mail, Pencil, ScanFace, Trash2, UserMinus } from 'lucide-react'
+import {
+  CalendarDays,
+  Eye,
+  Mail,
+  Pencil,
+  ScanFace,
+  Trash2,
+  UserMinus,
+} from 'lucide-react'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { useMediaUrl } from '@/hooks/use-media-url'
@@ -56,8 +64,9 @@ export function EmployeeRowActions({
   onViewAttendance,
   onAppointmentLetter,
 }: {
-  onView: () => void
-  onEdit: () => void
+  /** Omitted when the role may not read / edit an employee — the entry is dropped. */
+  onView?: () => void
+  onEdit?: () => void
   /** Both shown only when the row actually carries face images. */
   onViewFaces?: () => void
   onDeleteFaces?: () => void
@@ -67,10 +76,10 @@ export function EmployeeRowActions({
   onViewAttendance?: () => void
   onAppointmentLetter?: () => void
 }) {
-  const actions: RowAction[] = [
-    { label: 'View Details', icon: Eye, onSelect: onView },
-    { label: 'Edit Details', icon: Pencil, onSelect: onEdit },
-  ]
+  const actions: RowAction[] = []
+
+  if (onView) actions.push({ label: 'View Details', icon: Eye, onSelect: onView })
+  if (onEdit) actions.push({ label: 'Edit Details', icon: Pencil, onSelect: onEdit })
 
   // An employee with no enrolled face has nothing to show and nothing to clear,
   // so both entries are absent rather than disabled.
@@ -92,11 +101,22 @@ export function EmployeeRowActions({
       })
   }
 
-  if (onDelete) actions.push({ label: 'Delete', icon: Trash2, onSelect: onDelete, destructive: true })
-  if (onDeactivate) actions.push({ label: 'Deactive Employee', icon: UserMinus, onSelect: onDeactivate })
-  if (onViewAttendance) actions.push({ label: 'View Attendance', icon: CalendarDays, onSelect: onViewAttendance })
+  if (onDelete)
+    actions.push({ label: 'Delete', icon: Trash2, onSelect: onDelete, destructive: true })
+  if (onDeactivate)
+    actions.push({ label: 'Deactive Employee', icon: UserMinus, onSelect: onDeactivate })
+  if (onViewAttendance)
+    actions.push({
+      label: 'View Attendance',
+      icon: CalendarDays,
+      onSelect: onViewAttendance,
+    })
   if (onAppointmentLetter)
-    actions.push({ label: 'Appointment Letter', icon: Mail, onSelect: onAppointmentLetter })
+    actions.push({
+      label: 'Appointment Letter',
+      icon: Mail,
+      onSelect: onAppointmentLetter,
+    })
 
   return <RowActionsMenu actions={actions} />
 }

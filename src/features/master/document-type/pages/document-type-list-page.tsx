@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_SORT } from '../constants'
 import { useDocumentTypeList } from '../hooks/use-document-type-list'
 import type { DocumentType } from '../types'
@@ -37,6 +38,9 @@ export function DocumentTypeListPage() {
     isDeleting,
   } = useDocumentTypeList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.documentTypes)
+
   const columns = useMemo<ColumnDef<DocumentType>[]>(
     () => [
       {
@@ -53,8 +57,8 @@ export function DocumentTypeListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -77,7 +81,7 @@ export function DocumentTypeListPage() {
       }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -92,10 +96,12 @@ export function DocumentTypeListPage() {
         title="Document Types"
         description="Manage your document type master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add Document Type
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add Document Type
+            </Button>
+          )
         }
       />
 
@@ -127,10 +133,12 @@ export function DocumentTypeListPage() {
               title="No document types yet"
               description="Create your first document type to get started."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add Document Type
-                </Button>
+                canCreate && (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add Document Type
+                  </Button>
+                )
               }
             />
           }

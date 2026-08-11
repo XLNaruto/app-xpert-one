@@ -1,5 +1,5 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
-import { OCCURRENCE_LABELS, WEEK_DAYS } from '../constants'
+import { OCCURRENCE_LABELS, WEEK_DAYS, WEEKOFF_PRESETS } from '../constants'
 import type {
   WeekoffDayPayload,
   WeekoffPolicyFormValues,
@@ -100,6 +100,32 @@ export function weekoffPolicyToFormValues(
     rules,
     status: policy.status,
   }
+}
+
+/**
+ * Which preset the current selection *is*, or `-1` for a pattern of the user's
+ * own. Order-insensitive on both halves, since a tick order and a row order carry
+ * no meaning — what matters is the set of rules the pattern amounts to.
+ */
+export function matchingPresetIndex(
+  everyWeekDays: number[],
+  rules: WeekoffPolicyFormValues['rules'],
+): number {
+  const key = (
+    days: number[],
+    ruleList: WeekoffPolicyFormValues['rules'],
+  ) =>
+    JSON.stringify([
+      [...days].sort((a, b) => a - b),
+      ruleList
+        .map((rule) => `${rule.weekDay}-${rule.weekNumber ?? ''}-${rule.isOff}`)
+        .sort(),
+    ])
+
+  const current = key(everyWeekDays, rules)
+  return WEEKOFF_PRESETS.findIndex(
+    (preset) => key(preset.apply.everyWeekDays, preset.apply.rules) === current,
+  )
 }
 
 /** One rule as a phrase — `2nd & 4th Sat` is built from these by the summary. */

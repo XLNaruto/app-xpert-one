@@ -12,6 +12,7 @@ import {
   useUpdateWeekoffPolicy,
 } from '../api/use-weekoff-policy-mutations'
 import {
+  matchingPresetIndex,
   weekoffPolicyToFormValues,
   weekoffSummary,
 } from '../lib/weekoff-policy-mappers'
@@ -77,6 +78,14 @@ export function useWeekoffPolicyForm(id?: number) {
   }
 
   /**
+   * The preset the current pattern already matches, so the chip can show it as
+   * the one in force. Derived rather than remembered — editing a tick or a row
+   * away from a preset drops the highlight on its own, and an edited policy
+   * lights up the preset it happens to be.
+   */
+  const activePreset = matchingPresetIndex(everyWeekDays, watchedRules)
+
+  /**
    * The pattern as the list screen will read it — shown live under the editor, so
    * the consequence of thirty ticks and rows is legible before saving.
    */
@@ -123,6 +132,7 @@ export function useWeekoffPolicyForm(id?: number) {
     rules,
     addRule,
     applyPreset,
+    activePreset,
     summary,
     isPending: isEdit ? updatePolicy.isPending : createPolicy.isPending,
     isLoading: isEdit && detail.isLoading,

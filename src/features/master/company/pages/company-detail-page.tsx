@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
 import { decryptId } from '@/lib/crypto'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { CompanyLogo } from '../components/company-logo'
 import { useCompanyDetail } from '../hooks/use-company-detail'
 
@@ -38,6 +39,9 @@ export function CompanyDetailPage({ data }: { data?: string }) {
     goToEdit,
   } = useCompanyDetail(decryptId(data))
 
+  // The Edit button is the only write this screen offers.
+  const { canUpdate } = useResourceAccess(PERMISSIONS.companies)
+
   // Reading this record was refused — show the 403 screen with the server's
   // reason instead of an inline error line.
   if (isForbidden) {
@@ -55,7 +59,7 @@ export function CompanyDetailPage({ data }: { data?: string }) {
               <ArrowLeft className="size-4" />
               Back
             </Button>
-            {company && (
+            {canUpdate && company && (
               <Button onClick={goToEdit}>
                 <Pencil className="size-4" />
                 Edit
@@ -91,7 +95,11 @@ export function CompanyDetailPage({ data }: { data?: string }) {
               <p className="mb-1.5 text-xs font-medium text-muted-foreground">Logo</p>
               <CompanyLogo logo={company.logo} />
             </div>
-            <DetailItem icon={Building2} label="Company Name" value={company.companyName} />
+            <DetailItem
+              icon={Building2}
+              label="Company Name"
+              value={company.companyName}
+            />
             <DetailItem icon={Hash} label="Company Code" value={company.companyCode} />
             <DetailItem
               icon={CalendarDays}
@@ -122,8 +130,16 @@ export function CompanyDetailPage({ data }: { data?: string }) {
 
             <FormSection icon={Phone} title="Contact Details" />
             <DetailItem icon={Phone} label="Phone" value={company.phone} />
-            <DetailItem icon={Smartphone} label="Primary Mobile Number" value={company.mobile1} />
-            <DetailItem icon={Smartphone} label="Secondary Mobile Number" value={company.mobile2} />
+            <DetailItem
+              icon={Smartphone}
+              label="Primary Mobile Number"
+              value={company.mobile1}
+            />
+            <DetailItem
+              icon={Smartphone}
+              label="Secondary Mobile Number"
+              value={company.mobile2}
+            />
             <DetailItem icon={Mail} label="Email" value={company.email} />
             <DetailItem
               icon={CalendarDays}

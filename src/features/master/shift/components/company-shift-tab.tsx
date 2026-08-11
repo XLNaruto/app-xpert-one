@@ -14,6 +14,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { SHIFT_SORT } from '../constants'
 import { formatShiftWindow } from '../lib/shift-mappers'
 import { useShiftList } from '../hooks/use-shift-list'
@@ -38,6 +39,10 @@ interface CompanyShiftTabProps {
  */
 export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
   const list = useShiftList(companyId)
+  // The tab is both the shift form and the shift list, so it needs all four.
+  const { canCreate, canUpdate, canDelete, canManage } = useResourceAccess(
+    PERMISSIONS.shifts,
+  )
   const form = useShiftForm({
     companyId,
     editing: list.editing,
@@ -60,8 +65,8 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => list.setEditing(row.original)}
-            onDelete={() => list.setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => list.setEditing(row.original) : undefined}
+            onDelete={canDelete ? () => list.setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -150,7 +155,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
       ...auditColumns<Shift>({ createdAt: SHIFT_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.weekoffPolicyNames],
+    [list.weekoffPolicyNames, canUpdate, canDelete],
   )
 
   return (
@@ -159,161 +164,165 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         Its own form element, submitted on its own — the company detail tab has a
         separate one, and nesting the two would be invalid markup.
       */}
-      <form
-        onSubmit={form.onSubmit}
-        noValidate
-        className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        <FormSection
-          icon={Clock}
-          title={form.isEdit ? 'Edit Shift' : 'Add Shift'}
-          description="A named window of the clock, and the tolerances attendance is judged against"
-          className="mt-0"
-        />
+      {canManage && (
+        <form
+          onSubmit={form.onSubmit}
+          noValidate
+          className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        >
+          <FormSection
+            icon={Clock}
+            title={form.isEdit ? 'Edit Shift' : 'Add Shift'}
+            description="A named window of the clock, and the tolerances attendance is judged against"
+            className="mt-0"
+          />
 
-        <Field label="Shift Name" required error={form.errors.shiftName?.message}>
-          <Input placeholder="General Shift" {...form.register('shiftName')} />
-        </Field>
-        <TimeField
-          control={form.control}
-          name="startTime"
-          label="Start Time"
-          required
-          error={form.errors.startTime?.message}
-        />
-        <TimeField
-          control={form.control}
-          name="endTime"
-          label="End Time"
-          required
-          error={form.errors.endTime?.message}
-          hint="An end earlier than the start makes this a night shift — the flag is worked out for you."
-        />
-        <Field
-          label="Break (minutes)"
-          error={form.errors.breakMinutes?.message}
-          hint="Unpaid break inside the shift. Leave blank for none."
-        >
-          <Input
-            type="number"
-            min={0}
-            max={1440}
-            placeholder="60"
-            {...form.register('breakMinutes')}
+          <Field label="Shift Name" required error={form.errors.shiftName?.message}>
+            <Input placeholder="General Shift" {...form.register('shiftName')} />
+          </Field>
+          <TimeField
+            control={form.control}
+            name="startTime"
+            label="Start Time"
+            required
+            error={form.errors.startTime?.message}
           />
-        </Field>
-        <Field
-          label="Concession (minutes)"
-          error={form.errors.concessionMinutes?.message}
-          hint="Grace after the start time in which a check-in still counts as on time. With 09:00 and 15, arriving at 09:20 is 5 minutes late, not 20."
-        >
-          <Input
-            type="number"
-            min={0}
-            max={720}
-            placeholder="15"
-            {...form.register('concessionMinutes')}
+          <TimeField
+            control={form.control}
+            name="endTime"
+            label="End Time"
+            required
+            error={form.errors.endTime?.message}
+            hint="An end earlier than the start makes this a night shift — the flag is worked out for you."
           />
-        </Field>
-        <Field
-          label="Full Day Hours"
-          error={form.errors.minFullDayHours?.message}
-          hint="Worked hours at or above this count as a full day. Filled in from the shift window minus the break — type over it if yours differs."
-        >
-          <Input
-            type="number"
-            min={0.5}
-            max={24}
-            step={0.5}
-            placeholder="8"
-            {...form.register('minFullDayHours')}
-          />
-        </Field>
-        <Field
-          label="Half Day Hours"
-          error={form.errors.minHalfDayHours?.message}
-          hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it if yours differs."
-        >
-          <Input
-            type="number"
-            min={0.5}
-            max={24}
-            step={0.5}
-            placeholder="4"
-            {...form.register('minHalfDayHours')}
-          />
-        </Field>
+          <Field
+            label="Break (minutes)"
+            error={form.errors.breakMinutes?.message}
+            hint="Unpaid break inside the shift. Leave blank for none."
+          >
+            <Input
+              type="number"
+              min={0}
+              max={1440}
+              placeholder="60"
+              {...form.register('breakMinutes')}
+            />
+          </Field>
+          <Field
+            label="Concession (minutes)"
+            error={form.errors.concessionMinutes?.message}
+            hint="Grace after the start time in which a check-in still counts as on time. With 09:00 and 15, arriving at 09:20 is 5 minutes late, not 20."
+          >
+            <Input
+              type="number"
+              min={0}
+              max={720}
+              placeholder="15"
+              {...form.register('concessionMinutes')}
+            />
+          </Field>
+          <Field
+            label="Full Day Hours"
+            error={form.errors.minFullDayHours?.message}
+            hint="Worked hours at or above this count as a full day. Filled in from the shift window minus the break — type over it if yours differs."
+          >
+            <Input
+              type="number"
+              min={0.5}
+              max={24}
+              step={0.5}
+              placeholder="8"
+              {...form.register('minFullDayHours')}
+            />
+          </Field>
+          <Field
+            label="Half Day Hours"
+            error={form.errors.minHalfDayHours?.message}
+            hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it if yours differs."
+          >
+            <Input
+              type="number"
+              min={0.5}
+              max={24}
+              step={0.5}
+              placeholder="4"
+              {...form.register('minHalfDayHours')}
+            />
+          </Field>
 
-        {/*
+          {/*
           Clearable, and blank by default: most shifts name no pattern of their own
           and fall back to the department's default, then the company's, then the
           platform's Sunday-only constant. Naming one here overrides all three for
           this shift alone.
         */}
-        <Field
-          label="Week-Off Policy"
-          hint="Leave blank to follow the department's or company's default pattern. Set one only for a shift whose off days differ from everyone else's."
-        >
-          <Controller
-            control={form.control}
-            name="weekoffPolicyId"
-            render={({ field }) => (
-              <Combobox
-                className="w-full"
-                value={field.value}
-                onChange={field.onChange}
-                options={form.weekoffPolicySelectOptions}
-                clearable
-                panelMinWidth={340}
-                placeholder={
-                  form.isWeekoffPoliciesLoading ? 'Loading…' : 'Follows default'
-                }
-                searchPlaceholder="Search policy"
-              />
-            )}
-          />
-        </Field>
-
-        <Field
-          label="Status"
-          hint="An inactive shift stays on record but shouldn't be rostered against going forward."
-        >
-          <div className="flex h-9 items-center gap-2">
+          <Field
+            label="Week-Off Policy"
+            hint="Leave blank to follow the department's or company's default pattern. Set one only for a shift whose off days differ from everyone else's."
+          >
             <Controller
               control={form.control}
-              name="status"
+              name="weekoffPolicyId"
               render={({ field }) => (
-                <>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    aria-label="Shift active"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    {field.value ? 'Active' : 'Inactive'}
-                  </span>
-                </>
+                <Combobox
+                  className="w-full"
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={form.weekoffPolicySelectOptions}
+                  clearable
+                  panelMinWidth={340}
+                  placeholder={
+                    form.isWeekoffPoliciesLoading ? 'Loading…' : 'Follows default'
+                  }
+                  searchPlaceholder="Search policy"
+                />
               )}
             />
-          </div>
-        </Field>
+          </Field>
 
-        <div className="col-span-full flex items-center justify-end gap-3 border-t border-border pt-5">
-          {form.isEdit && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={form.cancelEdit}
-              disabled={form.isPending}
-            >
-              Cancel Edit
-            </Button>
-          )}
-          <Button type="submit" disabled={form.isPending}>
-            {form.isPending ? 'Saving…' : form.isEdit ? 'Save Shift' : 'Add Shift'}
-          </Button>
-        </div>
-      </form>
+          <Field
+            label="Status"
+            hint="An inactive shift stays on record but shouldn't be rostered against going forward."
+          >
+            <div className="flex h-9 items-center gap-2">
+              <Controller
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label="Shift active"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {field.value ? 'Active' : 'Inactive'}
+                    </span>
+                  </>
+                )}
+              />
+            </div>
+          </Field>
+
+          <div className="col-span-full flex items-center justify-end gap-3 border-t border-border pt-5">
+            {form.isEdit && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={form.cancelEdit}
+                disabled={form.isPending}
+              >
+                Cancel Edit
+              </Button>
+            )}
+            {(form.isEdit ? canUpdate : canCreate) && (
+              <Button type="submit" disabled={form.isPending}>
+                {form.isPending ? 'Saving…' : form.isEdit ? 'Save Shift' : 'Add Shift'}
+              </Button>
+            )}
+          </div>
+        </form>
+      )}
 
       <div className="mt-8">
         {list.isForbidden ? (

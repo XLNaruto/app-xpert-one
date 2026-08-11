@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { BRANCH_SORT } from '../constants'
 import { useBranchList } from '../hooks/use-branch-list'
 import type { Branch } from '../types'
@@ -38,6 +39,11 @@ export function BranchListPage() {
     isDeleting,
   } = useBranchList()
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canView, canDelete } = useResourceAccess(
+    PERMISSIONS.branches,
+  )
+
   const columns = useMemo<ColumnDef<Branch>[]>(
     () => [
       {
@@ -54,9 +60,9 @@ export function BranchListPage() {
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onView={() => goToDetail(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onView={canView ? () => goToDetail(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -81,7 +87,9 @@ export function BranchListPage() {
       {
         id: BRANCH_SORT.city,
         accessorKey: 'city',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Location" />,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Location" />
+        ),
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const parts = [row.original.city, row.original.stateName].filter(
@@ -117,7 +125,7 @@ export function BranchListPage() {
       ...auditColumns<Branch>({ createdAt: BRANCH_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [canUpdate, canView, canDelete],
   )
 
   // Reading the master was refused (`{ code: 'FORBIDDEN' }`) — show the 403
@@ -132,10 +140,12 @@ export function BranchListPage() {
         title="Branch"
         description="Manage your branch master records."
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            Add New Branch
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              Add New Branch
+            </Button>
+          )
         }
       />
 
@@ -167,10 +177,12 @@ export function BranchListPage() {
               title="No branches yet"
               description="Create your first branch to get started."
               action={
-                <Button onClick={goToCreate}>
-                  <Plus className="size-4" />
-                  Add New Branch
-                </Button>
+                canCreate && (
+                  <Button onClick={goToCreate}>
+                    <Plus className="size-4" />
+                    Add New Branch
+                  </Button>
+                )
               }
             />
           }

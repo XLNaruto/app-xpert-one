@@ -1,4 +1,5 @@
 import { Clock, RotateCcw } from 'lucide-react'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,9 @@ export function DepartmentShiftTab({
     isClearing,
   } = useDefaultShift({ companyId, departmentId, currentShiftId })
 
+  // Pointing a department at a shift is an update on the shift master.
+  const { canUpdate } = useResourceAccess(PERMISSIONS.shifts)
+
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <FormSection
@@ -81,29 +85,34 @@ export function DepartmentShiftTab({
 
       {hasNoShifts && !isLoadingShifts && (
         <p className="col-span-full text-sm text-muted-foreground">
-          This company has no shifts yet — add them on the company's Shift tab
-          first, then come back to pick one here.
+          This company has no shifts yet — add them on the company's Shift tab first, then
+          come back to pick one here.
         </p>
       )}
 
       <div className="col-span-full mt-4 flex items-center justify-end gap-3 border-t border-border pt-5">
+        {/* Both writes are updates to the department's default shift. */}
         {/*
           Clearing is its own write, not "save nothing": a department with no
           default falls back to the company's, which is a different outcome from
           leaving the current one in place.
         */}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={clear}
-          disabled={isSaving || isClearing}
-        >
-          <RotateCcw className="size-4" />
-          {isClearing ? 'Clearing…' : 'Clear Default'}
-        </Button>
-        <Button type="button" onClick={save} disabled={isSaving || isClearing}>
-          {isSaving ? 'Saving…' : 'Save Shift'}
-        </Button>
+        {canUpdate && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={clear}
+              disabled={isSaving || isClearing}
+            >
+              <RotateCcw className="size-4" />
+              {isClearing ? 'Clearing…' : 'Clear Default'}
+            </Button>
+            <Button type="button" onClick={save} disabled={isSaving || isClearing}>
+              {isSaving ? 'Saving…' : 'Save Shift'}
+            </Button>
+          </>
+        )}
       </div>
     </div>
   )

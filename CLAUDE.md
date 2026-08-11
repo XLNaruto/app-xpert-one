@@ -70,6 +70,24 @@ following the same self-contained folder shape.
     + expiry). IndexedDB is async, so those stores set `skipHydration: true` and
     are rehydrated in `main.tsx` before the app mounts — add any new persisted
     store to that `Promise.all`.
+14. **Access control goes through `features/permissions`** — `GET /user/my-role`
+    (cached for the session, mounted once in the dashboard layout) is the single
+    source of truth. A new screen names its resource once in
+    `features/permissions/constants.ts` (`PERMISSIONS`), then:
+    - the sidebar row in `config/navigation.ts` carries `permission: PERMISSIONS.x`
+      (`filterNavByPermission` drops what the user can't reach),
+    - the module's `routes/_authenticated/**/route.tsx` calls
+      `requirePermission(context.queryClient, PERMISSIONS.x)` in `beforeLoad`, so a
+      typed URL can't walk past a hidden row (a 403 renders `RouteError` →
+      `Forbidden`), and
+    - the screen takes its button flags from
+      `useResourceAccess(PERMISSIONS.x)` (`canCreate` / `canUpdate` / `canDelete`
+      / `canView` / `canManage`) — an Add button, a row's Edit/Delete and a Save
+      are rendered only when held; for a one-off code use `useCan()` or
+      `<Can permission="x:import">`. Row-action flags belong in the columns
+      `useMemo` deps.
+    A bare `PERMISSIONS` entry is a *resource*, matching any action held on it; pass
+    a full `resource:action` code to gate one action. Never gate on a role name.
 
 ## Feature folder shape
 

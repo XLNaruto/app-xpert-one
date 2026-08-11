@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { History, IndianRupee, RotateCcw, Save } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,9 @@ export function BulkWagePage() {
   const navigate = useNavigate()
   const form = useBulkWageForm()
 
+  // Saving the grid writes the wage structures; History is the read-only screen.
+  const { canView, canManage } = useResourceAccess(PERMISSIONS.bulkWage)
+
   const changedCount = form.dirtyRows.size
 
   return (
@@ -74,15 +78,17 @@ export function BulkWagePage() {
               month. It sits before Discard Changes because it takes nothing back
               — it only opens the history in its own screen.
             */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => navigate({ to: '/hr/bulk-wage/history' })}
-            >
-              <History className="size-4" />
-              History
-            </Button>
+            {canView && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate({ to: '/hr/bulk-wage/history' })}
+              >
+                <History className="size-4" />
+                History
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -93,16 +99,20 @@ export function BulkWagePage() {
               <RotateCcw className="size-4" />
               Discard Changes
             </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={form.askSaveAll}
-              disabled={form.isSaving || !form.canSaveAll}
-              title={saveAllHint(changedCount)}
-            >
-              <Save className="size-4" />
-              {form.isSaving ? 'Saving…' : `Save All${changedCount ? ` (${changedCount})` : ''}`}
-            </Button>
+            {canManage && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={form.askSaveAll}
+                disabled={form.isSaving || !form.canSaveAll}
+                title={saveAllHint(changedCount)}
+              >
+                <Save className="size-4" />
+                {form.isSaving
+                  ? 'Saving…'
+                  : `Save All${changedCount ? ` (${changedCount})` : ''}`}
+              </Button>
+            )}
           </>
         }
       />
@@ -121,8 +131,8 @@ export function BulkWagePage() {
                 Designation Wage Structure
               </h3>
               <p className="text-xs text-muted-foreground">
-                One row per designation, opened on what it is paid today. Edit the
-                cells you need, then save every changed row at the month above.
+                One row per designation, opened on what it is paid today. Edit the cells
+                you need, then save every changed row at the month above.
               </p>
             </div>
           </div>
@@ -138,20 +148,23 @@ export function BulkWagePage() {
             <span className="font-medium text-primary">{changedCount} changed</span>
             {changedCount === 0 && form.canSaveAll && (
               <span className="text-muted-foreground">
-                {' '}· Save All re-dates every configured row to the month above
+                {' '}
+                · Save All re-dates every configured row to the month above
               </span>
             )}
           </p>
-          <Button
-            type="button"
-            size="sm"
-            onClick={form.askSaveAll}
-            disabled={form.isSaving || !form.canSaveAll}
-            title={saveAllHint(changedCount)}
-          >
-            <Save className="size-4" />
-            {form.isSaving ? 'Saving…' : 'Save All'}
-          </Button>
+          {canManage && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={form.askSaveAll}
+              disabled={form.isSaving || !form.canSaveAll}
+              title={saveAllHint(changedCount)}
+            >
+              <Save className="size-4" />
+              {form.isSaving ? 'Saving…' : 'Save All'}
+            </Button>
+          )}
         </div>
       </div>
 

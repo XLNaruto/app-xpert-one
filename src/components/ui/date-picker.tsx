@@ -13,6 +13,16 @@ const PANEL_MAX = 340
 const GAP = 4
 const VIEWPORT_PADDING = 8
 
+/*
+ * The panel's own width — `.react-calendar` is `18rem` in `globals.css`.
+ *
+ * The horizontal clamp below has to be measured against THIS, not against the
+ * field: a field narrower than the panel (a `w-44` filter control, say) sitting
+ * at the right edge of the page would otherwise be told it had room, and the
+ * panel would hang off the viewport and be clipped.
+ */
+const PANEL_WIDTH = 288
+
 interface DatePickerProps {
   /** Selected date as `yyyy-MM-dd`, or `''` when nothing is picked. */
   value: string
@@ -72,7 +82,9 @@ export function DatePicker({
       const rect = wrap.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
       const dropUp = spaceBelow < PANEL_MAX && rect.top > spaceBelow
-      const maxLeft = window.innerWidth - rect.width - VIEWPORT_PADDING
+      // Wide enough for the panel, whatever the field measures.
+      const panelWidth = Math.max(rect.width, PANEL_WIDTH)
+      const maxLeft = window.innerWidth - panelWidth - VIEWPORT_PADDING
       const left = Math.min(
         Math.max(VIEWPORT_PADDING, rect.left),
         Math.max(VIEWPORT_PADDING, maxLeft),

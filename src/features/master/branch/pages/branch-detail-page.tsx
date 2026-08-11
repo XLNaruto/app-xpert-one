@@ -25,12 +25,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/utils'
 import { decryptId } from '@/lib/crypto'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ActCard } from '../components/act-card'
 import { useBranchDetail } from '../hooks/use-branch-detail'
 
 /** Show a stored date as 'dd MMM yyyy', or nothing when it isn't recorded. */
-const asDate = (value: string | null | undefined) =>
-  value ? formatDate(value) : null
+const asDate = (value: string | null | undefined) => (value ? formatDate(value) : null)
 /** Never surface a stored credential — just say whether one is on file. */
 const asSecret = (value: string | null | undefined) => (value ? '••••••••' : null)
 /** A whole-number column as text, blank when the branch doesn't record it. */
@@ -57,6 +57,9 @@ export function BranchDetailPage({ data }: { data?: string }) {
     goToEdit,
   } = useBranchDetail(decryptId(data))
 
+  // The Edit button is the only write this screen offers.
+  const { canUpdate } = useResourceAccess(PERMISSIONS.branches)
+
   // Reading this record was refused — show the 403 screen with the server's
   // reason instead of an inline error line.
   if (isForbidden) {
@@ -74,7 +77,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
               <ArrowLeft className="size-4" />
               Back
             </Button>
-            {branch && (
+            {canUpdate && branch && (
               <Button onClick={goToEdit}>
                 <Pencil className="size-4" />
                 Edit
@@ -171,7 +174,11 @@ export function BranchDetailPage({ data }: { data?: string }) {
               label="PF Office Address"
               value={officeName('PF', acts?.pfOfficeAddressId ?? null)}
             />
-            <DetailItem icon={UserRound} label="PF Username" value={acts?.pfUsername ?? null} />
+            <DetailItem
+              icon={UserRound}
+              label="PF Username"
+              value={acts?.pfUsername ?? null}
+            />
             <DetailItem
               icon={ShieldCheck}
               label="PF Password"
@@ -185,7 +192,11 @@ export function BranchDetailPage({ data }: { data?: string }) {
             tone="border-emerald-500/20 bg-emerald-500/5"
             iconTone="text-emerald-600 dark:text-emerald-400"
           >
-            <DetailItem icon={FileText} label="ESIC Code" value={acts?.esicCode ?? null} />
+            <DetailItem
+              icon={FileText}
+              label="ESIC Code"
+              value={acts?.esicCode ?? null}
+            />
             <DetailItem
               icon={IndianRupee}
               label="ESIC Deducts On"
@@ -320,7 +331,11 @@ export function BranchDetailPage({ data }: { data?: string }) {
               label="LWF Office Address"
               value={officeName('LWF', acts?.lwfOfficeAddressId ?? null)}
             />
-            <DetailItem icon={UserRound} label="LWF Username" value={acts?.lwfUsername ?? null} />
+            <DetailItem
+              icon={UserRound}
+              label="LWF Username"
+              value={acts?.lwfUsername ?? null}
+            />
             <DetailItem
               icon={ShieldCheck}
               label="LWF Password"

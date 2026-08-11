@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { PERMISSIONS, requirePermission } from '@/features/permissions'
 import { SalaryViewDetailPage } from '@/features/hr/salary-view'
 import { validateDataSearch } from '@/lib/route-search'
 
@@ -8,6 +9,8 @@ import { validateDataSearch } from '@/lib/route-search'
  * back off the report for that employee and period.
  */
 export const Route = createFileRoute('/_authenticated/hr/salary-view/detail')({
+  beforeLoad: ({ context }) =>
+    requirePermission(context.queryClient, `${PERMISSIONS.salaryView}:read`),
   validateSearch: validateDataSearch,
   component: RouteComponent,
 })

@@ -41,6 +41,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden, NotFound } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   EMPLOYMENT_TYPE_OPTIONS,
   MARITAL_STATUS_OPTIONS,
@@ -96,6 +97,9 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     goToEdit,
   } = useEmployeeDetail(data)
 
+  // The Edit button is the only write this screen offers.
+  const { canUpdate } = useResourceAccess(PERMISSIONS.employees)
+
   const resolveMedia = useMediaResolver()
 
   // No usable token — nothing to show.
@@ -135,10 +139,12 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
         description="Everything on record, read-only"
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={goToEdit}>
-              <Pencil className="size-4" />
-              Edit
-            </Button>
+            {canUpdate && (
+              <Button variant="outline" onClick={goToEdit}>
+                <Pencil className="size-4" />
+                Edit
+              </Button>
+            )}
             <Button variant="outline" onClick={goToList}>
               <ArrowLeft className="size-4" />
               Back
@@ -148,11 +154,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
       />
 
       <div className="space-y-4">
-        <EmployeeHero
-          employee={employee}
-          posting={posting}
-          isActive={isActive}
-        />
+        <EmployeeHero employee={employee} posting={posting} isActive={isActive} />
 
         {/* ── Personal ───────────────────────────────────────────────────── */}
 
@@ -160,9 +162,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           <Grid>
             <DetailItem
               label="Full Name"
-              value={
-                [employee.prefix, employee.name].filter(Boolean).join(' ') || null
-              }
+              value={[employee.prefix, employee.name].filter(Boolean).join(' ') || null}
             />
             <DetailItem label="Gender" value={employee.gender || null} />
             <DetailItem label="Date of Birth" value={onDate(employee.birthDate)} />
@@ -501,7 +501,11 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                   <DetailItem label="PT Type" value={wage.data.ptActType || null} />
                   <DetailItem
                     label="PT Amount"
-                    value={wage.data.ptAmount === null ? null : formatAmount(wage.data.ptAmount)}
+                    value={
+                      wage.data.ptAmount === null
+                        ? null
+                        : formatAmount(wage.data.ptAmount)
+                    }
                   />
                 </ActCard>
               )}
@@ -537,7 +541,10 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                     }
                   />
                   <div>
-                    <BoolChip label="PF on OT" value={wage.data.isPfApplicableOnOvertime} />
+                    <BoolChip
+                      label="PF on OT"
+                      value={wage.data.isPfApplicableOnOvertime}
+                    />
                   </div>
                   <div>
                     <BoolChip
@@ -546,7 +553,10 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                     />
                   </div>
                   <div>
-                    <BoolChip label="PT on OT" value={wage.data.isPtApplicableOnOvertime} />
+                    <BoolChip
+                      label="PT on OT"
+                      value={wage.data.isPtApplicableOnOvertime}
+                    />
                   </div>
                 </ActCard>
               )}
@@ -646,9 +656,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
 
           <SubHeading icon={Briefcase} title="Work Experience" />
           {experienceRows.length === 0 ? (
-            <p className="text-sm italic text-muted-foreground">
-              No experience records.
-            </p>
+            <p className="text-sm italic text-muted-foreground">No experience records.</p>
           ) : (
             <div className="divide-y divide-border">
               {experienceRows.map((experience) => (
@@ -768,7 +776,9 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                     asset.assignedDate ? `Issued ${onDate(asset.assignedDate)}` : '—'
                   }
                   trailing={
-                    <Badge variant={asset.status === 'ASSIGNED' ? 'success' : 'secondary'}>
+                    <Badge
+                      variant={asset.status === 'ASSIGNED' ? 'success' : 'secondary'}
+                    >
                       {asset.status || '—'}
                     </Badge>
                   }

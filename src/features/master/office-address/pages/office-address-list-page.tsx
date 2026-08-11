@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { OFFICE_ADDRESS_SORT } from '../constants'
 import { useOfficeAddressList } from '../hooks/use-office-address-list'
 import type { OfficeAddress, OfficeAddressScreen } from '../types'
@@ -41,6 +42,11 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
     forbiddenMessage,
   } = useOfficeAddressList(screen)
 
+  // Which of this screen's buttons this role may see.
+  const { canCreate, canUpdate, canDelete } = useResourceAccess(
+    PERMISSIONS.officeAddresses,
+  )
+
   const columns = useMemo<ColumnDef<OfficeAddress>[]>(
     () => [
       {
@@ -57,8 +63,8 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <TableRowActions
-            onEdit={() => goToEdit(row.original.id)}
-            onDelete={() => setPendingDelete(row.original)}
+            onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            onDelete={canDelete ? () => setPendingDelete(row.original) : undefined}
           />
         ),
       },
@@ -144,10 +150,12 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         title={screen.title}
         description={screen.description}
         actions={
-          <Button onClick={goToCreate}>
-            <Plus className="size-4" />
-            {addLabel}
-          </Button>
+          canCreate && (
+            <Button onClick={goToCreate}>
+              <Plus className="size-4" />
+              {addLabel}
+            </Button>
+          )
         }
       />
 
@@ -183,12 +191,14 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
                 search ? 'Try a different search term.' : screen.emptyDescription
               }
               action={
-                search ? undefined : (
-                  <Button onClick={goToCreate}>
-                    <Plus className="size-4" />
-                    {addLabel}
-                  </Button>
-                )
+                search
+                  ? undefined
+                  : canCreate && (
+                      <Button onClick={goToCreate}>
+                        <Plus className="size-4" />
+                        {addLabel}
+                      </Button>
+                    )
               }
             />
           }
