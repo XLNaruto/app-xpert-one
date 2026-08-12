@@ -32,6 +32,9 @@ export const EMPTY_SHIFT_FORM: ShiftFormValues = {
   startTime: '',
   endTime: '',
   breakMinutes: '',
+  // Off, matching the API's default and every existing shift — break overage is
+  // reported but not charged until a company opts in.
+  isLateBreakPenaltyApplicable: false,
   concessionMinutes: '',
   minFullDayHours: '',
   minHalfDayHours: '',

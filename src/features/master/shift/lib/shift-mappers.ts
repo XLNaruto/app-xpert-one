@@ -24,6 +24,7 @@ export function toShift(response: ShiftResponse): Shift {
     endTime: toHhMm(response.end_time),
     isNightShift: response.is_night_shift,
     breakMinutes: response.break_minutes,
+    isLateBreakPenaltyApplicable: response.is_late_break_penalty_applicable,
     concessionMinutes: response.concession_minutes,
     earlyExitGraceMinutes: response.early_exit_grace_minutes,
     minFullDayHours: response.min_full_day_hours,
@@ -57,6 +58,8 @@ export function shiftToPayload(values: ShiftFormValues): ShiftUpdatePayload {
     start_time: values.startTime,
     end_time: values.endTime,
     ...sent('break_minutes', values.breakMinutes),
+    // Always sent: a toggle turned off has to overwrite a stored `true`.
+    is_late_break_penalty_applicable: values.isLateBreakPenaltyApplicable,
     ...sent('concession_minutes', values.concessionMinutes),
     // Not on the form any more — every shift is saved with no end-of-shift grace.
     early_exit_grace_minutes: 0,
@@ -76,6 +79,7 @@ export function shiftToFormValues(shift: Shift): ShiftFormValues {
     startTime: shift.startTime,
     endTime: shift.endTime,
     breakMinutes: String(shift.breakMinutes),
+    isLateBreakPenaltyApplicable: shift.isLateBreakPenaltyApplicable,
     concessionMinutes: String(shift.concessionMinutes),
     minFullDayHours: String(shift.minFullDayHours),
     minHalfDayHours: String(shift.minHalfDayHours),

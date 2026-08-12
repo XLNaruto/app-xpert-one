@@ -20,6 +20,13 @@ export interface Shift extends AuditFields {
   isNightShift: boolean
   /** Unpaid break inside the shift. */
   breakMinutes: number
+  /**
+   * True when break time taken beyond `breakMinutes` is docked from pay — the
+   * excess only, at the per-minute rate of the daily wage, landing on the payslip
+   * as its `lunch_deduction`. False (the default) reports the overage without
+   * charging for it.
+   */
+  isLateBreakPenaltyApplicable: boolean
   /** Minutes after `startTime` in which a check-in still counts as on time. */
   concessionMinutes: number
   /** The mirror of the concession at the end of the shift. */

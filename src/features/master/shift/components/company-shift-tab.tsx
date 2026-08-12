@@ -105,7 +105,22 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         accessorKey: 'breakMinutes',
         header: 'Break',
         enableSorting: false,
-        cell: ({ row }) => `${row.original.breakMinutes} min`,
+        meta: { className: 'whitespace-nowrap' },
+        // The allowance and whether going over it costs anything read as one fact,
+        // so they share a cell rather than widening the table by a column.
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <span>{row.original.breakMinutes} min</span>
+            {row.original.isLateBreakPenaltyApplicable && (
+              <Badge
+                variant="secondary"
+                title="Break time beyond this is deducted from pay"
+              >
+                Penalty
+              </Badge>
+            )}
+          </div>
+        ),
       },
       {
         accessorKey: 'concessionMinutes',
@@ -278,6 +293,30 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                 />
               )}
             />
+          </Field>
+
+          <Field
+            label="Break Penalty"
+            hint="Deduct pay for break time taken beyond the break above — the extra minutes only, at the daily wage's per-minute rate, shown on the payslip as the lunch deduction. Off reports the extra time without charging it."
+          >
+            <div className="flex h-9 items-center gap-2">
+              <Controller
+                control={form.control}
+                name="isLateBreakPenaltyApplicable"
+                render={({ field }) => (
+                  <>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label="Break penalty"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {field.value ? 'Deducted' : 'Not deducted'}
+                    </span>
+                  </>
+                )}
+              />
+            </div>
           </Field>
 
           <Field

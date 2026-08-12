@@ -49,6 +49,15 @@ export const shiftSchema = z
       .regex(TIME_PATTERN, 'Enter a time as HH:MM'),
     /** Unpaid break inside the shift. */
     breakMinutes: optionalInt(1440, 'Enter whole minutes, up to 1440'),
+    /**
+     * Dock pay for break time taken beyond `breakMinutes`?
+     *
+     * Off is the API's default and what every existing shift carries — the overage
+     * is then reported but never charged. On charges the excess only, at the
+     * per-minute rate of the daily wage, reaching the payslip as its
+     * `lunch_deduction`.
+     */
+    isLateBreakPenaltyApplicable: z.boolean(),
     /** Grace after `startTime` in which a check-in still counts as on time. */
     concessionMinutes: optionalInt(720, 'Enter whole minutes, up to 720'),
     /** Worked hours at or above this are a full day. */
@@ -109,6 +118,7 @@ export const shiftResponseSchema = z.object({
   /** Derived server-side from the two times — read-only here. */
   is_night_shift: z.boolean(),
   break_minutes: z.number(),
+  is_late_break_penalty_applicable: z.boolean(),
   concession_minutes: z.number(),
   early_exit_grace_minutes: z.number(),
   min_full_day_hours: z.number(),
@@ -149,6 +159,11 @@ export interface ShiftPayload {
   start_time: string
   end_time: string
   break_minutes?: number
+  /**
+   * Always sent, like `status` — it's a toggle on the form, so "off" is a real
+   * choice that has to overwrite a stored `true` rather than leave it standing.
+   */
+  is_late_break_penalty_applicable: boolean
   concession_minutes?: number
   early_exit_grace_minutes?: number
   min_full_day_hours?: number
