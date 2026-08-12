@@ -3,6 +3,7 @@ import { asset } from '@/lib/asset'
 import { CompanySelectGate } from '@/features/company'
 import { useAppConfig } from '@/features/config'
 import { usePermissions } from '@/features/permissions'
+import { useIpAccessModeGlobal } from '@/features/administration/ip-address'
 import { Sidebar } from './components/sidebar'
 import { Topbar } from './components/topbar'
 
@@ -13,6 +14,10 @@ export function DashboardLayout() {
   // Load the user's role + permission codes once, globally, so the sidebar's
   // gates and every `useCan()` / `<Can>` check answer from a warm cache.
   usePermissions()
+  // Load the company's IP access mode once, globally, same as the role above: it
+  // warms the IP screen's header, and a barred network (`RESTRICTED_IP`) is met
+  // by the full-screen overlay on entering the app instead of only on that screen.
+  useIpAccessModeGlobal()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

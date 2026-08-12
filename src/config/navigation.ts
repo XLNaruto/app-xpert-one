@@ -10,6 +10,7 @@ import {
   CalendarHeart,
   CalendarOff,
   Calculator,
+  CreditCard,
   Clock,
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
@@ -22,6 +23,7 @@ import {
   Landmark,
   LayoutDashboard,
   MapPinned,
+  Network,
   Percent,
   ReceiptIndianRupee,
   RefreshCw,
@@ -305,6 +307,23 @@ export const navGroups: NavGroup[] = [
         to: "/administration/role",
         icon: ShieldCheck,
         permission: PERMISSIONS.roles,
+      },
+      {
+        // The company's allow/block lists plus the mode switch that decides
+        // which of them the door actually consults.
+        label: "IP Access Control",
+        to: "/administration/ip-address",
+        icon: Network,
+        permission: PERMISSIONS.ipAddresses,
+      },
+      {
+        // Billing is the ACCOUNT's plan, not a company's — nothing on it is
+        // tenant-scoped, so it stays reachable before a company is picked.
+        label: "Billing & Subscription",
+        to: "/administration/billing",
+        icon: CreditCard,
+        permission: PERMISSIONS.billing,
+        companyIndependent: true,
       },
     ],
   },

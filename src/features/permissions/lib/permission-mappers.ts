@@ -1,5 +1,34 @@
-import type { MyRoleResponse, PermissionModuleResponse } from '../schemas'
-import type { MyRole, PermissionModule } from '../types'
+import type {
+  CompanyRefResponse,
+  MyRoleResponse,
+  PermissionModuleResponse,
+  TalkGrantResponse,
+} from '../schemas'
+import type { CompanyRef, MyRole, PermissionModule, TalkGrant } from '../types'
+
+/**
+ * A named company on a role's reach. Shared by `my-role` and the role detail —
+ * both answer `{ id, company_name }`.
+ */
+export function toCompanyRef(raw: CompanyRefResponse): CompanyRef {
+  return { id: raw.id, name: raw.company_name }
+}
+
+/**
+ * One Talk grant — a company with its departments nested. An empty
+ * `departments` is carried through as-is: it means the WHOLE company, and
+ * collapsing it to anything else would lose that.
+ */
+export function toTalkGrant(raw: TalkGrantResponse): TalkGrant {
+  return {
+    companyId: raw.company_id,
+    companyName: raw.company_name,
+    departments: raw.departments.map((department) => ({
+      id: department.department_id,
+      name: department.department_name,
+    })),
+  }
+}
 
 /**
  * One catalog node, snake_case → camelCase, recursing into `children`.
@@ -39,12 +68,9 @@ export function toMyRole(raw: MyRoleResponse): MyRole {
     permissionCodes: raw.permission_codes,
     modules: raw.modules.map(toPermissionModule),
     accessLevel: raw.access_level,
-    companyIds: raw.company_ids,
+    companies: raw.company_ids.map(toCompanyRef),
     talkEnabled: raw.talk_enabled,
-    talkAccess: raw.talk_access.map((grant) => ({
-      companyId: grant.company_id,
-      departmentId: grant.department_id ?? null,
-    })),
+    talkAccess: raw.talk_access.map(toTalkGrant),
     access: raw.access,
   }
 }

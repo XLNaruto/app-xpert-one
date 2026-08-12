@@ -1,18 +1,10 @@
 import { z } from 'zod'
+import { recordNameField, shortCodeField } from '@/lib/validation'
 
 /** Create/edit form for a leave type master record. */
 export const leaveTypeSchema = z.object({
-  leaveName: z
-    .string()
-    .trim()
-    .min(1, 'Leave name is required')
-    .min(2, 'Minimum 2 characters')
-    .max(120, 'Leave name cannot exceed 120 characters'),
-  shortName: z
-    .string()
-    .trim()
-    .min(1, 'Short name is required')
-    .max(20, 'Short name cannot exceed 20 characters'),
+  leaveName: recordNameField('the leave name', { max: 120 }),
+  shortName: shortCodeField('the short name', { max: 20 }),
   payType: z.enum(['PAID', 'UNPAID'], { message: 'Pay type is required' }),
 })
 

@@ -44,5 +44,8 @@ export const ACCESS_LEVEL_OPTIONS = [
   },
 ]
 
-/** "The whole company" — the empty department value on a Talk grant row. */
-export const WHOLE_COMPANY = ''
+/**
+ * What an empty department selection on a Talk grant means — the whole company,
+ * every department present and future, which is how the endpoint reads it too.
+ */
+export const WHOLE_COMPANY_LABEL = 'Whole company'

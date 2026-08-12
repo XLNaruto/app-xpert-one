@@ -61,11 +61,30 @@ export interface RoleAccess {
   attendance: boolean
 }
 
-/** One Talk grant — a company, optionally narrowed to a department. */
+/**
+ * A company named on a role's reach. The API answers `{ id, company_name }`
+ * rather than a bare id, so a chip is labelled without a second call.
+ */
+export interface CompanyRef {
+  id: number
+  name: string
+}
+
+/** One department a Talk grant reaches. */
+export interface TalkDepartment {
+  id: number
+  name: string
+}
+
+/**
+ * One Talk grant — a COMPANY, optionally narrowed to some of its departments.
+ * There is one entry per company; an EMPTY `departments` means the WHOLE
+ * company, every department present and future, never "none".
+ */
 export interface TalkGrant {
   companyId: number
-  /** Null means the whole company. */
-  departmentId: number | null
+  companyName: string
+  departments: TalkDepartment[]
 }
 
 /** `GET /user/my-role` — the signed-in user's role, codes and menu. */
@@ -83,8 +102,8 @@ export interface MyRole {
   /** The same set as the sidebar tree. */
   modules: PermissionModule[]
   accessLevel: 'GLOBAL' | 'COMPANY'
-  /** Empty on `GLOBAL`, which means every company of the account. */
-  companyIds: number[]
+  /** Named. Empty on `GLOBAL`, which means every company of the account. */
+  companies: CompanyRef[]
   talkEnabled: boolean
   talkAccess: TalkGrant[]
   access: RoleAccess

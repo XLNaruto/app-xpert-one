@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /**
  * Create/edit form for a department master record — the three fields the screen
@@ -8,11 +9,7 @@ import { z } from 'zod'
  */
 export const departmentSchema = z.object({
   branchId: z.string().trim().min(1, 'Branch is required'),
-  departmentName: z
-    .string()
-    .trim()
-    .min(1, 'Department name is required')
-    .max(200, 'Department name cannot exceed 200 characters'),
+  departmentName: recordNameField('the department name', { max: 200 }),
   /** Day of the month (1–31) the attendance/salary cycle starts. */
   monthStartDay: z.string().trim().min(1, 'Month start date is required'),
 })

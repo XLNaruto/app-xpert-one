@@ -1,5 +1,10 @@
 import type { AuditFields } from '@/types/audit'
-import type { Permission, PermissionModule } from '@/features/permissions'
+import type {
+  CompanyRef,
+  Permission,
+  PermissionModule,
+  TalkGrant,
+} from '@/features/permissions'
 
 /**
  * How far a role reaches.
@@ -10,12 +15,11 @@ import type { Permission, PermissionModule } from '@/features/permissions'
  */
 export type RoleAccessLevel = 'GLOBAL' | 'COMPANY'
 
-/** One Talk grant — a company, optionally narrowed to a department. */
-export interface RoleTalkGrant {
-  companyId: number
-  /** Null means the whole company. */
-  departmentId: number | null
-}
+/**
+ * One Talk grant — a COMPANY with the departments inside it the role reaches.
+ * Shared with `my-role`, which answers the very same shape.
+ */
+export type RoleTalkGrant = TalkGrant
 
 /** A role row on the list screen. The codes themselves come from the detail. */
 export interface RoleListRow extends AuditFields {
@@ -27,6 +31,8 @@ export interface RoleListRow extends AuditFields {
   isSystem: boolean
   accessLevel: RoleAccessLevel
   talkEnabled: boolean
+  /** Exactly what is stored on the role, in catalog order. */
+  permissionCodes: Permission[]
   /** How many codes the role grants — sent so the screen need not count. */
   permissionCount: number
 }
@@ -46,7 +52,8 @@ export interface Role {
   isSystem: boolean
   permissionCodes: Permission[]
   accessLevel: RoleAccessLevel
-  companyIds: number[]
+  /** Named. Empty on `GLOBAL`, where it reads as every company. */
+  companies: CompanyRef[]
   talkEnabled: boolean
   talkAccess: RoleTalkGrant[]
   /** The catalog tree, with `granted` already reflecting this role. */

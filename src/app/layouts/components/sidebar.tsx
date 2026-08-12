@@ -98,7 +98,9 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          'z-50 flex h-screen flex-col overflow-hidden border-sidebar-border bg-sidebar text-sidebar-foreground lg:border-r',
+          // `sidebar-shell` is the hover target that reveals the nav's
+          // scrollbar thumb — see `.sidebar-shell:hover` in globals.css.
+          'sidebar-shell z-50 flex h-screen flex-col overflow-hidden border-sidebar-border bg-sidebar text-sidebar-foreground lg:border-r',
           'transition-[translate,width] duration-300 ease-in-out will-change-[translate,width]',
           // Mobile/tablet: fixed drawer sliding from the left.
           'fixed inset-y-0 left-0 w-72 shadow-xl',
@@ -168,10 +170,12 @@ export function Sidebar() {
                 className={cn(
                   'space-y-0.5',
                   // Expanded rows are laid out at their final width (18rem panel
-                  // minus the nav's px-2) from the first frame, so labels are
-                  // revealed by the widening panel instead of re-wrapping from
-                  // three lines down to one as it animates.
-                  !collapsed && 'w-68',
+                  // minus the nav's px-2 and the 12px scrollbar gutter) from the first
+                  // frame, so labels are revealed by the widening panel instead
+                  // of re-wrapping from three lines down to one as it animates.
+                  // The scrollbar is part of that width, so a menu long enough
+                  // to scroll doesn't narrow the rows it sits next to.
+                  !collapsed && 'w-65',
                 )}
               >
                 <p
@@ -211,7 +215,7 @@ export function Sidebar() {
 /** Placeholder rows shown while `GET /user/my-role` decides what this user sees. */
 function NavSkeleton({ collapsed }: { collapsed: boolean }) {
   return (
-    <div className={cn('space-y-0.5', !collapsed && 'w-68')} aria-hidden>
+    <div className={cn('space-y-0.5', !collapsed && 'w-65')} aria-hidden>
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}

@@ -13,9 +13,7 @@ export interface ComboboxOption {
   value: string
 }
 
-interface ComboboxProps {
-  value: string
-  onChange: (value: string) => void
+interface ComboboxBaseProps {
   options: ComboboxOption[]
   /** Leading icon in the trigger. */
   icon?: LucideIcon
@@ -60,6 +58,26 @@ interface ComboboxProps {
   onSearchChange?: (query: string) => void
 }
 
+interface ComboboxSingleProps extends ComboboxBaseProps {
+  multiple?: false
+  value: string
+  onChange: (value: string) => void
+}
+
+interface ComboboxMultiProps extends ComboboxBaseProps {
+  /**
+   * Tick many options instead of one. The panel stays open as they're picked,
+   * the value is the selected values in pick order, and `clearable` empties it.
+   */
+  multiple: true
+  value: string[]
+  onChange: (value: string[]) => void
+  /** Labels shown in the trigger before it collapses to "+N more". */
+  maxVisibleLabels?: number
+}
+
+export type ComboboxProps = ComboboxSingleProps | ComboboxMultiProps
+
 /** Trigger `onScrollEnd` when scrolled within this many px of the bottom. */
 const SCROLL_END_THRESHOLD = 48
 
@@ -78,23 +96,31 @@ interface PanelCoords {
  * never clipped by an `overflow-hidden`/`overflow-auto` ancestor (e.g. the
  * FilterBar panel). Closes on outside-click or Escape.
  */
-export function Combobox({
-  value,
-  onChange,
-  options,
-  icon: Icon,
-  placeholder,
-  searchable = true,
-  clearable = false,
-  searchPlaceholder = 'Search',
-  align = 'start',
-  className,
-  triggerClassName,
-  panelMinWidth = 0,
-  onScrollEnd,
-  loading = false,
-  onSearchChange,
-}: ComboboxProps) {
+export function Combobox(props: ComboboxProps) {
+  const {
+    options,
+    icon: Icon,
+    placeholder,
+    searchable = true,
+    clearable = false,
+    searchPlaceholder = 'Search',
+    align = 'start',
+    className,
+    triggerClassName,
+    panelMinWidth = 0,
+    onScrollEnd,
+    loading = false,
+    onSearchChange,
+  } = props
+
+  // `value`/`onChange` stay on `props`: reading them through the union is what
+  // keeps the string and string[] halves apart without a cast.
+  const selectedValues = props.multiple
+    ? props.value
+    : props.value
+      ? [props.value]
+      : []
+
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [coords, setCoords] = useState<PanelCoords | null>(null)
@@ -153,7 +179,9 @@ export function Combobox({
     }
   }, [open])
 
-  const selected = options.find((o) => o.value === value)
+  /** The picked options, in the order the *list* holds them. */
+  const selectedOptions = options.filter((o) => selectedValues.includes(o.value))
+
   // With server-side search the parent already returns the matching page, so
   // show options verbatim; otherwise filter the loaded options locally.
   const filtered =
@@ -167,10 +195,30 @@ export function Combobox({
   }
 
   const choose = (v: string) => {
-    onChange(v)
+    // Multi keeps the panel (and the search term) as it is: picking three
+    // departments shouldn't mean reopening and re-typing three times.
+    if (props.multiple) {
+      props.onChange(
+        props.value.includes(v) ? props.value.filter((current) => current !== v) : [...props.value, v],
+      )
+      return
+    }
+    props.onChange(v)
     setOpen(false)
     setQuery('')
     onSearchChange?.('')
+  }
+
+  /** Drop one picked value (multi only) — the × on a chip. */
+  const remove = (v: string) => {
+    if (!props.multiple) return
+    props.onChange(props.value.filter((current) => current !== v))
+  }
+
+  const clear = () => {
+    if (props.multiple) props.onChange([])
+    else props.onChange('')
+    setOpen(false)
   }
 
   const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
@@ -183,49 +231,109 @@ export function Combobox({
 
   // The trigger is a <button>, so the clear control can't nest inside it — it
   // rides as an overlay sibling, with the trigger padded to make room.
-  const showClear = clearable && value !== ''
+  const showClear = clearable && selectedValues.length > 0
 
-  return (
-    <div ref={wrapRef} className={cn('relative', className)}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className={cn(
-          'flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:border-ring/40',
-          open && 'ring-1 ring-ring',
-          triggerClassName,
-        )}
-      >
-        {Icon ? <Icon className="size-4 shrink-0 text-muted-foreground" /> : null}
+  const maxVisibleLabels = props.multiple ? (props.maxVisibleLabels ?? 2) : 1
+  const visibleLabels = selectedOptions.slice(0, maxVisibleLabels)
+  const hiddenCount = selectedOptions.length - visibleLabels.length
+
+  const triggerClasses = cn(
+    'flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:border-ring/40',
+    open && 'ring-1 ring-ring',
+    triggerClassName,
+  )
+
+  const triggerContent = (
+    <>
+      {Icon ? <Icon className="size-4 shrink-0 text-muted-foreground" /> : null}
+      {props.multiple && selectedOptions.length > 0 ? (
+        <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+          {visibleLabels.map((option) => (
+            <span
+              key={option.value}
+              className="flex min-w-0 items-center gap-1 rounded bg-primary/10 py-0.5 pl-1.5 pr-1 text-xs text-primary"
+            >
+              <span className="max-w-40 truncate">{option.label}</span>
+              {/* Drops just this one — the trigger's × next to the chevron
+                  clears the lot. Valid only because the multi trigger is a
+                  div: a <button> can't hold another one. */}
+              <button
+                type="button"
+                aria-label={`Remove ${option.label}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  remove(option.value)
+                }}
+                className="flex size-3.5 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-primary/20"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+          {hiddenCount > 0 ? (
+            <span className="shrink-0 text-xs text-muted-foreground">+{hiddenCount} more</span>
+          ) : null}
+        </span>
+      ) : (
         <span
           className={cn(
             'flex-1 truncate text-left',
-            !selected && 'text-muted-foreground',
+            selectedOptions.length === 0 && 'text-muted-foreground',
           )}
         >
-          {selected?.label ?? placeholder ?? ''}
+          {selectedOptions[0]?.label ?? placeholder ?? ''}
         </span>
-        {/* Reserves the slot the clear overlay occupies, left of the chevron. */}
-        {showClear ? <span aria-hidden className="size-5 shrink-0" /> : null}
-        <ChevronDown
-          className={cn(
-            'size-4 shrink-0 text-muted-foreground transition-transform',
-            open && 'rotate-180',
-          )}
-        />
-      </button>
+      )}
+      {/* Reserves the slot the clear overlay occupies, left of the chevron. */}
+      {showClear ? <span aria-hidden className="size-5 shrink-0" /> : null}
+      <ChevronDown
+        className={cn(
+          'size-4 shrink-0 text-muted-foreground transition-transform',
+          open && 'rotate-180',
+        )}
+      />
+    </>
+  )
+
+  return (
+    <div ref={wrapRef} className={cn('relative', className)}>
+      {/* Multi draws its trigger as a div so each chip can carry its own remove
+          button; single stays a real <button>. Both expose the same role. */}
+      {props.multiple ? (
+        <div
+          role="combobox"
+          tabIndex={0}
+          onClick={() => setOpen((o) => !o)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setOpen((o) => !o)
+            }
+          }}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className={triggerClasses}
+        >
+          {triggerContent}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className={triggerClasses}
+        >
+          {triggerContent}
+        </button>
+      )}
 
       {showClear ? (
         <button
           type="button"
           aria-label="Clear selection"
           title="Clear"
-          onClick={() => {
-            onChange('')
-            setOpen(false)
-          }}
+          onClick={clear}
           className="absolute right-7 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <X className="size-3.5" />
@@ -263,13 +371,14 @@ export function Combobox({
               <ul
                 className="max-h-60 overflow-y-auto"
                 role="listbox"
+                aria-multiselectable={props.multiple ? true : undefined}
                 onScroll={handleScroll}
               >
                 {filtered.length === 0 && !loading ? (
                   <li className="px-2 py-2 text-center text-sm text-muted-foreground">No results</li>
                 ) : (
                   filtered.map((o) => {
-                    const active = o.value === value
+                    const active = selectedValues.includes(o.value)
                     return (
                       <li key={o.value}>
                         <button

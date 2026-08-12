@@ -198,9 +198,14 @@
  *        "children": [ … ]                         // same shape, any depth
  *      } ],
  *      "access_level": "GLOBAL" | "COMPANY",
- *      "company_ids": [ 5 ],                // empty on GLOBAL → every company
- *      "talk_enabled": false, "talk_access": [ { "company_id": 5,
- *                                                "department_id": null } ],
+ *      "company_ids": [ { "id": 5, "company_name": "Acme" } ],  // NAMED; empty
+ *                                           //   on GLOBAL → every company
+ *      "talk_enabled": false,
+ *      "talk_access": [ { "company_id": 5, "company_name": "Acme",
+ *                         "departments": [ { "department_id": 9,
+ *                                            "department_name": "Sales" } ] } ],
+ *                                           // one entry PER COMPANY; empty
+ *                                           //   departments = the WHOLE company
  *      "access": { "web": true, "app": false, "talk": false, "attendance": true }
  *    }
  * Notes: `permission_codes` is the EXACT set every route policy checks — the

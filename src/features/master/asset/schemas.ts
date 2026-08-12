@@ -1,12 +1,9 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** Create/edit form for an asset master record. */
 export const assetSchema = z.object({
-  assetName: z
-    .string()
-    .trim()
-    .min(1, 'Asset name is required')
-    .max(200, 'Asset name cannot exceed 200 characters'),
+  assetName: recordNameField('the asset name', { max: 200 }),
 })
 
 export type AssetFormValues = z.infer<typeof assetSchema>

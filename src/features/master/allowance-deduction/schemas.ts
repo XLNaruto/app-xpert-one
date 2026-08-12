@@ -1,19 +1,11 @@
 import { z } from 'zod'
+import { recordNameField, shortCodeField } from '@/lib/validation'
 
 /** Create/edit form for an allowance / deduction master record. */
 export const allowanceDeductionSchema = z.object({
   type: z.enum(['ALLOWANCE', 'DEDUCTION'], { message: 'Please select type' }),
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Please enter name')
-    .min(2, 'Minimum 2 characters')
-    .max(120, 'Name cannot exceed 120 characters'),
-  shortName: z
-    .string()
-    .trim()
-    .min(1, 'Please enter short name')
-    .max(20, 'Short name cannot exceed 20 characters'),
+  name: recordNameField('the name', { max: 120 }),
+  shortName: shortCodeField('the short name', { max: 20 }),
 })
 
 export type AllowanceDeductionFormValues = z.infer<typeof allowanceDeductionSchema>

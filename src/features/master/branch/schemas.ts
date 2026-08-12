@@ -1,25 +1,16 @@
 import { z } from 'zod'
-
-/** PAN — five letters, four digits, one letter (e.g. ABCDE1234F). */
-const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
-/** GSTIN — 15-char state-code + PAN + entity + Z + checksum. */
-const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/
-const MOBILE_RE = /^\d{10}$/
-const PIN_RE = /^\d{6}$/
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-/** Passes when the value is blank (optional field) or matches `re`. */
-const optionalMatch = (re: RegExp, message: string) =>
-  z
-    .string()
-    .trim()
-    .refine((v) => v === '' || re.test(v), message)
-
-const DIGITS_RE = /^\d+$/
-
-/** An optional free-text field, capped at the API's column length. */
-const text = (max: number) =>
-  z.string().trim().max(max, `Cannot exceed ${max} characters`)
+import {
+  emailField,
+  gstField,
+  mobileField,
+  panField,
+  phoneField,
+  pinCodeField,
+  recordNameField,
+  registrationNumberField,
+  text,
+  wholeNumberField,
+} from '@/lib/validation'
 
 /**
  * An optional act field. Dates come from `<DateField>` already shaped
@@ -44,14 +35,10 @@ const id = z.string().trim()
  */
 export const branchSchema = z.object({
   // Branch information
-  branchName: z
-    .string()
-    .trim()
-    .min(1, 'Branch name is required')
-    .max(200, 'Cannot exceed 200 characters'),
-  registrationNumber: text(100),
-  panNumber: optionalMatch(PAN_RE, 'Enter a valid PAN (e.g. ABCDE1234F)'),
-  gstNumber: optionalMatch(GST_RE, 'Enter a valid 15-character GST number'),
+  branchName: recordNameField('the branch name', { max: 200 }),
+  registrationNumber: registrationNumberField(),
+  panNumber: panField(),
+  gstNumber: gstField(),
 
   // Address details
   addressLine1: text(500),
@@ -59,14 +46,14 @@ export const branchSchema = z.object({
   addressLine3: text(500),
   stateId: z.string().trim(),
   districtId: z.string().trim(),
-  city: text(200),
-  pinCode: optionalMatch(PIN_RE, 'Pin code must be 6 digits'),
+  city: recordNameField('the city', { required: false, max: 200 }),
+  pinCode: pinCodeField(),
 
   // Contact details
-  phone: text(20),
-  mobile1: optionalMatch(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-  mobile2: optionalMatch(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-  email: optionalMatch(EMAIL_RE, 'Enter a valid email address'),
+  phone: phoneField({ max: 20 }),
+  mobile1: mobileField(),
+  mobile2: mobileField(),
+  email: emailField(),
 
   // ---------------------------------------------------------------------
   // Applicable acts — saved to `/user/act-registrations`, one row per branch,
@@ -76,7 +63,7 @@ export const branchSchema = z.object({
   // ---------------------------------------------------------------------
 
   // PF act
-  pfCode: actText(100),
+  pfCode: registrationNumberField({ label: 'the PF code' }),
   epfActDate: actText(),
   fpfActDate: actText(),
   pfOfficeAddressId: id,
@@ -84,7 +71,7 @@ export const branchSchema = z.object({
   pfPassword: actText(200),
 
   // ESIC act
-  esicCode: actText(100),
+  esicCode: registrationNumberField({ label: 'the ESIC code' }),
   esicDeductsOn: actText(100),
   esicRegistrationDate: actText(),
   esicOfficeAddressId: id,
@@ -93,32 +80,35 @@ export const branchSchema = z.object({
 
   // Factory act
   factoryActDate: actText(),
-  factoryLicenseNumber: actText(100),
-  factoryFinNumber: actText(100),
-  noOfEmployees: optionalMatch(DIGITS_RE, 'Enter a whole number'),
-  electricHorsePower: optionalMatch(DIGITS_RE, 'Enter a whole number'),
+  factoryLicenseNumber: registrationNumberField({ label: 'the licence number' }),
+  factoryFinNumber: registrationNumberField({ label: 'the FIN number' }),
+  noOfEmployees: wholeNumberField(),
+  electricHorsePower: wholeNumberField(),
   licenseExpiryDate: actText(),
   stabilityExpiryDate: actText(),
   factoryOfficeAddressId: id,
 
   // Professional tax act
   ptRegistrationDate: actText(),
-  ptPecRegistrationNumber: actText(100),
-  ptPrcRegistrationNumber: actText(100),
-  ptCorporationName: actText(200),
+  ptPecRegistrationNumber: registrationNumberField({ label: 'the PEC number' }),
+  ptPrcRegistrationNumber: registrationNumberField({ label: 'the PRC number' }),
+  ptCorporationName: recordNameField('the corporation name', {
+    required: false,
+    max: 200,
+  }),
   ptStateId: id,
   ptDistrictId: id,
 
   // LWF act
   lwfRegistrationDate: actText(),
-  lwfRegistrationNumber: actText(100),
+  lwfRegistrationNumber: registrationNumberField(),
   lwfOfficeAddressId: id,
   lwfUsername: actText(100),
   lwfPassword: actText(200),
 
   // Employment exchange act
   exRegistrationDate: actText(),
-  exRegistrationNumber: actText(100),
+  exRegistrationNumber: registrationNumberField(),
   exOfficeAddressId: id,
 })
 

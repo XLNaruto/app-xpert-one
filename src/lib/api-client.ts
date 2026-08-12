@@ -1,6 +1,8 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { apiBaseUrl } from '@/config/env'
 import { useAuthStore } from '@/stores/auth-store'
+import { useIpBlockStore } from '@/stores/ip-block-store'
+import { getApiErrorMessage, isRestrictedIpError } from './api-error'
 import { refreshAccessToken } from './auth-refresh'
 
 /**
@@ -41,10 +43,26 @@ function forceSignOut() {
 // On 401: refresh once (single-flight, in auth-refresh.ts) and replay the
 // original request. If the refresh fails — or on any 401 that can't be retried
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Any response at all proves the address is reachable again, so a block
+    // raised earlier (or on a network we've since left) lifts itself.
+    useIpBlockStore.getState().clear()
+    return response
+  },
   async (error) => {
     const original = error?.config as RetriableConfig | undefined
     const status = error?.response?.status
+
+    // A network-level block hits every endpoint identically, so it's answered
+    // once app-wide (the `RestrictedIp` overlay from `__root`) instead of each
+    // screen turning it into its own error state. The rejection still travels on
+    // so callers keep their normal failure handling.
+    if (isRestrictedIpError(error)) {
+      useIpBlockStore
+        .getState()
+        .block(getApiErrorMessage(error, 'Requests from this IP address are blocked.'))
+      return Promise.reject(error)
+    }
     const canRetry =
       status === 401 &&
       original != null &&

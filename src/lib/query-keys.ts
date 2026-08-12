@@ -53,6 +53,39 @@ export const queryKeys = {
       [...queryKeys.role.all, 'assignable-permissions'] as const,
   },
   /**
+   * Billing — `features/administration/billing`.
+   *
+   * Account-scoped, not tenant-scoped: no key here carries a company. The three
+   * reads are separate because they answer different questions — what may be
+   * bought, what IS bought (at its purchase-time prices), and how much of it is
+   * being used.
+   */
+  billing: {
+    all: ['billing'] as const,
+    plans: () => [...queryKeys.billing.all, 'plans'] as const,
+    subscription: () => [...queryKeys.billing.all, 'subscription'] as const,
+    /** `GET /user/me` — the account, its subscription and its usage counts. */
+    account: () => [...queryKeys.billing.all, 'account'] as const,
+  },
+  /**
+   * IP access control — `features/administration/ip-address`.
+   *
+   * `mode` is the company-level switch and the two list counts; it sits under
+   * the same `all` prefix as the entries because adding or removing an address
+   * changes those counts, so one invalidation has to refresh both.
+   *
+   * `type` narrows a page to one list server-side, so it's part of the list key
+   * — a filtered page is its own result set, not a slice of the unfiltered one.
+   */
+  ipAddress: {
+    all: ['ip-address'] as const,
+    list: (params?: PageParams, type?: string) =>
+      params
+        ? ([...queryKeys.ipAddress.all, 'list', params, type ?? ''] as const)
+        : ([...queryKeys.ipAddress.all, 'list'] as const),
+    mode: () => [...queryKeys.ipAddress.all, 'mode'] as const,
+  },
+  /**
    * The signed-in user's own companies (tenants) + active selection —
    * `features/company`. Kept separate from the `company` master list below so a
    * tenant switch can invalidate everything *except* this key.

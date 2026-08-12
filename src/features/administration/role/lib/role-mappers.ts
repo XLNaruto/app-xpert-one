@@ -1,5 +1,4 @@
-import { toPermissionModule } from '@/features/permissions'
-import { WHOLE_COMPANY } from '../constants'
+import { toCompanyRef, toPermissionModule, toTalkGrant } from '@/features/permissions'
 import type {
   AssignablePermissionsResponse,
   RoleFormValues,
@@ -18,6 +17,7 @@ export function toRoleListRow(response: RoleListRowResponse): RoleListRow {
     isSystem: response.is_system,
     accessLevel: response.access_level,
     talkEnabled: response.talk_enabled,
+    permissionCodes: response.permission_codes,
     permissionCount: response.permission_count,
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',
@@ -35,12 +35,9 @@ export function toRole(response: RoleResponse): Role {
     isSystem: response.is_system,
     permissionCodes: response.permission_codes,
     accessLevel: response.access_level,
-    companyIds: response.company_ids,
+    companies: response.company_ids.map(toCompanyRef),
     talkEnabled: response.talk_enabled,
-    talkAccess: response.talk_access.map((grant) => ({
-      companyId: grant.company_id,
-      departmentId: grant.department_id ?? null,
-    })),
+    talkAccess: response.talk_access.map(toTalkGrant),
     modules: response.modules.map(toPermissionModule),
   }
 }
@@ -70,11 +67,12 @@ export function roleToPayload(values: RoleFormValues): RoleUpdatePayload {
     access_level: values.accessLevel,
     company_ids: values.accessLevel === 'GLOBAL' ? [] : [...new Set(values.companyIds)],
     talk_enabled: values.talkEnabled,
+    // One entry per company, its departments nested — an empty list is "the
+    // whole company", which is what a grant with nothing narrowed means.
     talk_access: values.talkEnabled
       ? values.talkAccess.map((grant) => ({
           company_id: Number(grant.companyId),
-          department_id:
-            grant.departmentId === WHOLE_COMPANY ? null : Number(grant.departmentId),
+          department_ids: [...new Set(grant.departmentIds.map(Number))],
         }))
       : [],
   }
@@ -93,11 +91,11 @@ export function roleToFormValues(role: Role): RoleFormValues {
     name: role.name,
     permissionCodes: role.permissionCodes,
     accessLevel: role.accessLevel,
-    companyIds: role.companyIds,
+    companyIds: role.companies.map((company) => company.id),
     talkEnabled: role.talkEnabled,
     talkAccess: role.talkAccess.map((grant) => ({
       companyId: String(grant.companyId),
-      departmentId: grant.departmentId === null ? WHOLE_COMPANY : String(grant.departmentId),
+      departmentIds: grant.departments.map((department) => String(department.id)),
     })),
   }
 }

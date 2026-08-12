@@ -2,8 +2,9 @@ import { RotateCcw, TriangleAlert } from 'lucide-react'
 import { useRouter } from '@tanstack/react-router'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { getApiErrorMessage, isForbiddenError, isRestrictedIpError } from '@/lib/api-error'
 import { Forbidden } from './forbidden'
+import { RestrictedIp } from './restricted-ip'
 
 /**
  * The router's default error boundary. A forbidden (403) failure — the user
@@ -14,6 +15,12 @@ import { Forbidden } from './forbidden'
  * `defaultErrorComponent` so every route is covered.
  */
 export function RouteError({ error, reset }: { error: unknown; reset?: () => void }) {
+  // A network-level block is normally already on screen via the root overlay;
+  // answering it here too keeps a loader failure from falling through to the
+  // generic "unexpected error" screen, whose retry can't help.
+  if (isRestrictedIpError(error)) {
+    return <RestrictedIp description={getApiErrorMessage(error)} />
+  }
   if (isForbiddenError(error)) {
     return <Forbidden description={getApiErrorMessage(error)} />
   }

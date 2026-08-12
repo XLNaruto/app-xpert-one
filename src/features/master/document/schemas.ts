@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /**
  * Create/edit form for a document master record. The type is held as an id
@@ -7,12 +8,7 @@ import { z } from 'zod'
  */
 export const documentSchema = z.object({
   documentTypeId: z.string().trim().min(1, 'Please select a document type'),
-  documentName: z
-    .string()
-    .trim()
-    .min(1, 'Please enter document name')
-    .min(2, 'Minimum 2 characters')
-    .max(200, 'Cannot exceed 200 characters'),
+  documentName: recordNameField('the document name', { max: 200 }),
   /** Mandatory for every employee — the API defaults it to false. */
   isRequired: z.boolean(),
 })

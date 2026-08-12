@@ -189,6 +189,23 @@
     font-family: var(--font-heading);
   }
 
+  /* Anything clickable says so under the cursor.
+
+     Tailwind's preflight resets buttons to the UA `cursor: default`, so every
+     control that isn't the shadcn `Button` (which sets `cursor-pointer` itself)
+     came out with an arrow — raw `<button>`s, icon buttons, sortable table
+     headers, filter chips, `<summary>` disclosures, calendar tiles.
+
+     Disabled controls are deliberately excluded: an arrow is how a dead button
+     admits it's dead, and a pointer over one promises a click that won't land.
+     `[role='button']` covers the div-based controls Radix renders, which have no
+     `:disabled` state and use `aria-disabled` instead. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary {
+    cursor: pointer;
+  }
+
   /* Kill the browser autofill blue/yellow background so themed (glassy)
      inputs keep their look. Chrome paints the autofill highlight through an
      internal background that `background-color` can't touch, so overpaint it
@@ -432,43 +449,46 @@
   background-color: color-mix(in oklab, var(--foreground) 32%, transparent);
 }
 
-/* Hairline, theme-aware scrollbar for the sidebar nav. The track takes no
-   layout width and the thumb stays invisible until the nav is hovered, so the
-   menu rows keep their full width and the bar never draws attention. */
+/* Slim, theme-aware scrollbar for the sidebar nav. The thumb is invisible
+   until the pointer enters the sidebar (`.sidebar-shell:hover`) and darkens
+   again once it's over the bar itself. Both engines take real layout width and
+   Firefox's `thin` bar is the wider of the two (~10-12px), so the menu rows
+   reserve 12px up front (see the nav row width in
+   `app/layouts/components/sidebar.tsx`) — the rows keep the same width whether
+   or not the nav is scrolling. The Chromium track is padded out to that 12px
+   with a transparent border so its thumb still reads as a 3px hairline. */
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
-.sidebar-scroll:hover {
-  scrollbar-color: color-mix(
-      in oklab,
-      var(--sidebar-foreground) 18%,
-      transparent
-    )
-    transparent;
-}
 .sidebar-scroll::-webkit-scrollbar {
-  width: 3px;
+  width: 12px;
 }
 .sidebar-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
   background-color: transparent;
+  background-clip: content-box;
+  border: 4.5px solid transparent;
   border-radius: 9999px;
   transition: background-color 150ms ease-in-out;
 }
-.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+.sidebar-shell:hover .sidebar-scroll {
+  scrollbar-color: color-mix(in oklab, var(--sidebar-foreground) 14%, transparent)
+    transparent;
+}
+.sidebar-shell:hover .sidebar-scroll::-webkit-scrollbar-thumb {
   background-color: color-mix(
     in oklab,
-    var(--sidebar-foreground) 18%,
+    var(--sidebar-foreground) 14%,
     transparent
   );
 }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(
     in oklab,
-    var(--sidebar-foreground) 32%,
+    var(--sidebar-foreground) 26%,
     transparent
   );
 }

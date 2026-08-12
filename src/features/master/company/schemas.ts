@@ -1,23 +1,15 @@
 import { z } from 'zod'
-
-/** PAN — five letters, four digits, one letter (e.g. ABCDE1234F). */
-const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/
-/** GSTIN — 15-char state-code + PAN + entity + Z + checksum. */
-const GST_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/
-const MOBILE_RE = /^\d{10}$/
-const PIN_RE = /^\d{6}$/
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-/** Passes when the value is blank (optional field) or matches `re`. */
-const optionalMatch = (re: RegExp, message: string) =>
-  z
-    .string()
-    .trim()
-    .refine((v) => v === '' || re.test(v), message)
-
-/** An optional free-text field, capped at the API's column length. */
-const text = (max: number) =>
-  z.string().trim().max(max, `Cannot exceed ${max} characters`)
+import {
+  emailField,
+  gstField,
+  mobileField,
+  panField,
+  phoneField,
+  pinCodeField,
+  recordNameField,
+  registrationNumberField,
+  text,
+} from '@/lib/validation'
 
 /**
  * Create/edit form for a company master record. The state and district are held
@@ -26,11 +18,7 @@ const text = (max: number) =>
  */
 export const companySchema = z.object({
   // Company information
-  companyName: z
-    .string()
-    .trim()
-    .min(1, 'Company name is required')
-    .max(200, 'Cannot exceed 200 characters'),
+  companyName: recordNameField('the company name', { max: 200 }),
   establishYear: z.string().trim().min(1, 'Establish year is required'),
   /**
    * The logo's **object key**, never the file — the bytes go to storage on a
@@ -38,14 +26,9 @@ export const companySchema = z.object({
    * means no logo.
    */
   logo: z.string().trim().max(500, 'Cannot exceed 500 characters'),
-  registrationNumber: text(100),
-  panNumber: z
-    .string()
-    .trim()
-    .min(1, 'PAN number is required')
-    .toUpperCase()
-    .regex(PAN_RE, 'Enter a valid PAN (e.g. ABCDE1234F)'),
-  gstNumber: optionalMatch(GST_RE, 'Enter a valid 15-character GST number'),
+  registrationNumber: registrationNumberField(),
+  panNumber: panField({ required: true }),
+  gstNumber: gstField(),
 
   // Address details
   addressLine1: z
@@ -57,22 +40,14 @@ export const companySchema = z.object({
   addressLine3: text(500),
   stateId: z.string().trim().min(1, 'State is required'),
   districtId: z.string().trim(),
-  city: text(100),
-  pinCode: optionalMatch(PIN_RE, 'Pin code must be 6 digits'),
+  city: recordNameField('the city', { required: false, max: 100 }),
+  pinCode: pinCodeField(),
 
   // Contact details
-  phone: text(20),
-  mobile1: z
-    .string()
-    .trim()
-    .min(1, 'Mobile number is required')
-    .regex(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-  mobile2: optionalMatch(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required')
-    .regex(EMAIL_RE, 'Enter a valid email address'),
+  phone: phoneField({ max: 20 }),
+  mobile1: mobileField({ required: true }),
+  mobile2: mobileField(),
+  email: emailField({ required: true }),
 })
 
 export type CompanyFormValues = z.infer<typeof companySchema>

@@ -15,11 +15,18 @@ export { holdsPermission } from './lib/permission-match'
  * and `GET /user/roles/:id` return the very same tree `my-role` does, so the
  * schema and its mapper are declared once, here.
  */
-export { toPermissionModule } from './lib/permission-mappers'
-export { permissionModuleSchema, permissionActionSchema } from './schemas'
+export { toPermissionModule, toCompanyRef, toTalkGrant } from './lib/permission-mappers'
+export {
+  permissionModuleSchema,
+  permissionActionSchema,
+  companyRefResponseSchema,
+  talkGrantResponseSchema,
+} from './schemas'
 export type {
   PermissionModuleResponse,
   PermissionActionResponse,
+  CompanyRefResponse,
+  TalkGrantResponse,
 } from './schemas'
 export { PERMISSIONS, ACCESS_CODES, ACTIONS } from './constants'
 export type {
@@ -29,4 +36,7 @@ export type {
   PermissionModule,
   PermissionAction,
   RoleAccess,
+  CompanyRef,
+  TalkGrant,
+  TalkDepartment,
 } from './types'

@@ -1,14 +1,10 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** Create/edit form for a holiday master record. Dates are `yyyy-MM-dd`. */
 export const holidaySchema = z
   .object({
-    holidayName: z
-      .string()
-      .trim()
-      .min(1, 'Please enter holiday name')
-      .min(2, 'Minimum 2 characters')
-      .max(200, 'Holiday name cannot exceed 200 characters'),
+    holidayName: recordNameField('the holiday name', { max: 200 }),
     fromDate: z.string().trim().min(1, 'Please select from date'),
     toDate: z.string().trim().min(1, 'Please select to date'),
   })

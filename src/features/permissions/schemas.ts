@@ -52,6 +52,37 @@ export const permissionModuleSchema: z.ZodType<PermissionModuleResponse> = z.laz
   }),
 )
 
+/**
+ * A company named on a role's reach. Both `my-role` and `GET /user/roles/:id`
+ * answer with `{ id, company_name }` rather than a bare id, so a chip can be
+ * labelled without a second call.
+ */
+export const companyRefResponseSchema = z.object({
+  id: z.number(),
+  company_name: z.string().default(''),
+})
+
+/**
+ * One Talk grant — a COMPANY with its departments nested. There is one entry per
+ * company, and an EMPTY `departments` means the whole company (every department,
+ * present and future), never "none".
+ */
+export const talkGrantResponseSchema = z.object({
+  company_id: z.number(),
+  company_name: z.string().default(''),
+  departments: z
+    .array(
+      z.object({
+        department_id: z.number(),
+        department_name: z.string().default(''),
+      }),
+    )
+    .default([]),
+})
+
+export type CompanyRefResponse = z.infer<typeof companyRefResponseSchema>
+export type TalkGrantResponse = z.infer<typeof talkGrantResponseSchema>
+
 export const myRoleResponseSchema = z.object({
   user_id: z.number(),
   role_id: z.number().nullish(),
@@ -60,16 +91,9 @@ export const myRoleResponseSchema = z.object({
   permission_codes: z.array(z.string()).default([]),
   modules: z.array(permissionModuleSchema).default([]),
   access_level: z.enum(['GLOBAL', 'COMPANY']).default('COMPANY'),
-  company_ids: z.array(z.number()).default([]),
+  company_ids: z.array(companyRefResponseSchema).default([]),
   talk_enabled: z.boolean().default(false),
-  talk_access: z
-    .array(
-      z.object({
-        company_id: z.number(),
-        department_id: z.number().nullish(),
-      }),
-    )
-    .default([]),
+  talk_access: z.array(talkGrantResponseSchema).default([]),
   access: z
     .object({
       web: z.boolean().default(false),

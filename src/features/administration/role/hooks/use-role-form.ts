@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { useMyCompanies } from '@/features/company'
 import type { Permission, PermissionModule } from '@/features/permissions'
 import { roleSchema, type RoleFormValues } from '../schemas'
-import { EMPTY_ROLE_FORM, WHOLE_COMPANY } from '../constants'
+import { EMPTY_ROLE_FORM } from '../constants'
 import { useAssignablePermissions, useRole } from '../api/use-roles'
 import { useCreateRole, useUpdateRole } from '../api/use-role-mutations'
 import { roleToFormValues } from '../lib/role-mappers'
@@ -64,6 +64,15 @@ export function useRoleForm(id?: number) {
   const accessLevel = useWatch({ control, name: 'accessLevel' }) ?? 'COMPANY'
   const companyIds = useWatch({ control, name: 'companyIds' }) ?? []
   const talkEnabled = useWatch({ control, name: 'talkEnabled' }) ?? false
+
+  /**
+   * The company each grant row currently names, by row. One entry PER COMPANY
+   * is the rule (the endpoint merges a repeat rather than replacing it), so a
+   * row's picker offers everything the OTHER rows haven't taken.
+   */
+  const talkCompanyIds = (useWatch({ control, name: 'talkAccess' }) ?? []).map(
+    (grant) => grant?.companyId ?? '',
+  )
 
   // Seed the form once the record loads (edit mode only).
   useEffect(() => {
@@ -227,8 +236,23 @@ export function useRoleForm(id?: number) {
     setValue('companyIds', next, { shouldValidate: true, shouldDirty: true })
   }
 
-  const addTalkGrant = () =>
-    talkAccess.append({ companyId: '', departmentId: WHOLE_COMPANY })
+  // A fresh grant starts unnarrowed: no departments means the whole company,
+  // which is the sensible default for "this role may talk in company X".
+  const addTalkGrant = () => talkAccess.append({ companyId: '', departmentIds: [] })
+
+  /** The departments picked inside a grant row — empty is the whole company. */
+  const setTalkDepartments = (index: number, departmentIds: string[]) =>
+    setValue(`talkAccess.${index}.departmentIds`, departmentIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+
+  /** Back to "the whole company" — the grant reaches every department. */
+  const clearTalkDepartments = (index: number) =>
+    setValue(`talkAccess.${index}.departmentIds`, [], {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
 
   const goToList = () => navigate({ to: '/administration/role' })
 
@@ -305,7 +329,12 @@ export function useRoleForm(id?: number) {
     /* Talk */
     talkEnabled,
     talkAccess,
+    talkCompanyIds,
+    /** Every company already has a row — there is nothing left to add. */
+    canAddTalkGrant: talkAccess.fields.length < companyOptions.length,
     addTalkGrant,
+    setTalkDepartments,
+    clearTalkDepartments,
 
     isPending: isEdit ? updateRole.isPending : createRole.isPending,
     isLoading: isEdit ? detail.isLoading : catalog.isLoading,

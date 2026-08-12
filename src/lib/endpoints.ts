@@ -74,6 +74,50 @@ export const endpoints = {
     ASSIGN: '/user/roles/assign',
   },
   /**
+   * Billing — the account's plan, not a company's. Nothing here takes a
+   * `company_id`: the subscription, its entitlements and the usage counted
+   * against them all belong to the organization.
+   *
+   * `PLANS` is the buyable catalog plus any plan built for this organization,
+   * with the running one flagged `is_active`. `SUBSCRIPTION` is what's actually
+   * live, including the prices it was bought at — prices the plan catalog quotes
+   * for *today*, which is why the two are read separately rather than joined.
+   * Usage against the plan's limits comes from `ME.GET`.
+   *
+   * Purchasing (`POST /user/subscriptions`, which answers with a Razorpay order)
+   * is deliberately absent: the checkout handoff needs a publishable key the API
+   * doesn't hand out, so the screen reads and doesn't sell.
+   */
+  BILLING: {
+    PLANS: '/user/plans',
+    SUBSCRIPTION: '/user/subscription',
+  },
+  /**
+   * IP access control — which networks may reach the panel for a company.
+   *
+   * Two things live here. `MODE` is the company-level switch: `PUBLIC` means
+   * everyone but the blocked list, `RESTRICTED` means only the allowed list. The
+   * rest is the list itself — one entry per host (`203.0.113.4`, `2001:db8::1`)
+   * or CIDR range (`10.0.0.0/8`), each tagged `ALLOWED` or `BLOCKED`.
+   *
+   * The API refuses the moves that would lock the caller out: switching to
+   * `RESTRICTED` with an empty allow list, and deleting (or re-typing) the last
+   * allowed entry of a `RESTRICTED` company both answer 409. The same address may
+   * sit on both lists — `BLOCKED` wins at the door.
+   *
+   * Tenant-scoped: a required `company_id` on reads and on the mode write, and in
+   * the body on create. Gated by `ip-addresses:*`, not `companies:*`.
+   */
+  IP_ADDRESSES: {
+    LIST: '/user/ip-addresses',
+    POST: '/user/ip-addresses',
+    GET: (id: number) => `/user/ip-addresses/${id}`,
+    PATCH: (id: number) => `/user/ip-addresses/${id}`,
+    DELETE: (id: number) => `/user/ip-addresses/${id}`,
+    /** GET reads the company's mode + list counts; PUT switches it. */
+    MODE: '/user/ip-addresses/mode',
+  },
+  /**
    * The company master — every company under the caller's account. Unlike the
    * tenant-scoped masters below it carries no `company_id`: the account itself
    * is the scope, and a company's code is generated server-side.

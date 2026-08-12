@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** The API's ceiling on a cycle — and so on the `weeks` array too. */
 export const MAX_CYCLE_WEEKS = 52
@@ -21,11 +22,7 @@ export type RotationWeekFormValues = z.infer<typeof rotationWeekSchema>
  */
 export const shiftRotationSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, 'Rotation name is required')
-      .max(100, 'Rotation name cannot exceed 100 characters'),
+    name: recordNameField('the rotation name', { max: 100 }),
     /** Held as a string — that's what the number input gives us. */
     cycleLengthWeeks: z
       .string()

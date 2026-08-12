@@ -1,21 +1,14 @@
 import { z } from 'zod'
+import {
+  emailField,
+  mobileField,
+  phoneField,
+  pinCodeField,
+  recordNameField,
+  shortCodeField,
+  text,
+} from '@/lib/validation'
 import { OFFICE_FOR_VALUES } from './types'
-
-const PIN_RE = /^\d{6}$/
-const MOBILE_RE = /^[6-9]\d{9}$/
-const PHONE_RE = /^[\d\s()+-]{6,15}$/
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-
-/** Passes when the value is blank (optional field) or matches `re`. */
-const optionalMatch = (re: RegExp, message: string) =>
-  z
-    .string()
-    .trim()
-    .refine((v) => v === '' || re.test(v), message)
-
-/** An optional free-text field, capped at the API's column length. */
-const text = (max: number) =>
-  z.string().trim().max(max, `Cannot exceed ${max} characters`)
 
 /**
  * Create/edit form for an office address — shared by all five screens. The
@@ -24,18 +17,14 @@ const text = (max: number) =>
  */
 export const officeAddressSchema = z.object({
   // Office information
-  officeName: z
-    .string()
-    .trim()
-    .min(1, 'Office name is required')
-    .max(250, 'Cannot exceed 250 characters'),
-  officeCode: text(250),
-  officeType: text(255),
+  officeName: recordNameField('the office name', { max: 250 }),
+  officeCode: shortCodeField('the office code', { required: false, max: 250 }),
+  officeType: recordNameField('the office type', { required: false, max: 255 }),
 
   // Contact details
-  mobile: optionalMatch(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-  phone: optionalMatch(PHONE_RE, 'Enter a valid phone number'),
-  email: optionalMatch(EMAIL_RE, 'Enter a valid email address'),
+  mobile: mobileField(),
+  phone: phoneField(),
+  email: emailField(),
 
   // Address details
   addressLine1: z
@@ -47,8 +36,8 @@ export const officeAddressSchema = z.object({
   addressLine3: text(500),
   stateId: z.string().trim().min(1, 'Please select state'),
   districtId: z.string().trim().min(1, 'Please select district'),
-  city: text(200),
-  pinCode: optionalMatch(PIN_RE, 'Pin code must be 6 digits'),
+  city: recordNameField('the city', { required: false, max: 200 }),
+  pinCode: pinCodeField(),
 })
 
 export type OfficeAddressFormValues = z.infer<typeof officeAddressSchema>

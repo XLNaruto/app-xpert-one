@@ -18,6 +18,16 @@ export const FORBIDDEN_STATUS = 403
 export const FORBIDDEN_CODE = 'FORBIDDEN'
 
 /**
+ * The API's error code for a network-level block — the caller's IP isn't on this
+ * company's allow list (or is on its block list), see `administration/ip-address`.
+ * It also arrives as a 403, but it says nothing about the user's permissions: the
+ * same account on an allowed network works fine, and no amount of role editing
+ * fixes it. It's answered app-wide by the `RestrictedIp` overlay rather than
+ * per-screen, since every request from this address fails the same way.
+ */
+export const RESTRICTED_IP_CODE = 'RESTRICTED_IP'
+
+/**
  * Our own code for "this screen is company-scoped and no company is active".
  * Raised client-side by `activeCompanyId()` before the request goes out, so a
  * screen can answer it with the company picker instead of a red error line.
@@ -41,9 +51,19 @@ export class ApiError extends Error {
     this.code = code
   }
 
-  /** True when the caller is authenticated but not permitted. */
+  /**
+   * True when the caller is authenticated but not permitted. A restricted-IP 403
+   * is deliberately excluded — it isn't a missing right, so it must not surface
+   * as "contact your administrator to request access".
+   */
   get isForbidden(): boolean {
+    if (this.code === RESTRICTED_IP_CODE) return false
     return this.status === FORBIDDEN_STATUS || this.code === FORBIDDEN_CODE
+  }
+
+  /** True when the request was refused because of where it came from. */
+  get isRestrictedIp(): boolean {
+    return this.code === RESTRICTED_IP_CODE
   }
 }
 
@@ -95,10 +115,25 @@ export function isNoActiveCompanyError(error: unknown): boolean {
  * including a query's `error` (which is typed `unknown`).
  */
 export function isForbiddenError(error: unknown): boolean {
+  if (isRestrictedIpError(error)) return false
   if (error instanceof ApiError) return error.isForbidden
   if (error instanceof AxiosError) {
     const data = error.response?.data as ApiErrorBody | undefined
     return error.response?.status === FORBIDDEN_STATUS || data?.code === FORBIDDEN_CODE
+  }
+  return false
+}
+
+/**
+ * Was this failure a network-level block (`{ code: 'RESTRICTED_IP' }`)? Safe to
+ * call on any thrown value, including a query's `error` and a raw AxiosError
+ * straight out of the interceptor.
+ */
+export function isRestrictedIpError(error: unknown): boolean {
+  if (error instanceof ApiError) return error.isRestrictedIp
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as ApiErrorBody | undefined
+    return data?.code === RESTRICTED_IP_CODE
   }
   return false
 }

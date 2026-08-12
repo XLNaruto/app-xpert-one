@@ -84,6 +84,14 @@ export const PERMISSIONS = {
   // ── Administration (no screens in the app yet) ────────────────────────────
   users: 'users',
   roles: 'roles',
+  /**
+   * Billing — the account's plan and subscription. The catalog carries a single
+   * action on it, `billing:manage` (also in `ACCESS_CODES` below, where it reads
+   * as an account-level right). Named as a bare resource here so the menu row
+   * and the route gate ask "may this user reach billing at all", which is the
+   * question they're actually asking.
+   */
+  billing: 'billing',
   access: 'access',
   ipAddresses: 'ip-addresses',
   talkMonitoring: 'talk-monitoring',

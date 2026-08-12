@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** `HH:MM` (24-hour), the only time format the endpoint accepts. */
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -35,11 +36,7 @@ const optionalHours = z
  */
 export const shiftSchema = z
   .object({
-    shiftName: z
-      .string()
-      .trim()
-      .min(1, 'Shift name is required')
-      .max(100, 'Shift name cannot exceed 100 characters'),
+    shiftName: recordNameField('the shift name', { max: 100 }),
     startTime: z
       .string()
       .trim()

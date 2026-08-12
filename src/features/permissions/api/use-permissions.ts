@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
 import { queryKeys } from '@/lib/query-keys'
+import { isForbiddenError } from '@/lib/api-error'
 import { mockDelay } from '@/lib/utils'
 import { fetchMyRole } from './permissions-api'
 import { holdsPermission } from '../lib/permission-match'
@@ -19,7 +20,7 @@ async function mockMyRole(): Promise<MyRole> {
     permissionCodes: [],
     modules: [],
     accessLevel: 'GLOBAL',
-    companyIds: [],
+    companies: [],
     talkEnabled: false,
     talkAccess: [],
     access: { web: true, app: false, talk: false, attendance: true },
@@ -45,7 +46,8 @@ export function useMyRole() {
     gcTime: Infinity,
     // A menu that silently empties itself is worse than one extra attempt; past
     // that the checker falls open rather than locking the user out (see below).
-    retry: 1,
+    // A 403 is the server's final answer, so retrying it only delays the gate.
+    retry: (failureCount, error) => !isForbiddenError(error) && failureCount < 1,
   })
 }
 
@@ -69,10 +71,15 @@ export interface PermissionChecker {
   /** Still loading — gated checks answer `false` meanwhile. */
   isLoading: boolean
   /**
-   * True when nothing is being gated: the role call failed, or it answered with
-   * no codes at all. The API enforces every permission itself, so falling open
-   * here trades a menu row the user may get a 403 on for never trapping a user
-   * in an empty app because one request failed.
+   * True when nothing is being gated: the role call failed for an *incidental*
+   * reason (network drop, 5xx), or it answered with no codes at all. The API
+   * enforces every permission itself, so falling open there trades a menu row
+   * the user may get a 403 on for never trapping a user in an empty app because
+   * one request happened to fail.
+   *
+   * A 403 on `/user/my-role` is not incidental — it's the server's explicit
+   * answer about this user — so it gates instead: every `can()` is false and the
+   * sidebar empties rather than offering rows the API will refuse.
    */
   isUnrestricted: boolean
 }
@@ -86,11 +93,13 @@ export interface PermissionChecker {
  * {can('employees:create') && <Button onClick={goToCreate}>Add Employee</Button>}
  */
 export function useCan(): PermissionChecker {
-  const { data, isLoading, isError } = useMyRole()
+  const { data, isLoading, isError, error } = useMyRole()
 
   return useMemo(() => {
     const granted = new Set(data?.permissionCodes ?? [])
-    const unrestricted = isError || (data !== undefined && granted.size === 0)
+    const denied = isError && isForbiddenError(error)
+    const unrestricted =
+      !denied && (isError || (data !== undefined && granted.size === 0))
     const can = (spec?: PermissionSpec | null) =>
       unrestricted ? true : holdsPermission(granted, spec)
 
@@ -102,7 +111,7 @@ export function useCan(): PermissionChecker {
       isLoading,
       isUnrestricted: unrestricted,
     }
-  }, [data, isError, isLoading])
+  }, [data, error, isError, isLoading])
 }
 
 /** The five uniform CRUD answers for one resource, as a screen needs them. */

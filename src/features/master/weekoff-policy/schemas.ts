@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** The API's ceiling on `days` — 7 weekdays × 5 occurrences. */
 export const MAX_WEEKOFF_RULES = 35
@@ -30,11 +31,7 @@ export type WeekoffRuleFormValues = z.infer<typeof weekoffRuleSchema>
  */
 export const weekoffPolicySchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, 'Policy name is required')
-      .max(100, 'Policy name cannot exceed 100 characters'),
+    name: recordNameField('the policy name', { max: 100 }),
     /** Weekdays that are off every week — `week_number: null`, `is_off: true`. */
     everyWeekDays: z.array(z.number().int().min(0).max(6)),
     rules: z.array(weekoffRuleSchema),

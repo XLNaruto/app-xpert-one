@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { permissionModuleSchema } from '@/features/permissions'
+import {
+  companyRefResponseSchema,
+  permissionModuleSchema,
+  talkGrantResponseSchema,
+} from '@/features/permissions'
+import { recordNameField } from '@/lib/validation'
 
 /**
  * The API's own limits, so the form refuses what the endpoint would anyway —
@@ -9,13 +14,26 @@ export const MAX_ROLE_NAME = 100
 export const MAX_ROLE_PERMISSIONS = 300
 export const MAX_ROLE_COMPANIES = 200
 export const MAX_ROLE_TALK_GRANTS = 500
+export const MAX_ROLE_TALK_DEPARTMENTS = 500
 
-/** One Talk grant row on the form. */
+/**
+ * One Talk grant row on the form — a company and the departments inside it the
+ * role may talk to.
+ */
 export const roleTalkGrantSchema = z.object({
   /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
   companyId: z.string().trim().min(1, 'Pick a company'),
-  /** Empty means the whole company. */
-  departmentId: z.string().trim(),
+  /**
+   * The departments picked inside that company, as strings for the same reason.
+   * EMPTY means the WHOLE company — every department, present and future —
+   * never "none", which is exactly how the endpoint reads it.
+   */
+  departmentIds: z
+    .array(z.string())
+    .max(
+      MAX_ROLE_TALK_DEPARTMENTS,
+      `A grant cannot name more than ${MAX_ROLE_TALK_DEPARTMENTS} departments`,
+    ),
 })
 export type RoleTalkGrantFormValues = z.infer<typeof roleTalkGrantSchema>
 
@@ -30,11 +48,7 @@ export type RoleTalkGrantFormValues = z.infer<typeof roleTalkGrantSchema>
  */
 export const roleSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(1, 'Role name is required')
-      .max(MAX_ROLE_NAME, `Role name cannot exceed ${MAX_ROLE_NAME} characters`),
+    name: recordNameField('the role name', { max: MAX_ROLE_NAME }),
     permissionCodes: z
       .array(z.string())
       .min(1, 'Enable at least one permission')
@@ -81,19 +95,19 @@ export const roleSchema = z
       })
     }
 
-    // The same company twice — once for the whole company and once for one of its
-    // departments — is contradictory, and two identical rows are a mistake.
+    // One entry PER COMPANY: the endpoint merges a company sent twice rather
+    // than replacing it, so a second row for the same company silently changes
+    // what the first one meant. Caught here instead.
     const seen = new Set<string>()
     values.talkAccess.forEach((grant, index) => {
-      const key = `${grant.companyId}:${grant.departmentId}`
-      if (seen.has(key)) {
+      if (seen.has(grant.companyId)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['talkAccess', index, 'companyId'],
-          message: 'This grant is already on the list',
+          message: 'This company already has a grant — add its departments to that row',
         })
       }
-      seen.add(key)
+      seen.add(grant.companyId)
     })
   })
 
@@ -101,16 +115,14 @@ export type RoleFormValues = z.infer<typeof roleSchema>
 
 /* ── Responses ─────────────────────────────────────────────────────────────── */
 
-/** One Talk grant as stored. */
-const talkAccessResponseSchema = z.object({
-  company_id: z.number(),
-  department_id: z.number().nullish(),
-})
-
 /**
  * `GET /user/roles/:id` — the role plus the catalog it's ticked against. Parsed
  * as leniently as `my-role` is: the catalog grows server-side, and a missing
  * display field must never throw away the whole tree.
+ *
+ * The reach comes back NAMED — `company_ids` is `{ id, company_name }` and each
+ * Talk entry carries its company name plus a `departments` list — so nothing on
+ * screen needs a second call to label a chip.
  */
 export const roleResponseSchema = z.object({
   id: z.number(),
@@ -119,18 +131,19 @@ export const roleResponseSchema = z.object({
   permission_codes: z.array(z.string()).default([]),
   is_system: z.boolean().default(false),
   access_level: z.enum(['GLOBAL', 'COMPANY']).default('COMPANY'),
-  company_ids: z.array(z.number()).default([]),
+  company_ids: z.array(companyRefResponseSchema).default([]),
   talk_enabled: z.boolean().default(false),
-  talk_access: z.array(talkAccessResponseSchema).default([]),
+  talk_access: z.array(talkGrantResponseSchema).default([]),
   modules: z.array(permissionModuleSchema).default([]),
 })
 export type RoleResponse = z.infer<typeof roleResponseSchema>
 
-/** One row of `GET /user/roles` — no codes, but `permission_count` and audit. */
+/** One row of `GET /user/roles` — the codes, `permission_count` and audit. */
 export const roleListRowResponseSchema = z.object({
   id: z.number(),
   company_id: z.number().nullish(),
   name: z.string(),
+  permission_codes: z.array(z.string()).default([]),
   is_system: z.boolean().default(false),
   access_level: z.enum(['GLOBAL', 'COMPANY']).default('COMPANY'),
   talk_enabled: z.boolean().default(false),
@@ -162,6 +175,15 @@ export type AssignablePermissionsResponse = z.infer<
  * Hand-written rather than zod: the endpoint rejects unknown keys, so this type
  * is exactly what may be sent.
  */
+export interface RoleTalkAccessPayload {
+  company_id: number
+  /**
+   * EMPTY (or omitted) means the WHOLE company — every department, present and
+   * future — never "none". Each must belong to the company named alongside it.
+   */
+  department_ids: number[]
+}
+
 export interface RolePayload {
   company_id: number
   name: string
@@ -169,7 +191,8 @@ export interface RolePayload {
   access_level: 'GLOBAL' | 'COMPANY'
   company_ids: number[]
   talk_enabled: boolean
-  talk_access: { company_id: number; department_id: number | null }[]
+  /** One entry PER COMPANY — repeating a company merges rather than replaces. */
+  talk_access: RoleTalkAccessPayload[]
 }
 
 /** PATCH takes the same body minus the owning company, which is fixed. */

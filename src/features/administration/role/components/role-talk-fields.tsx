@@ -1,24 +1,18 @@
 import { useMemo } from 'react'
 import { Controller } from 'react-hook-form'
-import { Building2, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { Building2, MessageSquare, Network, Plus, Trash2 } from 'lucide-react'
 import { ALL_ROWS } from '@/lib/pagination'
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { useDepartments, departmentOptions } from '@/features/master/department'
-import { WHOLE_COMPANY } from '../constants'
+import { useDepartments } from '@/features/master/department'
+import { WHOLE_COMPANY_LABEL } from '../constants'
 import type { useRoleForm } from '../hooks/use-role-form'
 
 interface RoleTalkFieldsProps {
   form: ReturnType<typeof useRoleForm>
   disabled?: boolean
-}
-
-/** "The whole company" as an option, ahead of that company's departments. */
-const WHOLE_COMPANY_OPTION: ComboboxOption = {
-  label: 'Whole company',
-  value: WHOLE_COMPANY,
 }
 
 interface TalkGrantRowProps {
@@ -30,10 +24,15 @@ interface TalkGrantRowProps {
 }
 
 /**
- * One grant: a company, optionally narrowed to one of its departments.
+ * One grant: a COMPANY and the departments inside it the role may talk to.
  *
- * The departments are read per row rather than for all rows at once — each row
- * names a different company, and the department must belong to the company
+ * There is one row per company — the endpoint MERGES a company sent twice
+ * rather than replacing it, so narrowing happens inside the row instead of by
+ * adding another. Ticking nothing is the whole company, every department
+ * present and future, which is what the empty list means to the API as well.
+ *
+ * The departments are read per row rather than for all rows at once: each row
+ * names a different company, and a department must belong to the company
  * alongside it (the endpoint answers 400 otherwise).
  */
 function TalkGrantRow({
@@ -44,72 +43,104 @@ function TalkGrantRow({
   onRemove,
 }: TalkGrantRowProps) {
   const companyId = form.form.watch(`talkAccess.${index}.companyId`)
+  const selectedIds = form.form.watch(`talkAccess.${index}.departmentIds`) ?? []
   const numericCompanyId = companyId ? Number(companyId) : undefined
 
   const departments = useDepartments(ALL_ROWS, numericCompanyId)
 
-  const options = useMemo<ComboboxOption[]>(
-    () => [WHOLE_COMPANY_OPTION, ...departmentOptions(departments.data?.items ?? [])],
+  const departmentOptions = useMemo<ComboboxOption[]>(
+    () =>
+      (departments.data?.items ?? []).map((department) => ({
+        label: department.departmentName,
+        value: String(department.id),
+      })),
     [departments.data],
   )
 
   const rowErrors = form.errors.talkAccess?.[index]
+  const isWholeCompany = selectedIds.length === 0
 
   return (
-    <div className="flex flex-wrap items-start gap-2 rounded-lg border border-border/60 bg-muted/20 p-2.5">
-      <div className="min-w-40 flex-1">
-        <Controller
-          control={form.form.control}
-          name={`talkAccess.${index}.companyId`}
-          render={({ field }) => (
-            <Combobox
-              value={field.value}
-              onChange={(value) => {
-                field.onChange(value)
-                // The department belongs to the old company — keeping it would
-                // be a 400 on save, so a company change resets the narrowing.
-                form.form.setValue(`talkAccess.${index}.departmentId`, WHOLE_COMPANY)
-              }}
-              options={companyOptions}
-              icon={Building2}
-              placeholder="Select company"
-              className="w-full"
-            />
+    <div className="space-y-2.5 rounded-lg border border-border/60 bg-muted/20 p-2.5">
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-40 flex-1">
+          <Controller
+            control={form.form.control}
+            name={`talkAccess.${index}.companyId`}
+            render={({ field }) => (
+              <Combobox
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value)
+                  // The departments belong to the old company — keeping them
+                  // would be a 400 on save, so a company change resets them.
+                  form.clearTalkDepartments(index)
+                }}
+                options={companyOptions}
+                icon={Building2}
+                placeholder="Select company"
+                className="w-full"
+              />
+            )}
+          />
+          {rowErrors?.companyId?.message && (
+            <p className="mt-1 text-xs text-destructive">{rowErrors.companyId.message}</p>
           )}
-        />
-        {rowErrors?.companyId?.message && (
-          <p className="mt-1 text-xs text-destructive">{rowErrors.companyId.message}</p>
-        )}
-      </div>
+        </div>
 
-      <div className="min-w-40 flex-1">
-        <Controller
-          control={form.form.control}
-          name={`talkAccess.${index}.departmentId`}
-          render={({ field }) => (
-            <Combobox
-              value={field.value}
-              onChange={field.onChange}
-              options={options}
-              placeholder="Whole company"
-              loading={departments.isLoading}
-              className="w-full"
-            />
+        {/* Empty is the WHOLE company, so clearing the picker is the "all
+            departments" control — hence `clearable` rather than a button. */}
+        <div className="min-w-40 flex-1">
+          <Controller
+            control={form.form.control}
+            name={`talkAccess.${index}.departmentIds`}
+            render={({ field }) => (
+              <Combobox
+                multiple
+                value={field.value ?? []}
+                onChange={field.onChange}
+                options={departmentOptions}
+                icon={Network}
+                clearable
+                placeholder={
+                  !companyId
+                    ? 'Pick a company first'
+                    : departments.isLoading
+                      ? 'Loading departments…'
+                      : departmentOptions.length === 0
+                        ? 'No departments — whole company'
+                        : WHOLE_COMPANY_LABEL
+                }
+                searchPlaceholder="Search departments"
+                className="w-full"
+                loading={departments.isLoading}
+                panelMinWidth={260}
+              />
+            )}
+          />
+          {rowErrors?.departmentIds?.message && (
+            <p className="mt-1 text-xs text-destructive">{rowErrors.departmentIds.message}</p>
           )}
-        />
-      </div>
+        </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        disabled={disabled}
-        onClick={onRemove}
-        aria-label="Remove this Talk grant"
-        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </Button>
+        <span className="flex h-9 items-center text-xs text-muted-foreground">
+          {isWholeCompany
+            ? WHOLE_COMPANY_LABEL
+            : `${selectedIds.length} department${selectedIds.length === 1 ? '' : 's'}`}
+        </span>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          onClick={onRemove}
+          aria-label="Remove this Talk grant"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -178,7 +209,15 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
               index={index}
               form={form}
               disabled={disabled}
-              companyOptions={form.companyOptions}
+              // A company another row already took is off this row's list: the
+              // endpoint MERGES a repeated company instead of replacing it, so
+              // two rows for one company quietly rewrite each other.
+              companyOptions={form.companyOptions.filter(
+                (option) =>
+                  !form.talkCompanyIds.some(
+                    (taken, row) => row !== index && taken === option.value,
+                  ),
+              )}
               onRemove={() => form.talkAccess.remove(index)}
             />
           ))}
@@ -196,8 +235,11 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
             type="button"
             variant="outline"
             size="sm"
-            disabled={disabled}
+            disabled={disabled || !form.canAddTalkGrant}
             onClick={form.addTalkGrant}
+            title={
+              form.canAddTalkGrant ? undefined : 'Every company already has a grant'
+            }
           >
             <Plus className="size-4" />
             Add grant

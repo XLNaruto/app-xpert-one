@@ -1,8 +1,5 @@
 import { z } from 'zod'
-
-/** Amount with up to two decimals. */
-const AMOUNT_RE = /^\d+(\.\d{1,2})?$/
-const DIGITS_RE = /^\d+$/
+import { AMOUNT_RE, DIGITS_RE, recordNameField } from '@/lib/validation'
 
 /** Every optional dropdown / free-text field on the designation form. */
 const text = z.string().trim()
@@ -53,7 +50,7 @@ const componentRowSchema = z.object({
 export const designationSchema = z
   .object({
     // Designation detail
-    designationName: z.string().trim().min(1, 'Designation name is required'),
+    designationName: recordNameField('the designation name', { max: 200 }),
 
     // Salary configuration
     salaryType: text,

@@ -1,13 +1,9 @@
 import { z } from 'zod'
+import { recordNameField } from '@/lib/validation'
 
 /** Create/edit form for a document type master record. */
 export const documentTypeSchema = z.object({
-  typeName: z
-    .string()
-    .trim()
-    .min(1, 'Please enter document type')
-    .min(2, 'Minimum 2 characters')
-    .max(200, 'Cannot exceed 200 characters'),
+  typeName: recordNameField('the document type', { max: 200 }),
 })
 
 export type DocumentTypeFormValues = z.infer<typeof documentTypeSchema>

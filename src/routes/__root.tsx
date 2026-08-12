@@ -2,8 +2,9 @@ import { useEffect } from 'react'
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import { pageNameForPath } from '@/config/navigation'
-import { OfflineScreen } from '@/features/error'
+import { OfflineScreen, RestrictedIp } from '@/features/error'
 import { useOnlineStatus } from '@/hooks/use-online-status'
+import { useIpBlockStore } from '@/stores/ip-block-store'
 
 const APP_NAME = 'XpertOne'
 
@@ -30,6 +31,9 @@ function RootComponent() {
     select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname,
   })
   const online = useOnlineStatus()
+  // Set by the api-client interceptor on a `RESTRICTED_IP` response — the block
+  // applies to every endpoint, so it's answered here once instead of per screen.
+  const ipBlockMessage = useIpBlockStore((s) => s.blockedMessage)
 
   // Reflect the active page in the browser tab: "XpertOne | <page>".
   useEffect(() => {
@@ -40,7 +44,12 @@ function RootComponent() {
   return (
     <>
       <Outlet />
-      {!online && <OfflineScreen />}
+      {/* Offline wins: while there's no connection the block can't be re-checked. */}
+      {!online ? (
+        <OfflineScreen />
+      ) : (
+        ipBlockMessage !== null && <RestrictedIp description={ipBlockMessage} />
+      )}
     </>
   )
 }

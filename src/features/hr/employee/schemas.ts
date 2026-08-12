@@ -1,5 +1,24 @@
 import { z } from 'zod'
 import { shiftResponseSchema } from '@/features/master/shift'
+import {
+  AADHAAR_RE,
+  AMOUNT_RE,
+  MOBILE_RE,
+  PERSON_NAME_RE,
+  PIN_CODE_RE,
+  RECORD_NAME_RE,
+  aadhaarField,
+  accountNumberField,
+  emailField,
+  esicNumberField,
+  ifscField,
+  mobileField,
+  optionalMatch,
+  panField,
+  personNameField,
+  recordNameField,
+  uanField,
+} from '@/lib/validation'
 import { MINIMUM_EMPLOYEE_AGE, PERMANENT_EMPLOYMENT_TYPE } from './constants'
 
 /**
@@ -18,39 +37,19 @@ import { MINIMUM_EMPLOYEE_AGE, PERMANENT_EMPLOYMENT_TYPE } from './constants'
 
 /* ── Shared field pieces ─────────────────────────────────────────────────── */
 
-/** Indian mobile number. */
-const MOBILE_RE = /^[6-9]\d{9}$/
-const PIN_CODE_RE = /^\d{6}$/
-const AADHAR_RE = /^\d{12}$/
-const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/
-const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/
-const DECIMAL_RE = /^\d+(\.\d{1,2})?$/
 /** `yyyy-MM` — the month format an experience row's dates travel in. */
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
 
-/** An optional text field: blank passes, anything filled must match `regex`. */
-function optionalPattern(regex: RegExp, message: string) {
-  return z
-    .string()
-    .trim()
-    .refine((value) => value === '' || regex.test(value), message)
-}
+/**
+ * The shared patterns and field builders — a PAN, an IFSC or a person's name
+ * means the same thing here as it does on every other screen. `optionalPattern`
+ * is the local alias for the shared `optionalMatch`, kept because the row-level
+ * `superRefine`s below read against it.
+ */
+const optionalPattern = optionalMatch
 
-/** A name: letters, digits and spaces, with at least one letter in it. */
-const NAME_RE = /^(?=.*[a-zA-Z])[a-zA-Z0-9\s.'-]+$/
-
-function nameField(label: string) {
-  return z
-    .string()
-    .trim()
-    .min(1, `Please enter ${label}`)
-    .min(2, 'Minimum 2 characters')
-    .max(150, 'Cannot exceed 150 characters')
-    .regex(
-      NAME_RE,
-      `${label} must include at least one letter, and can only use letters, digits, spaces and . ' -`,
-    )
-}
+/** A person's name — letters and name punctuation only, never digits. */
+const nameField = (label: string) => personNameField(label)
 
 /** Whole years between a `yyyy-MM-dd` date and today. */
 function yearsSince(date: string): number {
@@ -105,8 +104,8 @@ export const employeeBasicSchema = z
     currentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
     currentStateId: z.string(),
     currentDistrictId: z.string(),
-    currentTaluka: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    currentCity: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    currentTaluka: recordNameField('the taluka', { required: false, max: 255 }),
+    currentCity: recordNameField('the city', { required: false, max: 255 }),
     currentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
 
     /**
@@ -120,29 +119,19 @@ export const employeeBasicSchema = z
     permanentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
     permanentStateId: z.string(),
     permanentDistrictId: z.string(),
-    permanentTaluka: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    permanentCity: z.string().trim().max(255, 'Cannot exceed 255 characters'),
+    permanentTaluka: recordNameField('the taluka', { required: false, max: 255 }),
+    permanentCity: recordNameField('the city', { required: false, max: 255 }),
     permanentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
 
-    mobileNumber1: z
-      .string()
-      .trim()
-      .min(1, 'Please enter a mobile number')
-      .regex(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
-    mobileNumber2: optionalPattern(MOBILE_RE, 'Enter a valid 10-digit mobile number'),
+    mobileNumber1: mobileField({ required: true, label: 'a mobile number' }),
+    mobileNumber2: mobileField(),
     landlineNumber: optionalPattern(/^\d{6,12}$/, 'Enter 6 to 12 digits'),
-    email: z
-      .string()
-      .trim()
-      .refine(
-        (value) => value === '' || z.string().email().safeParse(value).success,
-        'Enter a valid email address',
-      ),
+    email: emailField(),
 
     bloodGroup: z.string(),
-    height: optionalPattern(DECIMAL_RE, 'Enter a number, e.g. 170 or 5.8'),
+    height: optionalPattern(AMOUNT_RE, 'Enter a number, e.g. 170 or 5.8'),
     heightUnit: z.string(),
-    weight: optionalPattern(DECIMAL_RE, 'Enter a number, e.g. 68 or 68.5'),
+    weight: optionalPattern(AMOUNT_RE, 'Enter a number, e.g. 68 or 68.5'),
     weightUnit: z.string(),
     isDisability: z.boolean(),
     remarks: z.string().trim().max(1000, 'Cannot exceed 1000 characters'),
@@ -408,33 +397,17 @@ export type EmployeeBasicUpdatePayload = Omit<EmployeeBasicPayload, 'company_id'
 export const employeeKycSchema = z
   .object({
     pfNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
-    uanNumber: optionalPattern(/^\d{12}$/, 'UAN must be 12 digits'),
-    esicNumber: optionalPattern(/^\d{10,17}$/, 'Enter 10 to 17 digits'),
+    uanNumber: uanField(),
+    esicNumber: esicNumberField(),
 
     bankId: z.string().trim().min(1, 'Please select a bank'),
-    bankAccountNumber: z
-      .string()
-      .trim()
-      .min(1, 'Please enter the account number')
-      .regex(/^\d{9,18}$/, 'Account number must be 9 to 18 digits'),
-    bankBranchName: z.string().trim().max(150, 'Cannot exceed 150 characters'),
-    ifscCode: z
-      .string()
-      .trim()
-      .min(1, 'Please enter the IFSC code')
-      .regex(IFSC_RE, 'Enter a valid IFSC code, e.g. HDFC0001234'),
+    bankAccountNumber: accountNumberField({ required: true }),
+    bankBranchName: recordNameField('the branch name', { required: false, max: 150 }),
+    ifscCode: ifscField({ required: true }),
 
-    aadharNumber: z
-      .string()
-      .trim()
-      .min(1, 'Please enter the Aadhaar number')
-      .regex(AADHAR_RE, 'Aadhaar number must be 12 digits'),
-    nameAsPerAadhar: z
-      .string()
-      .trim()
-      .min(1, 'Please enter the name as per Aadhaar')
-      .max(150, 'Cannot exceed 150 characters'),
-    panNumber: optionalPattern(PAN_RE, 'Enter a valid PAN, e.g. ABCDE1234F'),
+    aadharNumber: aadhaarField({ required: true }),
+    nameAsPerAadhar: personNameField('the name as per Aadhaar'),
+    panNumber: panField(),
     epicNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
     rationCardNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
 
@@ -661,11 +634,11 @@ export const employeeFamilyListSchema = z.object({
         ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Please enter the name' })
       } else if (name.length < 2) {
         ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Minimum 2 characters' })
-      } else if (!NAME_RE.test(name)) {
+      } else if (!PERSON_NAME_RE.test(name)) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'fullName'],
-          message: "Must include at least one letter, and can only use letters, digits, spaces and . ' -",
+          message: "A name can only use letters, spaces and . ' -",
         })
       }
 
@@ -682,7 +655,7 @@ export const employeeFamilyListSchema = z.object({
       }
 
       const aadhar = row.aadharNumber.trim()
-      if (aadhar !== '' && !AADHAR_RE.test(aadhar)) {
+      if (aadhar !== '' && !AADHAAR_RE.test(aadhar)) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'aadharNumber'],
@@ -751,11 +724,27 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
   rows.forEach((row, index) => {
     if (!rowNeedsRules(rows, index, EDUCATION_ROW_KEYS)) return
 
-    if (row.educationName.trim() === '') {
+    const qualification = row.educationName.trim()
+    if (qualification === '') {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'educationName'],
         message: 'Please enter the qualification',
+      })
+    } else if (!RECORD_NAME_RE.test(qualification)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'educationName'],
+        message: 'A qualification must contain at least one letter',
+      })
+    }
+
+    const board = row.board.trim()
+    if (board !== '' && !RECORD_NAME_RE.test(board)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'board'],
+        message: 'A board name must contain at least one letter',
       })
     }
     if (row.passingYear.trim() === '') {
@@ -850,18 +839,42 @@ function refineExperienceRows(
   rows.forEach((row, index) => {
     if (!rowNeedsRules(rows, index, EXPERIENCE_ROW_KEYS)) return
 
-    if (row.companyName.trim() === '') {
+    const company = row.companyName.trim()
+    if (company === '') {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'companyName'],
         message: 'Please enter the company name',
       })
+    } else if (!RECORD_NAME_RE.test(company)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'companyName'],
+        message: 'A company name must contain at least one letter',
+      })
     }
-    if (row.designation.trim() === '') {
+
+    const designation = row.designation.trim()
+    if (designation === '') {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'designation'],
         message: 'Please enter the designation',
+      })
+    } else if (!RECORD_NAME_RE.test(designation)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'designation'],
+        message: 'A designation must contain at least one letter',
+      })
+    }
+
+    const contactPerson = row.contactPersonName.trim()
+    if (contactPerson !== '' && !PERSON_NAME_RE.test(contactPerson)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'contactPersonName'],
+        message: "A name can only use letters, spaces and . ' -",
       })
     }
 
@@ -881,7 +894,7 @@ function refineExperienceRows(
     }
 
     const salary = row.salary.trim()
-    if (salary !== '' && !DECIMAL_RE.test(salary)) {
+    if (salary !== '' && !AMOUNT_RE.test(salary)) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'salary'],
