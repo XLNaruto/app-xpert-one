@@ -146,6 +146,28 @@ export function useRoleForm(id?: number) {
         : new Set(),
     )
 
+  /**
+   * The keys the "Expand all" control actually governs: the open module's nodes
+   * that hold children. The module itself is excluded — its sections are always
+   * drawn, so it has no chevron of its own to count.
+   */
+  const expandableKeys = useMemo(
+    () =>
+      [...index.nodeByKey.values()]
+        .filter(
+          (flat) =>
+            flat.rootKey === activeModule?.key &&
+            flat.node.key !== activeModule?.key &&
+            flat.node.children.length > 0,
+        )
+        .map((flat) => flat.node.key),
+    [index, activeModule],
+  )
+
+  /** Everything that can be open is open — the control flips to "Collapse all". */
+  const isAllExpanded =
+    expandableKeys.length > 0 && expandableKeys.every((key) => expandedKeys.has(key))
+
   /** Write a new selection back to the form, in catalog order. */
   const commit = (next: Set<Permission>) =>
     setValue('permissionCodes', orderCodes(next, index), {
@@ -256,6 +278,8 @@ export function useRoleForm(id?: number) {
     expandedKeys,
     toggleExpanded,
     setAllExpanded,
+    hasExpandable: expandableKeys.length > 0,
+    isAllExpanded,
     selected,
     locked,
     selectedCount,

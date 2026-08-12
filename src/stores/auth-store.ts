@@ -33,6 +33,8 @@ interface SetSessionOptions {
   remember?: boolean
   /** Access-token lifetime in seconds, from the login/refresh response. */
   expiresIn?: number
+  /** Whether this sign-in went through a second factor — see `twoFactorEnabled`. */
+  twoFactorEnabled?: boolean
 }
 
 /** Absolute access-token expiry from a lifetime in seconds (null if unknown). */
@@ -57,6 +59,17 @@ interface AuthState {
    * the proactive refresh in `lib/auth-refresh.ts`; null when unknown.
    */
   accessTokenExpiresAt: number | null
+  /**
+   * Whether the user holds a second factor on their login. No endpoint reports
+   * this, so it is *inferred* at sign-in and cannot be read back: a login that
+   * asked for a code before minting the token pair means on, one that went
+   * straight through means off. `POST /user/me/two-factor/{enable,disable}`
+   * updates it from there, including from the 409 those answer when the flag
+   * was already what was asked for.
+   */
+  twoFactorEnabled: boolean
+  /** Record the second factor being switched on or off from the profile screen. */
+  setTwoFactorEnabled: (enabled: boolean) => void
   /** Establish a full session after sign-in. */
   setSession: (
     user: AuthUser,
@@ -95,6 +108,8 @@ export const useAuthStore = create<AuthState>()(
       rememberMe: false,
       expiresAt: null,
       accessTokenExpiresAt: null,
+      twoFactorEnabled: false,
+      setTwoFactorEnabled: (enabled) => set({ twoFactorEnabled: enabled }),
       setSession: (user, token, refreshToken, options) => {
         const remember = options?.remember ?? false
         set({
@@ -105,6 +120,7 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: remember,
           expiresAt: remember ? Date.now() + REMEMBER_MS : null,
           accessTokenExpiresAt: accessExpiryFrom(options?.expiresIn),
+          twoFactorEnabled: options?.twoFactorEnabled ?? false,
         })
       },
       setTokens: (token, refreshToken, expiresIn) =>
@@ -124,6 +140,7 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false,
           expiresAt: null,
           accessTokenExpiresAt: null,
+          twoFactorEnabled: false,
         }),
     }),
     {

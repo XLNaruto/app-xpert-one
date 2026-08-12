@@ -9,6 +9,7 @@ import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/dat
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
+import { ScopedDataError } from '@/features/company'
 import { EMPLOYEE_SORT } from '../constants'
 import { useEmployeeList } from '../hooks/use-employee-list'
 import { useEmployeeFaces } from '../hooks/use-employee-faces'
@@ -216,9 +217,11 @@ export function EmployeeListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load employees."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load employees."
+          what="employees"
+        />
       ) : (
         <DataTable
           columns={columns}

@@ -88,9 +88,12 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
         </div>
       </div>
 
-      <div className="grid gap-3 overflow-hidden rounded-xl border border-border/60 lg:grid-cols-[240px_1fr] lg:gap-0">
+      {/* Fixed height from `lg` up so the matrix can't push the form's Save off
+          the page: the rail and the open module each take their own scrollbar,
+          and `min-h-0` is what lets a grid child scroll instead of growing. */}
+      <div className="grid gap-3 overflow-hidden rounded-xl border border-border/60 lg:h-128 lg:grid-cols-[240px_1fr] lg:gap-0">
         {/* Module rail */}
-        <div className="border-border/60 bg-muted/30 p-2 lg:border-r">
+        <div className="min-h-0 overflow-y-auto border-border/60 bg-muted/30 p-2 lg:border-r">
           <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {form.selectedCount} of {form.totalCodes} selected
           </p>
@@ -104,7 +107,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
                   type="button"
                   onClick={() => form.setActiveModuleKey(module.key)}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
+                    'flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
                     isActive
                       ? 'bg-primary/10 font-medium text-primary ring-1 ring-primary/20'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -125,10 +128,10 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
         {/* No padding on the panel itself — the ruled list runs edge to edge, so
             every divider is one unbroken line across the whole panel. Only the
             header above it is inset. */}
-        <div className="min-w-0">
+        <div className="flex min-h-0 min-w-0 flex-col">
           {active ? (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 p-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-semibold text-foreground">
@@ -147,14 +150,20 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.setAllExpanded(true)}
-                  >
-                    Expand all
-                  </Button>
+                  {/* The same control both ways — a module with everything open
+                      has no use for "Expand all", and a separate Collapse button
+                      would be dead half the time. Hidden outright when the module
+                      has nothing to expand. */}
+                  {form.hasExpandable && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => form.setAllExpanded(!form.isAllExpanded)}
+                    >
+                      {form.isAllExpanded ? 'Collapse all' : 'Expand all'}
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
@@ -169,7 +178,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
 
               {/* One ruled list: no gaps, no per-row radius, every row divided
                   from the next by a full-width line. */}
-              <div className="divide-y divide-border border-t border-border">
+              <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto border-t border-border">
                 {active.actions.length > 0 || active.children.length > 0 ? (
                   <>
                     {/* The module's own checkboxes, where it has any. Narrowed to
@@ -199,24 +208,29 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
                     {/* The sections are rows of the SAME list as the module above
                         them, not a block inset under it — an inset wrapper is what
                         leaves a gap down the left and cuts every divider short.
-                        `depth` carries the hierarchy instead, as left padding. */}
-                    {active.children.map((child) => (
-                      <PermissionNodeRow
-                        key={child.key}
-                        node={child}
-                        depth={1}
-                        disabled={disabled}
-                        selected={form.selected}
-                        locked={form.locked}
-                        expandedKeys={form.expandedKeys}
-                        stateOf={form.stateOf}
-                        countOf={form.countOf}
-                        requiredByLabel={form.requiredByLabel}
-                        onToggleNode={form.onToggleNode}
-                        onToggleCode={form.onToggleCode}
-                        onToggleExpanded={form.toggleExpanded}
-                      />
-                    ))}
+                        `depth` carries the hierarchy instead, as left padding.
+                        No indent guide at this level: the module isn't a row you
+                        can collapse, so a rail down the whole list would point at
+                        nothing. Guides only mark what an open chevron holds. */}
+                    <div className="divide-y divide-border">
+                      {active.children.map((child) => (
+                        <PermissionNodeRow
+                          key={child.key}
+                          node={child}
+                          depth={1}
+                          disabled={disabled}
+                          selected={form.selected}
+                          locked={form.locked}
+                          expandedKeys={form.expandedKeys}
+                          stateOf={form.stateOf}
+                          countOf={form.countOf}
+                          requiredByLabel={form.requiredByLabel}
+                          onToggleNode={form.onToggleNode}
+                          onToggleCode={form.onToggleCode}
+                          onToggleExpanded={form.toggleExpanded}
+                        />
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <p className="px-1 py-6 text-center text-sm text-muted-foreground">

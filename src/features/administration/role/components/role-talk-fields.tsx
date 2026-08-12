@@ -5,7 +5,7 @@ import { ALL_ROWS } from '@/lib/pagination'
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Switch } from '@/components/ui/switch'
-import { Field } from '@/components/common/form-field'
+import { cn } from '@/lib/utils'
 import { useDepartments, departmentOptions } from '@/features/master/department'
 import { WHOLE_COMPANY } from '../constants'
 import type { useRoleForm } from '../hooks/use-role-form'
@@ -126,30 +126,49 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
 
   return (
     <div className="col-span-full space-y-3">
-      <Field
-        label="Talk"
-        hint="Whether this role may use Talk, and where. Off means no access at all."
-      >
-        <div className="flex h-9 items-center gap-2">
-          <Controller
-            control={form.form.control}
-            name="talkEnabled"
-            render={({ field }) => (
-              <>
-                <Switch
-                  checked={field.value}
-                  disabled={disabled}
-                  onCheckedChange={field.onChange}
-                  aria-label="Talk enabled"
-                />
-                <span className="text-xs text-muted-foreground">
-                  {field.value ? 'Enabled' : 'Disabled'}
-                </span>
-              </>
+      {/* One row, not three: the whole tile is the switch — same card language as
+          the access-level choices above it, so the gate reads as a peer of them
+          rather than as a stray toggle under a label. */}
+      <Controller
+        control={form.form.control}
+        name="talkEnabled"
+        render={({ field }) => (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={field.value}
+            disabled={disabled}
+            onClick={() => field.onChange(!field.value)}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
+              field.value
+                ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border/60 hover:border-primary/30 hover:bg-muted/40',
+              disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
             )}
-          />
-        </div>
-      </Field>
+          >
+            <span
+              className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-lg',
+                field.value ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+              )}
+            >
+              <MessageSquare className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium text-foreground">Talk</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                Whether this role may use Talk, and where. Off means no access at all.
+              </span>
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {field.value ? 'Enabled' : 'Disabled'}
+            </span>
+            {/* Presentational: the tile owns the click and the switch role. */}
+            <Switch presentational checked={field.value} disabled={disabled} />
+          </button>
+        )}
+      />
 
       {form.talkEnabled && (
         <div className="space-y-2">

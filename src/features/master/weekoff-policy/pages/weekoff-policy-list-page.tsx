@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { WEEKOFF_POLICY_SORT } from '../constants'
 import { ruleLabel } from '../lib/weekoff-policy-mappers'
 import { useWeekoffPolicyList } from '../hooks/use-weekoff-policy-list'
@@ -146,11 +147,11 @@ export function WeekoffPolicyListPage() {
       />
 
       {list.isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {list.error instanceof Error
-            ? list.error.message
-            : "Couldn't load week-off policies."}
-        </p>
+        <ScopedDataError
+          error={list.error}
+          fallback="Couldn't load week-off policies."
+          what="week-off policies"
+        />
       ) : (
         <DataTable
           columns={columns}

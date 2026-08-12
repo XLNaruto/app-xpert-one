@@ -1,5 +1,7 @@
 export { CompanySwitcher } from './components/company-switcher'
 export { CompanySelectGate } from './components/company-select-gate'
+export { CompanyRequired } from './components/company-required'
+export { ScopedDataError } from './components/scoped-data-error'
 export { useMyCompanies } from './api/use-my-companies'
 export { useSelectCompany } from './api/use-select-company'
 export type { MyCompany, MyCompaniesState } from './types'

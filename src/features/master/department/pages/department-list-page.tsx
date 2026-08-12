@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { DEPARTMENT_SORT } from '../constants'
 import { useDepartmentList } from '../hooks/use-department-list'
 import type { Department } from '../types'
@@ -125,9 +126,11 @@ export function DepartmentListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load departments."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load departments."
+          what="departments"
+        />
       ) : (
         <DataTable
           columns={columns}

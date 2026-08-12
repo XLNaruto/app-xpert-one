@@ -24,32 +24,97 @@
  * ───────────────────────────────────────────────────────────────────────────
  * AUTH.LOGIN — POST /user/auth/login                       (no bearer)
  * ───────────────────────────────────────────────────────────────────────────
- * →  { "email": "jdoe@acme.com", "password": "secret", "source": "WEB" }
- * ←  {
- *      "access_token": "…",
- *      "refresh_token": "…",
- *      "expires_in": 3600,                 // access-token lifetime, seconds
- *      "user": {
- *        "id": 1,
- *        "account_id": 1,
- *        "email": "jdoe@acme.com",
- *        "name": "J Doe",
- *        "role_id": 2 | null,
- *        "company_id": 5 | null,           // active company, or null → must select one
- *        "last_selected_company_id": 5 | null,
- *        "is_owner": false
- *      }
+ * →  { "email": "jdoe@acme.com", "password": "secret",
+ *      "is_owner": true, "company_code": "ACME",   // code only when is_owner:false
+ *      "source": "WEB", "remember_me": false }
+ * ←  ONE OF THREE bodies, told apart by `status`:
+ *    1. signed in
+ *    {  "status": "authenticated",
+ *       "access_token": "…",
+ *       "refresh_token": "…",
+ *       "expires_in": 3600,                // access-token lifetime, seconds
+ *       "refresh_expires_in": 43200,       // 30 days when remember_me
+ *       "user": {
+ *         "id": 1,
+ *         "account_id": 1,
+ *         "email": "jdoe@acme.com",
+ *         "name": "J Doe",
+ *         "role_id": 2 | null,
+ *         "company_id": 5 | null,          // active company, or null → must select one
+ *         "last_selected_company_id": 5 | null,
+ *         "is_owner": false
+ *       }
  *    }
- * Notes: one form for everyone — `email` is unique platform-wide, so an account
- * owner and a tenant-created admin sign in identically (there is no `is_owner`
- * flag or company code to send). `source: "WEB"` allows exactly ONE browser
- * session, so signing in again on the web signs the previous browser out, while
- * the user's `APP` sessions on their phones are untouched. It also picks the
- * permission the login is checked against — `web:access` — so a user without
- * panel access gets a 403, not a 401 (owners are exempt on WEB). A wrong
- * password and an unknown address both answer 401.
+ *    2. address never verified — no token minted, a code was mailed instead
+ *    {  "status": "email_verification_required",
+ *       "otp_expires_in": 120, "masked_email": "xp****@gmail.com", "message": "…" }
+ *    3. second factor on — the password alone is not enough
+ *    {  "status": "two_factor_required", "challenge_token": "…",
+ *       "otp_expires_in": 120, "masked_email": "xp****@gmail.com", "message": "…" }
+ * Notes: TWO forms picked by `is_owner` — `true` is the account owner (email +
+ * password alone), `false` is a tenant-created admin and additionally REQUIRES
+ * `company_code`. There is no fallback: an address sent through the wrong form
+ * answers 401 with the same message as a wrong password. `source: "WEB"` allows
+ * exactly ONE browser session, so signing in again on the web signs the previous
+ * browser out, while the user's `APP` sessions on their phones are untouched. It
+ * also picks the permission the login is checked against — `web:access` — so a
+ * user without panel access gets a 403, not a 401 (owners are exempt on WEB).
+ * `remember_me` lengthens the SIGNED refresh-token lifetime (30 days vs 12
+ * hours); the client cannot extend it by storing the token differently.
+ * Both non-`authenticated` bodies are 200s, not errors — they are the next step,
+ * so `loginRequest` resolves them as a `LoginOutcome` rather than throwing.
+ * Whether the second factor is on is not readable anywhere, so it is INFERRED
+ * here: reaching a session through shape 3 means on, straight through shape 1
+ * means off (see `AuthState.twoFactorEnabled`).
  * Code: `features/auth/api/auth-api.ts` → `loginRequest`
  * Schema: `loginResponseSchema` (`features/auth/schemas.ts`)
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * AUTH.VERIFY_EMAIL — POST /user/auth/verify-email          (no bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * →  { "email": "jdoe@acme.com", "otp_code": "123456" }
+ * ←  { "email": "…", "is_email_verified": true, "message": "…" }
+ * Notes: takes the ADDRESS, not a handle, so the user can finish from the mail
+ * on a device that never saw the login response — which user gets verified
+ * still comes out of the stored code. Single-use, lives two minutes, and three
+ * wrong guesses burn it; wrong / expired / too-many all answer 401. NO token is
+ * issued, so the screen replays the login once this succeeds — which is also
+ * what surfaces a `two_factor_required` on an account holding both.
+ * Code: `features/auth/api/auth-api.ts` → `verifyEmailRequest`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * AUTH.RESEND_EMAIL_OTP — POST /user/auth/resend-email-otp  (no bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * →  { "email": "jdoe@acme.com" }
+ * ←  { "otp_expires_in": 120, "masked_email": "xp****@gmail.com", "message": "…" }
+ * Notes: the code screen's "didn't get it?" button, for BOTH challenges. A new
+ * code replaces any live one *for that address*, and a two-factor login code is
+ * mailed to that same address, so this re-arms either kind. ALWAYS 200 with the
+ * same shape — an unknown address, a deactivated user and an already-verified
+ * one are indistinguishable from a code being sent, so it can't double as an
+ * account-exists lookup.
+ * It returns no `challenge_token`, so the two-factor branch keeps the one the
+ * login gave it. That token is bound to the login, not to the code, but carries
+ * the login's own two-minute life — so a resend renews the code while the
+ * challenge behind it keeps ageing. A verify rejected after a resend means that
+ * challenge lapsed and the sign-in must start again.
+ * Code: `features/auth/api/auth-api.ts` → `resendEmailOtpRequest`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * AUTH.VERIFY_LOGIN_OTP — POST /user/auth/verify-login-otp  (no bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * →  { "challenge_token": "…", "otp_code": "123456" }
+ * ←  EXACTLY the `authenticated` body of AUTH.LOGIN — never a challenge.
+ * Notes: the only place a token is minted for a two-factor login. WHICH user is
+ * signed in — and from which client — comes out of the challenge, never out of
+ * this request, so the session shape (a `WEB` login signs the previous browser
+ * out, an `APP` login does not) can't be changed between the two steps. The
+ * role and the application right are re-read here, so a login refused in the
+ * meantime does not complete. Single-use and expires with the code after two
+ * minutes, and a replay reads as expired — so a spent or stale challenge is a
+ * 401, NOT a re-issued one. Unlike the login this either resolves to a session
+ * or throws, which is why the code screen has no branch for another challenge.
+ * Code: `features/auth/api/auth-api.ts` → `verifyLoginOtpRequest`
  *
  * ───────────────────────────────────────────────────────────────────────────
  * AUTH.REFRESH_TOKEN — POST /user/auth/refresh             (no bearer)
@@ -86,7 +151,25 @@
  * ME.GET — GET /user/me                                     (bearer)
  * ───────────────────────────────────────────────────────────────────────────
  * ←  { "account": { … }, "subscription": { … }, "usage": { … } }
- * Notes: the caller's own account context, resolved from the token.
+ * Notes: the caller's own account context, resolved from the token. It does
+ * NOT report `two_factor_auth` — no endpoint does (see below).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ME.TWO_FACTOR_ENABLE  — POST /user/me/two-factor/enable    (bearer, no body)
+ * ME.TWO_FACTOR_DISABLE — POST /user/me/two-factor/disable   (bearer, no body)
+ * ───────────────────────────────────────────────────────────────────────────
+ * ←  { "two_factor_auth": true | false, "message": "…" }
+ * Notes: flips the factor for the CALLER only — the user comes from the token.
+ * Carries no permission code (no tenant should be able to stop its own users
+ * securing their logins) and needs no mailed code (the address was already
+ * proved at the first login). Neither signs the current session out. Enabling
+ * when already on — or disabling when already off — answers 409, which is
+ * itself the truth about the stored state, so the toggle corrects itself from
+ * that rather than showing an error. There is NO endpoint that reads the flag:
+ * the profile screen shows `AuthState.twoFactorEnabled`, inferred at login from
+ * which body the login answered with and then updated by these two calls.
+ * Code: `features/profile/api/two-factor-api.ts`,
+ *       `features/profile/api/use-two-factor.ts`
  *
  * ───────────────────────────────────────────────────────────────────────────
  * ME.COMPANIES — GET /user/my/companies                     (bearer)

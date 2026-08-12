@@ -123,7 +123,7 @@ export function Topbar() {
                 <span
                   className={cn(
                     'inline-block size-4 rounded-full bg-white shadow transition-transform',
-                    theme === 'dark' ? 'translate-x-4' : 'translate-x-0.5',
+                    theme === 'dark' ? 'translate-x-4.5' : 'translate-x-0.5',
                   )}
                 />
               </span>

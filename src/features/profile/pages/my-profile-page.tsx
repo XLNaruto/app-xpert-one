@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useMyProfile } from '../api/use-profile'
+import { TwoFactorCard } from '../components/two-factor-card'
 import type { ProfileStatus } from '../types'
 
 /** Format an ISO date/date-time as 'dd MMM yyyy' (falls back to the raw value). */
@@ -207,6 +208,15 @@ export function MyProfilePage() {
           </div>
         </div>
       ) : null}
+
+      {/* Security — reads the session, not the profile query, so it stands
+          outside the load/error branches above. */}
+      <section className="mt-6 space-y-3">
+        <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Security
+        </h2>
+        <TwoFactorCard />
+      </section>
     </div>
   )
 }

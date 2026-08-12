@@ -86,55 +86,63 @@ export function RoleScopeFields({ form, disabled = false }: RoleScopeFieldsProps
           hint="The companies this role may act in. A global role reaches all of them, including ones added later."
           error={companyError}
         >
-          {form.isCompaniesLoading ? (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : form.companies.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No companies on this account yet.
-            </p>
-          ) : (
-            <div
-              className={cn(
-                'grid gap-2 sm:grid-cols-2 lg:grid-cols-3',
-                isGlobal && 'opacity-50',
-              )}
-            >
-              {form.companies.map((company) => {
-                // Under GLOBAL every box reads as ticked — that IS the reach —
-                // but the stored list stays untouched underneath, so switching
-                // back to COMPANY restores whatever was picked before.
-                const checked = isGlobal || form.companyIds.includes(company.id)
-                return (
-                  <label
-                    key={company.id}
-                    className={cn(
-                      'flex items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2 text-sm transition-colors',
-                      isGlobal || disabled
-                        ? 'cursor-not-allowed'
-                        : 'cursor-pointer hover:border-primary/30 hover:bg-muted/40',
-                    )}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      disabled={isGlobal || disabled}
-                      onChange={() => form.toggleCompany(company.id)}
-                      aria-label={company.name}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-foreground">
-                      {company.name}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {company.code}
-                    </span>
-                  </label>
-                )
-              })}
-            </div>
-          )}
+          {/* The tiles sit on a panel of their own: on a long form a bare grid of
+              bordered boxes reads as loose furniture, and the account can hold
+              more companies than fit — the panel caps the height and scrolls. */}
+          <div className="max-h-60 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-2.5">
+            {form.isCompaniesLoading ? (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <Skeleton key={index} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : form.companies.length === 0 ? (
+              <p className="py-2 text-center text-sm text-muted-foreground">
+                No companies on this account yet.
+              </p>
+            ) : (
+              <div
+                className={cn(
+                  'grid gap-2 sm:grid-cols-2 lg:grid-cols-3',
+                  isGlobal && 'opacity-50',
+                )}
+              >
+                {form.companies.map((company) => {
+                  // Under GLOBAL every box reads as ticked — that IS the reach —
+                  // but the stored list stays untouched underneath, so switching
+                  // back to COMPANY restores whatever was picked before.
+                  const checked = isGlobal || form.companyIds.includes(company.id)
+                  return (
+                    <label
+                      key={company.id}
+                      className={cn(
+                        'flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors',
+                        checked
+                          ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20'
+                          : 'border-border/60 bg-card',
+                        isGlobal || disabled
+                          ? 'cursor-not-allowed'
+                          : 'cursor-pointer hover:border-primary/30',
+                      )}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        disabled={isGlobal || disabled}
+                        onChange={() => form.toggleCompany(company.id)}
+                        aria-label={company.name}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-foreground">
+                        {company.name}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {company.code}
+                      </span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </Field>
       </div>
     </>

@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/api-error'
+import { ApiError, NO_ACTIVE_COMPANY_CODE } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
 
 /**
@@ -9,11 +9,18 @@ import { useAuthStore } from '@/stores/auth-store'
  * Called from a feature's `api/` layer, never from a component — a request made
  * before a company is selected would come back a bare 400 on the missing
  * parameter, so this fails first with something a screen can actually show.
+ *
+ * The failure carries `NO_ACTIVE_COMPANY`, which is what lets a screen answer it
+ * with `<CompanyRequired>` (the picker) instead of an error line.
  */
 export function activeCompanyId(what: string): number {
   const companyId = useAuthStore.getState().user?.companyId
   if (companyId == null) {
-    throw new ApiError(`Select a company before managing ${what}.`)
+    throw new ApiError(
+      `Select a company to continue with ${what}.`,
+      undefined,
+      NO_ACTIVE_COMPANY_CODE,
+    )
   }
   return companyId
 }

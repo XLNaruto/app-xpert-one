@@ -16,7 +16,10 @@ const ROLE_TABS = [
   { value: 'user', label: 'User', icon: UserRound },
 ] as const
 
-/** Email · password sign-in. */
+/**
+ * Email · password sign-in. A login that answers with a challenge instead of a
+ * session hands over to `/verify-otp` rather than swapping this form out.
+ */
 export function LoginPage() {
   const {
     register,
@@ -27,7 +30,6 @@ export function LoginPage() {
     isPending,
     isError,
     error,
-    needsEmailVerification,
   } = useLogin()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -54,12 +56,7 @@ export function LoginPage() {
         {isError && (
           <p
             role="alert"
-            className={cn(
-              'rounded-lg border px-3 py-2 text-sm',
-              needsEmailVerification
-                ? 'border-primary/30 bg-primary/10 text-primary'
-                : 'border-destructive/30 bg-destructive/10 text-destructive',
-            )}
+            className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
           >
             {error?.message}
           </p>

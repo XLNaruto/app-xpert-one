@@ -51,6 +51,13 @@ export interface NavItem {
    * hidden row can't be reached by typing its URL either.
    */
   permission?: PermissionSpec;
+  /**
+   * Set on the few rows that work without an active company. Everything else is
+   * tenant-scoped, so until a company is selected `filterNavByCompany` hides it —
+   * the Company master is the one place the user can still go (to create or pick
+   * one). A parent survives if any of its children are marked.
+   */
+  companyIndependent?: boolean;
 }
 
 export interface NavGroup {
@@ -129,6 +136,9 @@ export const navGroups: NavGroup[] = [
             to: "/master/company",
             icon: Building2,
             permission: PERMISSIONS.companies,
+            // `/user/companies` isn't tenant-scoped, so this row stays reachable
+            // with no company selected — it's how the user gets one.
+            companyIndependent: true,
           },
           {
             label: "Branch",
@@ -323,6 +333,33 @@ export function filterNavByPermission(
       .map(keepItem)
       .filter((child): child is NavItem => child !== null);
     if (!children.length) return item.to ? { ...item, children } : null;
+    return { ...item, children };
+  };
+
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.map(keepItem).filter((item): item is NavItem => item !== null),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+/**
+ * Drop every row that needs an active company, keeping only the ones flagged
+ * `companyIndependent` (today: the Company master). Runs *after*
+ * `filterNavByPermission`, so a user who can't reach the company master is left
+ * with an empty sidebar rather than a row they'd be forbidden on.
+ *
+ * Applied by the sidebar only while no company is selected — every other screen
+ * would just render the "Select a company" picker, so offering the row is noise.
+ */
+export function filterNavByCompany(groups: NavGroup[]): NavGroup[] {
+  const keepItem = (item: NavItem): NavItem | null => {
+    if (!item.children?.length) return item.companyIndependent ? item : null;
+    const children = item.children
+      .map(keepItem)
+      .filter((child): child is NavItem => child !== null);
+    if (!children.length) return item.companyIndependent && item.to ? { ...item, children } : null;
     return { ...item, children };
   };
 

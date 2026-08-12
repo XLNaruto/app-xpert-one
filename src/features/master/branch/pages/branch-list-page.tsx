@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { BRANCH_SORT } from '../constants'
 import { useBranchList } from '../hooks/use-branch-list'
 import type { Branch } from '../types'
@@ -150,9 +151,11 @@ export function BranchListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load branches."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load branches."
+          what="branches"
+        />
       ) : (
         <DataTable
           columns={columns}

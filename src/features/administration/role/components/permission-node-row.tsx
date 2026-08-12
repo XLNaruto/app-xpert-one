@@ -5,6 +5,33 @@ import type { Permission, PermissionModule } from '@/features/permissions'
 import { PermissionActionPill } from './permission-action-pill'
 import type { NodeState } from '../lib/permission-tree'
 
+/** Left padding of a depth-0 row, in px. */
+const GUTTER = 8
+/** How much further right each level sits — enough to read as a step, no more. */
+const INDENT = 16
+/** Centre of the 20px toggle column a row's chevron (or bullet) sits in. */
+const TOGGLE_CENTRE = 10
+
+/**
+ * Where the indent guide for a node's children runs: straight down from the
+ * centre of that node's own chevron. The children themselves sit one indent to
+ * the right of it, so the line never crosses their toggles.
+ */
+function guideLeft(depth: number) {
+  return GUTTER + depth * INDENT + TOGGLE_CENTRE
+}
+
+/** The hairline itself — one per expanded parent, spanning its children. */
+function IndentGuide({ depth }: { depth: number }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 w-px bg-border"
+      style={{ left: guideLeft(depth) }}
+    />
+  )
+}
+
 export interface PermissionNodeRowProps {
   node: PermissionModule
   depth: number
@@ -56,14 +83,25 @@ export function PermissionNodeRow({
       {/* Depth is paid for in padding rather than in a nested, inset container:
           the rows are one continuous ruled list, so every divider has to span the
           full width. An inset wrapper would break that line at each level. */}
+      {/* The whole row is the expand target — the chevron is a 20px hit area and
+          nobody aims for it. The controls sitting on the row stop the click, so
+          ticking a box or a pill never also folds the row away. */}
       <div
-        className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2.5 pr-3"
-        style={{ paddingLeft: 12 + depth * 24 }}
+        className={cn(
+          'flex flex-wrap items-center gap-x-2 gap-y-2 py-2.5 pr-3',
+          hasChildren && 'cursor-pointer select-none transition-colors hover:bg-muted/40',
+        )}
+        style={{ paddingLeft: GUTTER + depth * INDENT }}
+        onClick={hasChildren ? () => onToggleExpanded(node.key) : undefined}
       >
         {hasChildren ? (
           <button
             type="button"
-            onClick={() => onToggleExpanded(node.key)}
+            onClick={(event) => {
+              // The row behind it already toggles; without this the two cancel.
+              event.stopPropagation()
+              onToggleExpanded(node.key)
+            }}
             className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
             aria-expanded={isExpanded}
@@ -80,6 +118,7 @@ export function PermissionNodeRow({
           checked={state === 'all'}
           indeterminate={state === 'partial'}
           disabled={disabled || node.permissions.length === 0}
+          onClick={(event) => event.stopPropagation()}
           onChange={() => onToggleNode(node)}
           aria-label={`Select every permission under ${node.label}`}
         />
@@ -102,7 +141,10 @@ export function PermissionNodeRow({
         {/* A node's own checkboxes. A section has a single `read` gating whether
             the section shows at all; a bare heading has none. */}
         {node.actions.length > 0 && (
-          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          <div
+            className="ml-auto flex flex-wrap items-center gap-1.5"
+            onClick={(event) => event.stopPropagation()}
+          >
             {node.actions.map((action) => (
               <PermissionActionPill
                 key={action.permission}
@@ -119,7 +161,8 @@ export function PermissionNodeRow({
       </div>
 
       {hasChildren && isExpanded && (
-        <div className="divide-y divide-border border-t border-border">
+        <div className="relative divide-y divide-border border-t border-border">
+          <IndentGuide depth={depth} />
           {node.children.map((child) => (
             <PermissionNodeRow
               key={child.key}

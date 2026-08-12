@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { ROLE_SORT } from '../constants'
 import { useRoleList } from '../hooks/use-role-list'
 import type { RoleListRow } from '../types'
@@ -139,9 +140,11 @@ export function RoleListPage() {
       />
 
       {list.isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {list.error instanceof Error ? list.error.message : "Couldn't load roles."}
-        </p>
+        <ScopedDataError
+          error={list.error}
+          fallback="Couldn't load roles."
+          what="roles"
+        />
       ) : (
         <DataTable
           columns={columns}

@@ -1,10 +1,23 @@
 import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
-import { ApiError, toApiError } from '@/lib/api-error'
-import { loginPendingResponseSchema, loginResponseSchema } from '../schemas'
+import { toApiError } from '@/lib/api-error'
+import {
+  loginOutcomeResponseSchema,
+  loginResponseSchema,
+  resendEmailOtpResponseSchema,
+  verifyEmailResponseSchema,
+} from '../schemas'
 import { toAuthUser } from '../lib/auth-mappers'
-import type { LoginValues } from '../schemas'
-import type { AuthSession } from '../types'
+import type { LoginResponse, LoginValues } from '../schemas'
+import type { AuthSession, LoginOutcome } from '../types'
+
+/** A freshly mailed verification code: its wording and when it lapses. */
+export interface ResendResult {
+  message: string
+  otpExpiresIn: number
+  /** Absolute epoch-ms deadline — see `AuthChallenge.codeExpiresAt`. */
+  codeExpiresAt: number
+}
 
 /**
  * Backend session endpoints. Token *rotation* on a 401 lives in the api-client
@@ -12,9 +25,56 @@ import type { AuthSession } from '../types'
  * avoid recursing through that interceptor).
  */
 
+/** What the API mints codes for, when a response doesn't say. */
+const DEFAULT_OTP_TTL_SECONDS = 120
+
+/** Fallback wording when the API sends a challenge without a `message`. */
+function challengeMessage(maskedEmail: string) {
+  return `We have sent a verification code to ${maskedEmail}.`
+}
+
+/** The session half of a `200`, once it's known to be the authenticated one. */
+function toAuthSession(data: LoginResponse): AuthSession {
+  return {
+    user: toAuthUser(data.user),
+    token: data.access_token,
+    refreshToken: data.refresh_token,
+    expiresIn: data.expires_in,
+  }
+}
+
+/** Turn any of the login endpoint's three `200` bodies into a `LoginOutcome`. */
+function toLoginOutcome(raw: unknown, email: string): LoginOutcome {
+  const data = loginOutcomeResponseSchema.parse(raw)
+
+  if ('access_token' in data) {
+    return { status: 'authenticated', session: toAuthSession(data) }
+  }
+
+  const maskedEmail = data.masked_email ?? email
+  // Two minutes is what the API mints codes for; only used if it stops saying
+  // so, and the countdown is cosmetic either way.
+  const otpExpiresIn = data.otp_expires_in ?? DEFAULT_OTP_TTL_SECONDS
+  return {
+    status: 'challenge',
+    challenge: {
+      kind:
+        data.status === 'two_factor_required' ? 'two-factor' : 'email',
+      challengeToken:
+        data.status === 'two_factor_required' ? data.challenge_token : '',
+      maskedEmail,
+      otpExpiresIn,
+      // Stamped here, where the answer just arrived, so the deadline survives
+      // the reloads and remounts a duration wouldn't.
+      codeExpiresAt: Date.now() + otpExpiresIn * 1000,
+      message: data.message ?? challengeMessage(maskedEmail),
+    },
+  }
+}
+
 /**
  * POST /user/auth/login — exchange email + password for an access/refresh pair
- * plus the signed-in user.
+ * plus the signed-in user, *or* for the next step of the sign-in.
  *
  * The API takes two login forms, picked by the required `is_owner` flag: `true`
  * is the account owner (email + password alone), `false` is an admin user the
@@ -29,28 +89,18 @@ import type { AuthSession } from '../types'
  * — while the same user's `APP` sessions on their phones are left alone. It
  * also decides the permission the login is checked against (`web:access`), so a
  * user without panel access gets a 403 rather than a 401.
+ *
+ * Correct credentials do not guarantee a session: an unverified address and a
+ * user holding a second factor each answer `200` with a challenge instead, so
+ * the result is a `LoginOutcome` and only a *rejected* login throws.
  */
-/**
- * `code` on the `ApiError` thrown when the credentials were right but the email
- * is unverified, so a screen can branch to an OTP step instead of only showing
- * the message.
- */
-export const EMAIL_VERIFICATION_REQUIRED = 'EMAIL_VERIFICATION_REQUIRED'
-
-/** Did this sign-in fail only because the address is still unverified? */
-export function isEmailVerificationRequired(error: unknown): boolean {
-  return error instanceof ApiError && error.code === EMAIL_VERIFICATION_REQUIRED
-}
-
 export async function loginRequest({
   email,
   password,
   isOwner,
   companyCode,
-}: Pick<
-  LoginValues,
-  'email' | 'password' | 'isOwner' | 'companyCode'
->): Promise<AuthSession> {
+  remember,
+}: LoginValues): Promise<LoginOutcome> {
   const code = companyCode.trim()
   try {
     const raw = await http.post<
@@ -61,6 +111,7 @@ export async function loginRequest({
         is_owner: boolean
         company_code?: string
         source: 'WEB'
+        remember_me: boolean
       }
     >(endpoints.AUTH.LOGIN, {
       email,
@@ -70,29 +121,117 @@ export async function loginRequest({
       is_owner: isOwner,
       ...(isOwner ? {} : { company_code: code }),
       source: 'WEB',
+      // The tick-box is a *server-side* refresh lifetime (30 days vs 12 hours),
+      // so it has to be sent — storing the token differently can't extend it.
+      remember_me: remember,
     })
-    // A login can answer `200` without a session: right credentials, unverified
-    // address. It carries the API's own message, which is what the caller shows
-    // — parsing it as a session would only surface a schema dump instead.
-    const pending = loginPendingResponseSchema.safeParse(raw)
-    if (pending.success) {
-      throw new ApiError(
-        pending.data.message ??
-          `Your email address is not verified yet. We have sent a verification code to ${pending.data.masked_email ?? email}.`,
-        undefined,
-        EMAIL_VERIFICATION_REQUIRED,
-      )
-    }
-
-    const data = loginResponseSchema.parse(raw)
-    return {
-      user: toAuthUser(data.user),
-      token: data.access_token,
-      refreshToken: data.refresh_token,
-      expiresIn: data.expires_in,
-    }
+    return toLoginOutcome(raw, email)
   } catch (error) {
     throw toApiError(error, 'Sign-in failed. Please check your credentials.')
+  }
+}
+
+/**
+ * POST /user/auth/verify-email — spend the code a first login mailed, which
+ * flips `is_email_verified` on the user.
+ *
+ * It takes the address rather than a handle, so the user can finish from the
+ * mail on a device that never saw the login response. No token comes back —
+ * verification is not a login — so the caller signs in again afterwards, which
+ * is also what surfaces a second factor on an account holding both.
+ *
+ * The code is single-use and lives two minutes, and three wrong guesses burn
+ * it; wrong, expired and too-many-attempts all answer 401 alike.
+ */
+export async function verifyEmailRequest(
+  email: string,
+  otpCode: string,
+): Promise<string> {
+  try {
+    const raw = await http.post<unknown, { email: string; otp_code: string }>(
+      endpoints.AUTH.VERIFY_EMAIL,
+      { email, otp_code: otpCode },
+    )
+    const data = verifyEmailResponseSchema.parse(raw)
+    return data.message ?? 'Email verified.'
+  } catch (error) {
+    throw toApiError(
+      error,
+      'That code is wrong or has expired. Request a new one.',
+    )
+  }
+}
+
+/**
+ * POST /user/auth/resend-email-otp — mail a fresh verification code, which
+ * replaces any live one for that address.
+ *
+ * It always answers `200` with the same shape: an unknown address, a
+ * deactivated user and an already-verified one are indistinguishable from a
+ * code being sent, so this can't double as an account-exists lookup. Nothing in
+ * the reply is worth branching on beyond the wording.
+ *
+ * Two-factor has no counterpart — its challenge is minted by the login, so a
+ * resend there means replaying the login for a new `challenge_token`.
+ */
+export async function resendEmailOtpRequest(
+  email: string,
+): Promise<ResendResult> {
+  try {
+    const raw = await http.post<unknown, { email: string }>(
+      endpoints.AUTH.RESEND_EMAIL_OTP,
+      { email },
+    )
+    const data = resendEmailOtpResponseSchema.parse(raw)
+    const otpExpiresIn = data.otp_expires_in ?? DEFAULT_OTP_TTL_SECONDS
+    return {
+      message:
+        data.message ??
+        challengeMessage(data.masked_email ?? 'your email address'),
+      otpExpiresIn,
+      // The old code is dead the moment this one is mailed, so the countdown
+      // restarts from this answer rather than from the original challenge.
+      codeExpiresAt: Date.now() + otpExpiresIn * 1000,
+    }
+  } catch (error) {
+    throw toApiError(error, "Couldn't send a new code. Please try again.")
+  }
+}
+
+/**
+ * POST /user/auth/verify-login-otp — the second half of a login that answered
+ * `two_factor_required`, and the only place a token is minted for one.
+ *
+ * Which user is signed in, and from which client, comes out of the challenge
+ * rather than this request, so the session shape (a `WEB` login signs the
+ * previous browser out, an `APP` login does not) can't be changed between the
+ * two steps. The role and the `web:access` right are re-read here, so a login
+ * refused in the meantime does not complete.
+ *
+ * Unlike the login, this resolves to a session or not at all: the success body
+ * is *exactly* the `authenticated` one. The challenge is single-use and expires
+ * with the code, and a replay reads as expired — so a spent or stale challenge
+ * is a rejection, never a re-issued one. That is why nothing here can hand back
+ * another challenge, and why the caller has no branch for one.
+ */
+export async function verifyLoginOtpRequest(
+  challengeToken: string,
+  otpCode: string,
+): Promise<AuthSession> {
+  try {
+    const raw = await http.post<
+      unknown,
+      { challenge_token: string; otp_code: string }
+    >(endpoints.AUTH.VERIFY_LOGIN_OTP, {
+      challenge_token: challengeToken,
+      otp_code: otpCode,
+    })
+    return toAuthSession(loginResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(
+      error,
+      'That code is wrong or has expired. Request a new one.',
+    )
   }
 }
 

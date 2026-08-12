@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_SORT } from '../constants'
 import { useDocumentTypeList } from '../hooks/use-document-type-list'
 import type { DocumentType } from '../types'
@@ -106,9 +107,11 @@ export function DocumentTypeListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load document types."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load document types."
+          what="document types"
+        />
       ) : (
         <DataTable
           columns={columns}

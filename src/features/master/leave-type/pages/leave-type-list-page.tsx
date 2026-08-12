@@ -8,6 +8,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
+import { ScopedDataError } from '@/features/company'
 import { LEAVE_TYPE_SORT, PAY_TYPE_LABELS } from '../constants'
 import { useLeaveTypeList } from '../hooks/use-leave-type-list'
 import type { LeaveType } from '../types'
@@ -111,9 +112,11 @@ export function LeaveTypeListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load leave types."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load leave types."
+          what="leave types"
+        />
       ) : (
         <DataTable
           columns={columns}

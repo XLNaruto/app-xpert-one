@@ -21,10 +21,26 @@ export const endpoints = {
     REFRESH_TOKEN: '/user/auth/refresh',
     LOGOUT: '/user/auth/logout',
     SELECT_COMPANY: '/user/auth/select-company',
+    /**
+     * Spend the six-digit code a first login mailed, which flips
+     * `is_email_verified`. Mints no token — verification is not a login, so the
+     * screen signs in again once it succeeds.
+     */
+    VERIFY_EMAIL: '/user/auth/verify-email',
+    /** Mail a fresh verification code; the previous one stops working. */
+    RESEND_EMAIL_OTP: '/user/auth/resend-email-otp',
+    /**
+     * The second half of a two-factor login: the `challenge_token` the login
+     * answered with plus the mailed code, in exchange for the token pair.
+     */
+    VERIFY_LOGIN_OTP: '/user/auth/verify-login-otp',
   },
   ME: {
     GET: '/user/me',
     COMPANIES: '/user/my/companies',
+    /** Turn the caller's own second factor on / off. No permission code. */
+    TWO_FACTOR_ENABLE: '/user/me/two-factor/enable',
+    TWO_FACTOR_DISABLE: '/user/me/two-factor/disable',
     /**
      * The caller's own role + everything the front end needs to draw itself:
      * the flat `permission_codes` every route policy checks and the same set

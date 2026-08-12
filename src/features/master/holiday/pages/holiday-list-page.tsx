@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
+import { ScopedDataError } from '@/features/company'
 import { HOLIDAY_LABELS, HOLIDAY_SORT } from '../constants'
 import { useHolidayList } from '../hooks/use-holiday-list'
 import type { Holiday } from '../types'
@@ -113,9 +114,11 @@ export function HolidayListPage() {
       />
 
       {isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load holidays."}
-        </p>
+        <ScopedDataError
+          error={error}
+          fallback="Couldn't load holidays."
+          what="holidays"
+        />
       ) : (
         <DataTable
           columns={columns}

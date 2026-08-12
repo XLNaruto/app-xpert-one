@@ -13,6 +13,7 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { cn, formatDate } from '@/lib/utils'
+import { ScopedDataError } from '@/features/company'
 import { LEAVE_SORT, LEAVE_STATUS_FILTER_OPTIONS } from '../constants'
 import { useLeaveList } from '../hooks/use-leave-list'
 import { LeaveDecisionDialog } from '../components/leave-decision-dialog'
@@ -221,11 +222,11 @@ export function LeaveListPage() {
       />
 
       {leave.isError ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {leave.error instanceof Error
-            ? leave.error.message
-            : "Couldn't load the leave records."}
-        </p>
+        <ScopedDataError
+          error={leave.error}
+          fallback="Couldn't load the leave records."
+          what="leave records"
+        />
       ) : (
         <DataTable
           columns={columns}

@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { ChevronDown, PanelLeft, PanelLeftClose, X } from 'lucide-react'
-import { filterNavByPermission, navGroups, type NavItem } from '@/config/navigation'
+import {
+  filterNavByCompany,
+  filterNavByPermission,
+  navGroups,
+  type NavItem,
+} from '@/config/navigation'
 import { useCan } from '@/features/permissions'
+import { useMyCompanies } from '@/features/company'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
@@ -57,8 +63,17 @@ export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { can, isLoading: roleLoading } = useCan()
 
-  // Only the menu rows this user's role reaches — `GET /user/my-role`.
-  const visibleGroups = useMemo(() => filterNavByPermission(navGroups, can), [can])
+  // Shares the `/user/my/companies` cache with the topbar switcher and the gate.
+  const { selectedCompanyId } = useMyCompanies()
+
+  // Only the menu rows this user's role reaches — `GET /user/my-role`. With no
+  // company selected the survivors are narrowed again to the company-independent
+  // rows, so the only way on is the Company master. Permission first: a row the
+  // role can't reach must never come back through the company pass.
+  const visibleGroups = useMemo(() => {
+    const permitted = filterNavByPermission(navGroups, can)
+    return selectedCompanyId == null ? filterNavByCompany(permitted) : permitted
+  }, [can, selectedCompanyId])
 
   // Rail-collapse only applies on desktop; the mobile drawer is always full width.
   const collapsed = isDesktop && collapsedRaw
