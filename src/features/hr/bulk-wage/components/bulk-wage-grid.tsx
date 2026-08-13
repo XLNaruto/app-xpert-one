@@ -11,6 +11,7 @@ import { amountLabel, gridAmount } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import {
   ActMarkerButton,
+  CellTooltip,
   ColumnHint,
   GridAmountInput,
   GridInput,
@@ -565,9 +566,9 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <div className="space-y-0.5">
           <span className="flex items-center gap-1.5 font-semibold text-foreground">
             <Briefcase className="size-3 shrink-0 text-primary" />
-            <span className="truncate" title={props.designationName}>
-              {props.designationName}
-            </span>
+            <CellTooltip label={props.designationName}>
+              <span className="truncate">{props.designationName}</span>
+            </CellTooltip>
           </span>
           {/*
             Where a changed row says so. The whole row is tinted, but a tint read

@@ -765,15 +765,16 @@ function RowCell({
           </div>
           {/* The cell holds a sum — punched days, holidays and paid leave — and
               may have been typed over since. This opens what it is made of. */}
-          <button
-            type="button"
-            onClick={() => onShowBreakdown(row, values?.presentDays ?? '')}
-            aria-label={`Attendance breakdown for ${row.employeeName || 'employee'}`}
-            title="Attendance breakdown"
-            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <Eye className="size-3.5" />
-          </button>
+          <CellTooltip label="Attendance breakdown">
+            <button
+              type="button"
+              onClick={() => onShowBreakdown(row, values?.presentDays ?? '')}
+              aria-label={`Attendance breakdown for ${row.employeeName || 'employee'}`}
+              className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Eye className="size-3.5" />
+            </button>
+          </CellTooltip>
         </div>
       )
     }
@@ -1237,21 +1238,25 @@ function Money({
   stale: boolean
   className?: string
 }) {
-  return (
+  const amount = (
     <span
       className={cn(
         'block tabular-nums',
         stale && 'text-muted-foreground/60 line-through decoration-muted-foreground/40',
         className,
       )}
-      title={
-        stale
-          ? 'Computed by the server for the days it had — it settles when this row is saved and the register reloaded'
-          : undefined
-      }
     >
       {formatAmount(value)}
     </span>
+  )
+
+  // Only a stale figure has anything to explain — a settled one is just a number.
+  return stale ? (
+    <CellTooltip label="Computed by the server for the days it had — it settles when this row is saved and the register reloaded">
+      {amount}
+    </CellTooltip>
+  ) : (
+    amount
   )
 }
 

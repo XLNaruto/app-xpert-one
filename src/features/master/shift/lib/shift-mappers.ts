@@ -26,6 +26,9 @@ export function toShift(response: ShiftResponse): Shift {
     breakMinutes: response.break_minutes,
     isLateBreakPenaltyApplicable: response.is_late_break_penalty_applicable,
     concessionMinutes: response.concession_minutes,
+    isLateCheckInPenaltyApplicable: response.is_late_check_in_penalty_applicable,
+    lateCheckInPenaltyType: response.late_check_in_penalty_type ?? null,
+    lateCheckInPenaltyValue: response.late_check_in_penalty_value ?? null,
     earlyExitGraceMinutes: response.early_exit_grace_minutes,
     minFullDayHours: response.min_full_day_hours,
     minHalfDayHours: response.min_half_day_hours,
@@ -61,6 +64,15 @@ export function shiftToPayload(values: ShiftFormValues): ShiftUpdatePayload {
     // Always sent: a toggle turned off has to overwrite a stored `true`.
     is_late_break_penalty_applicable: values.isLateBreakPenaltyApplicable,
     ...sent('concession_minutes', values.concessionMinutes),
+    // Always sent, for the same reason as the break penalty.
+    is_late_check_in_penalty_applicable: values.isLateCheckInPenaltyApplicable,
+    // The rule travels even while the switch is off, so suspending it keeps the
+    // configured numbers; a blank field is a real "no rule" and has to null out
+    // whatever was stored.
+    late_check_in_penalty_type: values.lateCheckInPenaltyType || null,
+    late_check_in_penalty_value: values.lateCheckInPenaltyValue.trim()
+      ? Number(values.lateCheckInPenaltyValue)
+      : null,
     // Not on the form any more — every shift is saved with no end-of-shift grace.
     early_exit_grace_minutes: 0,
     ...sent('min_full_day_hours', values.minFullDayHours),
@@ -81,6 +93,10 @@ export function shiftToFormValues(shift: Shift): ShiftFormValues {
     breakMinutes: String(shift.breakMinutes),
     isLateBreakPenaltyApplicable: shift.isLateBreakPenaltyApplicable,
     concessionMinutes: String(shift.concessionMinutes),
+    isLateCheckInPenaltyApplicable: shift.isLateCheckInPenaltyApplicable,
+    lateCheckInPenaltyType: shift.lateCheckInPenaltyType ?? '',
+    lateCheckInPenaltyValue:
+      shift.lateCheckInPenaltyValue === null ? '' : String(shift.lateCheckInPenaltyValue),
     minFullDayHours: String(shift.minFullDayHours),
     minHalfDayHours: String(shift.minHalfDayHours),
     weekoffPolicyId: shift.weekoffPolicyId ? String(shift.weekoffPolicyId) : '',
@@ -99,27 +115,41 @@ function toMinutes(time: string): number | null {
 }
 
 /**
- * Paid hours in the shift window: end − start, minus the unpaid break, rounded
- * to the nearest half hour so it lands on the form's 0.5 step.
+ * Length of the shift window in hours: end − start, rounded to the nearest half
+ * hour so it lands on the form's 0.5 step. The unpaid break is deliberately
+ * *not* taken off — the full-day threshold is measured against the window, and
+ * the break is charged separately by its own penalty.
  *
  * An end at or before the start crosses midnight, so a day is added — the same
  * rule the API uses to derive `is_night_shift`. Returns `null` while either time
- * is blank or half-typed, and when the break swallows the whole window.
+ * is blank or half-typed.
  */
-export function shiftPaidHours(
-  startTime: string,
-  endTime: string,
-  breakMinutes: string,
-): number | null {
+export function shiftSpanHours(startTime: string, endTime: string): number | null {
   const start = toMinutes(startTime)
   const end = toMinutes(endTime)
   if (start === null || end === null) return null
 
   const span = end > start ? end - start : end + 1440 - start
-  const paid = span - (Number(breakMinutes.trim()) || 0)
-  if (paid <= 0) return null
+  return Math.round(span / 30) / 2
+}
 
-  return Math.round(paid / 30) / 2
+/**
+ * The other direction: `09:00` + 9 hours → `18:00`, so typing a full day can fill
+ * the end of the window in. Wraps past midnight, and returns `null` while the
+ * start isn't a time yet or the hours aren't a sane day length.
+ */
+export function shiftEndFromHours(startTime: string, hours: number): string | null {
+  const start = toMinutes(startTime)
+  if (start === null) return null
+  if (!Number.isFinite(hours) || hours <= 0 || hours > 24) return null
+
+  const end = (start + Math.round(hours * 60)) % 1440
+  return `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`
+}
+
+/** Half a day on the form's 0.5 step — 9 → 4.5, 8.5 → 4.5. */
+export function halfDayHours(fullDayHours: number): number {
+  return Math.round(fullDayHours) / 2
 }
 
 /** `09:00` → `09:00 AM` — how a time reads on a list row. */
@@ -135,6 +165,20 @@ export function formatTime(time: string): string {
 /** `09:00 AM – 06:00 PM` — the window as one readable cell. */
 export function formatShiftWindow(shift: Shift): string {
   return `${formatTime(shift.startTime)} – ${formatTime(shift.endTime)}`
+}
+
+/**
+ * `10%` / `₹150` — what one late day costs, or `null` while no rule is
+ * configured. Charged per late day either way, so no "per minute" reading.
+ */
+export function formatLateCheckInPenalty(shift: Shift): string | null {
+  if (shift.lateCheckInPenaltyType === null || shift.lateCheckInPenaltyValue === null) {
+    return null
+  }
+
+  return shift.lateCheckInPenaltyType === 'PERCENTAGE'
+    ? `${shift.lateCheckInPenaltyValue}%`
+    : `₹${shift.lateCheckInPenaltyValue.toLocaleString('en-IN')}`
 }
 
 /**

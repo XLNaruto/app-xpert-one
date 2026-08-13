@@ -411,15 +411,19 @@ export function ShiftRosterTab({
               value={tab.month}
               onChange={tab.goToMonth}
             />
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={tab.goToThisMonth}
-              title="Back to this month"
-            >
-              This month
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={tab.goToThisMonth}
+                >
+                  This month
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Back to this month</TooltipContent>
+            </Tooltip>
             <Button
               type="button"
               size="sm"

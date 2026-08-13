@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import type { useIpAccessModeSwitch } from '../hooks/use-ip-access-mode-switch'
 
@@ -97,26 +98,39 @@ export function IpAccessModeCard({
             </div>
           </div>
 
-          {canUpdate && (
-            <Button
-              variant="outline"
-              onClick={access.startSwitch}
-              disabled={access.wouldLockEveryoneOut || access.isSwitching}
+          {canUpdate &&
+            (() => {
+              const button = (
+                <Button
+                  variant="outline"
+                  onClick={access.startSwitch}
+                  disabled={access.wouldLockEveryoneOut || access.isSwitching}
+                >
+                  {restricted ? (
+                    <Globe className="size-4" />
+                  ) : (
+                    <Lock className="size-4" />
+                  )}
+                  {restricted ? 'Make Public' : 'Restrict Access'}
+                </Button>
+              )
+
               // The server refuses this move too; saying why beats a dead button.
-              title={
-                access.wouldLockEveryoneOut
-                  ? 'Add at least one allowed address before restricting access.'
-                  : undefined
-              }
-            >
-              {restricted ? (
-                <Globe className="size-4" />
+              // A disabled button swallows pointer events, so the trigger is the
+              // span around it rather than the button itself.
+              return access.wouldLockEveryoneOut ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">{button}</span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-56 text-pretty font-normal">
+                    Add at least one allowed address before restricting access.
+                  </TooltipContent>
+                </Tooltip>
               ) : (
-                <Lock className="size-4" />
-              )}
-              {restricted ? 'Make Public' : 'Restrict Access'}
-            </Button>
-          )}
+                button
+              )
+            })()}
         </CardContent>
       </Card>
 

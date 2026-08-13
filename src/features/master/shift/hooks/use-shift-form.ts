@@ -7,7 +7,12 @@ import { useWeekoffPolicies, weekoffPolicyOptions } from '@/features/master/week
 import { shiftSchema, type ShiftFormValues } from '../schemas'
 import { EMPTY_SHIFT_FORM } from '../constants'
 import { useCreateShift, useUpdateShift } from '../api/use-shift-mutations'
-import { shiftPaidHours, shiftToFormValues } from '../lib/shift-mappers'
+import {
+  halfDayHours,
+  shiftEndFromHours,
+  shiftSpanHours,
+  shiftToFormValues,
+} from '../lib/shift-mappers'
 import type { Shift } from '../types'
 
 interface UseShiftFormOptions {
@@ -35,8 +40,17 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
   // clearable rather than required.
   const weekoffPolicies = useWeekoffPolicies(undefined, companyId)
 
-  /** `start|end|break` the form was seeded with on an edit, `null` on an add. */
-  const seededWindowRef = useRef<string | null>(null)
+  /**
+   * The window/full-day trio as the form last left it in step — what the sync
+   * effect diffs against to tell which side the user moved. Seeded on every
+   * `reset()` so opening a row for edit doesn't read as a change and recompute
+   * over its saved thresholds.
+   */
+  const syncedRef = useRef({
+    startTime: EMPTY_SHIFT_FORM.startTime,
+    endTime: EMPTY_SHIFT_FORM.endTime,
+    minFullDayHours: EMPTY_SHIFT_FORM.minFullDayHours,
+  })
 
   const {
     register,
@@ -51,39 +65,73 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
     defaultValues: EMPTY_SHIFT_FORM,
   })
 
-  // The two day thresholds follow from the window itself, so the form works them
-  // out as the times (and the unpaid break) are filled in: a full day is the paid
-  // length of the shift, a half day is half of that.
+  // The window and the full day are two views of one number, so the form keeps
+  // them in step whichever side is filled in:
+  //   • move Start or End  → Full Day Hours becomes the window's length
+  //   • type Full Day Hours → End Time becomes Start + that many hours
+  // and either way Half Day Hours follows as half the full day. The unpaid break
+  // is left out of all of it — it's charged by its own penalty, not by shortening
+  // the day.
   //
-  // Suggestion, not a rule — the moment either box is typed in it counts as
-  // dirty and is left alone, so a company whose half day isn't literally half
-  // keeps its own number. `reset()` clears that on the next add or edit.
-  const [startTime, endTime, breakMinutes] = watch(['startTime', 'endTime', 'breakMinutes'])
-  const isFullDayTouched = Boolean(dirtyFields.minFullDayHours)
+  // Half day is a suggestion, not a rule: the moment that box is typed in it
+  // counts as dirty and is left alone, so 3 against a full day of 8 stands.
+  // `reset()` clears that on the next add or edit.
+  const [startTime, endTime, minFullDayHours] = watch([
+    'startTime',
+    'endTime',
+    'minFullDayHours',
+  ])
   const isHalfDayTouched = Boolean(dirtyFields.minHalfDayHours)
 
   useEffect(() => {
-    // An edit opens on the row's own window: leave its saved thresholds be until
-    // the window actually moves.
-    if (seededWindowRef.current === `${startTime}|${endTime}|${breakMinutes}`) return
+    const previous = syncedRef.current
+    // Nothing to do until one of the three actually moves — and which one moved
+    // is what decides the direction, so a written-back value can't bounce back.
+    const windowMoved =
+      startTime !== previous.startTime || endTime !== previous.endTime
+    const fullDayTyped = minFullDayHours !== previous.minFullDayHours
+    if (!windowMoved && !fullDayTyped) return
 
-    const fullDay = shiftPaidHours(startTime, endTime, breakMinutes)
-    if (fullDay === null) return
+    const next = { startTime, endTime, minFullDayHours }
 
-    if (!isFullDayTouched) setValue('minFullDayHours', String(fullDay))
-    // Half of the full day, kept on the field's 0.5 step.
-    if (!isHalfDayTouched) setValue('minHalfDayHours', String(Math.round(fullDay) / 2))
-  }, [startTime, endTime, breakMinutes, isFullDayTouched, isHalfDayTouched, setValue])
+    if (windowMoved) {
+      const fullDay = shiftSpanHours(startTime, endTime)
+      if (fullDay !== null) {
+        next.minFullDayHours = String(fullDay)
+        setValue('minFullDayHours', next.minFullDayHours)
+        if (!isHalfDayTouched) setValue('minHalfDayHours', String(halfDayHours(fullDay)))
+      }
+    } else {
+      const typed = minFullDayHours.trim()
+      const fullDay = Number(typed)
+      if (typed && Number.isFinite(fullDay) && fullDay > 0 && fullDay <= 24) {
+        // The half day follows the number typed here on its own — it doesn't wait
+        // on an end time, which can't be worked out until a start is picked.
+        if (!isHalfDayTouched) setValue('minHalfDayHours', String(halfDayHours(fullDay)))
+
+        const end = shiftEndFromHours(startTime, fullDay)
+        if (end) {
+          next.endTime = end
+          setValue('endTime', end)
+        }
+      }
+    }
+
+    syncedRef.current = next
+  }, [startTime, endTime, minFullDayHours, isHalfDayTouched, setValue])
 
   // Follow the list's selection: a picked row seeds the form, clearing it blanks
   // the form back out for the next add.
   useEffect(() => {
-    reset(editing ? shiftToFormValues(editing) : EMPTY_SHIFT_FORM)
-    // The window a row arrived with — while it's untouched the stored thresholds
-    // stand, however they were arrived at.
-    seededWindowRef.current = editing
-      ? `${editing.startTime}|${editing.endTime}|${editing.breakMinutes}`
-      : null
+    const values = editing ? shiftToFormValues(editing) : EMPTY_SHIFT_FORM
+    reset(values)
+    // Seeding isn't editing: the row's stored thresholds stand, however they were
+    // arrived at, until the window or the full day is actually moved.
+    syncedRef.current = {
+      startTime: values.startTime,
+      endTime: values.endTime,
+      minFullDayHours: values.minFullDayHours,
+    }
   }, [editing, reset])
 
   /** Abandon an edit — back to a blank add. */
@@ -118,12 +166,22 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
     [weekoffPolicies.data],
   )
 
+  // The rule behind the late-check-in switch only makes sense while the switch is
+  // on, so the tab shows its two fields then — and the unit shown beside the
+  // amount follows the type picked above it.
+  const [isLateCheckInPenaltyApplicable, lateCheckInPenaltyType] = watch([
+    'isLateCheckInPenaltyApplicable',
+    'lateCheckInPenaltyType',
+  ])
+
   return {
     register,
     control,
     errors,
     onSubmit,
     isEdit,
+    isLateCheckInPenaltyApplicable,
+    lateCheckInPenaltyType,
     weekoffPolicySelectOptions,
     isWeekoffPoliciesLoading: weekoffPolicies.isLoading,
     isPending: isEdit ? updateShift.isPending : createShift.isPending,

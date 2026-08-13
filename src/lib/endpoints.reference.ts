@@ -215,9 +215,171 @@
  * the menu entry and block the route up front. The answer follows the token's
  * login source: a WEB token gets the web panel, an APP token only the
  * Supervisor app's two screens. Read once per session and per company switch.
+ * The only role route that needs no permission.
  * Code: `features/permissions/api/permissions-api.ts` → `fetchMyRole`,
  *       `features/permissions/api/use-permissions.ts`,
  *       `features/permissions/lib/route-guard.ts`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ROLES — /user/roles                                        (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Roles — what a web-panel user may do, authored per company.
+ *
+ * `ASSIGNABLE_PERMISSIONS` is the builder's checkbox matrix: the web panel's
+ * catalog narrowed to what the account's plan unlocked and minus `roles:*`,
+ * which is never delegatable. An action absent from it can never be saved, so
+ * the screen renders exactly what comes back rather than the full catalog.
+ *
+ * `permission_codes` on POST / PATCH is the COMPLETE ticked set and REPLACES
+ * what's stored — unticking a box means omitting its code, never sending a
+ * diff. Each action carries `requires`, the codes it doesn't work without, and
+ * the server does not repair a selection: an incomplete one answers 400 naming
+ * what's missing, so the builder maintains that closure itself.
+ *
+ * A DELETE is refused with 409 while a live user still holds the role.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ADMIN_USERS — /user/admin-users                            (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Admin users — the account's web-panel logins.
+ *
+ * ACCOUNT-scoped, not tenant-scoped: `company_id` on the list is a filter, not
+ * a requirement, and a create never sends one at all. Everything about what a
+ * user may DO comes from `role_id` — permissions, reach and Talk grants all
+ * live on the role, and the role's company BECOMES the user's.
+ *
+ * `email` IS the login and is unique across the whole platform; a mobile
+ * number is one identity too. Both are checked against every admin, every
+ * organization and every user (409), with a message that never says where the
+ * clash is — so no screen becomes a lookup for who holds an address. Mobile
+ * numbers go up as DIGITS ONLY.
+ *
+ * `ASSIGNABLE_ROLES` is the form's role dropdown: every role this account has
+ * authored across ALL of its companies, unpaginated, gated on `users:read`.
+ * Distinct from `ROLES.LIST`, which is the role screen — paged and needing a
+ * `company_id`, whereas here the company is a consequence of the pick.
+ *
+ * Refusals worth surfacing verbatim: a role with no company (that's the
+ * OWNER's shape, 400), changing your OWN role (400), and deleting yourself or
+ * an owner (400). A role or password change ends the user's live sessions —
+ * the PATCH answers `session_revoked` when it did.
+ *
+ * `GET /user/admin-users/deleted-data` is deliberately absent: it's the delta
+ * sync for a client holding a cached list, which the web panel isn't — query
+ * invalidation refetches the page instead.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * BILLING — /user/plans · /user/subscription                 (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Billing — the account's plan, not a company's. Nothing here takes a
+ * `company_id`: the subscription, its entitlements and the usage counted
+ * against them all belong to the organization.
+ *
+ * `PLANS` is the buyable catalog plus any plan built for this organization,
+ * with the running one flagged `is_active`. `SUBSCRIPTION` is what's actually
+ * live, including the prices it was bought at — prices the plan catalog quotes
+ * for *today*, which is why the two are read separately rather than joined.
+ * Usage against the plan's limits comes from `ME.GET`.
+ *
+ * Purchasing (`POST /user/subscriptions`, which answers with a Razorpay order)
+ * is deliberately absent: the checkout handoff needs a publishable key the API
+ * doesn't hand out, so the screen reads and doesn't sell.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * IP_ADDRESSES — /user/ip-addresses                          (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * IP access control — which networks may reach the panel for a company.
+ *
+ * Two things live here. `MODE` is the company-level switch: `PUBLIC` means
+ * everyone but the blocked list, `RESTRICTED` means only the allowed list. The
+ * rest is the list itself — one entry per host (`203.0.113.4`, `2001:db8::1`)
+ * or CIDR range (`10.0.0.0/8`), each tagged `ALLOWED` or `BLOCKED`.
+ *
+ * The API refuses the moves that would lock the caller out: switching to
+ * `RESTRICTED` with an empty allow list, and deleting (or re-typing) the last
+ * allowed entry of a `RESTRICTED` company both answer 409. The same address may
+ * sit on both lists — `BLOCKED` wins at the door.
+ *
+ * Tenant-scoped: a required `company_id` on reads and on the mode write, and in
+ * the body on create. Gated by `ip-addresses:*`, not `companies:*`.
+ *
+ * MODE — GET reads the company's mode + list counts; PUT switches it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SUPPORT_TICKETS — /user/support/tickets                    (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Help & Support — the tickets THIS organization raises with the PLATFORM
+ * desk. Account-scoped: a ticket names no company, and every user of the
+ * account sees every ticket (a colleague follows one up while its author is
+ * away), which is why `raised_by_user_id` is a filter rather than a scope.
+ *
+ * `ticket_type` and `priority` together select one cell of the subscription's
+ * support promise, and that cell BECOMES the ticket's deadline (`sla_value` /
+ * `sla_unit` / `due_at`), snapshot at creation. Neither is editable
+ * afterwards, and `REOPEN` does not re-buy the clock — raise a new ticket if
+ * the desk or the severity was wrong.
+ *
+ * `PATCH` corrects only the wording, and only until an admin first touches the
+ * ticket (409 after that). Resolving is the desk's job, not ours: this side
+ * can only `REOPEN` a finished ticket or `CLOSE` a resolved one. There is no
+ * delete — the platform's SLA reports are counted over these rows.
+ *
+ * REOPEN — `resolved` / `closed` → `reopened`, with a required reason.
+ * CLOSE  — `resolved` → `closed`. The screen's trash button, which files
+ *          rather than deletes.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * EMPLOYEE_SUPPORT_TICKETS — /user/employee-support-tickets   (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The EMPLOYEE help desk — the queue of what this account's employees raised
+ * from the mobile app, answered by the back office. The mirror image of
+ * `SUPPORT_TICKETS`: there we ask, here we answer.
+ *
+ * Account-scoped across every company unless `company_id` narrows it, and
+ * ordered most-severe-then-oldest: it's work waiting on somebody. Severity
+ * carries NO deadline on this desk — it ranks the queue and nothing else, so
+ * there is no `due_at` and nothing to police.
+ *
+ * There is no assignee: a ticket is worked by whoever picks it up, recorded on
+ * the resolution and on each message. `SUMMARY` is the per-status counts for
+ * the tab strip, in one round trip rather than five list calls.
+ *
+ * `STATUS` is the single route for all three transitions and reads only
+ * `status`; its body is a UNION, so `resolved` demands a `resolution_note` and
+ * the other two take nothing. Priority is the EMPLOYEE's statement of how much
+ * it hurts and is not re-gradable from here.
+ *
+ * SUMMARY  — one count per status, honouring the list's filters minus the
+ *            status ones.
+ * GET      — the ticket AND its whole thread, oldest-first — the detail screen
+ *            in one call.
+ * MESSAGES — post an office reply; the first one stamps `first_response_at`.
+ * STATUS   — `in_progress` | `resolved` (+ note) | `closed` — one route, a
+ *            union body.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * COMPANIES — /user/companies                                (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company master — every company under the caller's account. Unlike the
+ * tenant-scoped masters below it carries no `company_id`: the account itself
+ * is the scope, and a company's code is generated server-side.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * BRANCHES — /user/branches                                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's branches. Tenant-scoped: a required `company_id` on reads and
+ * in the body on create — and an edit can't move a branch between companies,
+ * so the PATCH body leaves it out.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ACT_REGISTRATIONS — /user/act-registrations                 (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * A branch's applicable acts — PF, ESIC, Factory, Professional Tax, LWF and
+ * Employment Exchange in one row per branch.
+ *
+ * `LIST` is a read for one `branch_id` and answers `{ act_registration }`,
+ * `null` when the tab has never been saved — which is how a save picks POST
+ * over PATCH. A second POST for the same branch is a 409.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * PF_RATES — /user/pf-rates                                 (bearer)
@@ -280,6 +442,447 @@
  * `created_at` is the only audit field, so the Updated column reads as a dash.
  * Code: `features/master/esic-rate/api/esic-rate-api.ts`
  * Schema: `esicRateResponseSchema`, `esicRatesResponseSchema`
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * PT_RATES — /user/pt-rates                                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * A PT rate carries its salary slabs inline as `details` — the nested array
+ * travels with the rate on POST/PATCH, so slabs are never saved separately.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * OFFICE_ADDRESSES — /user/office-addresses                   (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * One endpoint behind all five office-address screens — PF, ESIC, LWF,
+ * Factory and Employment Exchange — told apart by the record's `office_for`.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DEPARTMENTS — /user/departments                             (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's departments, each optionally pinned to a branch. Tenant-scoped:
+ * a required `company_id` on reads and in the body on create — an edit can move
+ * a department between branches but never between companies, so the PATCH body
+ * leaves `company_id` out. The department code is generated server-side.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SHIFTS — /user/shifts                                       (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's shifts — a named window of the clock, plus the tolerances
+ * attendance is judged against (the concession period, the early-exit grace,
+ * and the hours that make a full or a half day).
+ *
+ * Tenant-scoped: a required `company_id` on reads and in the create body. A
+ * shift is never moved between companies, so the PATCH body leaves it out.
+ * `is_night_shift` is DERIVED from the two times (an `end_time` earlier than
+ * `start_time` makes it one) and is never sent.
+ *
+ * `SET_DEFAULT` / `CLEAR_DEFAULT` are what make per-employee assignment
+ * unnecessary: with a default in place an ordinary employee needs no
+ * assignment row at all. Both take exactly one of `company_id` or
+ * `department_id` — a department's default wins over its company's, and a
+ * department with none falls back to the company's.
+ *
+ * A DELETE is refused with 409 while the shift is still a default anywhere or
+ * referenced by a rotation, an assignment or a roster entry.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SHIFT_ROTATIONS — /user/shift-rotations                     (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Rotation cycles — a named ring of shifts an employee walks week by week
+ * (nights one week, mornings the next).
+ *
+ * Tenant-scoped like the shifts they name: a required `company_id` on reads and
+ * in the create body, and every shift in the cycle must belong to that same
+ * company.
+ *
+ * `weeks` is the WHOLE cycle, not a patchable list: it has to cover weeks
+ * `1..cycle_length_weeks` exactly once, because an employee landing on a missing
+ * week would silently fall through to the department default. On a PATCH,
+ * omitting `weeks` leaves the cycle alone and sending it replaces every week —
+ * so `cycle_length_weeks` and `weeks` are validated against each other whichever
+ * of the two moved.
+ *
+ * The cycle is anchored per assignment, not globally: week 1 starts at each
+ * employee's own `effective_date`, so two people assigned a week apart are
+ * legitimately out of phase.
+ *
+ * A DELETE is refused with 409 while employees are still assigned to it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * WEEKOFF_POLICIES — /user/weekoff-policies                   (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Week-off policies — which days of the week don't count as working days.
+ *
+ * `days` is a list of RULES rather than a list of weekdays, which is what makes
+ * the interesting patterns expressible: `week_day` is 0 = Sunday … 6 = Saturday
+ * and `week_number` names WHICH occurrence of that weekday in the month (1–5),
+ * `null` meaning every one. Alternate Saturdays are therefore two rules with
+ * `week_number` 2 and 4, and because a dated rule beats an every-week rule,
+ * `is_off: false` carves an exception out of a broad one.
+ *
+ * Like the rotation's cycle, the rule set is replaced wholesale: omitting `days`
+ * on a PATCH leaves the rules alone and sending it replaces them all — "which
+ * days are off" only makes sense read together, so there is no per-rule patch.
+ *
+ * `SET_DEFAULT` / `CLEAR_DEFAULT` take exactly one of `company_id` or
+ * `department_id` (the department wins). A shift may name its own policy, but
+ * most don't — and without a default at one of those two levels every such shift
+ * falls back to the platform's Sunday-only constant.
+ *
+ * A DELETE is refused with 409 while a shift, company or department points at it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DESIGNATIONS — /user/designations                           (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's designations — a title plus an effective-dated wage structure
+ * behind it. The two are separate resources on purpose:
+ *
+ * - `LIST` answers titles only (name + audit), so the list screen shows no pay.
+ * - `POST` establishes the title *and* its opening wage structure in one body.
+ * - `PATCH` takes the `name` and nothing else — pay is never edited in place.
+ * - `WAGE_STRUCTURES` is the version history: POST appends one version from a
+ *   `YYYY-MM` month, and `WAGE_STRUCTURE` patches one existing version in
+ *   place (correcting a row rather than superseding it).
+ *
+ * The last two are the bulk wage screen's, which configures every designation
+ * of a company at once against one effective month:
+ *
+ * - `BULK_WAGE_GRID` reads the whole grid — every designation with the version
+ *   of its structure in force. Unpaginated: the screen is saved as a whole.
+ * - `BULK_UPDATE` writes it back in one transaction — either every row lands
+ *   or none does. Per row, a structure already effective from that exact month
+ *   is updated and any other month adds a version, keeping the earlier ones as
+ *   history.
+ *
+ * Tenant-scoped: a required `company_id` on reads and in the create body.
+ *
+ * BULK_WAGE_HISTORY — every designation of a company with *all* its wage
+ * versions — the bulk grid's read-only history twin. Paged over the
+ * designations, so a title's versions are never split across two pages.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * LEAVE_TYPES — /user/leave-types                             (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's leave catalog. Every read is scoped by a required
+ * `company_id`, and a new leave type carries the same id in its body.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * HOLIDAYS — /user/holidays                                   (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's holiday calendar. Like leave types, every read is scoped by a
+ * required `company_id` and a new holiday carries the same id in its body.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * PAY_COMPONENTS — /user/pay-components                        (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's payroll catalog — allowances and deductions in one resource,
+ * told apart by the record's `type`. Tenant-scoped like the two masters above:
+ * a required `company_id` on reads, and in the body on create.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ASSETS — /user/assets                                       (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's asset master — the catalog employee assets are issued from.
+ * Tenant-scoped: a required `company_id` on reads, and in the body on create.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DOCUMENT_TYPES — /user/document-types                        (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's document categories — the parent of the `documents` master, so
+ * a type exists before anything can be filed under it. Tenant-scoped: a
+ * required `company_id` on reads, and in the body on create. A name must be
+ * unique within the company (409 otherwise), and a delete is refused with 409
+ * while documents still reference the type.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DOCUMENTS — /user/documents                                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The company's document master, each row filed under a document type.
+ * Tenant-scoped like its parent, and `document_type_id` narrows a read to one
+ * category. Names are unique within the company (409 otherwise).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * EMPLOYEES — /user/employees                                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The employee — one person, plus the postings and the nine steps hung off
+ * them. The wizard's shape follows the API's: step 1 is the employee row
+ * itself (created together with the FIRST posting), and every later step is
+ * its own sub-resource under `/user/employees/:id/…`.
+ *
+ * `POST` establishes the person and their opening posting in one body, so a
+ * new employee exists only once step 1 is saved — which is why every other
+ * tab is locked until then. `PATCH` writes the person and the CURRENT posting;
+ * moving someone between company / branch / department / designation goes
+ * through `TRANSFERS` instead, so the old posting survives as history.
+ *
+ * Reads are scoped by a required `company_id` on the list and by the record's
+ * own tenant everywhere else.
+ *
+ * DELETE_FACE — DELETE: de-register the employee's face: the face record and
+ * its captured images are soft-deleted and the stored images purged, answering
+ * how many went. The person is re-registered from the mobile app afterwards,
+ * not just re-captured. (`DELETE …/delete-faces` drops only the pictures and
+ * keeps the enrolment; the portal doesn't use it.)
+ *
+ * KYC — step 2. Every field is a column on the employee, so an untouched step
+ * reads back as a record of `null`s rather than a 404. The first save is a POST
+ * (a full overwrite: an omitted field is stored as `null`), and every save
+ * after it is a PATCH.
+ *
+ * WAGE_STRUCTURE — step 3, read-only. The wage structure the employee inherits
+ * from the designation on their current posting; nothing is stored per
+ * employee, so there is no write here at all.
+ *
+ * FAMILY / FAMILY_MEMBER — step 4, family members, one row per call (no
+ * whole-step save).
+ *
+ * EDUCATIONS / EDUCATION — step 5a, qualifications.
+ *
+ * EXPERIENCES / EXPERIENCE — step 5b, prior employment. Its two dates are
+ * `YYYY-MM`, never full dates.
+ *
+ * DOCUMENTS / DOCUMENT — step 6, attachments. `document` is the object key from
+ * `UPLOADS.EMPLOYEE_DOCUMENT`; the file itself never passes through here.
+ *
+ * ASSETS / ASSET — step 7, assets issued from the asset master.
+ *
+ * TRANSFERS / TRANSFER / LEAVE_SERVICE — step 8, the posting history, newest
+ * first. `POST` is one atomic move (close the open posting, open the new one);
+ * `PATCH` corrects the latest posting in place and is refused for a closed one;
+ * `LEAVE_SERVICE` closes the open posting without opening another — the
+ * employee exits.
+ *
+ * SHIFT_ON_DAY / SHIFTS / SHIFT_ENTRY / ROSTER / ROSTER_ENTRY — step 9, which
+ * shift the employee works, and why.
+ *
+ * `SHIFT_ON_DAY` walks the whole precedence chain (roster → rotation →
+ * assignment → department default → company default) for one date and reports
+ * which link answered in `source`. That's the only way to tell "General,
+ * because it's the company default" (nothing to undo) from "General, because
+ * somebody rostered it onto this date" (one row a manager can remove). It
+ * answers for any day, past or future, so a rotation can be walked forward
+ * without materialising anything.
+ *
+ * `SHIFTS` is the assignment TIMELINE — append-only and unpaginated, since a
+ * career collects a handful of entries. An EMPTY timeline is the ordinary,
+ * healthy state: it means the employee is on their department's or company's
+ * default. A POST with NEITHER `shift_id` nor `rotation_id` is how an
+ * assignment ENDS ("back to the default from this date"); `SHIFT_ENTRY`'s
+ * DELETE is only for an entry typed by mistake, because removing one rewrites
+ * which shift the employee was judged against on days already closed.
+ *
+ * `ROSTER` is the per-date override — the highest-priority answer in the
+ * chain. Only the dates a manager explicitly overrode are rows; re-rostering
+ * a date REPLACES its entry rather than conflicting, and unlike a timeline
+ * entry a roster row IS safe to delete, since it says nothing about history.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * EMPLOYEE_LEAVES — /user/employee-leaves                      (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Step 9 — leave records. A top-level collection rather than a sub-resource:
+ * `?employee_id=` is the employee's own tab, and leaving it off gives the
+ * company-wide queue. Recording a leave from the back office IS the approval
+ * (`status` defaults to `APPROVED`); `STATUS` is the decision on one that was
+ * filed as `PENDING`, and only a pending row can be decided.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SALARY — /user/salary                                        (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Payroll — the salary register and the writes that process a month.
+ *
+ * `REGISTER` is the screen: one page of postings open inside the period, each
+ * carrying the attendance the month would be paid on, the wage structure in
+ * force for its designation and `computed` — the pay that would be saved if the
+ * row were committed as it stands. `?status=pending|complete` splits it into
+ * the month's queue and the month already processed.
+ *
+ * `BULK_SAVE` commits the run. **The server computes the pay**: a row sends
+ * only the days it is paid for (`present_days`, and optional `working_days` /
+ * `ot_hours` overrides), never a gross or a per-head amount, so a stale screen
+ * can't write pay from a wage structure that has since been revised.
+ *
+ * `BULK_DELETE` is the register's "discard selected" — a POST because the ids
+ * travel in a body. It soft-deletes, which is what lets the month be run
+ * again; an already-paid salary is refused and reported back in `skipped`.
+ *
+ * REPORT — the month already processed, as a MATRIX — the "View Salary" screen.
+ * One row per *stored* salary of the period, each with the employee's
+ * particulars, statutory numbers and bank details plus its per-head
+ * allowance and deduction lines. `allowance_heads` / `deduction_heads` are
+ * the union of head names across the whole result, in catalog order, and are
+ * the column set to pivot on — a row simply carries no line for a head it
+ * doesn't have, which reads as zero. Pivoting on one row's own components
+ * instead would give a table whose columns shift per row.
+ * `totals` is the footer for the ROWS RETURNED, so a paged screen's total
+ * adds up to the column above it. Unlike the register there is no `sort`:
+ * the endpoint fixes the order, so the screen's columns aren't sortable.
+ *
+ * IMPORTS — step 2 of the spreadsheet import: read the workbook already
+ * uploaded at `file_key`, price every row and save it. Rows are only ever
+ * *created* — a period already processed for a posting comes back in `skipped`,
+ * never overwritten. **The period written inside the sheet wins** over the one
+ * sent, and the response says which one actually landed.
+ *
+ * IMPORT_TEMPLATE — step 0 of the same import: the sheet to fill in. It answers
+ * the workbook itself as an attachment — one pre-filled row per posting **not
+ * yet processed** for the period, Present Days already filled in from
+ * attendance and every other cell locked, because the import matches rows
+ * by employee code and service id.
+ * Takes the register's own filters (`company_id`, `month`, `year`, and
+ * optionally `designation_id` / `department_id`), so the sheet that comes
+ * down is the register that is on screen.
+ *
+ * PAYMENTS — Pay Salary: what is outstanding for the period, and what already
+ * went out. `?status=unpaid|paid` is the screen's two tabs, split in SQL rather
+ * than filtered here.
+ * It reads *salary rows*, not the roster: someone the month was never run
+ * for is on neither tab, which is the register's question
+ * (`REGISTER?status=pending`), not this screen's. `totals` describes the
+ * whole filter while `items`/`total` describe the page, so the tiles don't
+ * move when the pager does. There is no `sort` — the order is the server's,
+ * so the screen's columns aren't sortable. `limit` goes up to 500 so a whole
+ * department can be ticked at once.
+ * The POST is Confirm & Pay: ONE batch — the date the money left, the mode
+ * it left by, its proof documents and the salaries it settles. Nothing in
+ * the `salary_id`/`employee_id` pairing is taken on trust; a row failing any
+ * check comes back in `skipped` with its reason while the rest still lands,
+ * and a concurrent batch that settled part of the same selection makes this
+ * one a 409 rather than a batch whose total describes rows it didn't pay.
+ *
+ * PAYMENT_HISTORY — the batches of one period, newest first, with the three
+ * counters over the whole filter. `batch_number` ("Batch #1") is a POSITION in
+ * that list, not an identifier — address a batch by `batch.id`, which is what
+ * `PAYMENT` takes.
+ *
+ * PAYMENT — one batch expanded: the batch itself, the employees it settled
+ * (paged — a batch may hold five hundred) and every proof document filed
+ * against it. A document's `document` is the storage KEY, not a url — resolve
+ * it against the media base like any other stored file.
+ *
+ * BANK_TRANSFER_SHEET — the bank's bulk-transfer upload sheet (.xlsx): one
+ * beneficiary row per UNPAID salary of the period with a positive net pay, in
+ * the fixed column order the bank's template mandates.
+ * Unpaid rows only, so it always describes what is still outstanding and is
+ * safe to re-download. `debit_account_number` is the company account being
+ * debited and is required: this system holds no company bank account of its
+ * own. 404 when nothing of the period is outstanding.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * BONUS_ESTIMATION — /user/bonus-estimation                    (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Bonus Estimation — what a bonus over a RANGE of periods would cost, and the
+ * bonuses committed for it.
+ *
+ * The range is `from`…`to` as `YYYY-MM`, inclusive, because a salary row
+ * carries a month and a year and no date at all. Everything is read off
+ * PROCESSED months, so an employee the register never priced is absent.
+ *
+ * `ESTIMATE` writes nothing. One line per employee with ALL FOUR bases summed
+ * over the range — net pay, gross pay, basic pay and basic pay of present days
+ * — so switching the CALCULATION BASE dropdown re-fills the column without
+ * another read. They are also the sums the save apportions against, so the
+ * amount authorised and the rows it lands on are figured from the same numbers.
+ * `advance_bonus` beside them is the BONUS pay component already paid inside
+ * the range, shown and never netted off. `total` counts EMPLOYEES, not months.
+ *
+ * The POST commits ONE bonus per employee: each sends the total `amount` for
+ * the whole range and the `percentage` that produced it, and the server splits
+ * that amount across the employee's processed months in proportion to each
+ * month's `calculation_field`. **`amount` is trusted and never recomputed** —
+ * the screen allows keying it by hand when the base is unavailable. A month
+ * that already carries a bonus is SKIPPED rather than overwritten and its
+ * share is not redistributed, so `saved_amount` may be less than
+ * `requested_amount` and each line reports what was written and why. Only a
+ * selection where nothing at all could be written is a 400; a concurrent save
+ * that committed part of the range is a 409 with nothing landed.
+ *
+ * `SAVED` reads it back, one card per employee with `total_bonus` being the sum
+ * of the months under it. Each month carries the base it was figured on and the
+ * `base_amount` that base held AT SAVE TIME — a snapshot, so reprocessing the
+ * month afterwards can't rewrite a committed bonus.
+ *
+ * BASE — POST: commit the ticked employees' bonuses for the range.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * SALARY_REPORTS — /user/salary-reports                        (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Reports — the statutory and payroll statements, read off the month already
+ * processed.
+ *
+ * All twelve share ONE query shape: `company_id`, `month`, `year`, an optional
+ * `department_id`, an optional `employee_ids`, plus `search` / `sort` /
+ * `sort_by` / `limit` / `offset`. `GROSS_SALARY` is the one exception — it
+ * spans a range and takes `from`/`to` as `YYYY-MM` instead of a period, because
+ * a salary row carries a month and a year and no date at all.
+ *
+ * **`sort` is per type.** Each endpoint accepts only its OWN columns and
+ * answers a 400 for anything else, so a type switch has to drop the order the
+ * previous type was read in rather than carry it across.
+ *
+ * There is **no export endpoint** for any of them: the API answers JSON only,
+ * so these screens page and sort server-side and have no download.
+ *
+ * PAY_SLIP — one row per processed salary: the person, the days, the four
+ * money columns.
+ *
+ * PAY_REGISTER — the statutory register: one employee's whole month in fixed
+ * columns (particulars, statutory numbers, bank, pay). Not the pivoted
+ * per-head matrix, which is `SALARY.REPORT`.
+ *
+ * GROSS_SALARY — a RANGE, `from`…`to` as `YYYY-MM`, grouped PER EMPLOYEE —
+ * someone who transferred mid-range is one line and `months_processed` says
+ * how many months it covers, so `total` counts employees, not processed months.
+ *
+ * PAID_SALARY — the period's released months, with the date each batch went out.
+ *
+ * UNPAID_SALARY — its mirror: processed but still outstanding. Reports only —
+ * paying is `SALARY.PAYMENTS`.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * PF_REPORTS — /user/pf-reports                                (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * PF — the four EPFO sheets. Every one carries `basis`, the rate row the month
+ * was priced against, so the screen can print what the figures were computed on
+ * rather than restate the statutory defaults.
+ *
+ * CHALLAN — Form-3A. `wages` here is a DAY COUNT, not money — the money base
+ * beside it is `epf_wages`. `rfl`, `wag` and `ee_transfer` are always 0 (no
+ * source) and aren't sortable for that reason.
+ *
+ * STATEMENT — the employer's contribution statement. Its `wages` is the AGREED
+ * basic capped at the ceiling, not the challan's prorated `epf_wages`, so the
+ * two legitimately print different wages for the same month.
+ *
+ * NEW_JOINING — the EPFO new-member sheet: the only type that reads POSTINGS
+ * rather than payroll, so a joiner is registrable before their first month is
+ * processed. `total` counts postings: a re-join is a second line.
+ *
+ * ECR — the Electronic Challan cum Return, KEYED BY UAN: a PF member without
+ * one is absent, so expect a smaller `total` than the challan's for the same
+ * filter. `refund` is always 0 and isn't sortable.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ESIC_REPORTS — /user/esic-reports                            (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * ESIC — both types carry `header`, the establishment and the rates in force.
+ *
+ * STATEMENT — IP number, contributing days, the ESIC wage base and both
+ * contributions.
+ *
+ * CHALLAN — the portal's own challan columns, DELIBERATELY WITHOUT the
+ * contributions: a challan declares the wage and the days and the portal
+ * computes what is owed. `reason_for_zero_wages` is always null (filled in on
+ * the portal).
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * PT_REPORTS — /user/pt-reports                                (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Professional Tax. `gross_wages` is the month's WHOLE gross — PT is assessed
+ * on the gross, unlike ESIC's per-head base — and `pt_amount` is the stored
+ * figure, never recomputed: re-walking the slabs today would return a different
+ * one for anyone who has since had a birthday.
+ *
+ * `header` carries no rates (there is no single PT rate to print) — it carries
+ * the establishment and the branch's EC / RC numbers instead.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * ATTENDANCE — the company's day, read top-down
@@ -368,6 +971,38 @@
  * Schema: `attendanceGroupsResponseSchema`,
  *         `attendanceGroupEmployeesResponseSchema`,
  *         `attendanceMonthResponseSchema` (`features/hr/attendance/schemas.ts`)
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * UPLOADS — /user/uploads/*                                    (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Presigned PUT handshakes. Each answers `{ upload_url, key }`: PUT the file
+ * straight at `upload_url` with the same `Content-Type` that was presigned,
+ * then send `key` on the record. No file ever travels through the API, and no
+ * DB row is touched here — an abandoned upload just leaves a stray object.
+ *
+ * COMPANY_LOGO — signs a PUT for a JPG/PNG/WebP. The bytes go straight to
+ * storage and the returned `key` is what `logo` holds on the company.
+ *
+ * SALARY_IMPORT — the salary import workbook: `.xlsx` or `.csv`, signed for
+ * those two only.
+ *
+ * SALARY_PAYMENT_DOCUMENT — one proof document for a salary payment batch:
+ * signs a PUT for a JPEG/PNG/WebP or PDF. Called ONCE PER FILE (each PUT is
+ * signed for its own content type), up to the ten a batch accepts, and the
+ * returned `key` goes in the batch's `documents` array alongside the
+ * `file_name` to label it by — the key keeps only a slug of the name, so it
+ * can't be recovered from it.
+ *
+ * SUPPORT_ATTACHMENT — a file on an employee-support reply: a corrected
+ * payslip, a form, a screenshot. Signs a PUT for a JPEG/PNG/WebP or PDF, and
+ * the returned `key` travels as `attachment_url` on the message. The
+ * employee's own presign writes into the SAME prefix: both ends of one thread
+ * share it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * BANKS · STATES · DISTRICTS — read-only lookups                (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * All three masters are maintained by the super admin — LIST + GET only.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * TYPICAL SIGN-IN FLOW

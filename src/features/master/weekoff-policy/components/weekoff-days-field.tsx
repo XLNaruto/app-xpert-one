@@ -3,6 +3,7 @@ import { CalendarOff, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Field } from '@/components/common/form-field'
 import { cn } from '@/lib/utils'
 import { WEEK_DAYS, WEEK_DAY_OPTIONS, WEEK_NUMBER_OPTIONS, WEEKOFF_PRESETS } from '../constants'
@@ -42,21 +43,26 @@ export function WeekoffDaysField({
             // read as the current state, not just three buttons.
             const active = form.activePreset === index
             return (
-              <Button
-                key={preset.label}
-                type="button"
-                size="sm"
-                variant="outline"
-                aria-pressed={active}
-                title={preset.description}
-                onClick={() => form.applyPreset(index)}
-                className={cn(
-                  active &&
-                    'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary',
-                )}
-              >
-                {preset.label}
-              </Button>
+              <Tooltip key={preset.label}>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    aria-pressed={active}
+                    onClick={() => form.applyPreset(index)}
+                    className={cn(
+                      active &&
+                        'border-primary bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary',
+                    )}
+                  >
+                    {preset.label}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  {preset.description}
+                </TooltipContent>
+              </Tooltip>
             )
           })}
         </div>

@@ -5,6 +5,7 @@ import { ALL_ROWS } from '@/lib/pagination'
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useDepartments } from '@/features/master/department'
 import { WHOLE_COMPANY_LABEL } from '../constants'
@@ -231,19 +232,31 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
 
           {grantsError && <p className="text-xs text-destructive">{grantsError}</p>}
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={disabled || !form.canAddTalkGrant}
-            onClick={form.addTalkGrant}
-            title={
-              form.canAddTalkGrant ? undefined : 'Every company already has a grant'
-            }
-          >
-            <Plus className="size-4" />
-            Add grant
-          </Button>
+          {/*
+            Why the button is dead, said on hover. A disabled button swallows
+            pointer events, so the span around it carries the trigger.
+          */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={disabled || !form.canAddTalkGrant}
+                  onClick={form.addTalkGrant}
+                >
+                  <Plus className="size-4" />
+                  Add grant
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-56 text-pretty font-normal">
+              {form.canAddTalkGrant
+                ? 'Add a company this role may talk in'
+                : 'Every company already has a grant'}
+            </TooltipContent>
+          </Tooltip>
         </div>
       )}
     </div>

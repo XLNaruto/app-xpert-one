@@ -10,6 +10,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { CellTooltip } from '@/components/common/wage-grid-fields'
 import { cn } from '@/lib/utils'
 import type { useDesignationForm } from '../hooks/use-designation-form'
 
@@ -261,12 +262,11 @@ function HeadRowShell({
         >
           {index + 1}
         </span>
-        <span
-          className="min-w-40 flex-1 truncate text-sm font-medium text-foreground"
-          title={label}
-        >
-          {label}
-        </span>
+        <CellTooltip label={label}>
+          <span className="min-w-40 flex-1 truncate text-sm font-medium text-foreground">
+            {label}
+          </span>
+        </CellTooltip>
         {children}
       </div>
       {error && <p className="mt-1 pl-8 text-xs text-destructive">{error}</p>}
@@ -343,20 +343,21 @@ function ValueTypeButton({
   const action = isPercentage ? 'Switch to Fixed Amount' : 'Switch to Percentage'
 
   return (
-    <button
-      type="button"
-      onClick={() => onChange(isPercentage ? 'Fixed' : 'Percentage')}
-      title={action}
-      aria-label={action}
-      className={cn(
-        'flex w-9 shrink-0 cursor-pointer items-center justify-center border-r transition-colors',
-        isPercentage
-          ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20'
-          : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400',
-      )}
-    >
-      <Icon className="size-3.5" />
-    </button>
+    <CellTooltip label={action}>
+      <button
+        type="button"
+        onClick={() => onChange(isPercentage ? 'Fixed' : 'Percentage')}
+        aria-label={action}
+        className={cn(
+          'flex w-9 shrink-0 cursor-pointer items-center justify-center border-r transition-colors',
+          isPercentage
+            ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20'
+            : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400',
+        )}
+      >
+        <Icon className="size-3.5" />
+      </button>
+    </CellTooltip>
   )
 }
 
@@ -377,11 +378,8 @@ function ActMarker({
 }) {
   const on = checked && !disabled
 
-  return (
-    <span
-      className="flex items-center gap-1"
-      title={disabled ? `${label} act is not applicable to this designation` : undefined}
-    >
+  const marker = (
+    <span className="flex items-center gap-1">
       <Switch
         checked={on}
         onCheckedChange={onCheckedChange}
@@ -397,5 +395,14 @@ function ActMarker({
         {label}
       </span>
     </span>
+  )
+
+  // Only a dead marker needs explaining — a live one says what it is by its label.
+  return disabled ? (
+    <CellTooltip label={`${label} act is not applicable to this designation`}>
+      {marker}
+    </CellTooltip>
+  ) : (
+    marker
   )
 }

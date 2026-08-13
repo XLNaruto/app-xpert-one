@@ -60,6 +60,30 @@ export const shiftSchema = z
     isLateBreakPenaltyApplicable: z.boolean(),
     /** Grace after `startTime` in which a check-in still counts as on time. */
     concessionMinutes: optionalInt(720, 'Enter whole minutes, up to 720'),
+    /**
+     * Dock pay for a check-in past `concessionMinutes`?
+     *
+     * Off is the API's default and what every existing shift carries — lateness is
+     * then reported but never charged. On charges the day once, by the type and
+     * value below, reaching the payslip as its `penalty`.
+     */
+    isLateCheckInPenaltyApplicable: z.boolean(),
+    /**
+     * How a late day is charged — a percentage of that day's wage, or a flat
+     * rupee amount. `''` while no rule has been configured.
+     */
+    lateCheckInPenaltyType: z.enum(['PERCENTAGE', 'FIXED']).or(z.literal('')),
+    /**
+     * What one late day costs, held as a string like the other numeric fields.
+     * Per late day either way — the minutes only decide *whether* the day is late.
+     */
+    lateCheckInPenaltyValue: z
+      .string()
+      .trim()
+      .refine(
+        (v) => v === '' || (/^\d+(\.\d{1,2})?$/.test(v) && Number(v) <= 1000000),
+        'Enter an amount up to 10,00,000',
+      ),
     /** Worked hours at or above this are a full day. */
     minFullDayHours: optionalHours,
     /** Worked hours at or above this, but under a full day, are a half day. */
@@ -92,6 +116,40 @@ export const shiftSchema = z
       })
     }
 
+    // The API rejects the switch without a rule behind it (400), so the form asks
+    // for both before the save leaves. Off leaves whatever is configured alone —
+    // suspending the rule shouldn't lose the 10% someone set.
+    if (values.isLateCheckInPenaltyApplicable) {
+      if (values.lateCheckInPenaltyType === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['lateCheckInPenaltyType'],
+          message: 'Pick how a late day is charged',
+        })
+      }
+
+      if (values.lateCheckInPenaltyValue === '' || Number(values.lateCheckInPenaltyValue) <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['lateCheckInPenaltyValue'],
+          message: 'Enter an amount greater than zero',
+        })
+      }
+    }
+
+    // A day can't cost more than the day it's charged against.
+    if (
+      values.lateCheckInPenaltyType === 'PERCENTAGE' &&
+      values.lateCheckInPenaltyValue !== '' &&
+      Number(values.lateCheckInPenaltyValue) > 100
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['lateCheckInPenaltyValue'],
+        message: 'A percentage can be at most 100',
+      })
+    }
+
     // Equal times describe a zero-length shift, not a 24-hour one.
     if (values.startTime && values.startTime === values.endTime) {
       ctx.addIssue({
@@ -120,6 +178,10 @@ export const shiftResponseSchema = z.object({
   break_minutes: z.number(),
   is_late_break_penalty_applicable: z.boolean(),
   concession_minutes: z.number(),
+  is_late_check_in_penalty_applicable: z.boolean(),
+  /** Null until a rule is configured — it outlives the switch being turned off. */
+  late_check_in_penalty_type: z.enum(['PERCENTAGE', 'FIXED']).nullish(),
+  late_check_in_penalty_value: z.number().nullish(),
   early_exit_grace_minutes: z.number(),
   min_full_day_hours: z.number(),
   min_half_day_hours: z.number(),
@@ -165,6 +227,15 @@ export interface ShiftPayload {
    */
   is_late_break_penalty_applicable: boolean
   concession_minutes?: number
+  /** Always sent, for the same reason as the break penalty above. */
+  is_late_check_in_penalty_applicable: boolean
+  /**
+   * The rule behind the switch. Both travel on every save — including while the
+   * switch is off, so a suspended rule keeps its configuration — and both go as
+   * an explicit `null` when the form holds none, which is what clears a rule.
+   */
+  late_check_in_penalty_type: 'PERCENTAGE' | 'FIXED' | null
+  late_check_in_penalty_value: number | null
   early_exit_grace_minutes?: number
   min_full_day_hours?: number
   min_half_day_hours?: number

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Check, Lock } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { EmployeeWizardStep } from '../hooks/use-employee-wizard'
 
@@ -98,55 +99,60 @@ export function EmployeeWizardNav({
             const active = step.tab === value
 
             return (
-              <button
-                key={step.tab}
-                ref={active ? activeRef : undefined}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                aria-disabled={step.locked}
-                onClick={() => select(step)}
-                title={step.locked ? 'Save Basic Detail first' : step.label}
-                className={cn(
-                  'group inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-medium transition-all',
-                  active
-                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                    : // Dark mode sits the chips on a near-black page, where the
-                      // muted grey reads as disabled — the labels take the full
-                      // foreground there and lean on the fill for the active state.
-                      'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground dark:text-foreground',
-                  step.locked &&
-                    'cursor-not-allowed opacity-50 hover:border-border hover:text-muted-foreground dark:text-muted-foreground',
-                )}
-              >
-                {/*
-                  One badge carries the step number and its state: a tick once the
-                  step is saved, a padlock while it can't be opened, the number
-                  otherwise. That keeps the strip to a single glyph per step, which
-                  is what lets nine of them fit a phone.
-                */}
-                <span
-                  className={cn(
-                    'grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold tabular-nums transition-colors',
-                    active
-                      ? 'bg-primary-foreground/20 text-primary-foreground'
-                      : step.locked
-                        ? 'bg-muted text-muted-foreground'
-                        : step.completed
-                          ? 'bg-success/15 text-success'
-                          : 'bg-muted text-muted-foreground dark:text-foreground',
-                  )}
-                >
-                  {step.locked ? (
-                    <Lock className="size-3" />
-                  ) : step.completed ? (
-                    <Check className="size-3" />
-                  ) : (
-                    step.index
-                  )}
-                </span>
-                {step.label}
-              </button>
+              <Tooltip key={step.tab}>
+                <TooltipTrigger asChild>
+                  <button
+                    ref={active ? activeRef : undefined}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-disabled={step.locked}
+                    onClick={() => select(step)}
+                    className={cn(
+                      'group inline-flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-medium transition-all',
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                        : // Dark mode sits the chips on a near-black page, where the
+                          // muted grey reads as disabled — the labels take the full
+                          // foreground there and lean on the fill for the active state.
+                          'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground dark:text-foreground',
+                      step.locked &&
+                        'cursor-not-allowed opacity-50 hover:border-border hover:text-muted-foreground dark:text-muted-foreground',
+                    )}
+                  >
+                    {/*
+                      One badge carries the step number and its state: a tick once the
+                      step is saved, a padlock while it can't be opened, the number
+                      otherwise. That keeps the strip to a single glyph per step, which
+                      is what lets nine of them fit a phone.
+                    */}
+                    <span
+                      className={cn(
+                        'grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold tabular-nums transition-colors',
+                        active
+                          ? 'bg-primary-foreground/20 text-primary-foreground'
+                          : step.locked
+                            ? 'bg-muted text-muted-foreground'
+                            : step.completed
+                              ? 'bg-success/15 text-success'
+                              : 'bg-muted text-muted-foreground dark:text-foreground',
+                      )}
+                    >
+                      {step.locked ? (
+                        <Lock className="size-3" />
+                      ) : step.completed ? (
+                        <Check className="size-3" />
+                      ) : (
+                        step.index
+                      )}
+                    </span>
+                    {step.label}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {step.locked ? 'Save Basic Detail first' : step.label}
+                </TooltipContent>
+              </Tooltip>
             )
           })}
         </div>

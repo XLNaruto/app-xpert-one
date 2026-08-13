@@ -23,6 +23,10 @@ export function useSaveSalaries() {
     mutationFn: (payload: SalarySavePayload) => saveSalaries(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.salary.all })
+      /* The reports read the same salary rows from their own key family, so the
+         `salary` invalidation doesn't reach them — a statement left on screen
+         would still be quoting the month as it was before this write. */
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all })
     },
   })
 }
@@ -52,6 +56,10 @@ export function useImportSalaries() {
     }) => importSalaries(file, { companyId, month, year }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.salary.all })
+      /* The reports read the same salary rows from their own key family, so the
+         `salary` invalidation doesn't reach them — a statement left on screen
+         would still be quoting the month as it was before this write. */
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all })
     },
   })
 }
@@ -86,6 +94,10 @@ export function useDeleteSalaries() {
     mutationFn: (salaryIds: number[]) => deleteSalaries(salaryIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.salary.all })
+      /* The reports read the same salary rows from their own key family, so the
+         `salary` invalidation doesn't reach them — a statement left on screen
+         would still be quoting the month as it was before this write. */
+      queryClient.invalidateQueries({ queryKey: queryKeys.reports.all })
     },
   })
 }

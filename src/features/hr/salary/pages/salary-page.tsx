@@ -4,6 +4,7 @@ import { PERMISSIONS, useCan } from '@/features/permissions'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatMonth } from '@/features/master/designation'
 import { useSalaryForm } from '../hooks/use-salary-form'
 import { SalaryToolbar } from '../components/salary-toolbar'
@@ -76,37 +77,53 @@ export function SalaryPage() {
               save is.
             */}
             {canDiscard && form.status === 'complete' && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={form.askDiscard}
-                disabled={form.isDiscarding || form.discardCount === 0}
-                title="Discard the selected processed salaries so the month can be run again"
-              >
-                <Trash2 className="size-4" />
-                {form.isDiscarding
-                  ? 'Discarding…'
-                  : `Discard${form.discardCount ? ` (${form.discardCount})` : ''}`}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* Disabled buttons swallow pointer events, so the span around
+                      each one carries the hover. */}
+                  <span className="inline-flex">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={form.askDiscard}
+                      disabled={form.isDiscarding || form.discardCount === 0}
+                    >
+                      <Trash2 className="size-4" />
+                      {form.isDiscarding
+                        ? 'Discarding…'
+                        : `Discard${form.discardCount ? ` (${form.discardCount})` : ''}`}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  Discard the selected processed salaries so the month can be run again
+                </TooltipContent>
+              </Tooltip>
             )}
             {canProcess && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.askSave}
-                disabled={!form.ready || form.isSaving || form.saveCount === 0}
-                title={
-                  selectedCount > 0
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={form.askSave}
+                      disabled={!form.ready || form.isSaving || form.saveCount === 0}
+                    >
+                      <Save className="size-4" />
+                      {form.isSaving
+                        ? 'Saving…'
+                        : `Save Salary${form.saveCount ? ` (${form.saveCount})` : ''}`}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  {selectedCount > 0
                     ? `Process the ${selectedCount} selected ${selectedCount === 1 ? 'row' : 'rows'}`
-                    : 'Process every row on this page'
-                }
-              >
-                <Save className="size-4" />
-                {form.isSaving
-                  ? 'Saving…'
-                  : `Save Salary${form.saveCount ? ` (${form.saveCount})` : ''}`}
-              </Button>
+                    : 'Process every row on this page'}
+                </TooltipContent>
+              </Tooltip>
             )}
             {/*
               The other way to process a month: a filled-in sheet instead of the
@@ -114,17 +131,25 @@ export function SalaryPage() {
               bulk route to it, not a different screen.
             */}
             {canImport && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.setImportOpen(true)}
-                disabled={form.isImporting}
-                title="Import a month from a filled-in salary sheet"
-              >
-                <Upload className="size-4" />
-                Import
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => form.setImportOpen(true)}
+                      disabled={form.isImporting}
+                    >
+                      <Upload className="size-4" />
+                      Import
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  Import a month from a filled-in salary sheet
+                </TooltipContent>
+              </Tooltip>
             )}
           </>
         }

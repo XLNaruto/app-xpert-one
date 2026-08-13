@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useLogin } from '../hooks/use-login'
 
@@ -145,18 +146,25 @@ export function LoginPage() {
               className={cn(fieldClasses, 'pr-10')}
               {...register('password')}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              title={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-2 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:text-primary"
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2 top-1/2 z-10 grid size-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:text-primary"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {showPassword ? 'Hide password' : 'Show password'}
+              </TooltipContent>
+            </Tooltip>
           </div>
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>

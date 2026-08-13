@@ -53,6 +53,16 @@ function facetChipLabel(facet: FilterFacet): string {
 }
 
 /**
+ * Trigger placeholder for a facet. A clear value of `''` reads as "nothing
+ * selected" to the Combobox, so its own "All …" option would render blank —
+ * surface that option's label as the placeholder instead.
+ */
+function facetPlaceholder(facet: FilterFacet): string {
+  const clearValue = facet.clearValue ?? 'all'
+  return facet.options.find((o) => o.value === clearValue)?.label ?? 'All'
+}
+
+/**
  * Reusable filter control. Renders a compact "Filters" trigger (with an active
  * count) plus removable chips for any applied filters. Clicking the trigger
  * opens an anchored panel with the search box and every faceted dropdown.
@@ -222,6 +232,7 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
                       value={facet.value}
                       onChange={facet.onChange}
                       options={facet.options}
+                      placeholder={facetPlaceholder(facet)}
                       searchable={facet.searchable}
                       searchPlaceholder={facet.searchPlaceholder}
                     />

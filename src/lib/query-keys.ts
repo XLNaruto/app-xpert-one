@@ -53,6 +53,25 @@ export const queryKeys = {
       [...queryKeys.role.all, 'assignable-permissions'] as const,
   },
   /**
+   * Admin users — `features/administration/admin-user`.
+   *
+   * Account-scoped: the `companyId` on the list key is the screen's FILTER, not
+   * the session's tenant, and `0` means "every user of the account" (which also
+   * includes the owners, who belong to no company).
+   *
+   * `assignableRoles` is the form's role dropdown — every role of the account
+   * across all its companies, unpaged, so it's held for the session.
+   */
+  adminUser: {
+    all: ['admin-user'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.adminUser.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.adminUser.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.adminUser.all, 'detail', id] as const,
+    assignableRoles: () => [...queryKeys.adminUser.all, 'assignable-roles'] as const,
+  },
+  /**
    * Billing — `features/administration/billing`.
    *
    * Account-scoped, not tenant-scoped: no key here carries a company. The three
@@ -429,6 +448,71 @@ export const queryKeys = {
       params
         ? ([...queryKeys.salary.all, 'report', filters, params] as const)
         : ([...queryKeys.salary.all, 'report', filters] as const),
+    /**
+     * Pay Salary's two tabs. Same family again, deliberately: paying a salary
+     * stamps `is_paid` on the very rows the register and the report show, so one
+     * `salary.all` invalidation refreshes every screen that read them. The tab
+     * (`unpaid`/`paid`) is part of `filters` — they're different reads, not two
+     * views of one answer, so neither may show under the other's heading.
+     */
+    payments: (filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.salary.all, 'payments', filters, params] as const,
+    /** The period's batches, newest first. */
+    paymentHistory: (filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.salary.all, 'payment-history', filters, params] as const,
+    /** One batch expanded, keyed by its id and the page of employees shown. */
+    paymentBatch: (id: number, params: PageParams) =>
+      [...queryKeys.salary.all, 'payment-batch', id, params] as const,
+  },
+  /**
+   * Bonus Estimation — the estimate over a range, and what has been committed
+   * for it.
+   *
+   * Its own root rather than a branch of `salary.all`: a bonus is written against
+   * salary rows but never changes them, so a discard or a payment must not drag
+   * this family with it, and saving a bonus must not invalidate the register.
+   *
+   * The two reads are separate families even though they share filters — the
+   * estimate is what a bonus *would* cost and `saved` is what it *did*, so
+   * neither may be shown under the other's heading while it loads. The
+   * calculation base is deliberately NOT in the estimate key: all four bases come
+   * back on every line, so switching the dropdown re-fills the column from the
+   * answer already cached instead of firing a fresh read.
+   */
+  bonusEstimation: {
+    all: ['bonus-estimation'] as const,
+    estimate: (filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.bonusEstimation.all, 'estimate', filters, params] as const,
+    saved: (filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.bonusEstimation.all, 'saved', filters, params] as const,
+  },
+  /**
+   * Reports — the twelve statements, one family per module.
+   *
+   * The TYPE is part of the key, not a detail of the filters: Pay Slip and Pay
+   * Register are different reads of the same month with different columns, and
+   * neither may be shown under the other's heading while it loads.
+   *
+   * The filters (period or range, department, the employees it was narrowed to)
+   * and the page — including its `sort`, which each type accepts only its own
+   * columns for — pick a report out just as completely, so they're all in the key
+   * alongside it.
+   *
+   * Deliberately its own root rather than under `salary.all`: reports only read.
+   * Discarding a salary must still refresh them, which is what the `salary`
+   * invalidation in `use-salary-mutations` doesn't reach — so those mutations
+   * invalidate `reports.all` too.
+   */
+  reports: {
+    all: ['reports'] as const,
+    salary: (type: string, filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.reports.all, 'salary', type, filters, params] as const,
+    pf: (type: string, filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.reports.all, 'pf', type, filters, params] as const,
+    esic: (type: string, filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.reports.all, 'esic', type, filters, params] as const,
+    pt: (type: string, filters: Record<string, unknown>, params: PageParams) =>
+      [...queryKeys.reports.all, 'pt', type, filters, params] as const,
   },
   /**
    * Attendance Management — one company day at a time.
@@ -463,6 +547,51 @@ export const queryKeys = {
     /** One employee's month grid, keyed by the month it answers for. */
     employeeMonth: (employeeId: number, month: string) =>
       [...queryKeys.attendance.all, 'employee-month', employeeId, month] as const,
+  },
+  /**
+   * Help & Support — the tickets this organization raised with the platform
+   * desk (`features/support/ticket`).
+   *
+   * Account-scoped, so no company rides in the key. The screen's filters
+   * (status, desk, severity, raiser) each pick a different result set out
+   * server-side, so they travel alongside the page params rather than being
+   * applied to a cached list.
+   */
+  supportTicket: {
+    all: ['support-ticket'] as const,
+    list: (params?: PageParams, filters?: Record<string, unknown>) =>
+      params
+        ? ([...queryKeys.supportTicket.all, 'list', params, filters ?? {}] as const)
+        : ([...queryKeys.supportTicket.all, 'list'] as const),
+    detail: (id: number) => [...queryKeys.supportTicket.all, 'detail', id] as const,
+  },
+  /**
+   * The employee help desk — what this account's employees raised
+   * (`features/support/employee-ticket`).
+   *
+   * `summary` is the tab strip's counts and sits under the same `all` prefix as
+   * the list on purpose: every transition moves a ticket between two of those
+   * counts, so one invalidation has to refresh both. It carries the list's
+   * filters MINUS the status ones, which is exactly what the endpoint takes.
+   *
+   * `detail` holds the ticket AND its whole thread — the API answers them in one
+   * call — so posting a reply invalidates that one key rather than a second one.
+   */
+  employeeSupportTicket: {
+    all: ['employee-support-ticket'] as const,
+    list: (params?: PageParams, filters?: Record<string, unknown>) =>
+      params
+        ? ([
+            ...queryKeys.employeeSupportTicket.all,
+            'list',
+            params,
+            filters ?? {},
+          ] as const)
+        : ([...queryKeys.employeeSupportTicket.all, 'list'] as const),
+    summary: (filters?: Record<string, unknown>) =>
+      [...queryKeys.employeeSupportTicket.all, 'summary', filters ?? {}] as const,
+    detail: (id: number) =>
+      [...queryKeys.employeeSupportTicket.all, 'detail', id] as const,
   },
   bank: {
     all: ['bank'] as const,

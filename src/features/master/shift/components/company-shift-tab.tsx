@@ -13,10 +13,11 @@ import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
-import { SHIFT_SORT } from '../constants'
-import { formatShiftWindow } from '../lib/shift-mappers'
+import { LATE_CHECK_IN_PENALTY_TYPE_OPTIONS, SHIFT_SORT } from '../constants'
+import { formatLateCheckInPenalty, formatShiftWindow } from '../lib/shift-mappers'
 import { useShiftList } from '../hooks/use-shift-list'
 import { useShiftForm } from '../hooks/use-shift-form'
 import type { Shift } from '../types'
@@ -112,12 +113,14 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <div className="flex items-center gap-2">
             <span>{row.original.breakMinutes} min</span>
             {row.original.isLateBreakPenaltyApplicable && (
-              <Badge
-                variant="secondary"
-                title="Break time beyond this is deducted from pay"
-              >
-                Penalty
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary">Penalty</Badge>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  Break time beyond this is deducted from pay
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         ),
@@ -126,7 +129,27 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         accessorKey: 'concessionMinutes',
         header: 'Concession',
         enableSorting: false,
-        cell: ({ row }) => `${row.original.concessionMinutes} min`,
+        meta: { className: 'whitespace-nowrap' },
+        // Same reading as the break cell: the grace and what overrunning it costs
+        // are one fact, so the penalty rides along as a badge rather than a column.
+        cell: ({ row }) => {
+          const penalty = formatLateCheckInPenalty(row.original)
+          return (
+            <div className="flex items-center gap-2">
+              <span>{row.original.concessionMinutes} min</span>
+              {row.original.isLateCheckInPenaltyApplicable && penalty && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="secondary">{penalty}</Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-56 text-pretty font-normal">
+                    Deducted from pay for each late day
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )
+        },
       },
       {
         id: 'dayHours',
@@ -208,7 +231,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             label="End Time"
             required
             error={form.errors.endTime?.message}
-            hint="An end earlier than the start makes this a night shift — the flag is worked out for you."
+            hint="Filled in from the start plus the full day hours — pick your own instead and the hours follow. An end earlier than the start makes this a night shift, worked out for you."
           />
           <Field
             label="Break (minutes)"
@@ -239,7 +262,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field
             label="Full Day Hours"
             error={form.errors.minFullDayHours?.message}
-            hint="Worked hours at or above this count as a full day. Filled in from the shift window minus the break — type over it if yours differs."
+            hint="Worked hours at or above this count as a full day. Filled in from the shift window, and typing a number here moves the end time to match. The break isn't taken off — it's charged by its own penalty."
           >
             <Input
               type="number"
@@ -253,7 +276,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field
             label="Half Day Hours"
             error={form.errors.minHalfDayHours?.message}
-            hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it if yours differs."
+            hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it and your number stands, so 3 against a full day of 8 is fine."
           >
             <Input
               type="number"
@@ -295,6 +318,80 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             />
           </Field>
 
+          <Field
+            label="Late Check-In Penalty"
+            hint="Deduct pay when a check-in falls outside the concession above — the whole day charged once, shown on the payslip as the penalty. Off reports the lateness without charging it."
+          >
+            <div className="flex h-9 items-center gap-2">
+              <Controller
+                control={form.control}
+                name="isLateCheckInPenaltyApplicable"
+                render={({ field }) => (
+                  <>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label="Late check-in penalty"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {field.value ? 'Deducted' : 'Not deducted'}
+                    </span>
+                  </>
+                )}
+              />
+            </div>
+          </Field>
+
+          {/*
+            Only while the switch is on: the API rejects it without a rule behind
+            it, and the rule is meaningless without it. The two keep their values
+            when it's switched off, so suspending the penalty doesn't lose them.
+          */}
+          {form.isLateCheckInPenaltyApplicable && (
+            <>
+              <Field
+                label="Penalty Type"
+                required
+                error={form.errors.lateCheckInPenaltyType?.message}
+                hint="A share of that day's wage, or a flat amount."
+              >
+                <Controller
+                  control={form.control}
+                  name="lateCheckInPenaltyType"
+                  render={({ field }) => (
+                    <Combobox
+                      className="w-full"
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={LATE_CHECK_IN_PENALTY_TYPE_OPTIONS}
+                      placeholder="Select"
+                      searchPlaceholder="Search type"
+                    />
+                  )}
+                />
+              </Field>
+
+              <Field
+                label={
+                  form.lateCheckInPenaltyType === 'FIXED'
+                    ? 'Penalty Amount (₹)'
+                    : 'Penalty (%)'
+                }
+                required
+                error={form.errors.lateCheckInPenaltyValue?.message}
+                hint="What one late day costs — 5 minutes late and 50 minutes late cost the same, since the minutes only decide whether the day is late."
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  max={form.lateCheckInPenaltyType === 'FIXED' ? 1000000 : 100}
+                  step={form.lateCheckInPenaltyType === 'FIXED' ? 1 : 0.5}
+                  placeholder={form.lateCheckInPenaltyType === 'FIXED' ? '150' : '10'}
+                  {...form.register('lateCheckInPenaltyValue')}
+                />
+              </Field>
+            </>
+          )}
           <Field
             label="Break Penalty"
             hint="Deduct pay for break time taken beyond the break above — the extra minutes only, at the daily wage's per-minute rate, shown on the payslip as the lunch deduction. Off reports the extra time without charging it."

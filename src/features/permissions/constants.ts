@@ -40,13 +40,18 @@ export const PERMISSIONS = {
   calculateSalary: 'calculate-salary',
   salaryView: 'view-salary',
   paySalary: 'pay-salary',
+  /**
+   * Bonus Estimation — grouped with payroll rather than with the reports below,
+   * because the screen COMMITS a bonus as well as estimating one: `create` is
+   * what its Save Bonus hangs off.
+   */
+  bonusEstimation: 'bonus-estimation',
 
-  // ── Reports (no screens in the app yet) ───────────────────────────────────
+  // ── Reports ───────────────────────────────────────────────────────────────
   salaryReport: 'salary-report',
   pfReport: 'pf-report',
   esicReport: 'esic-report',
   ptReport: 'pt-report',
-  bonusEstimation: 'bonus-estimation',
 
   // ── Master · Company Setup ────────────────────────────────────────────────
   companies: 'companies',
@@ -81,7 +86,8 @@ export const PERMISSIONS = {
   documentTypes: 'document-types',
   documents: 'documents',
 
-  // ── Administration (no screens in the app yet) ────────────────────────────
+  // ── Administration ────────────────────────────────────────────────────────
+  /** The account's web-panel logins — `features/administration/admin-user`. */
   users: 'users',
   roles: 'roles',
   /**
@@ -99,7 +105,23 @@ export const PERMISSIONS = {
   supervisorApp: 'supervisor-app',
   geoFence: 'geo-fence',
   bulkAttendance: 'bulk-attendance',
+  /**
+   * Help & Support — the tickets THIS organization raises with the platform
+   * desk (`features/support/ticket`).
+   */
   support: 'support',
+  /**
+   * The EMPLOYEE help desk — the queue our own employees raise from the app
+   * (`features/support/employee-ticket`). A separate desk from `support`, so a
+   * separate resource.
+   *
+   * Gated as `[employeeSupport, support]` (an ANY-of) wherever it's used: the
+   * catalog's exact spelling for this desk isn't confirmed from the panel, and
+   * an account that only carries the one `support` resource must not lose the
+   * screen over a name. Collapse it to the single code once
+   * `GET /user/roles/assignable-permissions` confirms which one is real.
+   */
+  employeeSupport: 'employee-support',
 
   // ── Lookups (dropdown data) ───────────────────────────────────────────────
   states: 'states',

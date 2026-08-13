@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { PERMISSIONS, type PermissionSpec } from "@/features/permissions";
 import {
+  Banknote,
   Boxes,
   Briefcase,
   Building,
@@ -15,12 +16,16 @@ import {
   // Used by the commented-out "HR Setup" menu below — uncomment together.
   // CalendarDays,
   // CalendarHeart,
+  FileBarChart,
   FileSpreadsheet,
   FileText,
   FileType2,
+  Gift,
   HandCoins,
+  Headset,
   HeartPulse,
   Landmark,
+  LifeBuoy,
   LayoutDashboard,
   MapPinned,
   Network,
@@ -122,7 +127,66 @@ export const navGroups: NavGroup[] = [
             icon: FileSpreadsheet,
             permission: PERMISSIONS.salaryView,
           },
+          {
+            label: "Pay Salary",
+            to: "/hr/pay-salary",
+            icon: Banknote,
+            permission: PERMISSIONS.paySalary,
+          },
         ],
+      },
+
+      {
+        /*
+          The statutory and payroll statements, read off months already
+          processed. They sit under Human Resource rather than in a section of
+          their own because that is where the month they report on was run —
+          nothing here writes, and every one of them is a different question
+          about the same payroll.
+
+          No `permission` on the parent: it's a disclosure, and each sheet
+          carries its own resource, so a user who holds only PF sees Reports with
+          one row under it rather than a heading they can't open.
+        */
+        label: "Reports",
+        icon: FileBarChart,
+        children: [
+          {
+            label: "Salary Report",
+            to: "/reports/salary-report",
+            icon: FileSpreadsheet,
+            permission: PERMISSIONS.salaryReport,
+          },
+          {
+            label: "PF Report",
+            to: "/reports/pf-report",
+            icon: Landmark,
+            permission: PERMISSIONS.pfReport,
+          },
+          {
+            label: "ESIC Report",
+            to: "/reports/esic-report",
+            icon: HeartPulse,
+            permission: PERMISSIONS.esicReport,
+          },
+          {
+            label: "PT Report",
+            to: "/reports/pt-report",
+            icon: ReceiptIndianRupee,
+            permission: PERMISSIONS.ptReport,
+          },
+        ],
+      },     
+      {
+        /*
+          Under Salary Management rather than with the Reports below it: the
+          estimate is a read, but the screen COMMITS a bonus against the
+          months it covers, which is a payroll action and not a statement.
+        */
+        label: "Bonus Estimation",
+        to: "/hr/bonus-estimation",
+        icon: Gift,
+        permission: PERMISSIONS.bonusEstimation,
       },
     ],
   },
@@ -303,6 +367,16 @@ export const navGroups: NavGroup[] = [
     title: "Administration",
     items: [
       {
+        // The account's web-panel logins. Account-scoped, not tenant-scoped:
+        // the list spans every company (and the owners, who belong to none),
+        // and a user's company follows from the role they're given.
+        label: "Users",
+        to: "/administration/admin-user",
+        icon: UsersRound,
+        permission: PERMISSIONS.users,
+        companyIndependent: true,
+      },
+      {
         label: "Roles & Permissions",
         to: "/administration/role",
         icon: ShieldCheck,
@@ -323,6 +397,39 @@ export const navGroups: NavGroup[] = [
         to: "/administration/billing",
         icon: CreditCard,
         permission: PERMISSIONS.billing,
+        companyIndependent: true,
+      },
+    ],
+  },
+  {
+    /*
+      Two help desks, pointing opposite ways. "Raise Support" is us asking the
+      XpertOne platform; "Employee Support" is our own people asking us. They
+      sit in one section because they are the same shape of work read from
+      either end, and separate rows because nothing about them is shared: one
+      carries a subscription-priced deadline, the other a queue with none.
+
+      Both are ACCOUNT-scoped — a platform ticket names no company, and the
+      employee queue deliberately spans every company of the account — so
+      neither waits on a company being picked.
+    */
+    title: "Help & Support",
+    items: [
+      {
+        label: "Raise Support",
+        to: "/support/ticket",
+        icon: LifeBuoy,
+        permission: PERMISSIONS.support,
+        companyIndependent: true,
+      },
+      {
+        // ANY-of: the catalog's exact spelling for this desk isn't confirmed, so
+        // the bare `support` resource keeps the row rather than losing it to a
+        // name. See `PERMISSIONS.employeeSupport`.
+        label: "Employee Support",
+        to: "/support/employee-ticket",
+        icon: Headset,
+        permission: [PERMISSIONS.employeeSupport, PERMISSIONS.support],
         companyIndependent: true,
       },
     ],

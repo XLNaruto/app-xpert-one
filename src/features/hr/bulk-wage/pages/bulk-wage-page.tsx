@@ -5,6 +5,7 @@ import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatMonth } from '@/features/master/designation'
 import { useBulkWageForm } from '../hooks/use-bulk-wage-form'
 import { BulkWageGrid } from '../components/bulk-wage-grid'
@@ -100,18 +101,28 @@ export function BulkWagePage() {
               Discard Changes
             </Button>
             {canManage && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.askSaveAll}
-                disabled={form.isSaving || !form.canSaveAll}
-                title={saveAllHint(changedCount)}
-              >
-                <Save className="size-4" />
-                {form.isSaving
-                  ? 'Saving…'
-                  : `Save All${changedCount ? ` (${changedCount})` : ''}`}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* Disabled buttons swallow pointer events — the span carries
+                      the hover so the hint still reads. */}
+                  <span className="inline-flex">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={form.askSaveAll}
+                      disabled={form.isSaving || !form.canSaveAll}
+                    >
+                      <Save className="size-4" />
+                      {form.isSaving
+                        ? 'Saving…'
+                        : `Save All${changedCount ? ` (${changedCount})` : ''}`}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-56 text-pretty font-normal">
+                  {saveAllHint(changedCount)}
+                </TooltipContent>
+              </Tooltip>
             )}
           </>
         }
@@ -154,16 +165,24 @@ export function BulkWagePage() {
             )}
           </p>
           {canManage && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={form.askSaveAll}
-              disabled={form.isSaving || !form.canSaveAll}
-              title={saveAllHint(changedCount)}
-            >
-              <Save className="size-4" />
-              {form.isSaving ? 'Saving…' : 'Save All'}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={form.askSaveAll}
+                    disabled={form.isSaving || !form.canSaveAll}
+                  >
+                    <Save className="size-4" />
+                    {form.isSaving ? 'Saving…' : 'Save All'}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-56 text-pretty font-normal">
+                {saveAllHint(changedCount)}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>

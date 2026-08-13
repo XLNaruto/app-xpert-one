@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertTriangle, CheckCircle2, ChevronRight, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { SalaryImportResult, SalaryImportRow } from '../types'
 
@@ -149,17 +150,23 @@ export function SalaryImportResultDialog({
                   {/* The reason in full on hover — the row keeps one line so a
                       long list stays scannable. */}
                   {row.reason ? (
-                    <span
-                      title={row.reason}
-                      className={cn(
-                        'max-w-[55%] truncate rounded-full border px-2.5 py-1 text-[11px] font-medium',
-                        active === 'errors'
-                          ? 'border-rose-300 text-rose-600 dark:border-rose-900 dark:text-rose-400'
-                          : 'border-amber-300 text-amber-600 dark:border-amber-900 dark:text-amber-400',
-                      )}
-                    >
-                      {row.reason}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn(
+                            'max-w-[55%] truncate rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                            active === 'errors'
+                              ? 'border-rose-300 text-rose-600 dark:border-rose-900 dark:text-rose-400'
+                              : 'border-amber-300 text-amber-600 dark:border-amber-900 dark:text-amber-400',
+                          )}
+                        >
+                          {row.reason}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-64 text-pretty font-normal">
+                        {row.reason}
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
                     <span className="text-[11px] text-muted-foreground">
                       Salary #{row.salaryId}

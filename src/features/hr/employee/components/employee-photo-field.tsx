@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Camera, Loader2, X } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import { cn } from '@/lib/utils'
@@ -111,22 +112,26 @@ export function EmployeePhotoField({
         </button>
 
         {hasPhoto && !disabled && !isUploading && (
-          <button
-            type="button"
-            onClick={clear}
-            aria-label="Remove photo"
-            title="Remove photo"
-            className={cn(
-              // Sits inside the box, matching the remove control on the shared
-              // file dropzones.
-              'absolute right-1 top-1 z-10 grid size-6 cursor-pointer place-items-center rounded-md',
-              'bg-background/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors',
-              'hover:bg-destructive/10 hover:text-destructive',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            )}
-          >
-            <X className="size-3.5" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={clear}
+                aria-label="Remove photo"
+                className={cn(
+                  // Sits inside the box, matching the remove control on the shared
+                  // file dropzones.
+                  'absolute right-1 top-1 z-10 grid size-6 cursor-pointer place-items-center rounded-md',
+                  'bg-background/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors',
+                  'hover:bg-destructive/10 hover:text-destructive',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                )}
+              >
+                <X className="size-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Remove photo</TooltipContent>
+          </Tooltip>
         )}
       </div>
 

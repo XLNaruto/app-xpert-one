@@ -1,5 +1,8 @@
 import type { AuditFields } from '@/types/audit'
 
+/** How one late day is charged — a share of that day's wage, or flat rupees. */
+export type LateCheckInPenaltyType = 'PERCENTAGE' | 'FIXED'
+
 /**
  * A shift master record as consumed by the UI (camelCase), mapped from the raw
  * `/user/shifts` response.
@@ -29,6 +32,24 @@ export interface Shift extends AuditFields {
   isLateBreakPenaltyApplicable: boolean
   /** Minutes after `startTime` in which a check-in still counts as on time. */
   concessionMinutes: number
+  /**
+   * True when a check-in past `concessionMinutes` is docked from pay — the day
+   * charged once by the type and value below, landing on the payslip as its
+   * `penalty`. False (the default) reports the lateness without charging for it.
+   */
+  isLateCheckInPenaltyApplicable: boolean
+  /**
+   * How a late day is charged: a percentage of that day's wage, or a flat rupee
+   * amount. `null` while no rule has been configured — it survives the switch
+   * being turned off, so a suspended rule keeps its numbers.
+   */
+  lateCheckInPenaltyType: LateCheckInPenaltyType | null
+  /**
+   * What one late day costs — percent (at most 100) or rupees, per the type. A
+   * fixed amount above the day's wage is capped when charged, so a day can pay
+   * nothing but never owes.
+   */
+  lateCheckInPenaltyValue: number | null
   /** The mirror of the concession at the end of the shift. */
   earlyExitGraceMinutes: number
   /** Worked hours at or above this are a full day. */

@@ -10,6 +10,8 @@ export function useCreateRole(companyId?: number) {
     mutationFn: (values: RoleFormValues) => createRole(values, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.role.all })
+      // The user form's role dropdown is a separate account-wide read.
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUser.assignableRoles() })
     },
   })
 }
@@ -29,6 +31,7 @@ export function useUpdateRole(id: number) {
     mutationFn: (values: RoleFormValues) => updateRole(id, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.role.all })
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUser.assignableRoles() })
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.all })
     },
   })
@@ -41,6 +44,8 @@ export function useDeleteRole() {
     mutationFn: (id: number) => deleteRole(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.role.all })
+      // The user form's role dropdown is a separate account-wide read.
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminUser.assignableRoles() })
     },
   })
 }
