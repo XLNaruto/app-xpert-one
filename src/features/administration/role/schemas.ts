@@ -1,9 +1,5 @@
 import { z } from 'zod'
-import {
-  companyRefResponseSchema,
-  permissionModuleSchema,
-  talkGrantResponseSchema,
-} from '@/features/permissions'
+import { permissionModuleSchema } from '@/features/permissions'
 import { recordNameField } from '@/lib/validation'
 
 /**
@@ -12,33 +8,16 @@ import { recordNameField } from '@/lib/validation'
  */
 export const MAX_ROLE_NAME = 100
 export const MAX_ROLE_PERMISSIONS = 300
-export const MAX_ROLE_COMPANIES = 200
-export const MAX_ROLE_TALK_GRANTS = 500
-export const MAX_ROLE_TALK_DEPARTMENTS = 500
-
-/**
- * One Talk grant row on the form — a company and the departments inside it the
- * role may talk to.
- */
-export const roleTalkGrantSchema = z.object({
-  /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
-  companyId: z.string().trim().min(1, 'Pick a company'),
-  /**
-   * The departments picked inside that company, as strings for the same reason.
-   * EMPTY means the WHOLE company — every department, present and future —
-   * never "none", which is exactly how the endpoint reads it.
-   */
-  departmentIds: z
-    .array(z.string())
-    .max(
-      MAX_ROLE_TALK_DEPARTMENTS,
-      `A grant cannot name more than ${MAX_ROLE_TALK_DEPARTMENTS} departments`,
-    ),
-})
-export type RoleTalkGrantFormValues = z.infer<typeof roleTalkGrantSchema>
 
 /**
  * The Create / Edit Role form.
+ *
+ * **A role carries the permission codes and nothing else.** Access level,
+ * company reach and the Talk grants used to live here; they are properties of
+ * the PERSON now and are edited on the Admin User form — one role ticked once
+ * serves every office. Sending `access_level` / `company_ids` / `talk_enabled` /
+ * `talk_access` here is IGNORED rather than rejected, so a stale field would
+ * fail silently.
  *
  * `permissionCodes` is the COMPLETE ticked set — the API replaces what's stored
  * rather than merging, so the form always holds the whole selection. The
@@ -46,70 +25,16 @@ export type RoleTalkGrantFormValues = z.infer<typeof roleTalkGrantSchema>
  * which is why nothing here re-checks it: by the time values reach the resolver
  * the set is already consistent.
  */
-export const roleSchema = z
-  .object({
-    name: recordNameField('the role name', { max: MAX_ROLE_NAME }),
-    permissionCodes: z
-      .array(z.string())
-      .min(1, 'Enable at least one permission')
-      .max(MAX_ROLE_PERMISSIONS, `A role cannot carry more than ${MAX_ROLE_PERMISSIONS} permissions`),
-    accessLevel: z.enum(['GLOBAL', 'COMPANY']),
-    companyIds: z.array(z.number().int().positive()),
-    talkEnabled: z.boolean(),
-    talkAccess: z.array(roleTalkGrantSchema),
-  })
-  .superRefine((values, ctx) => {
-    // GLOBAL ignores the list entirely (the server stores it empty), so only a
-    // COMPANY-level role has to name anyone.
-    if (values.accessLevel === 'COMPANY' && values.companyIds.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['companyIds'],
-        message: 'Pick at least one company, or give the role access to all of them',
-      })
-    }
-
-    if (values.companyIds.length > MAX_ROLE_COMPANIES) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['companyIds'],
-        message: `A role cannot reach more than ${MAX_ROLE_COMPANIES} companies`,
-      })
-    }
-
-    // Same shape on the Talk side: the switch is the gate, the grants are what
-    // it opens, and one without the other is rejected by the endpoint.
-    if (values.talkEnabled && values.talkAccess.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['talkAccess'],
-        message: 'Add at least one Talk grant, or turn Talk off',
-      })
-    }
-
-    if (values.talkAccess.length > MAX_ROLE_TALK_GRANTS) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['talkAccess'],
-        message: `A role cannot carry more than ${MAX_ROLE_TALK_GRANTS} Talk grants`,
-      })
-    }
-
-    // One entry PER COMPANY: the endpoint merges a company sent twice rather
-    // than replacing it, so a second row for the same company silently changes
-    // what the first one meant. Caught here instead.
-    const seen = new Set<string>()
-    values.talkAccess.forEach((grant, index) => {
-      if (seen.has(grant.companyId)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['talkAccess', index, 'companyId'],
-          message: 'This company already has a grant — add its departments to that row',
-        })
-      }
-      seen.add(grant.companyId)
-    })
-  })
+export const roleSchema = z.object({
+  name: recordNameField('the role name', { max: MAX_ROLE_NAME }),
+  permissionCodes: z
+    .array(z.string())
+    .min(1, 'Enable at least one permission')
+    .max(
+      MAX_ROLE_PERMISSIONS,
+      `A role cannot carry more than ${MAX_ROLE_PERMISSIONS} permissions`,
+    ),
+})
 
 export type RoleFormValues = z.infer<typeof roleSchema>
 
@@ -120,9 +45,8 @@ export type RoleFormValues = z.infer<typeof roleSchema>
  * as leniently as `my-role` is: the catalog grows server-side, and a missing
  * display field must never throw away the whole tree.
  *
- * The reach comes back NAMED — `company_ids` is `{ id, company_name }` and each
- * Talk entry carries its company name plus a `departments` list — so nothing on
- * screen needs a second call to label a chip.
+ * `{ id, company_id, name, permission_codes, is_system, created_at }` is the
+ * whole record — the reach was moved to the user and no longer comes back here.
  */
 export const roleResponseSchema = z.object({
   id: z.number(),
@@ -130,10 +54,6 @@ export const roleResponseSchema = z.object({
   name: z.string(),
   permission_codes: z.array(z.string()).default([]),
   is_system: z.boolean().default(false),
-  access_level: z.enum(['GLOBAL', 'COMPANY']).default('COMPANY'),
-  company_ids: z.array(companyRefResponseSchema).default([]),
-  talk_enabled: z.boolean().default(false),
-  talk_access: z.array(talkGrantResponseSchema).default([]),
   modules: z.array(permissionModuleSchema).default([]),
 })
 export type RoleResponse = z.infer<typeof roleResponseSchema>
@@ -145,8 +65,6 @@ export const roleListRowResponseSchema = z.object({
   name: z.string(),
   permission_codes: z.array(z.string()).default([]),
   is_system: z.boolean().default(false),
-  access_level: z.enum(['GLOBAL', 'COMPANY']).default('COMPANY'),
-  talk_enabled: z.boolean().default(false),
   permission_count: z.number().default(0),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
@@ -172,27 +90,17 @@ export type AssignablePermissionsResponse = z.infer<
 /* ── Request bodies ────────────────────────────────────────────────────────── */
 
 /**
- * Hand-written rather than zod: the endpoint rejects unknown keys, so this type
- * is exactly what may be sent.
+ * Hand-written rather than zod: this type is exactly what may be sent.
+ *
+ * The reach keys are deliberately absent. `access_level`, `company_ids`,
+ * `talk_enabled` and `talk_access` are properties of the user now; sent here
+ * they are IGNORED rather than rejected, which would save a role quietly
+ * granting no reach at all.
  */
-export interface RoleTalkAccessPayload {
-  company_id: number
-  /**
-   * EMPTY (or omitted) means the WHOLE company — every department, present and
-   * future — never "none". Each must belong to the company named alongside it.
-   */
-  department_ids: number[]
-}
-
 export interface RolePayload {
   company_id: number
   name: string
   permission_codes: string[]
-  access_level: 'GLOBAL' | 'COMPANY'
-  company_ids: number[]
-  talk_enabled: boolean
-  /** One entry PER COMPANY — repeating a company merges rather than replaces. */
-  talk_access: RoleTalkAccessPayload[]
 }
 
 /** PATCH takes the same body minus the owning company, which is fixed. */

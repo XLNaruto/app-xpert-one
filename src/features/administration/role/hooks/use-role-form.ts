@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useFieldArray, useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { useMyCompanies } from '@/features/company'
 import type { Permission, PermissionModule } from '@/features/permissions'
 import { roleSchema, type RoleFormValues } from '../schemas'
 import { EMPTY_ROLE_FORM } from '../constants'
@@ -27,8 +26,11 @@ import {
 } from '../lib/permission-tree'
 
 /**
- * Owns the Create / Edit Role screen — the form fields, the scope switches and
- * the permission matrix.
+ * Owns the Create / Edit Role screen — the role name and the permission matrix.
+ *
+ * **A role is the codes and nothing else.** Access level, company reach and the
+ * Talk grants moved to the USER (`features/administration/admin-user`), so one
+ * role ticked once serves every office instead of a role per person.
  *
  * **The whole selection is one field.** `permission_codes` REPLACES what's
  * stored on save, so the builder holds the complete ticked set rather than a diff
@@ -50,29 +52,13 @@ export function useRoleForm(id?: number) {
   const createRole = useCreateRole()
   const updateRole = useUpdateRole(id ?? Number.NaN)
 
-  const { companies, isLoading: isCompaniesLoading } = useMyCompanies()
-
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleSchema),
     defaultValues: EMPTY_ROLE_FORM,
   })
   const { control, setValue, reset, handleSubmit } = form
 
-  const talkAccess = useFieldArray({ control, name: 'talkAccess' })
-
   const permissionCodes = useWatch({ control, name: 'permissionCodes' }) ?? []
-  const accessLevel = useWatch({ control, name: 'accessLevel' }) ?? 'COMPANY'
-  const companyIds = useWatch({ control, name: 'companyIds' }) ?? []
-  const talkEnabled = useWatch({ control, name: 'talkEnabled' }) ?? false
-
-  /**
-   * The company each grant row currently names, by row. One entry PER COMPANY
-   * is the rule (the endpoint merges a repeat rather than replacing it), so a
-   * row's picker offers everything the OTHER rows haven't taken.
-   */
-  const talkCompanyIds = (useWatch({ control, name: 'talkAccess' }) ?? []).map(
-    (grant) => grant?.companyId ?? '',
-  )
 
   // Seed the form once the record loads (edit mode only).
   useEffect(() => {
@@ -223,37 +209,6 @@ export function useRoleForm(id?: number) {
       : undefined
   }
 
-  /** Companies for the scope picker and the Talk grants. */
-  const companyOptions = useMemo(
-    () => companies.map((company) => ({ label: company.name, value: String(company.id) })),
-    [companies],
-  )
-
-  const toggleCompany = (companyId: number) => {
-    const next = companyIds.includes(companyId)
-      ? companyIds.filter((current) => current !== companyId)
-      : [...companyIds, companyId]
-    setValue('companyIds', next, { shouldValidate: true, shouldDirty: true })
-  }
-
-  // A fresh grant starts unnarrowed: no departments means the whole company,
-  // which is the sensible default for "this role may talk in company X".
-  const addTalkGrant = () => talkAccess.append({ companyId: '', departmentIds: [] })
-
-  /** The departments picked inside a grant row — empty is the whole company. */
-  const setTalkDepartments = (index: number, departmentIds: string[]) =>
-    setValue(`talkAccess.${index}.departmentIds`, departmentIds, {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-
-  /** Back to "the whole company" — the grant reaches every department. */
-  const clearTalkDepartments = (index: number) =>
-    setValue(`talkAccess.${index}.departmentIds`, [], {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
-
   const goToList = () => navigate({ to: '/administration/role' })
 
   const onSubmit = handleSubmit((values) => {
@@ -317,24 +272,6 @@ export function useRoleForm(id?: number) {
     selectAll,
     clearAll,
     toggleActiveModule,
-
-    /* Scope & access */
-    accessLevel,
-    companyIds,
-    companyOptions,
-    companies,
-    isCompaniesLoading,
-    toggleCompany,
-
-    /* Talk */
-    talkEnabled,
-    talkAccess,
-    talkCompanyIds,
-    /** Every company already has a row — there is nothing left to add. */
-    canAddTalkGrant: talkAccess.fields.length < companyOptions.length,
-    addTalkGrant,
-    setTalkDepartments,
-    clearTalkDepartments,
 
     isPending: isEdit ? updateRole.isPending : createRole.isPending,
     isLoading: isEdit ? detail.isLoading : catalog.isLoading,

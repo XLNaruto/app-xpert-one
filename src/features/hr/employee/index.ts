@@ -9,7 +9,7 @@ export { EmployeeListPage } from './pages/employee-list-page'
 export { EmployeeCreatePage } from './pages/employee-create-page'
 export { EmployeeDetailPage } from './pages/employee-detail-page'
 
-export { useEmployees, useEmployee } from './api/use-employees'
+export { useEmployees, useEmployee, useEmployeePicker } from './api/use-employees'
 /**
  * Step 9's reads. `useEmployeeShiftOnDay` in particular answers "which shift is
  * this person on, on this date, and why" — the question attendance screens will ask
@@ -20,7 +20,7 @@ export {
   useEmployeeShiftAssignments,
   useEmployeeRoster,
 } from './api/use-employee-shifts'
-export { employeeOptions } from './lib/employee-mappers'
+export { employeeOptions, employeePickerOptions } from './lib/employee-mappers'
 export { assignmentLabel, SHIFT_SOURCE_LABELS } from './lib/employee-shift-mappers'
 
 export { EMPLOYEE_TABS, EMPLOYEE_TAB_LABELS, type EmployeeTab } from './constants'
@@ -36,6 +36,7 @@ export type {
   EmployeeFamilyMember,
   EmployeeKyc,
   EmployeeKycSummary,
+  EmployeePickerEntry,
   EmployeeRosterEntry,
   EmployeeService,
   EmployeeShiftAssignment,

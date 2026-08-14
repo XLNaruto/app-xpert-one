@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -14,12 +14,16 @@ import { adminUserToFormValues } from '../lib/admin-user-mappers'
 
 /**
  * Owns the Create / Edit User screen — personal information, the login
- * credentials and the role that decides everything else.
+ * credentials, the role, and how far this person reaches.
  *
- * **The role is the whole access model.** Permissions, company reach and Talk
- * grants all live on it, and the role's company becomes the user's — which is
- * why there's no company field here, and why the picker shows what the pick
- * implies before it's saved.
+ * **The role says what they may DO; this screen says WHERE.** Permissions live
+ * on the role and the role's company becomes the user's own — which is why
+ * there's no company *field* for that. The access level, the companies reached
+ * and the Talk grants are the user's own, so one role serves every office
+ * instead of being cloned per person.
+ *
+ * The two are easy to conflate and are not the same thing: `role_id` decides
+ * `company_id` (whose books this login sits in), `companyIds` decides reach.
  *
  * Two things the API refuses, handled here rather than as a 400:
  *
@@ -39,7 +43,7 @@ export function useAdminUserForm(id?: number) {
   const createUser = useCreateAdminUser()
   const updateUser = useUpdateAdminUser(id ?? Number.NaN)
 
-  const { companies } = useMyCompanies()
+  const { companies, isLoading: isCompaniesLoading } = useMyCompanies()
 
   /** The caller's own row — the one whose role can't be changed. */
   const currentUserId = useAuthStore((state) => state.user?.id ?? null)
@@ -68,6 +72,8 @@ export function useAdminUserForm(id?: number) {
   })
   const { control, reset, handleSubmit, setValue } = form
 
+  const talkAccess = useFieldArray({ control, name: 'talkAccess' })
+
   // Seed the form once the record loads (edit mode only).
   useEffect(() => {
     if (detail.data) reset(adminUserToFormValues(detail.data))
@@ -75,6 +81,18 @@ export function useAdminUserForm(id?: number) {
 
   const roleId = useWatch({ control, name: 'roleId' }) ?? ''
   const status = useWatch({ control, name: 'status' }) ?? 'active'
+  const accessLevel = useWatch({ control, name: 'accessLevel' }) ?? 'COMPANY'
+  const companyIds = useWatch({ control, name: 'companyIds' }) ?? []
+  const talkEnabled = useWatch({ control, name: 'talkEnabled' }) ?? false
+
+  /**
+   * The company each grant row currently names, by row. One entry PER COMPANY
+   * is the rule (the endpoint merges a repeat rather than replacing it), so a
+   * row's picker offers everything the OTHER rows haven't taken.
+   */
+  const talkCompanyIds = (useWatch({ control, name: 'talkAccess' }) ?? []).map(
+    (grant) => grant?.companyId ?? '',
+  )
 
   /** Company names by id, so a role can be labelled with the company it carries. */
   const companyNames = useMemo(
@@ -114,6 +132,30 @@ export function useAdminUserForm(id?: number) {
 
   const setStatus = (value: string) =>
     setValue('status', value === 'inactive' ? 'inactive' : 'active', {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+
+  /** Companies for the scope tiles and the Talk grants. */
+  const companyOptions = useMemo(
+    () => companies.map((company) => ({ label: company.name, value: String(company.id) })),
+    [companies],
+  )
+
+  const toggleCompany = (companyId: number) => {
+    const next = companyIds.includes(companyId)
+      ? companyIds.filter((current) => current !== companyId)
+      : [...companyIds, companyId]
+    setValue('companyIds', next, { shouldValidate: true, shouldDirty: true })
+  }
+
+  // A fresh grant starts unnarrowed: no departments means the whole company,
+  // which is the sensible default for "this user may talk in company X".
+  const addTalkGrant = () => talkAccess.append({ companyId: '', departmentIds: [] })
+
+  /** Back to "the whole company" — the grant reaches every department. */
+  const clearTalkDepartments = (index: number) =>
+    setValue(`talkAccess.${index}.departmentIds`, [], {
       shouldValidate: true,
       shouldDirty: true,
     })
@@ -188,6 +230,29 @@ export function useAdminUserForm(id?: number) {
     /* Credentials */
     status,
     setStatus,
+
+    /* Scope & access — the user's own reach, not the role's */
+    accessLevel,
+    companyIds,
+    companyOptions,
+    companies,
+    isCompaniesLoading,
+    toggleCompany,
+    /**
+     * An OWNER reaches every company by construction — the server stores them
+     * `GLOBAL` with empty lists whatever is sent, so the fields render as a
+     * statement of fact rather than as an edit that quietly does nothing.
+     */
+    isReachLocked: isOwner,
+
+    /* Talk */
+    talkEnabled,
+    talkAccess,
+    talkCompanyIds,
+    /** Every company already has a row — there is nothing left to add. */
+    canAddTalkGrant: talkAccess.fields.length < companyOptions.length,
+    addTalkGrant,
+    clearTalkDepartments,
 
     isPending: isEdit ? updateUser.isPending : createUser.isPending,
     isLoading: isEdit ? detail.isLoading : roles.isLoading,

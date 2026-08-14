@@ -15,7 +15,7 @@ export {
   useDeleteAdminUser,
 } from './api/use-admin-user-mutations'
 
-export { roleLabel } from './lib/admin-user-mappers'
+export { roleLabel, accessLevelLabel } from './lib/admin-user-mappers'
 export { ADMIN_USER_SORT, ADMIN_USER_DEFAULT_SORT } from './constants'
 
 export type { AdminUser, AssignableRole } from './types'

@@ -45,6 +45,13 @@ export const endpoints = {
     DELETE: (id: number) => `/user/admin-users/${id}`,
     ASSIGNABLE_ROLES: '/user/admin-users/assignable-roles',
   },
+  TALK_CREDENTIALS: {
+    LIST: '/user/talk-credentials',
+    POST: '/user/talk-credentials',
+    GET: (id: number) => `/user/talk-credentials/${id}`,
+    PATCH: (id: number) => `/user/talk-credentials/${id}`,
+    DELETE: (id: number) => `/user/talk-credentials/${id}`,
+  },
   BILLING: {
     PLANS: '/user/plans',
     SUBSCRIPTION: '/user/subscription',
@@ -216,6 +223,11 @@ export const endpoints = {
   },
   EMPLOYEES: {
     LIST: '/user/employees',
+    /**
+     * The picker list — id/name/mobile/email only, across EVERY company of the
+     * account, so it takes no `company_id`. `LIST` above is the register's grid.
+     */
+    PICKER: '/user/employees/list',
     POST: '/user/employees',
     GET: (id: number) => `/user/employees/${id}`,
     PATCH: (id: number) => `/user/employees/${id}`,

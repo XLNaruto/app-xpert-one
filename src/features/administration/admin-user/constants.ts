@@ -32,8 +32,9 @@ export const ADMIN_USER_STATUS_OPTIONS: ComboboxOption[] = [
 ]
 
 /**
- * A fresh user: active, with no role picked. Nothing is granted by default —
- * the role decides everything, so it has to be chosen deliberately.
+ * A fresh user: active, with no role picked and no reach beyond the companies
+ * that get ticked. Nothing is granted by default — the role decides what they
+ * may do and the scope below decides where, so both are chosen deliberately.
  */
 export const EMPTY_ADMIN_USER_FORM: AdminUserFormValues = {
   firstName: '',
@@ -44,4 +45,28 @@ export const EMPTY_ADMIN_USER_FORM: AdminUserFormValues = {
   password: '',
   confirmPassword: '',
   status: 'active',
+  accessLevel: 'COMPANY',
+  companyIds: [],
+  talkEnabled: false,
+  talkAccess: [],
 }
+
+/** The two reaches a user can have, as the scope selector spells them. */
+export const ACCESS_LEVEL_OPTIONS = [
+  {
+    value: 'COMPANY' as const,
+    label: 'Selected companies',
+    description: 'Only the companies ticked below.',
+  },
+  {
+    value: 'GLOBAL' as const,
+    label: 'All companies',
+    description: 'Every company of the account, including ones added later.',
+  },
+]
+
+/**
+ * What an empty department selection on a Talk grant means — the whole company,
+ * every department present and future, which is how the endpoint reads it too.
+ */
+export const WHOLE_COMPANY_LABEL = 'Whole company'

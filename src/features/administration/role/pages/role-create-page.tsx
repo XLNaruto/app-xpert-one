@@ -1,4 +1,4 @@
-import { ArrowLeft, KeyRound, ShieldCheck, SlidersHorizontal } from 'lucide-react'
+import { ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
@@ -10,8 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRoleForm } from '../hooks/use-role-form'
 import { PermissionMatrix } from '../components/permission-matrix'
-import { RoleScopeFields } from '../components/role-scope-fields'
-import { RoleTalkFields } from '../components/role-talk-fields'
 
 interface RoleCreatePageProps {
   /**
@@ -88,14 +86,9 @@ export function RoleCreatePage({ data }: RoleCreatePageProps) {
                 />
               </Field>
 
-              <FormSection
-                icon={SlidersHorizontal}
-                title="Scope & Access"
-                description="Which companies the role reaches, and whether it may use Talk."
-              />
-
-              <RoleScopeFields form={form} disabled={isReadOnly} />
-              <RoleTalkFields form={form} disabled={isReadOnly} />
+              {/* No Scope & Access here on purpose: which companies a login
+                  reaches, and whether it may use Talk, are properties of the
+                  PERSON and are set on the Add / Edit User form. */}
 
               <FormSection
                 icon={KeyRound}

@@ -53,6 +53,19 @@ export interface PermissionModule {
   children: PermissionModule[]
 }
 
+/**
+ * How far a login reaches.
+ *
+ * `GLOBAL` is every company of the account, present and future — the company
+ * list is then EMPTY, and that emptiness reads as "all of them", never "none".
+ * `COMPANY` is exactly the companies named.
+ *
+ * It lives on the USER, not on their role: two people on one role can reach
+ * different companies. Declared here because `my-role` and the Admin User form
+ * answer the very same shape.
+ */
+export type AccessLevel = 'GLOBAL' | 'COMPANY'
+
 /** The application rights the account holds, resolved. */
 export interface RoleAccess {
   web: boolean
@@ -62,7 +75,7 @@ export interface RoleAccess {
 }
 
 /**
- * A company named on a role's reach. The API answers `{ id, company_name }`
+ * A company named on a user's reach. The API answers `{ id, company_name }`
  * rather than a bare id, so a chip is labelled without a second call.
  */
 export interface CompanyRef {
@@ -101,7 +114,12 @@ export interface MyRole {
   permissionCodes: Permission[]
   /** The same set as the sidebar tree. */
   modules: PermissionModule[]
-  accessLevel: 'GLOBAL' | 'COMPANY'
+  /**
+   * The reach — read from the USER's own row, not from their role, and answered
+   * exactly as `GET /user/admin-users/:id` answers it, so one renderer draws
+   * both screens. An account owner always reports `GLOBAL` with empty lists.
+   */
+  accessLevel: AccessLevel
   /** Named. Empty on `GLOBAL`, which means every company of the account. */
   companies: CompanyRef[]
   talkEnabled: boolean

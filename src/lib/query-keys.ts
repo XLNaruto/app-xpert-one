@@ -72,6 +72,22 @@ export const queryKeys = {
     assignableRoles: () => [...queryKeys.adminUser.all, 'assignable-roles'] as const,
   },
   /**
+   * Talk credentials — `features/talk/credential`.
+   *
+   * ACCOUNT-scoped like the admin users: the `companyId` on the list key is the
+   * screen's FILTER (credentials that reach one company by either kind of
+   * grant), not the session's tenant, and `0` means "every credential of the
+   * account".
+   */
+  talkCredential: {
+    all: ['talk-credential'] as const,
+    list: (params?: PageParams, companyId?: number) =>
+      params
+        ? ([...queryKeys.talkCredential.all, 'list', params, companyId ?? 0] as const)
+        : ([...queryKeys.talkCredential.all, 'list', companyId ?? 0] as const),
+    detail: (id: number) => [...queryKeys.talkCredential.all, 'detail', id] as const,
+  },
+  /**
    * Billing — `features/administration/billing`.
    *
    * Account-scoped, not tenant-scoped: no key here carries a company. The three
@@ -364,6 +380,12 @@ export const queryKeys = {
         ? ([...queryKeys.employee.all, 'list', params] as const)
         : ([...queryKeys.employee.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.employee.all, 'detail', id] as const,
+    /**
+     * The picker list — every company of the account, so no tenant on the key.
+     * `search` is matched server-side, which makes each term its own result set.
+     */
+    picker: (search?: string) =>
+      [...queryKeys.employee.all, 'picker', search ?? ''] as const,
     /** Step 2 — the KYC columns of one employee. */
     kyc: (id: number) => [...queryKeys.employee.all, 'kyc', id] as const,
     /** Step 3 — the wage structure inherited from the current designation. */

@@ -26,6 +26,23 @@ export interface EmployeeCompletedSteps {
   assets: boolean
 }
 
+/**
+ * One row of the PICKER read (`GET /user/employees/list`) — an employee as a
+ * screen that points AT one needs them, and nothing more.
+ *
+ * Deliberately not an {@link Employee}: the picker spans every company of the
+ * account and answers four columns, so it carries no posting, no wage and no
+ * completion flags. Reach for it wherever a form names an employee; reach for
+ * `Employee` where one is being shown or edited.
+ */
+export interface EmployeePickerEntry {
+  id: number
+  /** Empty when the API has none — the row is still pointable. */
+  name: string
+  mobileNumber: string | null
+  email: string | null
+}
+
 /* ── Step 1 — the person and their posting ───────────────────────────────── */
 
 /**

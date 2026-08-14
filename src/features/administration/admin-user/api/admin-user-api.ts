@@ -105,8 +105,10 @@ export async function fetchAdminUsers(
 /**
  * GET /user/admin-users/:id — one user, as the edit form loads it.
  *
- * It carries `role_id` but nothing about permissions, company reach or Talk:
- * those live on the role and are read from `GET /user/roles/:id`.
+ * It carries `role_id` (the permissions behind it are read from
+ * `GET /user/roles/:id`) plus this person's own reach: `access_level`,
+ * `company_ids` and `talk_access`, the last two RESOLVED TO NAMES so no chip on
+ * the form needs a second call. The LIST answers only the two scalars.
  */
 export async function fetchAdminUser(id: number): Promise<AdminUser> {
   try {
@@ -139,6 +141,11 @@ export async function fetchAssignableRoles(): Promise<AssignableRole[]> {
  * The email and the mobile number are each checked against every admin, every
  * organization and every user on the platform (409). The server's message is
  * deliberately vague about where a clash is, so it's surfaced verbatim.
+ *
+ * The four reach keys are required-shaped: `COMPANY` demands a non-empty
+ * `company_ids`, `talk_enabled` demands a non-empty `talk_access`, and every
+ * department must belong to the company named alongside it (400). Anything
+ * outside the account answers 404. The form mirrors all four.
  */
 export async function createAdminUser(values: AdminUserFormValues): Promise<AdminUser> {
   try {
@@ -158,6 +165,10 @@ export async function createAdminUser(values: AdminUserFormValues): Promise<Admi
  * `record` is what's currently stored, and it's what decides whether `role_id`
  * travels at all (see `adminUserToUpdatePayload`). A role or password change
  * ends every session the user holds; the response says so via `sessionRevoked`.
+ *
+ * A REACH change does not: it's read live from the row on every request, so a
+ * narrowed user is narrowed immediately with no re-login. The four keys travel
+ * together, because any one of them re-validates all four server-side.
  */
 export async function updateAdminUser(
   id: number,

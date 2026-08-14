@@ -11,7 +11,6 @@ export { RoleCreatePage } from './pages/role-create-page'
 export { useRoles, useRole, useAssignablePermissions } from './api/use-roles'
 export { useCreateRole, useUpdateRole, useDeleteRole } from './api/use-role-mutations'
 
-export { accessLevelLabel } from './lib/role-mappers'
 export { ROLE_SORT, ROLE_DEFAULT_SORT } from './constants'
 
-export type { Role, RoleListRow, RoleAccessLevel, RoleTalkGrant } from './types'
+export type { Role, RoleListRow } from './types'

@@ -17,35 +17,14 @@ export const ROLE_DEFAULT_SORT = {
 }
 
 /**
- * A fresh role: scoped to the company it's authored under, no permissions, no
- * Talk. Nothing is granted by default — a role starts at zero and the author
- * ticks up from there.
+ * A fresh role: scoped to the company it's authored under, no permissions.
+ * Nothing is granted by default — a role starts at zero and the author ticks up
+ * from there.
+ *
+ * There is no scope or Talk here: how far a login reaches is a property of the
+ * PERSON, set on the Admin User form.
  */
 export const EMPTY_ROLE_FORM: RoleFormValues = {
   name: '',
   permissionCodes: [],
-  accessLevel: 'COMPANY',
-  companyIds: [],
-  talkEnabled: false,
-  talkAccess: [],
 }
-
-/** The two reaches a role can have, as the scope selector spells them. */
-export const ACCESS_LEVEL_OPTIONS = [
-  {
-    value: 'COMPANY' as const,
-    label: 'Selected companies',
-    description: 'Only the companies ticked below.',
-  },
-  {
-    value: 'GLOBAL' as const,
-    label: 'All companies',
-    description: 'Every company of the account, including ones added later.',
-  },
-]
-
-/**
- * What an empty department selection on a Talk grant means — the whole company,
- * every department present and future, which is how the endpoint reads it too.
- */
-export const WHOLE_COMPANY_LABEL = 'Whole company'

@@ -24,6 +24,7 @@ import {
   HandCoins,
   Headset,
   HeartPulse,
+  KeyRound,
   Landmark,
   LifeBuoy,
   LayoutDashboard,
@@ -397,6 +398,31 @@ export const navGroups: NavGroup[] = [
         to: "/administration/billing",
         icon: CreditCard,
         permission: PERMISSIONS.billing,
+        companyIndependent: true,
+      },
+    ],
+  },
+  {
+    /*
+      Talk is the chat product, and this section is what the PANEL does about
+      it — not the chatting itself, which happens in the Talk app. Its own
+      section rather than a row under Administration because the API models it
+      that way too: `my-role` carries a Talk branch (Open Talk · Monitoring ·
+      Credential) beside the admin ones, and the rows land here as they're built.
+
+      ACCOUNT-scoped: a credential names an employee and reaches whichever
+      companies it is granted, spanning every company of the account — so the
+      screen doesn't wait on one being picked.
+    */
+    title: "Talk",
+    items: [
+      {
+        // The employees' own Talk logins. A back-office user's Talk access is
+        // part of their panel login instead, edited on Administration → Users.
+        label: "Credential",
+        to: "/talk/credential",
+        icon: KeyRound,
+        permission: PERMISSIONS.talkCredentials,
         companyIndependent: true,
       },
     ],

@@ -1,4 +1,5 @@
 import type { AuditFields } from '@/types/audit'
+import type { AccessLevel, CompanyRef, TalkGrant } from '@/features/permissions'
 import type { AdminUserStatus } from '../schemas'
 
 /**
@@ -8,9 +9,11 @@ import type { AdminUserStatus } from '../schemas'
  * narrower record (no audit block), which the mapper defaults rather than
  * modelling as a second type.
  *
- * **Nothing here says what the user may do.** Permissions, company reach and
- * Talk grants all live on the role; `roleId` is the only handle on them, and
- * `GET /user/roles/{roleId}` is where they're read and edited.
+ * **What the user may DO comes from the role** — `roleId` is the only handle on
+ * the permission codes, read and edited at `GET /user/roles/{roleId}`.
+ * **How far they REACH is theirs**: `accessLevel` / `companies` are the
+ * companies they can act in and `talkEnabled` / `talkAccess` where they may
+ * chat, all edited on this screen. Two people on one role can differ in both.
  */
 export interface AdminUser extends AuditFields {
   id: number
@@ -34,6 +37,25 @@ export interface AdminUser extends AuditFields {
   isOwner: boolean
   status: AdminUserStatus
   /**
+   * How far this login reaches. An OWNER is always `GLOBAL` by construction.
+   * `GLOBAL` leaves {@link companies} empty, and that emptiness reads as EVERY
+   * company — present and future — never "none".
+   */
+  accessLevel: AccessLevel
+  /**
+   * The companies named on a `COMPANY`-level reach, resolved to names by the
+   * API. **Only the detail read carries them** — a list row answers the two
+   * scalars alone, so this is empty there whatever the reach actually is.
+   */
+  companies: CompanyRef[]
+  /** Whether this person may use Talk at all. */
+  talkEnabled: boolean
+  /**
+   * Where they may talk: one entry per company, its departments nested. An
+   * entry with NO departments is the whole company. Detail read only, as above.
+   */
+  talkAccess: TalkGrant[]
+  /**
    * PATCH only — true when the edit ended a live session (a role change or a
    * password reset does; a rename doesn't). Undefined on every other read.
    */
@@ -42,14 +64,14 @@ export interface AdminUser extends AuditFields {
 
 /**
  * A role the form may assign — every role of the account across ALL of its
- * companies, not just the active one. `accessLevel` and `talkEnabled` come
- * along so the form can show what the pick implies before it's saved.
+ * companies, not just the active one.
+ *
+ * A role is the permission codes and the company it belongs to. It says nothing
+ * about reach any more: that is picked per user, further down this same form.
  */
 export interface AssignableRole {
   id: number
   name: string
   /** Becomes the user's company. Roles without one are never offered. */
   companyId: number
-  accessLevel: 'GLOBAL' | 'COMPANY'
-  talkEnabled: boolean
 }

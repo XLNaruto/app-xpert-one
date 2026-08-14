@@ -2,9 +2,15 @@ import type { ComboboxOption } from '@/components/ui/combobox'
 import type {
   EmployeeBasicFormValues,
   EmployeeBasicUpdatePayload,
+  EmployeePickerResponse,
   EmployeeResponse,
 } from '../schemas'
-import type { Employee, EmployeeCompletedSteps, EmployeeService } from '../types'
+import type {
+  Employee,
+  EmployeeCompletedSteps,
+  EmployeePickerEntry,
+  EmployeeService,
+} from '../types'
 import { toApiDate, toFormDate } from './employee-dates'
 
 /**
@@ -322,6 +328,38 @@ export function employeeOptions(employees: Employee[]): ComboboxOption[] {
   return employees.map((employee) => ({
     label: employee.code ? `${employee.name} (${employee.code})` : employee.name,
     value: String(employee.id),
+  }))
+}
+
+/**
+ * One PICKER row, snake_case → camelCase. The name is nullable on the wire and
+ * defaulted here, so a row can always be labelled — an unnamed employee is
+ * still a row the screen has to be able to point at.
+ */
+export function toEmployeePickerEntry(
+  response: EmployeePickerResponse,
+): EmployeePickerEntry {
+  return {
+    id: response.id,
+    name: response.name ?? '',
+    mobileNumber: response.primary_mobile_number ?? null,
+    email: response.email ?? null,
+  }
+}
+
+/**
+ * Dropdown options for the picker read — the mobile number rides in the label
+ * because the list spans every company of the account, where two people sharing
+ * a name is ordinary and no employee code comes back to tell them apart.
+ */
+export function employeePickerOptions(
+  entries: EmployeePickerEntry[],
+): ComboboxOption[] {
+  return entries.map((entry) => ({
+    label: entry.mobileNumber
+      ? `${entry.name || `#${entry.id}`} · ${entry.mobileNumber}`
+      : entry.name || `#${entry.id}`,
+    value: String(entry.id),
   }))
 }
 

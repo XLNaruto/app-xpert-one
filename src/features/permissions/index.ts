@@ -31,6 +31,7 @@ export type {
 export { PERMISSIONS, ACCESS_CODES, ACTIONS } from './constants'
 export type {
   MyRole,
+  AccessLevel,
   Permission,
   PermissionSpec,
   PermissionModule,

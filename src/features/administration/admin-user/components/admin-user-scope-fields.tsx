@@ -5,23 +5,24 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Field } from '@/components/common/form-field'
 import { ACCESS_LEVEL_OPTIONS } from '../constants'
-import type { useRoleForm } from '../hooks/use-role-form'
+import type { useAdminUserForm } from '../hooks/use-admin-user-form'
 
-interface RoleScopeFieldsProps {
-  form: ReturnType<typeof useRoleForm>
+interface AdminUserScopeFieldsProps {
+  form: ReturnType<typeof useAdminUserForm>
   disabled?: boolean
 }
 
 /**
- * How far the role reaches: every company of the account, or exactly the ones
- * ticked.
+ * How far THIS PERSON reaches: every company of the account, or exactly the
+ * ones ticked.
  *
- * `GLOBAL` includes companies added later, which is the reason it exists at all
- * — a role that has to be re-edited every time the account opens a company isn't
- * global. The company list is disabled rather than hidden under it, so the choice
- * reads as a choice.
+ * The reach is a property of the user rather than of their role — two people on
+ * one "HR Manager" role can each cover a different office, which is the whole
+ * point of it living here. `GLOBAL` includes companies added later, so a user
+ * who genuinely covers everything never has to be re-edited. The company list is
+ * disabled rather than hidden under it, so the choice reads as a choice.
  */
-export function RoleScopeFields({ form, disabled = false }: RoleScopeFieldsProps) {
+export function AdminUserScopeFields({ form, disabled = false }: AdminUserScopeFieldsProps) {
   const isGlobal = form.accessLevel === 'GLOBAL'
   const companyError = form.errors.companyIds?.message
 
@@ -83,7 +84,7 @@ export function RoleScopeFields({ form, disabled = false }: RoleScopeFieldsProps
         <Field
           label="Companies"
           required={!isGlobal}
-          hint="The companies this role may act in. A global role reaches all of them, including ones added later."
+          hint="The companies this user may act in. Reaching all of them includes any the account adds later."
           error={companyError}
         >
           {/* The tiles sit on a panel of their own: on a long form a bare grid of

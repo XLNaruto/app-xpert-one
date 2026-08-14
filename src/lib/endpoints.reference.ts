@@ -197,7 +197,7 @@
  *                       "icon": "Eye", "granted": true } ],
  *        "children": [ … ]                         // same shape, any depth
  *      } ],
- *      "access_level": "GLOBAL" | "COMPANY",
+ *      "access_level": "GLOBAL" | "COMPANY",    // the USER's row, not the role's
  *      "company_ids": [ { "id": 5, "company_name": "Acme" } ],  // NAMED; empty
  *                                           //   on GLOBAL → every company
  *      "talk_enabled": false,
@@ -216,6 +216,19 @@
  * login source: a WEB token gets the web panel, an APP token only the
  * Supervisor app's two screens. Read once per session and per company switch.
  * The only role route that needs no permission.
+ *
+ * The reach fields come from the USER's row, named exactly as
+ * `GET /user/admin-users/:id` names them — one mapper serves both. An account
+ * owner (`role_id` null, `is_owner` true) always reports `GLOBAL` with empty
+ * lists: they reach every company by construction.
+ *
+ * `talk:access` is a MENU ITEM in `modules` now — `Open Talk`, an external link
+ * out to the Talk app, sitting beside Monitoring and Credential under a bare
+ * `Talk` HEADING that carries no `actions` of its own. Walk `children`; never
+ * assume a node has actions. It is filtered out of the role builder's
+ * assignable set entirely (the treatment `roles:*` already gets), so it can only
+ * come from the user's Talk toggle. `access.talk` is still the boolean shortcut
+ * for "may this person chat".
  * Code: `features/permissions/api/permissions-api.ts` → `fetchMyRole`,
  *       `features/permissions/api/use-permissions.ts`,
  *       `features/permissions/lib/route-guard.ts`
@@ -224,6 +237,13 @@
  * ROLES — /user/roles                                        (bearer)
  * ───────────────────────────────────────────────────────────────────────────
  * Roles — what a web-panel user may do, authored per company.
+ *
+ * A role is the PERMISSION CODES and nothing else. `access_level`,
+ * `company_ids`, `talk_enabled` and `talk_access` were removed from every
+ * request and response here and belong to the USER (see `ADMIN_USERS` below) —
+ * one role ticked once now serves every office. Sending a removed key is
+ * IGNORED, not rejected, so a stale client fails silently. The record is exactly
+ * `{ id, company_id, name, permission_codes, is_system, created_at }`.
  *
  * `ASSIGNABLE_PERMISSIONS` is the builder's checkbox matrix: the web panel's
  * catalog narrowed to what the account's plan unlocked and minus `roles:*`,
@@ -244,9 +264,30 @@
  * Admin users — the account's web-panel logins.
  *
  * ACCOUNT-scoped, not tenant-scoped: `company_id` on the list is a filter, not
- * a requirement, and a create never sends one at all. Everything about what a
- * user may DO comes from `role_id` — permissions, reach and Talk grants all
- * live on the role, and the role's company BECOMES the user's.
+ * a requirement, and a create never sends one at all. What a user may DO comes
+ * from `role_id`, and the role's company BECOMES the user's own `company_id`.
+ *
+ * How far they REACH is theirs, and is set here — a different thing from the
+ * company above, easily conflated:
+ *   "access_level": "GLOBAL" | "COMPANY",   // required on POST
+ *   "company_ids":  [12, 13],               // required non-empty when COMPANY;
+ *                                           //   [] under GLOBAL = EVERY company
+ *   "talk_enabled": false,
+ *   "talk_access":  [ { "company_id": 12, "department_ids": [3, 4] },
+ *                     { "company_id": 13, "department_ids": [] } ]  // [] = the
+ *                                           //   WHOLE company, never "none"
+ * On PATCH all four are optional but **any one of them re-validates all four**,
+ * the omitted ones filled in from what is stored — so they travel together.
+ * Sending none leaves the reach untouched. Switching to GLOBAL clears
+ * `company_ids` server-side; turning Talk off clears `talk_access`.
+ *
+ * GET-by-id, POST and PATCH answer the reach with `company_ids` and
+ * `talk_access` RESOLVED TO NAMES (`{ id, company_name }`, and each Talk entry
+ * with a nested `departments`), so a chip never needs a second call. The LIST
+ * carries only `access_level` and `talk_enabled` — two joins per row is why.
+ *
+ * A reach change needs NO re-login: it's read live from the row on every
+ * request. (A role or password change does end every session.)
  *
  * `email` IS the login and is unique across the whole platform; a mobile
  * number is one identity too. Both are checked against every admin, every
@@ -255,7 +296,8 @@
  * numbers go up as DIGITS ONLY.
  *
  * `ASSIGNABLE_ROLES` is the form's role dropdown: every role this account has
- * authored across ALL of its companies, unpaginated, gated on `users:read`.
+ * authored across ALL of its companies, unpaginated, gated on `users:read`. Its
+ * rows carry `{ id, name, company_id }` — no `access_level`, no `talk_enabled`.
  * Distinct from `ROLES.LIST`, which is the role screen — paged and needing a
  * `company_id`, whereas here the company is a consequence of the pick.
  *
@@ -267,6 +309,59 @@
  * `GET /user/admin-users/deleted-data` is deliberately absent: it's the delta
  * sync for a client holding a cached list, which the web panel isn't — query
  * invalidation refetches the page instead.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * TALK_CREDENTIALS — /user/talk-credentials                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The EMPLOYEES' Talk logins — one per person who may chat. A back-office
+ * user's Talk access is part of their panel login instead (`talk_enabled` /
+ * `talk_access` on ADMIN_USERS): both live in one table, and this resource 404s
+ * on a back-office identity rather than editing it.
+ *
+ * ACCOUNT-scoped, not tenant-scoped: `company_id` on the list is a FILTER
+ * narrowing to the credentials that reach that company by EITHER kind of grant
+ * — a whole-company chip or a department inside it — and 404s when the company
+ * isn't this account's. `search` matches the LOGIN ADDRESS alone, not the
+ * employee's name. `sort` takes `email`, `created_at` or `updated_at`.
+ *
+ * `email` IS the login — there is no separate username — and it is unique
+ * across every Talk credential on the PLATFORM, not just this account: Talk is
+ * one deployment whose sign-in resolves the account from the address (409
+ * otherwise). One employee may hold only ONE credential, so a second create
+ * naming the same `employee_id` is a 409 too. The employee is picked from
+ * `EMPLOYEES.PICKER` and can NEVER be changed — there is no field for it, since
+ * re-pointing a credential would hand someone the first person's conversation
+ * history under an address their colleagues already know.
+ *
+ * The PASSWORD is Talk's own, not the panel one, and it is write-only: stored
+ * hashed and returned by nothing. Sending it on PATCH rotates it; omitting it
+ * leaves it alone.
+ *
+ * The REACH is two INDEPENDENT lists:
+ *   "company_ids":    [12, 13],   // WHOLE companies — every department in
+ *                                 //   each, present and future
+ *   "department_ids": [3, 4]      // single departments, each resolved
+ *                                 //   server-side to the company it belongs to
+ * A department may be granted without its company appearing in `company_ids`,
+ * and the two need not agree. On PATCH they REPLACE what is stored rather than
+ * merging, and are re-validated TOGETHER whenever either arrives (the omitted
+ * one filled in from storage), so they travel together. Anything outside the
+ * account answers 404.
+ *
+ * GET-by-id, POST and PATCH answer both lists RESOLVED TO NAMES — `companies`
+ * as `{ id, company_name }` and `departments` as `{ id, department_name,
+ * company_id }` — so no chip needs a second call; one soft-deleted since the
+ * grant was authored is omitted rather than returned nameless. The LIST answers
+ * neither, and carries the audit block plus `employee_name` instead.
+ *
+ * `employee_name` is NULL once the employee has been deleted: the credential
+ * outlives them, and the row has to stay visible in order to be revoked.
+ *
+ * `status` is the reversible alternative to DELETE — `inactive` blocks sign-in
+ * while keeping the address taken and the history intact. DELETE soft-deletes
+ * and RELEASES the address (every uniqueness index here is partial on
+ * `deleted_at is null`), so the same employee can be re-issued at it afterwards.
+ * Prefer suspension while an investigation is open.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * BILLING — /user/plans · /user/subscription                 (bearer)
@@ -616,6 +711,14 @@
  *
  * Reads are scoped by a required `company_id` on the list and by the record's
  * own tenant everywhere else.
+ *
+ * PICKER — GET /user/employees/list: the flat list for dropdowns — `id`, `name`,
+ * `primary_mobile_number`, `email` and nothing else. The one read here that is
+ * ACCOUNT-scoped: it spans every non-deleted company (so it takes no
+ * `company_id`), which is what a form naming someone outside the active tenant
+ * needs — the Talk credential screen, for one. `search` matches the NAME alone
+ * and rows come back ordered by it; `limit` caps at 100, so a caller says when
+ * the list is truncated rather than paging a picker.
  *
  * DELETE_FACE — DELETE: de-register the employee's face: the face record and
  * its captured images are soft-deleted and the stored images purged, answering

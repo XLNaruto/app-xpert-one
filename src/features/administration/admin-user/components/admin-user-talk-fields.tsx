@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Controller } from 'react-hook-form'
-import { Building2, MessageSquare, Network, Plus, Trash2 } from 'lucide-react'
+import { Building2, Info, MessageSquare, Network, Plus, Trash2 } from 'lucide-react'
 import { ALL_ROWS } from '@/lib/pagination'
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
@@ -9,23 +9,23 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 import { useDepartments } from '@/features/master/department'
 import { WHOLE_COMPANY_LABEL } from '../constants'
-import type { useRoleForm } from '../hooks/use-role-form'
+import type { useAdminUserForm } from '../hooks/use-admin-user-form'
 
-interface RoleTalkFieldsProps {
-  form: ReturnType<typeof useRoleForm>
+interface AdminUserTalkFieldsProps {
+  form: ReturnType<typeof useAdminUserForm>
   disabled?: boolean
 }
 
 interface TalkGrantRowProps {
   index: number
-  form: ReturnType<typeof useRoleForm>
+  form: ReturnType<typeof useAdminUserForm>
   disabled: boolean
   companyOptions: ComboboxOption[]
   onRemove: () => void
 }
 
 /**
- * One grant: a COMPANY and the departments inside it the role may talk to.
+ * One grant: a COMPANY and the departments inside it this user may talk to.
  *
  * There is one row per company — the endpoint MERGES a company sent twice
  * rather than replacing it, so narrowing happens inside the row instead of by
@@ -147,13 +147,13 @@ function TalkGrantRow({
 }
 
 /**
- * Talk: whether the role may use it at all, and which companies (or
+ * Talk: whether this person may use it at all, and which companies (or
  * departments within them) it reaches.
  *
  * The switch is the gate — with it off the grants are stored empty whatever the
  * form last held, and with it on at least one grant is required.
  */
-export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) {
+export function AdminUserTalkFields({ form, disabled = false }: AdminUserTalkFieldsProps) {
   const grantsError = form.errors.talkAccess?.message
 
   return (
@@ -190,7 +190,7 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-foreground">Talk</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                Whether this role may use Talk, and where. Off means no access at all.
+                Whether this user may use Talk, and where. Off means no access at all.
               </span>
             </span>
             <span className="shrink-0 text-xs text-muted-foreground">
@@ -201,6 +201,17 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
           </button>
         )}
       />
+
+      {/* The toggle saves and reads back correctly, but the code that opens
+          Talk is minted into the access token at sign-in — so a change here
+          only reaches the person at their next login. Said plainly rather than
+          leaving them to wonder why nothing moved. */}
+      {form.talkEnabled && form.isEdit && (
+        <p className="flex items-start gap-2 text-xs text-muted-foreground">
+          <Info className="mt-0.5 size-3.5 shrink-0" />
+          Talk access takes effect at this user's next sign-in.
+        </p>
+      )}
 
       {form.talkEnabled && (
         <div className="space-y-2">
@@ -226,7 +237,7 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
           {form.talkAccess.fields.length === 0 && (
             <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-muted-foreground">
               <MessageSquare className="mx-auto mb-1 size-4" />
-              No grants yet — add the companies this role may talk in.
+              No grants yet — add the companies this user may talk in.
             </p>
           )}
 
@@ -253,7 +264,7 @@ export function RoleTalkFields({ form, disabled = false }: RoleTalkFieldsProps) 
             </TooltipTrigger>
             <TooltipContent className="max-w-56 text-pretty font-normal">
               {form.canAddTalkGrant
-                ? 'Add a company this role may talk in'
+                ? 'Add a company this user may talk in'
                 : 'Every company already has a grant'}
             </TooltipContent>
           </Tooltip>

@@ -24,9 +24,9 @@ import type { AssignablePermissions, Role, RoleListRow } from '../types'
  * the role name and `sort` accepting `name` or `created_at`.
  *
  * Roles are authored PER COMPANY: the list takes a required `company_id` and a
- * create carries it in the body, both from the session's active company. How far
- * the role then *reaches* is a separate question, answered by `access_level` and
- * `company_ids` on the record itself.
+ * create carries it in the body, both from the session's active company. That is
+ * the company the role BELONGS to — how far a login *reaches* is a property of
+ * the user, set on `/user/admin-users`, and no longer lives on the role at all.
  */
 
 /** What `activeCompanyId` names in its error when no company is selected. */

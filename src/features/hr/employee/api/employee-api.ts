@@ -7,16 +7,21 @@ import { uploadFile, IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { EMPLOYEE_DEFAULT_SORT } from '../constants'
 import {
   deleteFaceResponseSchema,
+  employeePickerListResponseSchema,
   employeeResponseSchema,
   employeesResponseSchema,
 } from '../schemas'
-import { employeeBasicToPayload, toEmployee } from '../lib/employee-mappers'
+import {
+  employeeBasicToPayload,
+  toEmployee,
+  toEmployeePickerEntry,
+} from '../lib/employee-mappers'
 import type {
   EmployeeBasicFormValues,
   EmployeeBasicPayload,
   EmployeeBasicUpdatePayload,
 } from '../schemas'
-import type { Employee } from '../types'
+import type { Employee, EmployeePickerEntry } from '../types'
 
 /**
  * Step 1 — the employee record itself: `/user/employees`.
@@ -96,6 +101,34 @@ export async function fetchEmployees(
     }
 
     return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load employees.")
+  }
+}
+
+/**
+ * GET /user/employees/list — the account's employees for a PICKER.
+ *
+ * Not the register above: it spans every non-deleted company of the account (so
+ * no `company_id` travels), answers four columns per row, and matches `search`
+ * against the NAME alone, ordered by name. One page only — the API caps `limit`
+ * at 100 and a picker narrows by typing rather than by paging, so `total` comes
+ * back for the caller to say when the list is truncated.
+ */
+export async function fetchEmployeePicker(
+  search?: string,
+  limit = MAX_LIMIT,
+): Promise<Paginated<EmployeePickerEntry>> {
+  try {
+    const raw = await http.get<unknown>(endpoints.EMPLOYEES.PICKER, {
+      params: {
+        limit: Math.min(limit, MAX_LIMIT),
+        offset: 0,
+        ...(search?.trim() ? { search: search.trim() } : {}),
+      },
+    })
+    const { items, total } = employeePickerListResponseSchema.parse(raw)
+    return { items: items.map(toEmployeePickerEntry), total }
   } catch (error) {
     throw toApiError(error, "Couldn't load employees.")
   }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Globe2, KeyRound, MessageSquare, Plus, ShieldCheck } from 'lucide-react'
+import { KeyRound, Plus, ShieldCheck } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -85,36 +85,8 @@ export function RoleListPage() {
           </span>
         ),
       },
-      {
-        id: 'access_level',
-        accessorKey: 'accessLevel',
-        header: 'Scope',
-        enableSorting: false,
-        cell: ({ row }) =>
-          row.original.accessLevel === 'GLOBAL' ? (
-            <Badge variant="default" className="gap-1">
-              <Globe2 className="size-3" />
-              All companies
-            </Badge>
-          ) : (
-            <Badge variant="secondary">Selected companies</Badge>
-          ),
-      },
-      {
-        id: 'talk_enabled',
-        accessorKey: 'talkEnabled',
-        header: 'Talk',
-        enableSorting: false,
-        cell: ({ row }) =>
-          row.original.talkEnabled ? (
-            <Badge variant="success" className="gap-1">
-              <MessageSquare className="size-3" />
-              Enabled
-            </Badge>
-          ) : (
-            <span className="text-sm text-muted-foreground">—</span>
-          ),
-      },
+      // No Scope or Talk column: a role carries the permission codes and
+      // nothing else now — the reach is per USER, and the Users list shows it.
       // Only `created_at` is sortable; "Updated" renders without the control.
       ...auditColumns<RoleListRow>({ createdAt: ROLE_SORT.createdAt }),
     ],

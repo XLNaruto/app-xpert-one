@@ -1,4 +1,11 @@
-import { ArrowLeft, Crown, KeyRound, ShieldCheck, UserRound } from 'lucide-react'
+import {
+  ArrowLeft,
+  Crown,
+  KeyRound,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRound,
+} from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
@@ -12,6 +19,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { MIN_ADMIN_USER_PASSWORD } from '../schemas'
 import { useAdminUserForm } from '../hooks/use-admin-user-form'
 import { AdminUserRoleFields } from '../components/admin-user-role-fields'
+import { AdminUserScopeFields } from '../components/admin-user-scope-fields'
+import { AdminUserTalkFields } from '../components/admin-user-talk-fields'
 
 interface AdminUserCreatePageProps {
   /**
@@ -22,11 +31,13 @@ interface AdminUserCreatePageProps {
 }
 
 /**
- * Create / Edit User — personal information, the login credentials and the role
- * that decides everything else.
+ * Create / Edit User — personal information, the login credentials, the role
+ * that says what they may do, and the scope that says where.
  *
  * On edit the password boxes start empty and mean "leave the credential alone";
  * filling them resets it, which signs the user out of every session they hold.
+ * Narrowing the SCOPE is different — it's read live on every request, so it
+ * takes hold immediately and no session is cleared.
  */
 export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
   // Decrypt the params from the URL; missing/malformed → create mode.
@@ -38,7 +49,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
     <div>
       <PageHeader
         title={form.isEdit ? 'Edit User' : 'Add User'}
-        description="Their email address is the login. What they can reach once inside comes entirely from the role you give them."
+        description="Their email address is the login. The role decides what they can do; the scope below decides which companies they can do it in."
         actions={
           <>
             {form.isOwner && (
@@ -162,11 +173,20 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
 
               <FormSection
                 icon={ShieldCheck}
-                title="Role & Access"
-                description="The role carries the permissions, the company reach and the Talk grants — and its company becomes this user's."
+                title="Role"
+                description="The role carries the permissions — what this user may do — and its company becomes theirs."
               />
 
               <AdminUserRoleFields form={form} />
+
+              <FormSection
+                icon={SlidersHorizontal}
+                title="Scope & Access"
+                description="Which companies this user reaches, and whether they may use Talk. This is theirs, not their role's — two people on one role can cover different offices."
+              />
+
+              <AdminUserScopeFields form={form} disabled={form.isReachLocked} />
+              <AdminUserTalkFields form={form} disabled={form.isReachLocked} />
 
               <div className="col-span-full mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
                 <Button

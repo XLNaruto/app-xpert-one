@@ -1,6 +1,15 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { AlertCircle, Building2, Crown, Mail, Plus, UsersRound } from 'lucide-react'
+import {
+  AlertCircle,
+  Building2,
+  Crown,
+  Globe2,
+  Mail,
+  MessageSquare,
+  Plus,
+  UsersRound,
+} from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -71,6 +80,7 @@ export function AdminUserListPage() {
         id: ADMIN_USER_SORT.name,
         accessorKey: 'name',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{row.original.name}</span>
@@ -86,6 +96,7 @@ export function AdminUserListPage() {
         id: ADMIN_USER_SORT.email,
         accessorKey: 'email',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Mail className="size-3.5 shrink-0" />
@@ -110,6 +121,7 @@ export function AdminUserListPage() {
         accessorKey: 'roleName',
         header: 'Role',
         enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
           row.original.isOwner ? (
             <Badge variant="default" className="gap-1">
@@ -124,6 +136,7 @@ export function AdminUserListPage() {
         id: 'company',
         header: 'Company',
         enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const { companyId } = row.original
           // An owner belongs to the account rather than to any one company.
@@ -138,10 +151,45 @@ export function AdminUserListPage() {
         },
       },
       {
+        // The list carries the two reach SCALARS only — the named company and
+        // Talk lists cost two joins per row, so they come from the detail read.
+        id: 'access_level',
+        accessorKey: 'accessLevel',
+        header: 'Scope',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) =>
+          row.original.accessLevel === 'GLOBAL' ? (
+            <Badge variant="default" className="gap-1">
+              <Globe2 className="size-3" />
+              All companies
+            </Badge>
+          ) : (
+            <Badge variant="secondary">Selected companies</Badge>
+          ),
+      },
+      {
+        id: 'talk_enabled',
+        accessorKey: 'talkEnabled',
+        header: 'Talk',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) =>
+          row.original.talkEnabled ? (
+            <Badge variant="success" className="gap-1">
+              <MessageSquare className="size-3" />
+              Enabled
+            </Badge>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          ),
+      },
+      {
         id: 'status',
         accessorKey: 'status',
         header: 'Status',
         enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
           row.original.status === 'active' ? (
             <Badge variant="success">Active</Badge>
@@ -162,7 +210,7 @@ export function AdminUserListPage() {
     <div>
       <PageHeader
         title="Users"
-        description="The people who can sign in to this account. What each of them may do comes from the role you give them."
+        description="The people who can sign in to this account. Their role decides what they may do; their scope decides which companies they may do it in."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>

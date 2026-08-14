@@ -5,6 +5,11 @@ import { z } from 'zod'
  * grows server-side, so unknown extra fields are ignored and every display-only
  * field is optional — a missing `icon` or `description` must never throw away
  * the whole payload (and with it the entire menu).
+ *
+ * The SHAPE is unchanged but the semantics moved: `access_level`, `company_ids`,
+ * `talk_enabled` and `talk_access` now come from the USER's own row rather than
+ * their role's, named exactly as `GET /user/admin-users/:id` names them — which
+ * is why one mapper serves both.
  */
 
 /** One checkbox under a menu node. */
@@ -53,9 +58,9 @@ export const permissionModuleSchema: z.ZodType<PermissionModuleResponse> = z.laz
 )
 
 /**
- * A company named on a role's reach. Both `my-role` and `GET /user/roles/:id`
- * answer with `{ id, company_name }` rather than a bare id, so a chip can be
- * labelled without a second call.
+ * A company named on a user's reach. Both `my-role` and
+ * `GET /user/admin-users/:id` answer with `{ id, company_name }` rather than a
+ * bare id, so a chip can be labelled without a second call.
  */
 export const companyRefResponseSchema = z.object({
   id: z.number(),

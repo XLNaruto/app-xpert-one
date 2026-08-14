@@ -313,6 +313,27 @@ export const employeesResponseSchema = z.object({
   total: z.number(),
 })
 
+/**
+ * `GET /user/employees/list` — the PICKER row, four columns and nothing else.
+ *
+ * A different read from the register above: it spans every non-deleted company
+ * of the account (so it takes no `company_id`), carries no posting, no wage and
+ * no face, and its `search` matches the NAME alone. Use it wherever a screen
+ * points AT an employee rather than showing them.
+ */
+export const employeePickerResponseSchema = z.object({
+  id: z.number(),
+  name: z.string().nullish(),
+  primary_mobile_number: z.string().nullish(),
+  email: z.string().nullish(),
+})
+export type EmployeePickerResponse = z.infer<typeof employeePickerResponseSchema>
+
+export const employeePickerListResponseSchema = z.object({
+  items: z.array(employeePickerResponseSchema),
+  total: z.number(),
+})
+
 /** What `DELETE /user/employees/:id/face` answers. */
 export const deleteFaceResponseSchema = z.object({
   employee_id: z.number(),

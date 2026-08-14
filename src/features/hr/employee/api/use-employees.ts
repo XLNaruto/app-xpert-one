@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { ALL_ROWS, type PageParams } from '@/lib/pagination'
-import { fetchEmployee, fetchEmployees } from './employee-api'
+import { fetchEmployee, fetchEmployeePicker, fetchEmployees } from './employee-api'
 
 /**
  * GET /user/employees — the active company's employees, newest first.
@@ -15,6 +15,27 @@ export function useEmployees(params: PageParams = ALL_ROWS) {
     queryFn: () => fetchEmployees(params),
     // Keep the previous page on screen while the next one loads.
     placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * GET /user/employees/list — the account's employees for a picker, by name.
+ *
+ * ACCOUNT-scoped, unlike `useEmployees`: it spans every company, which is what a
+ * form naming a person outside the active tenant needs. `search` is matched
+ * server-side, so pass the dropdown's own search box through it — each term is
+ * its own cached result set, held briefly so re-opening the panel doesn't refetch.
+ */
+export function useEmployeePicker(search?: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.employee.picker(search),
+    queryFn: () => fetchEmployeePicker(search),
+    // A form that already knows its employee (an edit) shouldn't pay for the
+    // whole directory just to render a name it was given.
+    enabled,
+    // A typed term shouldn't blank the list while the next page arrives.
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
   })
 }
 
