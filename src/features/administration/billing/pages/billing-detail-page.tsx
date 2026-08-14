@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, Mail, Phone, Sparkles } from 'lucide-react'
+import { Building2, CreditCard, Mail, Phone, Sparkles } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import { Forbidden } from '@/features/error'
 import { BILLING_LABELS } from '../constants'
 import { useBillingOverview } from '../hooks/use-billing-overview'
+import { usePlanPurchase } from '../hooks/use-plan-purchase'
 import { CurrentPlanCard } from '../components/current-plan-card'
 import { PlanUsageMeters } from '../components/plan-usage-meters'
 import { PlanCard } from '../components/plan-card'
@@ -44,12 +46,11 @@ function BilledToItem({
 
 /**
  * Billing & Subscription — what the account is on, how much of it is being used,
- * and what else could be bought.
+ * what else could be bought, and the buying of it.
  *
- * Read-only by design. The API can open a subscription
- * (`POST /user/subscriptions`), but it answers with a Razorpay order that needs
- * a publishable key the panel isn't given — so this screen states the position
- * accurately instead of offering a checkout that can't complete.
+ * A purchase raises an order (`POST /user/subscriptions`) and hands it to the
+ * payment sheet; `usePlanPurchase` owns that sequence, and this page only shows
+ * it. Layout only — every decision here comes from a hook.
  */
 export function BillingDetailPage() {
   const {
@@ -77,6 +78,20 @@ export function BillingDetailPage() {
   const [cycle, setCycle] = useState<boolean | null>(null)
   const yearly = cycle ?? subscription?.isYearly ?? false
   const setYearly = (next: boolean) => setCycle(next)
+
+  const {
+    canPurchase,
+    pendingPlan,
+    requestPurchase,
+    cancelPurchase,
+    confirmPurchase,
+    isPurchasing,
+  } = usePlanPurchase({ account, yearly })
+
+  /** What the plan awaiting confirmation costs on the cycle being bought. */
+  const pendingPrice = pendingPlan
+    ? formatCurrency(yearly ? pendingPlan.yearPrice : pendingPlan.monthPrice)
+    : null
 
   // Reading billing was refused — show the 403 screen, not an empty panel.
   if (isForbidden) {
@@ -152,8 +167,9 @@ export function BillingDetailPage() {
                     Available Plans
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Compare what each plan allows. To change plans, get in touch
-                    with us.
+                    {canPurchase
+                      ? 'Compare what each plan allows, then pick the one you want.'
+                      : 'Compare what each plan allows. To change plans, get in touch with us.'}
                   </p>
                 </div>
 
@@ -177,7 +193,13 @@ export function BillingDetailPage() {
               */}
               <div className="grid grid-cols-1 items-stretch gap-5 pt-3 md:grid-cols-2 xl:grid-cols-3">
                 {plans.map((plan) => (
-                  <PlanCard key={plan.id} plan={plan} yearly={yearly} />
+                  <PlanCard
+                    key={plan.id}
+                    plan={plan}
+                    yearly={yearly}
+                    onPurchase={canPurchase ? requestPurchase : undefined}
+                    purchasing={isPurchasing}
+                  />
                 ))}
               </div>
             </div>
@@ -197,6 +219,42 @@ export function BillingDetailPage() {
           )}
         </div>
       )}
+
+      {/*
+        The confirmation names the price and the cycle because the grid's toggle
+        can be flipped after a card was read — this is the last point the two
+        are stated together before an order is raised.
+
+        `keepOpenOnConfirm` leaves it up while the order call is in flight: the
+        hook closes it once the order exists, so a failure stays on the dialog
+        the user can retry from rather than dropping them back to the grid.
+      */}
+      <ConfirmDialog
+        open={pendingPlan !== null}
+        onOpenChange={(open) => {
+          if (!open) cancelPurchase()
+        }}
+        onConfirm={confirmPurchase}
+        keepOpenOnConfirm
+        loading={isPurchasing}
+        icon={CreditCard}
+        title={pendingPlan ? `Subscribe to ${pendingPlan.name}?` : 'Subscribe?'}
+        description={
+          pendingPlan &&
+          (pendingPlan.isTrial && pendingPlan.trialDurationDays !== null ? (
+            <>
+              {pendingPlan.name} is free for {pendingPlan.trialDurationDays} days,
+              then {pendingPrice} per {yearly ? 'year' : 'month'}.
+            </>
+          ) : (
+            <>
+              You'll be charged {pendingPrice} per {yearly ? 'year' : 'month'}.
+              We'll take you to the payment page to complete it.
+            </>
+          ))
+        }
+        confirmLabel="Continue to payment"
+      />
     </div>
   )
 }

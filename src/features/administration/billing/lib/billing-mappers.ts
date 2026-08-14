@@ -10,13 +10,17 @@ import {
 } from '../constants'
 import type {
   AccountOverviewResponse,
+  CreateSubscriptionResponse,
+  PaymentOrderResponse,
   PlanResponse,
   SubscriptionResponse,
   SupportSlaResponse,
 } from '../schemas'
 import type {
   AccountOverview,
+  PaymentOrder,
   Plan,
+  PlanPurchase,
   PlanUsage,
   Subscription,
   SupportSla,
@@ -101,6 +105,33 @@ export function toSubscription(response: SubscriptionResponse): Subscription {
     isCancel: response.is_cancel,
     currentPeriodStart: response.current_period_start,
     currentPeriodEnd: response.current_period_end,
+  }
+}
+
+/**
+ * API record → the UI payment order.
+ *
+ * The paise figure is kept alongside the rupee one rather than replaced: the
+ * gateway is handed paise, and rounding a display value back up would be a way
+ * to charge the wrong amount.
+ */
+export function toPaymentOrder(response: PaymentOrderResponse): PaymentOrder {
+  return {
+    id: response.id,
+    amountPaise: response.amount_paise,
+    amount: paiseToRupees(response.amount_paise),
+    currency: response.currency,
+    status: response.status,
+  }
+}
+
+/** `POST /user/subscriptions` → the order to pay and the subscription it opened. */
+export function toPlanPurchase(
+  response: CreateSubscriptionResponse,
+): PlanPurchase {
+  return {
+    order: toPaymentOrder(response.order),
+    subscription: toSubscription(response.subscription),
   }
 }
 

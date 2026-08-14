@@ -25,6 +25,14 @@ const envSchema = z.object({
     .string()
     .default('AIzaSyCR5dRbUjEWxxxDsHbmWd76vBzLgunN8io'),
 
+  /**
+   * Razorpay publishable key id — the payment sheet a plan purchase hands off
+   * to. Empty means this environment can't take a card: the purchase still
+   * raises its order server-side, and the screen says the payment is pending
+   * rather than opening a checkout that can't load.
+   */
+  VITE_RAZORPAY_KEY_ID: z.string().default(''),
+
   /** Secret used to derive the key that encrypts persisted client storage. */
   VITE_APP_ENCRYPT_KEY: z.string().default('xpertone-storage-key'),
 })

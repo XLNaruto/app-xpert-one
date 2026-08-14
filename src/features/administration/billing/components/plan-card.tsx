@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
+  ArrowRight,
   Building2,
   ChevronRight,
   Crown,
   Gift,
   Headphones,
+  Loader2,
   ShieldCheck,
   UsersRound,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { cn, formatCurrency } from '@/lib/utils'
 import { yearlySavingsPercent } from '../lib/billing-mappers'
 import { PlanSlaDialog } from './plan-sla-dialog'
@@ -63,19 +66,25 @@ function FeatureRow({
 
 /**
  * One plan in the comparison grid — its price on the chosen cycle, what it
- * allows, and what it promises on support.
+ * allows, what it promises on support, and the button that buys it.
  *
- * There is no buy button: completing a purchase needs a payment handoff the API
- * doesn't currently support from the panel, so the grid compares and says who to
- * talk to rather than offering a checkout that would dead-end.
+ * Presentational only: it reports the click and renders the flags it's handed.
+ * Whether the user may buy at all, and everything the purchase then does, is the
+ * page's hook.
  */
 export function PlanCard({
   plan,
   yearly,
+  onPurchase,
+  purchasing = false,
 }: {
   plan: Plan
   /** Which cycle's price to show — the grid switches every card together. */
   yearly: boolean
+  /** Omitted when the user may not buy — the card then has no button at all. */
+  onPurchase?: (plan: Plan) => void
+  /** A purchase is in flight somewhere in the grid; every card locks. */
+  purchasing?: boolean
 }) {
   const price = yearly ? plan.yearPrice : plan.monthPrice
   const perEmployee = yearly ? plan.yearPricePerEmployee : plan.monthPricePerEmployee
@@ -182,25 +191,57 @@ export function PlanCard({
           />
         </ul>
 
-        {plan.supportSlas.length > 0 && (
-          // `mt-auto` pins this to the card's bottom edge so the row lines up
-          // across a grid of cards with different amounts above it.
-          <button
-            type="button"
-            onClick={() => setSlaOpen(true)}
-            className="mt-auto flex w-full items-center justify-between gap-2 rounded-lg border-t border-border px-1 pt-4 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <Headphones className="size-3.5" />
-              Support response
-            </span>
-            <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-medium text-primary">
-              {plan.supportSlas.length} promise
-              {plan.supportSlas.length === 1 ? '' : 's'}
-              <ChevronRight className="size-3.5" />
-            </span>
-          </button>
-        )}
+        {/*
+          `mt-auto` pins this footer to the card's bottom edge so the support row
+          and the buy button line up across a grid of cards with different
+          amounts of content above them.
+        */}
+        <div className="mt-auto">
+          {plan.supportSlas.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSlaOpen(true)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg border-t border-border px-1 pt-4 text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Headphones className="size-3.5" />
+                Support response
+              </span>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] font-medium text-primary">
+                {plan.supportSlas.length} promise
+                {plan.supportSlas.length === 1 ? '' : 's'}
+                <ChevronRight className="size-3.5" />
+              </span>
+            </button>
+          )}
+
+          {onPurchase && (
+            <Button
+              type="button"
+              className="mt-4 w-full"
+              variant={plan.isActive ? 'outline' : 'default'}
+              // The running plan can't be re-bought, and no card is clickable
+              // while another one's purchase is mid-flight — two open orders for
+              // the same account is not a state worth allowing.
+              disabled={plan.isActive || purchasing}
+              onClick={() => onPurchase(plan)}
+            >
+              {plan.isActive ? (
+                'Current Plan'
+              ) : purchasing ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Processing…
+                </>
+              ) : (
+                <>
+                  {plan.isTrial ? 'Start Free Trial' : 'Choose Plan'}
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       <PlanSlaDialog

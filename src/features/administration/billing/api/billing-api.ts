@@ -3,15 +3,24 @@ import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import {
   accountOverviewResponseSchema,
+  createSubscriptionResponseSchema,
   plansResponseSchema,
+  purchasePlanSchema,
   subscriptionResponseSchema,
 } from '../schemas'
+import type { PurchasePlanPayload } from '../schemas'
 import {
   toAccountOverview,
   toPlan,
+  toPlanPurchase,
   toSubscription,
 } from '../lib/billing-mappers'
-import type { AccountOverview, Plan, Subscription } from '../types'
+import type {
+  AccountOverview,
+  Plan,
+  PlanPurchase,
+  Subscription,
+} from '../types'
 
 /**
  * Billing — the account's plan catalog, its running subscription and the usage
@@ -19,11 +28,6 @@ import type { AccountOverview, Plan, Subscription } from '../types'
  *
  * Account-scoped, not tenant-scoped: nothing here sends a `company_id`, and none
  * of it changes when the user switches companies.
- *
- * Read-only. `POST /user/subscriptions` exists on the API and answers with a
- * Razorpay order, but completing that order needs a publishable key the API
- * doesn't hand out — so it isn't wired here rather than being wired into a
- * button that can't finish what it starts.
  */
 
 /**
@@ -57,6 +61,27 @@ export async function fetchSubscription(): Promise<Subscription | null> {
     const apiError = toApiError(error, "Couldn't load your subscription.")
     if (apiError.status === 404) return null
     throw apiError
+  }
+}
+
+/**
+ * POST /user/subscriptions — buy a plan.
+ *
+ * Opens the subscription in `pending` and answers with the Razorpay order that
+ * has to be paid before it goes active, so the caller has to carry the order
+ * through checkout; nothing here is settled by this call alone.
+ */
+export async function purchasePlan(
+  values: PurchasePlanPayload,
+): Promise<PlanPurchase> {
+  try {
+    const raw = await http.post<unknown, PurchasePlanPayload>(
+      endpoints.BILLING.SUBSCRIBE,
+      purchasePlanSchema.parse(values),
+    )
+    return toPlanPurchase(createSubscriptionResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't start the purchase for this plan.")
   }
 }
 

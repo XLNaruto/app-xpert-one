@@ -58,6 +58,28 @@ export interface Subscription {
   currentPeriodEnd: string | null
 }
 
+/**
+ * The payment order raised for a purchase.
+ *
+ * `amountPaise` stays in PAISE, unlike every other money field here: it is what
+ * the gateway is handed, and the gateway counts paise. `amount` carries the same
+ * figure in rupees for anything that has to show it.
+ */
+export interface PaymentOrder {
+  id: string
+  amountPaise: number
+  amount: number
+  currency: string
+  /** Razorpay's own order status — `created`, `attempted`, `paid`. */
+  status: string
+}
+
+/** What a purchase answers with: the order to pay, and the subscription it opens. */
+export interface PlanPurchase {
+  order: PaymentOrder
+  subscription: Subscription
+}
+
 /** How much of the plan's allowance the account is actually using. */
 export interface PlanUsage {
   employeeCount: number

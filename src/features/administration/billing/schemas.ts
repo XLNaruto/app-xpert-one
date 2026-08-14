@@ -83,6 +83,51 @@ export const subscriptionResponseSchema = z.object({
 export type SubscriptionResponse = z.infer<typeof subscriptionResponseSchema>
 
 /**
+ * The payment order `POST /user/subscriptions` opens — a Razorpay order, quoted
+ * in paise like every other price on this API.
+ *
+ * `status` is Razorpay's own (`created`, `attempted`, `paid`), so it's kept as a
+ * free string: it describes the ORDER, not the subscription, and the two move
+ * independently until the gateway confirms.
+ */
+export const paymentOrderSchema = z.object({
+  id: z.string(),
+  amount_paise: z.number(),
+  currency: z.string(),
+  status: z.string(),
+})
+
+export type PaymentOrderResponse = z.infer<typeof paymentOrderSchema>
+
+/**
+ * `POST /user/subscriptions` — the subscription is created straight away, but
+ * `pending` until its order is paid, which is why both halves come back
+ * together: the order is what the checkout needs, the subscription is what the
+ * screen shows afterwards.
+ */
+export const createSubscriptionResponseSchema = z.object({
+  order: paymentOrderSchema,
+  subscription: subscriptionResponseSchema,
+})
+
+export type CreateSubscriptionResponse = z.infer<
+  typeof createSubscriptionResponseSchema
+>
+
+/**
+ * What a purchase sends. `is_yearly` decides which of the plan's two prices the
+ * order is raised for, so it always goes on the wire rather than leaning on the
+ * API's `false` default — the grid's cycle toggle is the user's choice, and a
+ * silently-monthly order would contradict the price they just read.
+ */
+export const purchasePlanSchema = z.object({
+  plan_id: z.number().int().positive(),
+  is_yearly: z.boolean(),
+})
+
+export type PurchasePlanPayload = z.infer<typeof purchasePlanSchema>
+
+/**
  * `GET /user/me` — the account overview.
  *
  * Read here for `usage`, which is the only place the employee/company counts are

@@ -55,6 +55,8 @@ export const endpoints = {
   BILLING: {
     PLANS: '/user/plans',
     SUBSCRIPTION: '/user/subscription',
+    /** POST — open a subscription on a plan; answers with a payment order. */
+    SUBSCRIBE: '/user/subscriptions',
   },
   IP_ADDRESSES: {
     LIST: '/user/ip-addresses',

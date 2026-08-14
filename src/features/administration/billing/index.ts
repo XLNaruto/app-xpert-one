@@ -11,6 +11,7 @@ export { BillingDetailPage } from './pages/billing-detail-page'
 export { usePlans } from './api/use-plans'
 export { useSubscription } from './api/use-subscription'
 export { useAccountOverview } from './api/use-account-overview'
+export { usePurchasePlan } from './api/use-billing-mutations'
 
 export {
   formatPaise,
@@ -24,7 +25,9 @@ export type { UsageBar } from './lib/billing-mappers'
 export type {
   AccountOverview,
   BillingAccount,
+  PaymentOrder,
   Plan,
+  PlanPurchase,
   PlanUsage,
   Subscription,
   SupportSla,
