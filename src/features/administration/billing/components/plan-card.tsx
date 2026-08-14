@@ -187,7 +187,7 @@ export function PlanCard({
           <FeatureRow
             icon={ShieldCheck}
             value={plan.planPermissions.length}
-            label="permissions unlocked"
+            label="permissions available"
           />
         </ul>
 
