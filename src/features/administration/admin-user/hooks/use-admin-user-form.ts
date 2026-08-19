@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -74,10 +74,42 @@ export function useAdminUserForm(id?: number) {
 
   const talkAccess = useFieldArray({ control, name: 'talkAccess' })
 
-  // Seed the form once the record loads (edit mode only).
+  /**
+   * Seed the form once the record loads (edit mode only).
+   *
+   * Once PER RECORD, not per fetch: switching the active company invalidates
+   * every tenant-scoped query, which refetches this detail and hands back a
+   * fresh object — reseeding on that would silently throw away whatever the
+   * user had typed. The stored id is what says "this is a different record".
+   */
+  const seededId = useRef<number | null>(null)
   useEffect(() => {
-    if (detail.data) reset(adminUserToFormValues(detail.data))
+    if (!detail.data || seededId.current === detail.data.id) return
+    seededId.current = detail.data.id
+    reset(adminUserToFormValues(detail.data))
   }, [detail.data, reset])
+
+  /**
+   * The company the screen was opened under. A user is ACCOUNT-scoped, so the
+   * record itself survives a switch — but the roles offered, the companies the
+   * scope tiles list and every other screen have all moved on, and the `?data=`
+   * id still points at whoever was opened in the previous tenant. Editing on is
+   * a save made in one company's context against a record opened in another, so
+   * the screen steps back to the list instead, which reloads for the company now
+   * active. `null` (no selection yet) is not a switch.
+   */
+  const activeCompanyId = useAuthStore((state) => state.user?.companyId ?? null)
+  const openedUnderCompanyId = useRef(activeCompanyId)
+  useEffect(() => {
+    if (activeCompanyId === null) return
+    if (openedUnderCompanyId.current === null) {
+      openedUnderCompanyId.current = activeCompanyId
+      return
+    }
+    if (openedUnderCompanyId.current === activeCompanyId) return
+    openedUnderCompanyId.current = activeCompanyId
+    navigate({ to: '/administration/admin-user' })
+  }, [activeCompanyId, navigate])
 
   const roleId = useWatch({ control, name: 'roleId' }) ?? ''
   const status = useWatch({ control, name: 'status' }) ?? 'active'
