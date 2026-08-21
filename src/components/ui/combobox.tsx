@@ -56,6 +56,12 @@ interface ComboboxBaseProps {
    * instead of being filtered locally.
    */
   onSearchChange?: (query: string) => void
+  /**
+   * Locks the control: the panel can't open and the value can't be cleared.
+   * For a value the screen decides rather than the user — a required document's
+   * type, say, which is fixed by the master.
+   */
+  disabled?: boolean
 }
 
 interface ComboboxSingleProps extends ComboboxBaseProps {
@@ -111,6 +117,7 @@ export function Combobox(props: ComboboxProps) {
     onScrollEnd,
     loading = false,
     onSearchChange,
+    disabled = false,
   } = props
 
   // `value`/`onChange` stay on `props`: reading them through the union is what
@@ -231,14 +238,17 @@ export function Combobox(props: ComboboxProps) {
 
   // The trigger is a <button>, so the clear control can't nest inside it — it
   // rides as an overlay sibling, with the trigger padded to make room.
-  const showClear = clearable && selectedValues.length > 0
+  const showClear = clearable && selectedValues.length > 0 && !disabled
 
   const maxVisibleLabels = props.multiple ? (props.maxVisibleLabels ?? 2) : 1
   const visibleLabels = selectedOptions.slice(0, maxVisibleLabels)
   const hiddenCount = selectedOptions.length - visibleLabels.length
 
   const triggerClasses = cn(
-    'flex h-9 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors hover:border-ring/40',
+    'flex h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm text-foreground transition-colors',
+    disabled
+      ? 'cursor-not-allowed bg-muted/50 text-muted-foreground opacity-70'
+      : 'cursor-pointer hover:border-ring/40',
     open && 'ring-1 ring-ring',
     triggerClassName,
   )
@@ -302,9 +312,12 @@ export function Combobox(props: ComboboxProps) {
       {props.multiple ? (
         <div
           role="combobox"
-          tabIndex={0}
-          onClick={() => setOpen((o) => !o)}
+          tabIndex={disabled ? -1 : 0}
+          onClick={() => {
+            if (!disabled) setOpen((o) => !o)
+          }}
           onKeyDown={(e) => {
+            if (disabled) return
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
               setOpen((o) => !o)
@@ -312,6 +325,7 @@ export function Combobox(props: ComboboxProps) {
           }}
           aria-haspopup="listbox"
           aria-expanded={open}
+          aria-disabled={disabled}
           className={triggerClasses}
         >
           {triggerContent}
@@ -319,6 +333,7 @@ export function Combobox(props: ComboboxProps) {
       ) : (
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="listbox"
           aria-expanded={open}
@@ -340,7 +355,7 @@ export function Combobox(props: ComboboxProps) {
         </button>
       ) : null}
 
-      {open && coords
+      {open && !disabled && coords
         ? createPortal(
             <div
               ref={panelRef}

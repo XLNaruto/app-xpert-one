@@ -25,6 +25,9 @@ function isExpired(expiryDate: string): boolean {
  *
  * Expiry is flagged rather than merely shown: an expired ID or licence is a
  * compliance problem, not a stale field.
+ *
+ * Mandatory documents arrive as their own cards with the type and name already
+ * chosen and locked — the master decides those, so all that's left is the file.
  */
 export function DocumentDetailTab({
   employeeId,
@@ -42,6 +45,8 @@ export function DocumentDetailTab({
     removeRow,
     typeOptions,
     documentOptionsFor,
+    documentNameFor,
+    isRequiredRow,
     isOptionsLoading,
     changeDocumentType,
     uploadDocumentFile,
@@ -91,9 +96,8 @@ export function DocumentDetailTab({
           const errors = rowErrors?.[index]
           const row = form.watch(`rows.${index}`)
           const typeLabel = typeOptions.find((o) => o.value === row?.documentTypeId)?.label
-          const nameLabel = documentOptionsFor(row?.documentTypeId ?? '').find(
-            (o) => o.value === row?.documentId,
-          )?.label
+          const nameLabel = documentNameFor(row?.documentId ?? '')
+          const isRequired = isRequiredRow(row?.documentId ?? '')
 
           return (
             <RepeatCard
@@ -108,11 +112,14 @@ export function DocumentDetailTab({
                   <RepeatCardBadge variant="destructive">Expired</RepeatCardBadge>
                 ) : row?.document ? (
                   <RepeatCardBadge variant="success">Uploaded</RepeatCardBadge>
+                ) : isRequired ? (
+                  <RepeatCardBadge variant="warning">Required</RepeatCardBadge>
                 ) : undefined
               }
               hasError={Boolean(errors)}
               onRemove={() => removeRow(index)}
-              canRemove={fields.length > 1 || Boolean(row?.id)}
+              // A mandatory document can't be dropped — only filled in.
+              canRemove={!isRequired && (fields.length > 1 || Boolean(row?.id))}
             >
               <Field
                 label="Document Type"
@@ -130,6 +137,7 @@ export function DocumentDetailTab({
                       options={typeOptions}
                       placeholder={isOptionsLoading ? 'Loading…' : 'Select Type'}
                       searchPlaceholder="Search document type"
+                      disabled={isRequired}
                     />
                   )}
                 />
@@ -141,7 +149,11 @@ export function DocumentDetailTab({
                 error={errors?.documentId?.message}
                 // The document master is filed under a type, so nothing lists yet.
                 hint={
-                  row?.documentTypeId ? undefined : 'Choose a document type first.'
+                  isRequired
+                    ? 'Mandatory document — set by the document master.'
+                    : row?.documentTypeId
+                      ? undefined
+                      : 'Choose a document type first.'
                 }
               >
                 <Controller
@@ -152,9 +164,16 @@ export function DocumentDetailTab({
                       className="w-full"
                       value={document.value}
                       onChange={document.onChange}
-                      options={documentOptionsFor(row?.documentTypeId ?? '')}
+                      // A required document is no longer in the dropdown, so the
+                      // locked control is handed its own option to display.
+                      options={
+                        isRequired
+                          ? [{ label: nameLabel ?? '', value: row?.documentId ?? '' }]
+                          : documentOptionsFor(row?.documentTypeId ?? '')
+                      }
                       placeholder={row?.documentTypeId ? 'Select Name' : 'Select Type first'}
                       searchPlaceholder="Search document"
+                      disabled={isRequired}
                     />
                   )}
                 />

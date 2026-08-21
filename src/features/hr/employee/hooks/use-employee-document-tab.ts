@@ -40,6 +40,12 @@ import { useRowSeed } from './use-row-seed'
  * can narrow that itself (`?document_type_id=`), but both masters are already loaded
  * whole for the dropdowns, so the filter runs over what's in hand and changing type
  * costs no request.
+ *
+ * Documents the master marks `isRequired` are not something the user picks: every one
+ * of them gets its own card up front, with the type and name already filled in and
+ * locked, so the only thing left to do is upload the file. That's also why seeding
+ * waits for the document master — a list seeded before it lands would be missing the
+ * mandatory cards, and reseeding would throw away whatever was typed meanwhile.
  */
 export function useEmployeeDocumentTab({
   employeeId,
@@ -69,33 +75,90 @@ export function useEmployeeDocumentTab({
   /** Which card is mid-upload — only that card's picker shows a spinner. */
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
 
-  // Seed from the server, and again after each save — but never mid-save.
-  useRowSeed(list.data, isSaving, (attachments) => {
-    reset({
-      rows:
-        attachments.length > 0
-          ? attachments.map((document) => ({
-              id: document.id,
-              ...documentToFormValues(document),
-            }))
-          : [EMPTY_EMPLOYEE_DOCUMENT_FORM],
-    })
-    setRemovedIds([])
-  })
+
+  /** Documents every employee must file — one locked card each. */
+  const requiredDocuments = useMemo(
+    () => (documents.data?.items ?? []).filter((document) => document.isRequired),
+    [documents.data],
+  )
 
   const typeOptions = useMemo(
     () => documentTypeOptions(documentTypes.data?.items ?? []),
     [documentTypes.data],
   )
 
-  /** Documents of one type — the second dropdown cascades off the first. */
+  /**
+   * Nothing to seed from until the document master is in hand — the required
+   * cards are built from it, so seeding early would render a list without them.
+   */
+  const seed = useMemo(
+    () =>
+      list.data === undefined || documents.isPending
+        ? undefined
+        : { attachments: list.data, requiredDocuments },
+    [list.data, documents.isPending, requiredDocuments],
+  )
+
+  // Seed from the server, and again after each save — but never mid-save.
+  useRowSeed(seed, isSaving, ({ attachments, requiredDocuments: required }) => {
+    const saved = attachments.map((document) => ({
+      id: document.id,
+      ...documentToFormValues(document),
+    }))
+
+    // Every required document holds the top of the list, carrying its saved row
+    // when there is one so the file and expiry already on file stay put.
+    const requiredRows = required.map((document) => {
+      const filed = saved.find((row) => row.documentId === String(document.id))
+      return (
+        filed ?? {
+          ...EMPTY_EMPLOYEE_DOCUMENT_FORM,
+          documentTypeId: String(document.documentTypeId),
+          documentId: String(document.id),
+        }
+      )
+    })
+
+    // Only the rows actually pulled into a locked card are removed from the rest.
+    // A second saved row for the same required document keeps its own card rather
+    // than vanishing from a list it still exists in — so it can be deleted.
+    const claimed = new Set(requiredRows.map((row) => row.id).filter((id) => id !== undefined))
+    const extraRows = saved.filter((row) => !claimed.has(row.id))
+    const rows = [...requiredRows, ...extraRows]
+
+    reset({ rows: rows.length > 0 ? rows : [EMPTY_EMPLOYEE_DOCUMENT_FORM] })
+    setRemovedIds([])
+  })
+
+  /**
+   * Documents of one type — the second dropdown cascades off the first.
+   *
+   * Required documents are left out: each already has its own locked card, so
+   * offering one here only invites a duplicate row for a document that's
+   * already accounted for.
+   */
   const documentOptionsFor = (documentTypeId: string) => {
     if (!documentTypeId) return []
     const chosen = Number(documentTypeId)
     return (documents.data?.items ?? [])
-      .filter((document) => document.documentTypeId === chosen)
+      .filter((document) => document.documentTypeId === chosen && !document.isRequired)
       .map((document) => ({ label: document.documentName, value: String(document.id) }))
   }
+
+  /**
+   * A document's name from the whole master, required ones included — the locked
+   * cards need their title even though the dropdown no longer lists them.
+   */
+  const documentNameFor = (documentId: string) =>
+    (documents.data?.items ?? []).find((document) => String(document.id) === documentId)
+      ?.documentName
+
+  /**
+   * Is this row one of the mandatory documents? Its two dropdowns are locked, and
+   * so is its remove control — dropping the card would drop the requirement.
+   */
+  const isRequiredRow = (documentId: string) =>
+    documentId !== '' && requiredDocuments.some((document) => String(document.id) === documentId)
 
   const addRow = () => rows.append({ ...EMPTY_EMPLOYEE_DOCUMENT_FORM })
 
@@ -181,11 +244,13 @@ export function useEmployeeDocumentTab({
     removeRow,
     typeOptions,
     documentOptionsFor,
+    documentNameFor,
+    isRequiredRow,
     isOptionsLoading: documentTypes.isLoading || documents.isLoading,
     changeDocumentType,
     uploadDocumentFile,
     uploadingIndex,
-    isLoading: list.isLoading,
+    isLoading: list.isLoading || documents.isPending,
     isError: list.isError && !isForbidden,
     error: list.error,
     isForbidden,
