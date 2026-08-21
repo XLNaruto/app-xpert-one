@@ -189,19 +189,12 @@ export const queryKeys = {
         ? ([...queryKeys.shift.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.shift.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.shift.all, 'detail', id] as const,
-  },
-  /**
-   * Rotation cycles — read on their own master screen and, as a dropdown, when an
-   * employee is put on a rotation. `companyId` is in the key for the same reason
-   * it is on the shifts: the tenant a page read for identifies the result set.
-   */
-  shiftRotation: {
-    all: ['shift-rotation'] as const,
-    list: (params?: PageParams, companyId?: number) =>
-      params
-        ? ([...queryKeys.shiftRotation.all, 'list', params, companyId ?? 0] as const)
-        : ([...queryKeys.shiftRotation.all, 'list', companyId ?? 0] as const),
-    detail: (id: number) => [...queryKeys.shiftRotation.all, 'detail', id] as const,
+    /**
+     * One shift's dated versions. Its own key rather than part of the detail:
+     * editing a shift appends a version, so the history is invalidated by the same
+     * mutations but read only by the screen that asks for it.
+     */
+    history: (id: number) => [...queryKeys.shift.all, 'history', id] as const,
   },
   /**
    * Week-off policies — the master screen, plus the dropdown on the shift form
@@ -444,6 +437,16 @@ export const queryKeys = {
           ] as const)
         : ([...queryKeys.leave.all, 'list', employeeId ?? 0] as const),
     detail: (id: number) => [...queryKeys.leave.all, 'detail', id] as const,
+  },
+  /**
+   * The account's leave approval chain. ACCOUNT-scoped, so no company in the key:
+   * one chain answers for every company, which is the whole point of it.
+   */
+  leaveApprovalChain: {
+    all: ['leave-approval-chain'] as const,
+    detail: () => [...queryKeys.leaveApprovalChain.all, 'detail'] as const,
+    /** The distinct role names the picker offers. */
+    roles: () => [...queryKeys.leaveApprovalChain.all, 'roles'] as const,
   },
   /**
    * Payroll — the salary register, read one designation-month at a time.

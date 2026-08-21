@@ -1,5 +1,7 @@
 import { Controller } from 'react-hook-form'
+import { parseISO } from 'date-fns'
 import { Briefcase, GraduationCap } from 'lucide-react'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -8,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { YearPicker } from '@/components/ui/year-picker'
 import { Field } from '@/components/common/form-field'
 import { Forbidden } from '@/features/error'
-import { EARLIEST_PASSING_DATE } from '../constants'
+import { EARLIEST_PASSING_DATE, EXPERIENCE_CTC_TYPE_OPTIONS } from '../constants'
 import { useEmployeeEducationTab } from '../hooks/use-employee-education-tab'
 import { RepeatCard, RepeatCardBadge, RepeatSection } from './repeat-card'
 import { StepFormFooter } from './step-form-footer'
@@ -21,11 +23,27 @@ import { StepFormFooter } from './step-form-footer'
  * That's honest about the data too: nobody remembers the day they left a job four
  * employers ago.
  *
+ * **The verification block** is one statement, not two controls: the switch is
+ * what authorises a remark, so the textarea stays disabled until it's on and is
+ * cleared when it goes off. The API enforces the same pairing with a CHECK, and it
+ * stamps the verifier itself — the form never sends one.
+ *
  * **Is Fresher** hides the experience half rather than disabling it, and on save it
  * clears anything already recorded there. The switch has no column behind it: an
  * employee with no experience rows *is* a fresher, which is why it opens on for
  * exactly those employees.
  */
+/**
+ * A `yyyy-MM` form value as the first day of that month, for the month
+ * pickers' `minDate`/`maxDate`. `undefined` while the field is empty or
+ * half-typed, so the bound stays open until the other end is a real month.
+ */
+function monthStart(value: string | undefined): Date | undefined {
+  if (!value) return undefined
+  const parsed = parseISO(`${value}-01`)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
 export function EducationExperienceTab({
   employeeId,
   onContinue,
@@ -215,7 +233,7 @@ export function EducationExperienceTab({
                     <MonthPicker
                       value={from.value}
                       onChange={from.onChange}
-                      maxDate={new Date()}
+                      maxDate={monthStart(row?.toDate) ?? new Date()}
                       invalid={Boolean(errors?.fromDate)}
                     />
                   )}
@@ -230,6 +248,7 @@ export function EducationExperienceTab({
                     <MonthPicker
                       value={to.value}
                       onChange={to.onChange}
+                      minDate={monthStart(row?.fromDate)}
                       maxDate={new Date()}
                       invalid={Boolean(errors?.toDate)}
                     />
@@ -251,6 +270,28 @@ export function EducationExperienceTab({
                   placeholder="Salary"
                   aria-invalid={errors?.salary ? true : undefined}
                   {...form.register(`experiences.${index}.salary`)}
+                />
+              </Field>
+
+              {/*
+                Nullable on the record: rows entered before this field existed
+                don't say what the salary was quoted for, and defaulting to a guess
+                would turn a blank into a claim.
+              */}
+              <Field label="Salary Is" error={errors?.ctcType?.message}>
+                <Controller
+                  control={form.control}
+                  name={`experiences.${index}.ctcType`}
+                  render={({ field: ctc }) => (
+                    <Combobox
+                      className="w-full"
+                      searchable={false}
+                      value={ctc.value}
+                      onChange={ctc.onChange}
+                      options={EXPERIENCE_CTC_TYPE_OPTIONS}
+                      placeholder="Not stated"
+                    />
+                  )}
                 />
               </Field>
 
@@ -278,6 +319,19 @@ export function EducationExperienceTab({
               </Field>
 
               <Field
+                label="Contact Email"
+                error={errors?.contactPersonEmail?.message}
+              >
+                <Input
+                  inputMode="email"
+                  maxLength={255}
+                  placeholder="verifier@employer.com"
+                  aria-invalid={errors?.contactPersonEmail ? true : undefined}
+                  {...form.register(`experiences.${index}.contactPersonEmail`)}
+                />
+              </Field>
+
+              <Field
                 label="Reason for Leaving"
                 error={errors?.leavingReason?.message}
               >
@@ -287,6 +341,67 @@ export function EducationExperienceTab({
                   {...form.register(`experiences.${index}.leavingReason`)}
                 />
               </Field>
+
+              {/* ── The verification block — switch, then remark ─────────── */}
+              <div className="sm:col-span-2 rounded-lg border border-border bg-muted/30 p-3">
+                <Controller
+                  control={form.control}
+                  name={`experiences.${index}.isVerified`}
+                  render={({ field: verified }) => (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          Verified with the verifier
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {verified.value
+                            ? row?.verifiedByName
+                              ? `Vouched for by ${row.verifiedByName}.`
+                              : 'Saving stamps you as the verifier.'
+                            : 'Turn this on once somebody has actually contacted the verifier.'}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={verified.value}
+                        onCheckedChange={(checked) => {
+                          verified.onChange(checked)
+                          /*
+                            Turning it off clears the remark rather than hiding it:
+                            the API rejects a review on an unverified row, and the
+                            two only ever move together.
+                          */
+                          if (!checked) {
+                            form.setValue(
+                              `experiences.${index}.verificationReview`,
+                              '',
+                              { shouldValidate: true },
+                            )
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                />
+
+                <div className="mt-3">
+                  <Field
+                    label="What the Verifier Said"
+                    error={errors?.verificationReview?.message}
+                  >
+                    <Textarea
+                      rows={2}
+                      maxLength={2000}
+                      disabled={!row?.isVerified}
+                      placeholder={
+                        row?.isVerified
+                          ? 'What the verifier said about this employment'
+                          : 'Available once the row is marked verified'
+                      }
+                      {...form.register(`experiences.${index}.verificationReview`)}
+                    />
+                  </Field>
+                </div>
+              </div>
             </RepeatCard>
           )
         })}

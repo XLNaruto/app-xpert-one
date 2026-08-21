@@ -5,13 +5,14 @@ import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useWeekoffPolicies, weekoffPolicyOptions } from '@/features/master/weekoff-policy'
 import { shiftSchema, type ShiftFormValues } from '../schemas'
-import { EMPTY_SHIFT_FORM } from '../constants'
+import { EMPTY_SHIFT_FORM, todayIso } from '../constants'
 import { useCreateShift, useUpdateShift } from '../api/use-shift-mutations'
 import {
   halfDayHours,
   shiftEndFromHours,
   shiftSpanHours,
   shiftToFormValues,
+  touchesVersionedRules,
 } from '../lib/shift-mappers'
 import type { Shift } from '../types'
 
@@ -28,6 +29,12 @@ interface UseShiftFormOptions {
  * The add/edit form above the shift list. One form serves both: picking a row
  * seeds it and turns Save into a PATCH, and clearing the selection puts it back
  * to a blank POST. The component consumes this and only lays out fields.
+ *
+ * **A shift is a timeline.** Every rule on this form hangs off a dated version, so
+ * an edit that moves one WRITES A NEW VERSION from `effectiveDate` rather than
+ * overwriting what came before — days already closed go on resolving against the
+ * rules they were actually judged by. `name` and `status` aren't versioned, so a
+ * save that touched only those sends no date at all and opens no version.
  */
 export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOptions) {
   const isEdit = editing !== null
@@ -123,7 +130,11 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
   // Follow the list's selection: a picked row seeds the form, clearing it blanks
   // the form back out for the next add.
   useEffect(() => {
-    const values = editing ? shiftToFormValues(editing) : EMPTY_SHIFT_FORM
+    const values = editing
+      ? // Today, not the row's own effective date: re-sending that would amend the
+        // version in force and rewrite the days already judged against it.
+        shiftToFormValues(editing, todayIso())
+      : { ...EMPTY_SHIFT_FORM, effectiveDate: todayIso() }
     reset(values)
     // Seeding isn't editing: the row's stored thresholds stand, however they were
     // arrived at, until the window or the full day is actually moved.
@@ -134,10 +145,13 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
     }
   }, [editing, reset])
 
+  /** A blank add — today's date included, since the field is required. */
+  const blankForm = () => ({ ...EMPTY_SHIFT_FORM, effectiveDate: todayIso() })
+
   /** Abandon an edit — back to a blank add. */
   const cancelEdit = () => {
     onSaved()
-    reset(EMPTY_SHIFT_FORM)
+    reset(blankForm())
   }
 
   const onSubmit = handleSubmit((values) => {
@@ -146,19 +160,33 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
       return
     }
 
-    const mutation = isEdit ? updateShift : createShift
-    mutation.mutate(values, {
+    const onSettled = {
       onSuccess: () => {
         toast.success(isEdit ? 'Shift updated' : 'Shift added')
         // The list owns the selection, so clearing it is what blanks the form.
         onSaved()
-        reset(EMPTY_SHIFT_FORM)
+        reset(blankForm())
       },
-      onError: (err) =>
+      onError: (err: unknown) =>
         toast.error(
           getApiErrorMessage(err, `Failed to ${isEdit ? 'update' : 'add'} shift`),
         ),
-    })
+    }
+
+    if (isEdit) {
+      /*
+       * Only date the patch when the save actually moved a versioned rule.
+       * Renaming a shift would otherwise open a version identical to the one in
+       * force, and the history would fill with edits that changed nothing.
+       */
+      updateShift.mutate(
+        { values, withEffectiveDate: touchesVersionedRules(dirtyFields) },
+        onSettled,
+      )
+      return
+    }
+
+    createShift.mutate(values, onSettled)
   })
 
   const weekoffPolicySelectOptions = useMemo(

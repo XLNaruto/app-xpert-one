@@ -77,6 +77,15 @@ export function toLeave(response: LeaveResponse): Leave {
     status: response.status,
     statusRemark: response.status_remark ?? '',
     statusAt: response.status_at ?? '',
+    pendingWithRole: response.pending_with_role ?? null,
+    pendingWithOwner: response.pending_with_owner ?? false,
+    /*
+     * Absent means "the API didn't say", and the safe reading of that is the old
+     * behaviour: a pending row the caller holds `leaves:update` on is decidable.
+     * The screen still gates the buttons on the permission alongside this, so a
+     * false here is respected and a missing one doesn't blank the desk.
+     */
+    canDecide: response.can_decide ?? response.status === 'PENDING',
     ...auditOf(response),
   }
 }

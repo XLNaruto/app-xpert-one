@@ -32,6 +32,18 @@ export interface LeaveFilters {
   /** An overlap window — a leave straddling it is in it. */
   fromDate?: string
   toDate?: string
+  /**
+   * Your own queue. Implies `status=PENDING`.
+   *
+   * For an approver it is the companies where you are the level that answered.
+   * FOR THE OWNER it is the FALL-THROUGH — the companies no level covers, i.e.
+   * the ones only they can clear.
+   *
+   * VISIBILITY IS NOT ROUTING: the plain list is unchanged, and the owner goes on
+   * seeing every company's rows whether or not any hierarchy user can. The
+   * hierarchy decides who may APPROVE, never who may LOOK.
+   */
+  pendingWithMe?: boolean
 }
 
 /** The API's maximum `limit` on the leave register. */
@@ -57,6 +69,7 @@ export async function fetchLeaves(
         ...(filters.payType ? { pay_type: filters.payType } : {}),
         ...(filters.fromDate ? { from_date: filters.fromDate } : {}),
         ...(filters.toDate ? { to_date: filters.toDate } : {}),
+        ...(filters.pendingWithMe ? { pending_with_me: true } : {}),
         // The endpoint caps `search` at 100 characters and 400s past it.
         ...(params.search?.trim()
           ? { search: params.search.trim().slice(0, SEARCH_MAX_LENGTH) }

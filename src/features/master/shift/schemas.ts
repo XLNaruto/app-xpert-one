@@ -27,16 +27,31 @@ const optionalHours = z
     'Enter hours between 0.5 and 24',
   )
 
+/** `YYYY-MM-DD` — the only date format the endpoint accepts. */
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
 /**
  * Create/edit form for one shift.
  *
  * `is_night_shift` is absent on purpose — the API derives it from the two times
  * (an end earlier than the start makes it a night shift), so a form field for it
  * could only ever disagree with the times above it.
+ *
+ * A shift is a TIMELINE: the identity (name, status) is the record, and every
+ * RULE below hangs off a dated version. `effectiveDate` is the day the rules on
+ * this form start applying — required on create, where it opens the timeline, and
+ * on edit it writes a NEW version so days already closed go on resolving against
+ * the version that was in force when they happened.
  */
 export const shiftSchema = z
   .object({
     shiftName: recordNameField('the shift name', { max: 100 }),
+    /** The day these timings start applying. */
+    effectiveDate: z
+      .string()
+      .trim()
+      .min(1, 'Effective date is required')
+      .regex(DATE_PATTERN, 'Enter a date as YYYY-MM-DD'),
     startTime: z
       .string()
       .trim()
@@ -187,6 +202,9 @@ export const shiftResponseSchema = z.object({
   min_half_day_hours: z.number(),
   weekoff_policy_id: z.number().nullish(),
   status: z.boolean(),
+  /** Which dated version these timings are, and the day it took effect. */
+  version_id: z.number().nullish(),
+  effective_date: z.string().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -218,6 +236,8 @@ export const shiftsResponseSchema = z.object({
 export interface ShiftPayload {
   company_id: number
   name: string
+  /** Required on create — it opens the shift's timeline. */
+  effective_date: string
   start_time: string
   end_time: string
   break_minutes?: number
@@ -243,8 +263,59 @@ export interface ShiftPayload {
   status: boolean
 }
 
-/** The update body — a shift never moves between companies. */
-export type ShiftUpdatePayload = Omit<ShiftPayload, 'company_id'>
+/**
+ * The update body — a shift never moves between companies.
+ *
+ * `effective_date` is OPTIONAL here, and the difference matters: sent, it writes a
+ * NEW version from that day and keeps the history; left off, it AMENDS the version
+ * currently in force, rewriting history with it — only correct for fixing a typo
+ * in timings nobody has worked yet. Re-sending a date that already has a version
+ * amends that version rather than stacking a second rule set on the same day.
+ *
+ * `name` and `status` are NOT versioned: they apply at once whatever date
+ * accompanies them, and a patch touching only those writes no version at all.
+ */
+export type ShiftUpdatePayload = Omit<ShiftPayload, 'company_id' | 'effective_date'> & {
+  effective_date?: string
+}
+
+/**
+ * One dated version of a shift's rules, as `GET /user/shifts/:id/history` returns
+ * it. `name` and `status` are absent on purpose — repeating today's name on every
+ * historical row would suggest the shift had always been called that.
+ */
+export const shiftVersionResponseSchema = z.object({
+  id: z.number(),
+  shift_id: z.number(),
+  effective_date: z.string(),
+  start_time: z.string(),
+  end_time: z.string(),
+  is_night_shift: z.boolean(),
+  break_minutes: z.number(),
+  is_late_break_penalty_applicable: z.boolean(),
+  concession_minutes: z.number(),
+  is_late_check_in_penalty_applicable: z.boolean(),
+  late_check_in_penalty_type: z.enum(['PERCENTAGE', 'FIXED']).nullish(),
+  late_check_in_penalty_value: z.number().nullish(),
+  early_exit_grace_minutes: z.number(),
+  min_full_day_hours: z.number(),
+  min_half_day_hours: z.number(),
+  weekoff_policy_id: z.number().nullish(),
+  /** Exactly one row carries this — the version in force TODAY. */
+  is_current: z.boolean(),
+  created_at: z.string().nullish(),
+  created_by_name: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  updated_by_name: z.string().nullish(),
+})
+
+export type ShiftVersionResponse = z.infer<typeof shiftVersionResponseSchema>
+
+/** `GET /user/shifts/:id/history` — the whole timeline, newest first. */
+export const shiftHistoryResponseSchema = z.object({
+  items: z.array(shiftVersionResponseSchema),
+  total: z.number(),
+})
 
 /**
  * `set-default` / `clear-default` — exactly one of the two ids, naming the level

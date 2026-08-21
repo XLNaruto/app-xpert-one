@@ -3,8 +3,9 @@ import { queryKeys } from '@/lib/query-keys'
 import { fetchMyProfile } from './profile-api'
 
 /**
- * GET /sales-incharge-admin/me — the current user's profile. Cached for a
- * minute since it rarely changes within a session.
+ * GET /user/me — the current account, its subscription and its usage. Cached
+ * for a minute: the topbar reads it on every screen, and none of it moves
+ * within a session except through an action that invalidates it.
  */
 export function useMyProfile() {
   return useQuery({

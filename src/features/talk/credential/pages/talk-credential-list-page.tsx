@@ -143,8 +143,8 @@ export function TalkCredentialListPage() {
   return (
     <div>
       <PageHeader
-        title="XpertOne Talk Credential"
-        description="Each employee's own XpertOne Talk login — the address they sign in with, and the companies and departments they may talk to."
+        title="Talk Credential"
+        description="Each employee's own Talk login — the address they sign in with, and the companies and departments they may talk to."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -158,7 +158,7 @@ export function TalkCredentialListPage() {
       {list.isError ? (
         <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          <span>{getApiErrorMessage(list.error, "Couldn't load XpertOne Talk credentials.")}</span>
+          <span>{getApiErrorMessage(list.error, "Couldn't load Talk credentials.")}</span>
         </p>
       ) : (
         <DataTable
@@ -203,11 +203,11 @@ export function TalkCredentialListPage() {
           emptyState={
             <EmptyState
               icon={KeyRound}
-              title={list.search ? 'No matching credentials' : 'No XpertOne Talk credentials yet'}
+              title={list.search ? 'No matching credentials' : 'No Talk credentials yet'}
               description={
                 list.search
                   ? 'Try a different login address.'
-                  : 'Issue an employee their XpertOne Talk login, then choose the companies and departments it reaches.'
+                  : 'Issue an employee their Talk login, then choose the companies and departments it reaches.'
               }
               action={
                 list.search
@@ -229,7 +229,7 @@ export function TalkCredentialListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={UserRound}
-        title="Delete XpertOne Talk credential?"
+        title="Delete Talk credential?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.email}" will stop working and its grants are removed. The address is RELEASED, so the same employee can be issued a new credential under it — to suspend the login instead and keep it recoverable, edit it and set the status to Inactive.`

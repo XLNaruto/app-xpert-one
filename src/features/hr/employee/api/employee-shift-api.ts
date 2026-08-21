@@ -36,7 +36,7 @@ import type {
  * - `roster` — a per-date override, the most specific statement anybody can make.
  * - `shifts` — the assignment timeline, effective-dated and append-only.
  * - `shift` — not a resource but a QUESTION: the server walks the whole chain
- *   (roster → rotation → assignment → department → company) for one date and
+ *   (roster → assignment → department → company) for one date and
  *   reports which link answered.
  *
  * Nothing here needs a `company_id`: the employee id already fixes the tenant.
@@ -84,12 +84,9 @@ export async function fetchEmployeeShiftAssignments(
 }
 
 /**
- * POST /user/employees/:id/shifts — assign a shift or a rotation from a date, or
- * (naming neither) end the current assignment and hand the employee back to the
- * department or company default.
- *
- * For a rotation the `effective_date` is also the cycle's anchor: week 1 starts
- * there, which is why two employees assigned a week apart are out of phase.
+ * POST /user/employees/:id/shifts — assign a shift from a date, or (naming none)
+ * end the current assignment and hand the employee back to the department or
+ * company default.
  */
 export async function createEmployeeShiftAssignment(
   employeeId: number,
@@ -109,8 +106,8 @@ export async function createEmployeeShiftAssignment(
 /**
  * DELETE /user/employees/:id/shifts/:entryId — remove an entry typed by mistake.
  *
- * NOT the way to end an assignment: post an entry naming neither a shift nor a
- * rotation for that. Deleting rewrites history — days already stamped against the
+ * NOT the way to end an assignment: post an entry naming no shift for that.
+ * Deleting rewrites history — days already stamped against the
  * removed shift would re-resolve differently the next time the timeline was walked.
  */
 export async function deleteEmployeeShiftAssignment(
@@ -128,7 +125,7 @@ export async function deleteEmployeeShiftAssignment(
  * GET /user/employees/:id/roster — the per-date overrides inside a window.
  *
  * Only the dates somebody explicitly overrode are rows: the ordinary days aren't
- * stored anywhere, they resolve from the rotation, the assignment or a default.
+ * stored anywhere, they resolve from the assignment or a default.
  *
  * The tab reads a month at a time and takes the whole window in one request rather
  * than paging it. That's safe here and nowhere else: a date can hold at most one
@@ -186,7 +183,7 @@ export async function createEmployeeRosterEntry(
  * DELETE /user/employees/:id/roster/:entryId — drop a date override.
  *
  * Unlike a timeline entry this IS the right way to undo one: a roster row says
- * nothing about history, it only outranks the rotation and the defaults for its one
+ * nothing about history, it only outranks the assignment and the defaults for its one
  * date, and removing it hands that date straight back to them.
  */
 export async function deleteEmployeeRosterEntry(

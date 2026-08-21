@@ -576,31 +576,37 @@
  * `department_id` — a department's default wins over its company's, and a
  * department with none falls back to the company's.
  *
+ * A shift is a TIMELINE. The record holds the identity (company, name, status);
+ * every RULE — the times, break, concession, grace, day-length thresholds, both
+ * penalties, the week-off policy — lives on dated versions, because editing a
+ * shift used to rewrite history: moving General from 09:00-18:00 to 08:00-17:00
+ * re-resolved every closed day, and a payslip recomputed after the edit
+ * disagreed with the one already paid.
+ *
+ * `POST` therefore REQUIRES `effective_date` — it opens the timeline. On `PATCH`
+ * the field is optional and the difference is the whole feature: WITH a date it
+ * writes a NEW version from that day and keeps the history (what a user means by
+ * "change the shift"); WITHOUT one it AMENDS the version currently in force,
+ * rewriting history with it (only correct for a typo in timings nobody has
+ * worked yet). Re-sending a date that already has a version amends that version.
+ * `name` and `status` are NOT versioned — they apply at once whatever date
+ * accompanies them, and a patch touching only those writes no version at all.
+ *
+ * Every shift response carries `version_id` and `effective_date`, and the PATCH
+ * answers the shift AS OF the date just written — so a future-dated change leaves
+ * the list row showing the OLD timings until that date arrives. Which version
+ * answers a day: the greatest `effective_date` <= that day, and if the day
+ * precedes every version, the earliest one.
+ *
+ * `HISTORY` (GET /user/shifts/:id/history, gated on `shifts:read`) answers
+ * `{ items, total }` newest first — the versioned rules only, with `is_current`
+ * on EXACTLY ONE row: the version in force today, which is not always the top
+ * row because a change can be dated ahead. `name` and `status` are absent on
+ * purpose; repeating today's name on every historical row would suggest the
+ * shift had always been called that.
+ *
  * A DELETE is refused with 409 while the shift is still a default anywhere or
- * referenced by a rotation, an assignment or a roster entry.
- *
- * ───────────────────────────────────────────────────────────────────────────
- * SHIFT_ROTATIONS — /user/shift-rotations                     (bearer)
- * ───────────────────────────────────────────────────────────────────────────
- * Rotation cycles — a named ring of shifts an employee walks week by week
- * (nights one week, mornings the next).
- *
- * Tenant-scoped like the shifts they name: a required `company_id` on reads and
- * in the create body, and every shift in the cycle must belong to that same
- * company.
- *
- * `weeks` is the WHOLE cycle, not a patchable list: it has to cover weeks
- * `1..cycle_length_weeks` exactly once, because an employee landing on a missing
- * week would silently fall through to the department default. On a PATCH,
- * omitting `weeks` leaves the cycle alone and sending it replaces every week —
- * so `cycle_length_weeks` and `weeks` are validated against each other whichever
- * of the two moved.
- *
- * The cycle is anchored per assignment, not globally: week 1 starts at each
- * employee's own `effective_date`, so two people assigned a week apart are
- * legitimately out of phase.
- *
- * A DELETE is refused with 409 while employees are still assigned to it.
+ * referenced by an assignment or a roster entry.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * WEEKOFF_POLICIES — /user/weekoff-policies                   (bearer)
@@ -614,9 +620,30 @@
  * `week_number` 2 and 4, and because a dated rule beats an every-week rule,
  * `is_off: false` carves an exception out of a broad one.
  *
- * Like the rotation's cycle, the rule set is replaced wholesale: omitting `days`
+ * The rule set is replaced wholesale: omitting `days`
  * on a PATCH leaves the rules alone and sending it replaces them all — "which
  * days are off" only makes sense read together, so there is no per-rule patch.
+ *
+ * A policy has TWO shapes, chosen with `off_type`. FIXED (the default, and what
+ * every policy predating the column is) names the weekdays in `days` and carries
+ * no `weekly_off_days` — sending one is a 400. FLEXIBLE names a COUNT instead:
+ * `weekly_off_days` (1–6) days off a week, ANY days, with `days` required to be
+ * `[]`. It exists because a shop, warehouse or hospital runs seven days and each
+ * person rests when the rota allows; under the old model those employees were
+ * absent on the day they rested and present on the Sunday they worked. Switching
+ * a policy to FLEXIBLE on a PATCH CLEARS whatever weekday rules it still had.
+ *
+ * THE SURPRISING PART: under a FLEXIBLE policy NOTHING IS OFF IN ADVANCE, since
+ * the employee has not taken their day yet. `is_week_off` is false for every day
+ * of such a policy everywhere it appears, and false there does NOT mean "must
+ * work" — read the new `weekoff_flexible_days` in the resolved-shift block
+ * alongside it, and render its caption ("Any 1 day off per week") instead of an
+ * empty weekday list. The days are credited AFTERWARDS on the attendance month
+ * grid: the first `weekly_off_days` days of each week (Monday–Sunday) the
+ * employee did not work come back as `weekly_off`, and only the days beyond that
+ * as `absent`. A holiday, an approved leave or a future day is never spent on the
+ * allowance, a worked day is never retrospectively an off day, and a week clipped
+ * by the edge of the grid is judged on the days the grid contains.
  *
  * `SET_DEFAULT` / `CLEAR_DEFAULT` take exactly one of `company_id` or
  * `department_id` (the department wins). A shift may name its own policy, but
@@ -741,7 +768,22 @@
  * EDUCATIONS / EDUCATION — step 5a, qualifications.
  *
  * EXPERIENCES / EXPERIENCE — step 5b, prior employment. Its two dates are
- * `YYYY-MM`, never full dates.
+ * `YYYY-MM`, never full dates, and `ctc_type` ("MONTHLY" | "YEARLY", nullable)
+ * says what `salary` was quoted for — rows predating the column don't say.
+ *
+ * The verification block — `is_verified`, `verified_by`, `verification_review` —
+ * is ONE statement, held together by a database CHECK: verified means a verifier
+ * is recorded (a review optional), unverified means both are null. So:
+ *   - `verification_review` without `is_verified: true` is a 400 on either verb;
+ *   - `is_verified: true` (re-)stamps the CALLER as the verifier, and omitting the
+ *     review keeps the stored one;
+ *   - `is_verified: false` clears the verifier and the review, and a non-null
+ *     review alongside it is a 400 rather than a partial instruction;
+ *   - omitting `is_verified` lets the review be edited alone, but only on a row
+ *     that is already verified.
+ * `verified_by` is NOT accepted in a body — the API stamps the logged-in user, so
+ * nobody can attribute a verification to a colleague. LIST rows additionally
+ * resolve `verified_by_name`; the single-row GET does not.
  *
  * DOCUMENTS / DOCUMENT — step 6, attachments. `document` is the object key from
  * `UPLOADS.EMPLOYEE_DOCUMENT`; the file itself never passes through here.
@@ -757,19 +799,17 @@
  * SHIFT_ON_DAY / SHIFTS / SHIFT_ENTRY / ROSTER / ROSTER_ENTRY — step 9, which
  * shift the employee works, and why.
  *
- * `SHIFT_ON_DAY` walks the whole precedence chain (roster → rotation →
- * assignment → department default → company default) for one date and reports
+ * `SHIFT_ON_DAY` walks the whole precedence chain (roster → assignment →
+ * department default → company default) for one date and reports
  * which link answered in `source`. That's the only way to tell "General,
  * because it's the company default" (nothing to undo) from "General, because
  * somebody rostered it onto this date" (one row a manager can remove). It
- * answers for any day, past or future, so a rotation can be walked forward
- * without materialising anything.
+ * answers for any day, past or future, without materialising anything.
  *
  * `SHIFTS` is the assignment TIMELINE — append-only and unpaginated, since a
  * career collects a handful of entries. An EMPTY timeline is the ordinary,
  * healthy state: it means the employee is on their department's or company's
- * default. A POST with NEITHER `shift_id` nor `rotation_id` is how an
- * assignment ENDS ("back to the default from this date"); `SHIFT_ENTRY`'s
+ * default. A POST with NO `shift_id` is how an assignment ENDS ("back to the default from this date"); `SHIFT_ENTRY`'s
  * DELETE is only for an entry typed by mistake, because removing one rewrites
  * which shift the employee was judged against on days already closed.
  *
@@ -786,6 +826,75 @@
  * company-wide queue. Recording a leave from the back office IS the approval
  * (`status` defaults to `APPROVED`); `STATUS` is the decision on one that was
  * filed as `PENDING`, and only a pending row can be decided.
+ *
+ * Every row carries an APPROVAL BLOCK — `pending_with_role` (the chain level
+ * holding it), `pending_with_owner` (it fell through to the account owner) and
+ * `can_decide` (may YOU press Approve / Reject) — on the list and on the detail
+ * read alike, all null/false once the leave is decided. Read them as ONE
+ * statement: `can_decide` describes YOU, the other two describe the ROW, which
+ * is why an owner sees `can_decide: true` on a row reading `pending_with_role:
+ * "HR"`. DRIVE THE BUTTONS OFF `can_decide` — `leaves:update` now only says you
+ * may work a leave desk, not that this application is yours.
+ *
+ * `?pending_with_me=true` is your own queue and implies `status=PENDING`. For an
+ * approver it is the companies where you are the level that answered; FOR THE
+ * OWNER it is the FALL-THROUGH, the companies no level covers. The plain list is
+ * unchanged either way: VISIBILITY IS NOT ROUTING, and the owner goes on seeing
+ * every company's rows whether or not any hierarchy user can.
+ *
+ * On `STATUS`, `remark` is REQUIRED when `status: "REJECTED"` — a rejection with
+ * no reason leaves the employee nothing to act on, and a blank one is a 400. A
+ * 403 is also possible there even holding `leaves:update`, when the leave stands
+ * at somebody else's level; the message names that level, so surface it.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * LEAVE_APPROVAL_CHAIN — /user/leave-approval-chain            (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The account's leave approval chain — ONE ordered list of ROLE NAMES (HR →
+ * Manager → Team Leader) that EVERY company of the account follows. There is
+ * nothing to configure per company; that is the whole point.
+ *
+ * For a given employee's leave the approver is the FIRST level with a live user
+ * who can REACH that employee's company. If no level has one, the leave falls to
+ * the ACCOUNT OWNER — the chain's implicit last link.
+ *
+ * Role NAMES and not ids, because roles are company-scoped: one account
+ * legitimately holds three separate "HR Manager" rows, one per company, and a
+ * chain naming an id would route only one company's leave. "Reach" and not "the
+ * role's own company", because one GLOBAL "HR" user covers all ten companies
+ * without a role being authored in each — and an account running a separate HR
+ * per site is served by the same rule, since each of those users reaches only
+ * their own site.
+ *
+ * THE EMPTY CHAIN IS THE OFF SWITCH. An account that has configured nothing
+ * behaves exactly as it did before the feature existed: anyone holding
+ * `leaves:update` may decide any leave. Routing begins only on a saved chain.
+ *
+ * `GET` answers `{ levels, company_count, companies_with_owner }`, each level
+ * carrying `user_count` and `companies_covered`. `user_count: 0` is a WARNING —
+ * a dead link the chain silently skips. `companies_covered` short of
+ * `company_count` is NOT an error; that is why there is a level below.
+ * `companies_with_owner` names the companies whose leave waits on the owner.
+ *
+ * `ROLES` answers `{ role_names }` — the distinct role names across the whole
+ * account, which are the picker's options.
+ *
+ * `PUT` takes `{ role_names }` and answers the same shape as the GET. THE ARRAY
+ * ORDER IS THE ORDER OF AUTHORITY. Sending `[]` clears the chain and switches
+ * routing off. A role may appear only once (400 otherwise) and every name must
+ * exist somewhere in the account (400 naming the offenders) — a typo would
+ * silently never match and route the leave one authority too high with no error
+ * anywhere. The whole list every time: there is no per-level endpoint, because
+ * inserting a level renumbers everything below it.
+ *
+ * Permissions: `hierarchy:read` for the menu, `leave-approval-chain:read` to
+ * view (grantable to a role) and `leave-approval-chain:update` to set it —
+ * OWNER ONLY, and not offered by the role builder, same treatment as `roles:*`,
+ * because whoever edits the chain chooses who approves leave and a role holding
+ * it could route every application in the account to itself. Nothing is granted
+ * by default: the three codes must be ticked onto the account's subscription
+ * (`PATCH /admin/organizations/:id/permissions`) before its owner can reach the
+ * screen.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * SALARY — /user/salary                                        (bearer)

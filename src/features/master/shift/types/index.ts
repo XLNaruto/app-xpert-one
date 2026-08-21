@@ -6,6 +6,11 @@ export type LateCheckInPenaltyType = 'PERCENTAGE' | 'FIXED'
 /**
  * A shift master record as consumed by the UI (camelCase), mapped from the raw
  * `/user/shifts` response.
+ *
+ * A shift is a TIMELINE: the identity below (company, name, status) is the record,
+ * and every RULE hangs off a dated version. The same shift id legitimately reports
+ * different timings for different days — what you get here is the version in force
+ * for the day the API answered for, named by `versionId` / `effectiveDate`.
  */
 export interface Shift extends AuditFields {
   id: number
@@ -63,4 +68,47 @@ export interface Shift extends AuditFields {
    */
   weekoffPolicyId: number | null
   status: boolean
+  /**
+   * Which dated version these timings are, and the day it took effect. `null` on
+   * a response written before the timeline existed.
+   */
+  versionId: number | null
+  /** `YYYY-MM-DD` — the day this version's rules started applying. */
+  effectiveDate: string
+}
+
+/**
+ * One dated version of a shift's rules.
+ *
+ * Which version answers a day: the greatest `effectiveDate` <= that day, and if
+ * the day precedes every version, the earliest one — so history older than the
+ * shift itself still resolves.
+ *
+ * `shiftName` and `status` are deliberately absent: they aren't versioned, and
+ * repeating today's name on every historical row would suggest the shift had
+ * always been called that.
+ */
+export interface ShiftVersion extends AuditFields {
+  id: number
+  shiftId: number
+  /** `YYYY-MM-DD`. */
+  effectiveDate: string
+  startTime: string
+  endTime: string
+  isNightShift: boolean
+  breakMinutes: number
+  isLateBreakPenaltyApplicable: boolean
+  concessionMinutes: number
+  isLateCheckInPenaltyApplicable: boolean
+  lateCheckInPenaltyType: LateCheckInPenaltyType | null
+  lateCheckInPenaltyValue: number | null
+  earlyExitGraceMinutes: number
+  minFullDayHours: number
+  minHalfDayHours: number
+  weekoffPolicyId: number | null
+  /**
+   * The version in force TODAY — exactly one row carries it, and it is NOT always
+   * the newest, because a change can be dated in the future.
+   */
+  isCurrent: boolean
 }

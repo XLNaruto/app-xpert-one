@@ -7,7 +7,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { LEAVE_DEFAULT_SORT } from '../constants'
+import { LEAVE_DEFAULT_SORT, LEAVE_TAB_MINE } from '../constants'
 import { leaveDecisionSchema, type LeaveDecisionFormValues } from '../schemas'
 import { useLeaves } from '../api/use-leaves'
 import { useDecideLeave, useDeleteLeave } from '../api/use-leave-mutations'
@@ -35,10 +35,23 @@ export function useLeaveList() {
     onSortingChange,
   } = usePagination(DEFAULT_PAGE_SIZE, LEAVE_DEFAULT_SORT)
 
-  /** Status filter — `''` is every status, which the API gets as no filter. */
+  /**
+   * The tab in force. `''` is every status; `MINE` is `pending_with_me=true`,
+   * which is a different question from a status and so travels as its own param.
+   */
   const [statusFilter, setStatusFilter] = useState('')
 
-  const list = useLeaves(params, statusFilter ? { status: statusFilter } : {})
+  const isMyQueue = statusFilter === LEAVE_TAB_MINE
+  const list = useLeaves(
+    params,
+    isMyQueue
+      ? // The endpoint implies `status=PENDING` itself — sending both would be
+        // saying the same thing twice.
+        { pendingWithMe: true }
+      : statusFilter
+        ? { status: statusFilter }
+        : {},
+  )
   const deleteLeave = useDeleteLeave()
   const decideLeave = useDecideLeave()
 
@@ -75,6 +88,13 @@ export function useLeaveList() {
           toast.success(values.status === 'APPROVED' ? 'Leave approved' : 'Leave rejected')
           closeDecision()
         },
+        /*
+         * A 403 is possible here even with `leaves:update` — the leave may be
+         * standing at somebody else's level of the approval chain. The server's
+         * message names that level ("This leave is with HR (level 1)…"), which is
+         * exactly what tells the user who to chase, so it is surfaced verbatim.
+         * The dialog stays open behind it rather than closing on a failure.
+         */
         onError: (error) =>
           toast.error(getApiErrorMessage(error, "Couldn't record the decision.")),
       },
@@ -115,6 +135,7 @@ export function useLeaveList() {
     onSortingChange,
     statusFilter,
     changeStatusFilter,
+    isMyQueue,
     isLoading: list.isLoading,
     isError: list.isError && !isForbidden,
     error: list.error,

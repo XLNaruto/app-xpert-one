@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Controller } from 'react-hook-form'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Clock, Moon } from 'lucide-react'
+import { Clock, History, Moon } from 'lucide-react'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { DateField } from '@/components/common/date-field'
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { TableRowActions } from '@/components/common/table-row-actions'
@@ -14,10 +15,12 @@ import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatDate } from '@/lib/utils'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { LATE_CHECK_IN_PENALTY_TYPE_OPTIONS, SHIFT_SORT } from '../constants'
 import { formatLateCheckInPenalty, formatShiftWindow } from '../lib/shift-mappers'
+import { ShiftHistoryDialog } from './shift-history-dialog'
 import { useShiftList } from '../hooks/use-shift-list'
 import { useShiftForm } from '../hooks/use-shift-form'
 import type { Shift } from '../types'
@@ -37,6 +40,11 @@ interface CompanyShiftTabProps {
  * It is deliberately NOT part of the company form: a shift is its own record on
  * `/user/shifts`, saved by its own button, so the two never share a submit (and
  * no `<form>` ends up nested inside another).
+ *
+ * **A shift is a timeline.** Its rules hang off dated versions, so a row shows the
+ * timings in force for the day the list read — future-date a change and the row
+ * goes on showing the old ones until that date arrives, which is correct rather
+ * than stale. The clock icon on each row opens the whole history.
  */
 export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
   const list = useShiftList(companyId)
@@ -65,10 +73,29 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         header: () => <span className="text-xs font-medium uppercase">Actions</span>,
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
-          <TableRowActions
-            onEdit={canUpdate ? () => list.setEditing(row.original) : undefined}
-            onDelete={canDelete ? () => list.setPendingDelete(row.original) : undefined}
-          />
+          <div className="flex items-center gap-2">
+            <TableRowActions
+              onEdit={canUpdate ? () => list.setEditing(row.original) : undefined}
+              onDelete={canDelete ? () => list.setPendingDelete(row.original) : undefined}
+            />
+            {/*
+              Gated on `shifts:read` like the list itself — the history is the same
+              record read across time, not a separate right.
+            */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Update history"
+                  onClick={() => list.setHistoryFor(row.original)}
+                  className="grid size-8 cursor-pointer place-items-center rounded-lg bg-slate-500/10 text-slate-600 transition-colors hover:bg-slate-500/20 dark:text-slate-300"
+                >
+                  <History className="size-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Update history</TooltipContent>
+            </Tooltip>
+          </div>
         ),
       },
       {
@@ -91,6 +118,16 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             )}
           </div>
         ),
+      },
+      {
+        id: 'effectiveDate',
+        header: 'Effective From',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        // Which dated version these timings are. A row dated ahead of today is a
+        // change that hasn't arrived yet, so the shift still works the old hours.
+        cell: ({ row }) =>
+          row.original.effectiveDate ? formatDate(row.original.effectiveDate) : '—',
       },
       {
         id: SHIFT_SORT.startTime,
@@ -218,6 +255,24 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field label="Shift Name" required error={form.errors.shiftName?.message}>
             <Input placeholder="General Shift" {...form.register('shiftName')} />
           </Field>
+          {/*
+            The date is the edit's whole point: an edit WRITES A NEW VERSION from
+            here rather than overwriting what came before, so days already closed
+            go on resolving against the rules they were actually judged by. Name
+            and status aren't versioned — changing only those sends no date.
+          */}
+          <DateField
+            control={form.control}
+            name="effectiveDate"
+            label="These Timings Apply From"
+            required
+            error={form.errors.effectiveDate?.message}
+            hint={
+              form.isEdit
+                ? "A new dated version is written from this day. Earlier days keep being judged by the timings that were in force when they happened — this is what stops an edit changing last month's attendance. Change only the name or status and no version is written at all."
+                : 'The day these timings start applying. It opens the shift\'s timeline.'
+            }
+          />
           <TimeField
             control={form.control}
             name="startTime"
@@ -501,6 +556,11 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           />
         )}
       </div>
+
+      <ShiftHistoryDialog
+        shift={list.historyFor}
+        onClose={() => list.setHistoryFor(null)}
+      />
 
       <ConfirmDialog
         open={list.pendingDelete !== null}

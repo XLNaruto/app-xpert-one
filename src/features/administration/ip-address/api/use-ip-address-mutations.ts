@@ -59,11 +59,15 @@ export function useDeleteIpAddress() {
  * Only the header changes, but the whole family is invalidated anyway: the mode
  * decides which of the two lists is actually enforcing anything, so the rows are
  * read differently after the switch.
+ *
+ * The endpoint re-checks the caller's password, so it rides along with the mode
+ * rather than being read from anywhere — nothing keeps it after the request.
  */
 export function useUpdateIpAccessMode() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (mode: IpAccessMode) => updateIpAccessMode(mode),
+    mutationFn: ({ mode, password }: { mode: IpAccessMode; password: string }) =>
+      updateIpAccessMode(mode, password),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.ipAddress.all })
     },

@@ -1,6 +1,7 @@
 export { CompanyShiftTab } from './components/company-shift-tab'
 export { DepartmentShiftTab } from './components/department-shift-tab'
 export { useShifts } from './api/use-shifts'
+export { useShiftHistory } from './api/use-shift-history'
 export {
   useCreateShift,
   useUpdateShift,
@@ -17,4 +18,4 @@ export { shiftOptions, formatShiftWindow, formatTime, toShift } from './lib/shif
  */
 export { shiftResponseSchema } from './schemas'
 export type { ShiftResponse } from './schemas'
-export type { Shift } from './types'
+export type { Shift, ShiftVersion } from './types'

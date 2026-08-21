@@ -149,15 +149,10 @@ export const endpoints = {
     GET: (id: number) => `/user/shifts/${id}`,
     PATCH: (id: number) => `/user/shifts/${id}`,
     DELETE: (id: number) => `/user/shifts/${id}`,
+    /** The dated versions of one shift's rules, newest first. */
+    HISTORY: (id: number) => `/user/shifts/${id}/history`,
     SET_DEFAULT: (id: number) => `/user/shifts/${id}/set-default`,
     CLEAR_DEFAULT: '/user/shifts/clear-default',
-  },
-  SHIFT_ROTATIONS: {
-    LIST: '/user/shift-rotations',
-    POST: '/user/shift-rotations',
-    GET: (id: number) => `/user/shift-rotations/${id}`,
-    PATCH: (id: number) => `/user/shift-rotations/${id}`,
-    DELETE: (id: number) => `/user/shift-rotations/${id}`,
   },
   WEEKOFF_POLICIES: {
     LIST: '/user/weekoff-policies',
@@ -271,6 +266,17 @@ export const endpoints = {
     PATCH: (id: number) => `/user/employee-leaves/${id}`,
     DELETE: (id: number) => `/user/employee-leaves/${id}`,
     STATUS: (id: number) => `/user/employee-leaves/${id}/status`,
+  },
+  /**
+   * The account's leave approval chain — ONE ordered list of role names that
+   * every company of the account follows. There is no per-level endpoint,
+   * because inserting a level renumbers everything below it.
+   */
+  LEAVE_APPROVAL_CHAIN: {
+    GET: '/user/leave-approval-chain',
+    PUT: '/user/leave-approval-chain',
+    /** Distinct role names across the whole account — the picker's options. */
+    ROLES: '/user/leave-approval-chain/roles',
   },
   SALARY: {
     REGISTER: '/user/salary/register',

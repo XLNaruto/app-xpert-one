@@ -35,11 +35,12 @@ export function Topbar() {
     })
   }
 
-  // Prefer the live `/me` profile; fall back to the token-derived auth user.
-  const name = profile?.displayName ?? user?.name ?? 'User'
+  // Prefer the live `/user/me` account; fall back to the token-derived user.
+  const name = profile?.account.organizationName ?? user?.name ?? 'User'
   const phone =
-    profile?.phone?.replace(/^\+91/, '') ??
+    profile?.account.organizationMobileNumber?.replace(/^\+91/, '') ??
     user?.phone?.replace(/^\+91/, '') ??
+    profile?.account.organizationEmail ??
     user?.email
 
   return (

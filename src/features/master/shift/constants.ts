@@ -36,13 +36,24 @@ export const LATE_CHECK_IN_PENALTY_TYPE_LABELS: Record<LateCheckInPenaltyType, s
   FIXED: '₹',
 }
 
+/** Today as `YYYY-MM-DD` — the day an edit's new version opens on. */
+export function todayIso(): string {
+  const now = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
 /**
  * Blank form values for a new shift. The four tolerance fields open blank and
  * fall back to the API's own defaults, so a company that doesn't care about them
  * never has to fill them in.
+ *
+ * `effectiveDate` is filled in by the form rather than left blank: it's required,
+ * and today is what "these timings apply from" almost always means.
  */
 export const EMPTY_SHIFT_FORM: ShiftFormValues = {
   shiftName: '',
+  effectiveDate: '',
   startTime: '',
   endTime: '',
   breakMinutes: '',

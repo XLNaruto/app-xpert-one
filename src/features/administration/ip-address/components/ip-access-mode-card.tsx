@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { PasswordInput } from '@/components/ui/password-input'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { Field } from '@/components/common/form-field'
 import type { useIpAccessModeSwitch } from '../hooks/use-ip-access-mode-switch'
 
 /**
@@ -158,9 +160,48 @@ export function IpAccessModeCard({
         }
         cancelLabel="Cancel"
         loading={access.isSwitching}
+        confirmDisabled={!access.canConfirmSwitch}
         keepOpenOnConfirm
         onConfirm={access.confirmSwitch}
-      />
+      >
+        {/*
+          The endpoint verifies the caller's password before it will move the
+          mode — this switch can shut out the administrators themselves, so the
+          account holder confirms it rather than whoever holds the session.
+        */}
+        <Field
+          label="Your Password"
+          required
+          hint="Confirms it's you making the change. It is sent with this request only and never stored."
+          error={access.passwordError}
+        >
+          <PasswordInput
+            value={access.password}
+            onChange={(event) => access.setPassword(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && access.canConfirmSwitch) {
+                event.preventDefault()
+                access.confirmSwitch()
+              }
+            }}
+            placeholder="Enter your password"
+            /*
+              No autofill here. This field exists to prove the person at the
+              keyboard is the account holder — a saved password dropped in by the
+              browser would confirm nothing. Chrome ignores `off` on password
+              inputs, so `new-password` is what actually suppresses it, and the
+              unguessable `name` keeps heuristic managers off it too.
+            */
+            name="ip-access-mode-confirm"
+            autoComplete="new-password"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            autoFocus
+            disabled={access.isSwitching}
+          />
+        </Field>
+      </ConfirmDialog>
     </>
   )
 }

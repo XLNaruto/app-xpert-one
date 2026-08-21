@@ -290,7 +290,15 @@ export interface EmployeeEducation extends AuditFields {
   percentage: string
 }
 
-/** Prior employment. Both dates are months (`YYYY-MM`), never full dates. */
+/** What a prior employer's `salary` is quoted for. `null` — the row doesn't say. */
+export type ExperienceCtcType = 'MONTHLY' | 'YEARLY'
+
+/**
+ * Prior employment. Both dates are months (`YYYY-MM`), never full dates.
+ *
+ * The verification block is one statement, not three fields: a verified row always
+ * names a verifier, and an unverified one carries neither a verifier nor a review.
+ */
 export interface EmployeeExperience extends AuditFields {
   id: number
   employeeId: number | null
@@ -299,9 +307,17 @@ export interface EmployeeExperience extends AuditFields {
   toDate: string
   designation: string
   salary: string
+  ctcType: ExperienceCtcType | null
   leavingReason: string
   contactPersonName: string
   contactPersonNumber: string
+  contactPersonEmail: string
+  isVerified: boolean
+  /** A `users.id` — the API stamps it; the form never sends it. */
+  verifiedBy: number | null
+  /** Resolved on list rows only; empty from the single-row read. */
+  verifiedByName: string
+  verificationReview: string
 }
 
 /* ── Step 6 — documents ──────────────────────────────────────────────────── */
@@ -422,19 +438,17 @@ export interface EmployeeShiftAssignment extends AuditFields {
   employeeServiceId: number
   shiftId: number | null
   shiftName: string
-  rotationId: number | null
-  rotationName: string
-  /** `YYYY-MM-DD`. For a rotation this is also the cycle's anchor: week 1 starts here. */
+  /** `YYYY-MM-DD` — the day this entry starts applying. */
   effectiveDate: string
 }
 
 /** Where a roster row came from — a manual override, or one the system laid down. */
-export type RosterSourceType = 'MANUAL' | 'ROTATION' | 'POLICY'
+export type RosterSourceType = 'MANUAL' | 'POLICY'
 
 /**
  * One per-date shift override. The highest-priority answer in the resolution
  * chain, and the only part of it that's safe to delete: a roster row says nothing
- * about history, it just outranks the rotation and the defaults for its one date.
+ * about history, it just outranks the assignment and the defaults for its one date.
  */
 export interface EmployeeRosterEntry extends AuditFields {
   id: number
@@ -452,7 +466,7 @@ export interface EmployeeRosterEntry extends AuditFields {
  * way to tell "General, because it's the company default" (nothing to undo) from
  * "General, because somebody rostered it onto this date" (one row to remove).
  */
-export type ShiftSource = 'roster' | 'rotation' | 'assignment' | 'department' | 'company'
+export type ShiftSource = 'roster' | 'assignment' | 'department' | 'company'
 
 /**
  * The shift an employee works on one date, and why.
@@ -466,5 +480,16 @@ export interface EmployeeShiftOnDay {
   day: string
   shift: Shift | null
   source: ShiftSource | null
+  /**
+   * Always FALSE under a flexible policy — nothing is off in advance there, since
+   * the employee hasn't taken their day yet. Read it together with
+   * `weekoffFlexibleDays`: false alone never means "must work".
+   */
   isWeekOff: boolean
+  /**
+   * How many days a week are off under a FLEXIBLE policy, or `null` when the
+   * pattern names weekdays. When it's set the days are credited afterwards on the
+   * attendance month grid, not badged in advance.
+   */
+  weekoffFlexibleDays: number | null
 }

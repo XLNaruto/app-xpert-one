@@ -24,20 +24,53 @@ export type WeekoffRuleFormValues = z.infer<typeof weekoffRuleSchema>
 /**
  * Create/edit form for one week-off policy.
  *
- * The rules are captured in two parts because that's how people think about
- * them: `everyWeekDays` are the plain "this weekday is always off" ticks, and
- * `rules` are the occurrence-specific ones (alternate Saturdays, or a working
- * exception on the 1st). Both collapse into the API's single `days` array.
+ * A policy has TWO shapes, chosen by `offType`:
+ *
+ * - **FIXED** names the weekdays, and is what every policy written before this
+ *   field existed is. The rules are captured in two parts because that's how
+ *   people think about them: `everyWeekDays` are the plain "this weekday is
+ *   always off" ticks, and `rules` are the occurrence-specific ones (alternate
+ *   Saturdays, or a working exception on the 1st). Both collapse into the API's
+ *   single `days` array.
+ * - **FLEXIBLE** names a COUNT instead — so many days off a week, any days. It
+ *   describes a shop, a warehouse or a hospital, where the business runs seven
+ *   days and each person rests when the rota allows. A named weekday would
+ *   contradict the count, so `days` must go out empty.
  */
 export const weekoffPolicySchema = z
   .object({
     name: recordNameField('the policy name', { max: 100 }),
+    /** Which of the two shapes this policy is. */
+    offType: z.enum(['FIXED', 'FLEXIBLE']),
     /** Weekdays that are off every week — `week_number: null`, `is_off: true`. */
     everyWeekDays: z.array(z.number().int().min(0).max(6)),
     rules: z.array(weekoffRuleSchema),
+    /** FLEXIBLE only: how many days a week are off. Held as the input's string. */
+    weeklyOffDays: z.string().trim(),
     status: z.boolean(),
   })
   .superRefine((values, ctx) => {
+    /*
+     * A flexible policy is judged on its count and nothing else — the weekday
+     * rules are cleared on the way out, so they aren't validated on the way in.
+     */
+    if (values.offType === 'FLEXIBLE') {
+      const count = Number(values.weeklyOffDays)
+      if (
+        values.weeklyOffDays === '' ||
+        !Number.isInteger(count) ||
+        count < 1 ||
+        count > 6
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['weeklyOffDays'],
+          message: 'Enter a whole number of days between 1 and 6',
+        })
+      }
+      return
+    }
+
     // A policy with no rule at all says nothing — the shift would fall through to
     // the platform's Sunday-only constant, which is not what saving it means.
     if (values.everyWeekDays.length === 0 && values.rules.length === 0) {
@@ -105,6 +138,11 @@ export const weekoffPolicyResponseSchema = z.object({
   company_id: z.number(),
   name: z.string(),
   status: z.boolean(),
+  /** Which shape the policy is. Absent on records written before the column. */
+  off_type: z.enum(['FIXED', 'FLEXIBLE']).nullish(),
+  /** FLEXIBLE only — how many days a week are off. `null` on a FIXED policy. */
+  weekly_off_days: z.number().nullish(),
+  /** Always `[]` for a FLEXIBLE policy: a named day would contradict the count. */
   days: z.array(weekoffDayResponseSchema),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
@@ -135,6 +173,13 @@ export interface WeekoffPolicyPayload {
   company_id: number
   name: string
   status: boolean
+  /**
+   * FLEXIBLE requires `weekly_off_days` and an EMPTY `days`; FIXED must not carry
+   * `weekly_off_days` at all — either mismatch is a 400, so the two travel as a
+   * pair rather than being set independently.
+   */
+  off_type: 'FIXED' | 'FLEXIBLE'
+  weekly_off_days?: number
   days: WeekoffDayPayload[]
 }
 

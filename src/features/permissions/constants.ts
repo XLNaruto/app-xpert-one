@@ -76,7 +76,6 @@ export const PERMISSIONS = {
   // ── Master · Shift Management ─────────────────────────────────────────────
   /** The company's shifts — edited on the company screen's Shift tab. */
   shifts: 'shifts',
-  shiftRotations: 'shift-rotations',
   weekoffPolicies: 'weekoff-policies',
   /** An employee's shift assignment. */
   employeeShifts: 'employee-shifts',
@@ -98,6 +97,21 @@ export const PERMISSIONS = {
    * question they're actually asking.
    */
   billing: 'billing',
+  /**
+   * Hierarchy Management — the section itself. It gates the menu group; the one
+   * screen under it gates on `leaveApprovalChain`.
+   */
+  hierarchy: 'hierarchy',
+  /**
+   * The account's leave approval chain — one ordered list of ROLE NAMES that
+   * every company of the account follows.
+   *
+   * `leave-approval-chain:read` is grantable to a role. `:update` is NOT offered
+   * by the role builder — same treatment as `roles:*` — because whoever edits the
+   * chain chooses who approves leave, so a role holding it could route every
+   * application in the account to itself. Only the account owner gets it.
+   */
+  leaveApprovalChain: 'leave-approval-chain',
   access: 'access',
   ipAddresses: 'ip-addresses',
   talkMonitoring: 'talk-monitoring',

@@ -21,6 +21,16 @@ export interface WeekoffDay {
   isOff: boolean
 }
 
+/**
+ * Which shape a policy is.
+ *
+ * `FIXED` names the weekdays (`days`), which is what every policy written before
+ * this field existed is. `FLEXIBLE` names a count instead — so many days off a
+ * week, ANY days — for a business that runs seven days and lets each person rest
+ * when the rota allows. A flexible policy carries no rules at all.
+ */
+export type WeekoffOffType = 'FIXED' | 'FLEXIBLE'
+
 /** A week-off policy master record as consumed by the UI. */
 export interface WeekoffPolicy extends AuditFields {
   id: number
@@ -28,6 +38,14 @@ export interface WeekoffPolicy extends AuditFields {
   companyId: number
   name: string
   status: boolean
-  /** The whole rule set — read together, it *is* the pattern. */
+  offType: WeekoffOffType
+  /**
+   * FLEXIBLE only: how many days a week are off. `null` on a FIXED policy.
+   *
+   * Nothing is off IN ADVANCE under this — the employee hasn't taken their day
+   * yet — so the days are credited afterwards on the attendance month grid.
+   */
+  weeklyOffDays: number | null
+  /** The whole rule set — read together, it *is* the pattern. Empty when FLEXIBLE. */
   days: WeekoffDay[]
 }

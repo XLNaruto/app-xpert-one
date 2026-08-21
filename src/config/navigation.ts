@@ -32,13 +32,13 @@ import {
   Network,
   Percent,
   ReceiptIndianRupee,
-  RefreshCw,
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
   UserRoundCog,
   UsersRound,
   Wallet,
+  Workflow,
   // UsersRound,
   // Wallet,
 } from "lucide-react";
@@ -318,18 +318,12 @@ export const navGroups: NavGroup[] = [
           Shift Management sits under Master because all three of its records are
           configuration the rest of the app points at. The shifts themselves are
           created on the company's Shift tab (they hang off a company id), so what
-          lives here is what has no home of its own: the rotation cycles built from
-          those shifts, and the week-off patterns they fall back on.
+          lives here is what has no home of its own: the week-off patterns the
+          shifts fall back on.
         */
         label: "Shift Management",
         icon: Clock,
         children: [
-          {
-            label: "Shift Rotation",
-            to: "/master/shift-rotation",
-            icon: RefreshCw,
-            permission: PERMISSIONS.shiftRotations,
-          },
           {
             label: "Week-Off Policy",
             to: "/master/weekoff-policy",
@@ -392,6 +386,30 @@ export const navGroups: NavGroup[] = [
         permission: PERMISSIONS.ipAddresses,
       },
       {
+        /*
+          Hierarchy Management — who decides what, across the whole account. One
+          row today (Leave), and a group rather than a flat row because the other
+          hierarchies land beside it as they're built.
+
+          ACCOUNT-scoped: the leave chain is authored once and every company of
+          the account follows it, which is the whole point of it — so the row
+          doesn't wait on a company being picked.
+        */
+        label: "Hierarchy Management",
+        icon: Workflow,
+        permission: PERMISSIONS.hierarchy,
+        companyIndependent: true,
+        children: [
+          {
+            label: "Leave",
+            to: "/administration/leave-approval-chain",
+            icon: CalendarCheck,
+            permission: PERMISSIONS.leaveApprovalChain,
+            companyIndependent: true,
+          },
+        ],
+      },
+      {
         // Billing is the ACCOUNT's plan, not a company's — nothing on it is
         // tenant-scoped, so it stays reachable before a company is picked.
         label: "Billing & Subscription",
@@ -414,7 +432,7 @@ export const navGroups: NavGroup[] = [
       companies it is granted, spanning every company of the account — so the
       screen doesn't wait on one being picked.
     */
-    title: "XpertOne Talk",
+    title: "Talk",
     items: [
       {
         // The employees' own Talk logins. A back-office user's Talk access is

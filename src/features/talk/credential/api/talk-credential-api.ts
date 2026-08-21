@@ -98,7 +98,7 @@ export async function fetchTalkCredentials(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load XpertOne Talk credentials.")
+    throw toApiError(error, "Couldn't load Talk credentials.")
   }
 }
 
@@ -115,7 +115,7 @@ export async function fetchTalkCredential(id: number): Promise<TalkCredential> {
     const raw = await http.get<unknown>(endpoints.TALK_CREDENTIALS.GET(id))
     return toTalkCredential(talkCredentialResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'XpertOne Talk credential not found')
+    throw toApiError(error, 'Talk credential not found')
   }
 }
 
@@ -137,7 +137,7 @@ export async function createTalkCredential(
     )
     return toTalkCredential(talkCredentialResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't issue the XpertOne Talk credential.")
+    throw toApiError(error, "Couldn't issue the Talk credential.")
   }
 }
 
@@ -160,7 +160,7 @@ export async function updateTalkCredential(
     )
     return toTalkCredential(talkCredentialResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the XpertOne Talk credential.")
+    throw toApiError(error, "Couldn't update the Talk credential.")
   }
 }
 
@@ -178,6 +178,6 @@ export async function deleteTalkCredential(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.TALK_CREDENTIALS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the XpertOne Talk credential.")
+    throw toApiError(error, "Couldn't delete the Talk credential.")
   }
 }

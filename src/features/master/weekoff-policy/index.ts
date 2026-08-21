@@ -21,10 +21,12 @@ export {
 export {
   weekoffPolicyOptions,
   weekoffSummary,
+  weekoffPolicySummary,
+  flexibleWeekoffCaption,
   weekDayName,
   weekDayShort,
   ruleLabel,
 } from './lib/weekoff-policy-mappers'
 export { WEEK_DAYS } from './constants'
 
-export type { WeekoffPolicy, WeekoffDay } from './types'
+export type { WeekoffPolicy, WeekoffDay, WeekoffOffType } from './types'

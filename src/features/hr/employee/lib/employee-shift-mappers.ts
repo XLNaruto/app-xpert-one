@@ -20,15 +20,9 @@ import type {
 /** Step 9 mappers — the assignment timeline, the roster and the resolved answer. */
 
 /** The links of the precedence chain, in the order the server walks them. */
-const SHIFT_SOURCES: ShiftSource[] = [
-  'roster',
-  'rotation',
-  'assignment',
-  'department',
-  'company',
-]
+const SHIFT_SOURCES: ShiftSource[] = ['roster', 'assignment', 'department', 'company']
 
-const ROSTER_SOURCES: RosterSourceType[] = ['MANUAL', 'ROTATION', 'POLICY']
+const ROSTER_SOURCES: RosterSourceType[] = ['MANUAL', 'POLICY']
 
 /** API record → one entry of the assignment timeline. */
 export function toEmployeeShiftAssignment(
@@ -40,8 +34,6 @@ export function toEmployeeShiftAssignment(
     employeeServiceId: response.employee_service_id,
     shiftId: response.shift_id ?? null,
     shiftName: response.shift_name ?? '',
-    rotationId: response.rotation_id ?? null,
-    rotationName: response.rotation_name ?? '',
     effectiveDate: toFormDate(response.effective_date),
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',
@@ -88,23 +80,22 @@ export function toEmployeeShiftOnDay(
     shift: response.shift ? toShift(response.shift) : null,
     source: source && SHIFT_SOURCES.includes(source) ? source : null,
     isWeekOff: response.is_week_off,
+    weekoffFlexibleDays: response.weekoff_flexible_days ?? null,
   }
 }
 
 /**
  * Validated form values → the assignment body.
  *
- * The `default` mode sends both ids as `null`, which is the API's own way of
- * saying "back to the department or company default from this date". That's why
- * the keys travel as explicit nulls instead of being left out.
+ * The `default` mode sends `shift_id: null`, which is the API's own way of saying
+ * "back to the department or company default from this date". That's why the key
+ * travels as an explicit null instead of being left out.
  */
 export function employeeShiftAssignmentToPayload(
   values: EmployeeShiftAssignmentFormValues,
 ): EmployeeShiftAssignmentPayload {
   return {
     shift_id: values.mode === 'shift' && values.shiftId ? Number(values.shiftId) : null,
-    rotation_id:
-      values.mode === 'rotation' && values.rotationId ? Number(values.rotationId) : null,
     effective_date: toRequiredApiDate(values.effectiveDate),
   }
 }
@@ -120,12 +111,11 @@ export function employeeRosterToPayload(
 }
 
 /**
- * What one timeline entry says, in words. An entry naming neither a shift nor a
- * rotation is not blank — it ends the previous assignment — so it gets a phrase of
- * its own rather than a dash.
+ * What one timeline entry says, in words. An entry naming no shift is not blank —
+ * it ends the previous assignment — so it gets a phrase of its own rather than a
+ * dash.
  */
 export function assignmentLabel(entry: EmployeeShiftAssignment): string {
-  if (entry.rotationId !== null) return entry.rotationName || `Rotation #${entry.rotationId}`
   if (entry.shiftId !== null) return entry.shiftName || `Shift #${entry.shiftId}`
   return 'Back to department / company default'
 }
@@ -133,7 +123,6 @@ export function assignmentLabel(entry: EmployeeShiftAssignment): string {
 /** How each link of the chain reads on screen, and what it means for the user. */
 export const SHIFT_SOURCE_LABELS: Record<ShiftSource, string> = {
   roster: 'Rostered for this date',
-  rotation: 'From the rotation cycle',
   assignment: 'From the assignment timeline',
   department: "The department's default",
   company: "The company's default",

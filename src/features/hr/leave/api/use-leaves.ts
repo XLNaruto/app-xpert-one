@@ -17,6 +17,7 @@ export function useLeaves(params: PageParams, filters: LeaveFilters = {}) {
       payType: filters.payType ?? '',
       fromDate: filters.fromDate ?? '',
       toDate: filters.toDate ?? '',
+      pendingWithMe: filters.pendingWithMe ?? false,
     }),
     queryFn: () => fetchLeaves(params, filters),
     // A panel scoped to an employee has nothing to list until there is one.

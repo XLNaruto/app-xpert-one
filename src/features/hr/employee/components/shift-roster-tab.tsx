@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Clock,
   Moon,
-  RefreshCw,
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +26,7 @@ import { FormSection } from '@/components/common/form-section'
 import { DateField } from '@/components/common/date-field'
 import { Forbidden } from '@/features/error'
 import { formatShiftWindow } from '@/features/master/shift'
+import { flexibleWeekoffCaption } from '@/features/master/weekoff-policy'
 import { formatDate } from '@/lib/utils'
 import { ASSIGNMENT_MODE_OPTIONS } from '../constants'
 import {
@@ -104,15 +104,10 @@ export function ShiftRosterTab({
         meta: { className: 'min-w-56' },
         cell: ({ row }) => {
           const entry = row.original
-          const isDefault = entry.shiftId === null && entry.rotationId === null
+          const isDefault = entry.shiftId === null
           return (
             <div className="flex items-center gap-2">
-              {entry.rotationId !== null ? (
-                <Badge variant="secondary">
-                  <RefreshCw className="mr-1 size-3" />
-                  Rotation
-                </Badge>
-              ) : entry.shiftId !== null ? (
+              {entry.shiftId !== null ? (
                 <Badge variant="secondary">
                   <Clock className="mr-1 size-3" />
                   Shift
@@ -251,7 +246,7 @@ export function ShiftRosterTab({
             onClick={tab.openAssign}
           >
             <Clock className="size-4" />
-            Assign Shift / Rotation
+            Assign Shift
           </Button>
         </div>
       </div>
@@ -270,8 +265,8 @@ export function ShiftRosterTab({
           <div>
             <p className="text-sm font-medium text-foreground">Shift on a given day</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Answered live by walking roster → rotation → assignment → department →
-              company. Any date works, past or future.
+              Answered live by walking roster → assignment → department → company.
+              Any date works, past or future.
             </p>
           </div>
           <div className="w-44">
@@ -320,11 +315,25 @@ export function ShiftRosterTab({
                 }
               />
               <div className="flex flex-wrap items-center gap-2">
-                {tab.resolved.isWeekOff && (
-                  <Badge variant="warning">
+                {/*
+                  Under a flexible policy nothing is off IN ADVANCE — the employee
+                  hasn't taken their day yet — so `isWeekOff` is false for every
+                  date and badging one would be wrong. The allowance is stated
+                  instead, and the days are credited afterwards on the attendance
+                  month grid.
+                */}
+                {tab.resolved.weekoffFlexibleDays !== null ? (
+                  <Badge variant="secondary">
                     <CalendarOff className="mr-1 size-3" />
-                    Week off
+                    {flexibleWeekoffCaption(tab.resolved.weekoffFlexibleDays)}
                   </Badge>
+                ) : (
+                  tab.resolved.isWeekOff && (
+                    <Badge variant="warning">
+                      <CalendarOff className="mr-1 size-3" />
+                      Week off
+                    </Badge>
+                  )
                 )}
                 {tab.resolved.shift?.isNightShift && (
                   <Badge variant="secondary">
@@ -386,7 +395,7 @@ export function ShiftRosterTab({
           <FormSection
             icon={CalendarClock}
             title="Date Overrides"
-            description="The dates somebody rostered by hand — they outrank the rotation and every default"
+            description="The dates somebody rostered by hand — they outrank the assignment and every default"
             className="flex-1"
           />
           {/*
@@ -455,7 +464,7 @@ export function ShiftRosterTab({
                 <EmptyState
                   icon={CalendarClock}
                   title="No overrides this month"
-                  description="Ordinary days aren't rows here — they resolve from the rotation, the assignment or a default. Override a date only for a one-off."
+                  description="Ordinary days aren't rows here — they resolve from the assignment or a default. Override a date only for a one-off."
                 />
               }
             />
@@ -464,16 +473,16 @@ export function ShiftRosterTab({
       </div>
 
       <StepNavFooter onContinue={onContinue} onBack={onBack} continueLabel="Finish">
-        Ending an assignment is an entry naming neither a shift nor a rotation —
-        never a deletion, which would rewrite closed days.
+        Ending an assignment is an entry naming no shift — never a deletion, which
+        would rewrite closed days.
       </StepNavFooter>
 
-      {/* ── Assign a shift or rotation ──────────────────────────────────── */}
+      {/* ── Assign a shift ──────────────────────────────────────────────── */}
 
       <StepDialog
         open={tab.dialog === 'assign'}
         onOpenChange={(open) => !open && tab.closeDialog()}
-        title="Assign Shift / Rotation"
+        title="Assign Shift"
         description="Effective-dated and append-only: the entry says what the employee works from this date on."
         onSubmit={tab.onSubmitAssignment}
         isPending={tab.isAssigning}
@@ -502,11 +511,7 @@ export function ShiftRosterTab({
           label="Effective From"
           required
           error={assignErrors.effectiveDate?.message}
-          hint={
-            mode === 'rotation'
-              ? "Also the cycle's anchor — week 1 of the rotation starts on this date."
-              : 'The date this takes effect.'
-          }
+          hint="The date this takes effect."
         />
 
         {mode === 'shift' && (
@@ -534,31 +539,6 @@ export function ShiftRosterTab({
           </Field>
         )}
 
-        {mode === 'rotation' && (
-          <Field
-            label="Rotation"
-            required
-            error={assignErrors.rotationId?.message}
-            className="sm:col-span-2"
-          >
-            <Controller
-              control={tab.assignForm.control}
-              name="rotationId"
-              render={({ field }) => (
-                <Combobox
-                  className="w-full"
-                  panelMinWidth={320}
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={tab.rotationSelectOptions}
-                  placeholder={tab.isRotationsLoading ? 'Loading…' : 'Select rotation'}
-                  searchPlaceholder="Search rotation"
-                />
-              )}
-            />
-          </Field>
-        )}
-
         {/*
           "Back to default" is a real entry, not a cancel — it's the only correct way
           to END an assignment, since deleting the old entry would change what closed
@@ -566,9 +546,9 @@ export function ShiftRosterTab({
         */}
         {mode === 'default' && (
           <p className="sm:col-span-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-            This appends an entry naming no shift and no rotation, which is how the
-            API says "back to the department or company default from this date". The
-            earlier entries stay on record.
+            This appends an entry naming no shift, which is how the API says "back
+            to the department or company default from this date". The earlier
+            entries stay on record.
           </p>
         )}
       </StepDialog>
@@ -579,7 +559,7 @@ export function ShiftRosterTab({
         open={tab.dialog === 'roster'}
         onOpenChange={(open) => !open && tab.closeDialog()}
         title="Override a Date"
-        description="The most specific statement there is — it outranks the rotation and every default for this one date."
+        description="The most specific statement there is — it outranks the assignment and every default for this one date."
         onSubmit={tab.onSubmitRoster}
         isPending={tab.isRostering}
         submitLabel="Save Override"
@@ -640,7 +620,7 @@ export function ShiftRosterTab({
         title="Drop this date override?"
         description={
           tab.pendingRosterDelete
-            ? `${formatDate(tab.pendingRosterDelete.workDate)} goes back to resolving from the rotation, the assignment or a default. Nothing about history changes.`
+            ? `${formatDate(tab.pendingRosterDelete.workDate)} goes back to resolving from the assignment or a default. Nothing about history changes.`
             : undefined
         }
         confirmLabel="Drop"

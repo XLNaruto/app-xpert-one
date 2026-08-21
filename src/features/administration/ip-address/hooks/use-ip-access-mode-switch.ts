@@ -9,10 +9,11 @@ import type { IpAccessMode } from '../schemas'
  * The access mode header on the list screen, and the switch behind it.
  *
  * Flipping the mode changes who can reach the panel at all, including the person
- * flipping it — so it goes through a confirmation rather than a bare toggle. The
- * `RESTRICTED`-with-an-empty-allow-list case is refused by the server (409); the
- * button is disabled for it up front too, since the answer is knowable from the
- * counts already on screen.
+ * flipping it — so it goes through a confirmation rather than a bare toggle, and
+ * the confirmation asks for the caller's own password, which the endpoint
+ * verifies. The `RESTRICTED`-with-an-empty-allow-list case is refused by the
+ * server (409); the button is disabled for it up front too, since the answer is
+ * knowable from the counts already on screen.
  */
 export function useIpAccessModeSwitch() {
   const { data, isLoading, isError, error } = useIpAccessMode()
@@ -20,6 +21,19 @@ export function useIpAccessModeSwitch() {
 
   /** The mode the confirmation is asking about, or `null` while it's shut. */
   const [pendingMode, setPendingMode] = useState<IpAccessMode | null>(null)
+
+  /**
+   * The password typed into the confirmation. Component state only — it is sent
+   * with the one request and dropped, never stored or persisted.
+   */
+  const [password, setPassword] = useState('')
+
+  /**
+   * The refusal from the last attempt, shown under the field. A wrong password
+   * comes back 400, which is a correction to make in place rather than a toast
+   * that leaves the dialog looking untouched.
+   */
+  const [passwordError, setPasswordError] = useState<string>()
 
   const mode = data?.mode ?? 'PUBLIC'
   const allowedCount = data?.allowedCount ?? 0
@@ -34,20 +48,33 @@ export function useIpAccessModeSwitch() {
    */
   const wouldLockEveryoneOut = nextMode === 'RESTRICTED' && allowedCount === 0
 
+  /** Shut the confirmation and forget what was typed into it. */
+  const closeSwitch = () => {
+    setPendingMode(null)
+    setPassword('')
+    setPasswordError(undefined)
+  }
+
   const confirmSwitch = () => {
-    if (!pendingMode) return
-    updateMode.mutate(pendingMode, {
-      onSuccess: () => {
-        toast.success(
-          pendingMode === 'RESTRICTED'
-            ? 'Access restricted to the allowed list'
-            : 'Access opened to every network except the blocked list',
-        )
-        setPendingMode(null)
+    if (!pendingMode || !password.trim()) return
+    setPasswordError(undefined)
+    updateMode.mutate(
+      { mode: pendingMode, password },
+      {
+        onSuccess: () => {
+          toast.success(
+            pendingMode === 'RESTRICTED'
+              ? 'Access restricted to the allowed list'
+              : 'Access opened to every network except the blocked list',
+          )
+          closeSwitch()
+        },
+        onError: (err) =>
+          setPasswordError(
+            getApiErrorMessage(err, "Couldn't change the IP access mode."),
+          ),
       },
-      onError: (err) =>
-        toast.error(getApiErrorMessage(err, "Couldn't change the IP access mode.")),
-    })
+    )
   }
 
   return {
@@ -72,8 +99,21 @@ export function useIpAccessModeSwitch() {
     isForbidden: isForbiddenError(error),
     forbiddenMessage: isForbiddenError(error) ? getApiErrorMessage(error) : undefined,
     pendingMode,
-    startSwitch: () => setPendingMode(nextMode),
-    cancelSwitch: () => setPendingMode(null),
+    password,
+    setPassword: (value: string) => {
+      setPassword(value)
+      // The old refusal describes the old attempt; keep it only until retyping.
+      setPasswordError(undefined)
+    },
+    passwordError,
+    /** Nothing to verify with — the confirm button stays disabled. */
+    canConfirmSwitch: password.trim().length > 0,
+    startSwitch: () => {
+      setPassword('')
+      setPasswordError(undefined)
+      setPendingMode(nextMode)
+    },
+    cancelSwitch: closeSwitch,
     confirmSwitch,
     isSwitching: updateMode.isPending,
   }

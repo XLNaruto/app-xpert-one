@@ -181,9 +181,15 @@ export async function fetchIpAccessMode(): Promise<IpAccessModeState> {
  * Refused with 409 when switching to `RESTRICTED` while the allow list is empty:
  * that would admit nobody at all, the caller included. Switching to `PUBLIC`
  * does NOT clear the block list — an address someone barred stays barred.
+ *
+ * The caller's own password is required and verified server-side — this is the
+ * one write that can shut the panel's administrators out, so re-entering it is
+ * what proves the session is being driven by the account holder. A wrong or
+ * missing password comes back 400 and the confirmation shows that message.
  */
 export async function updateIpAccessMode(
   mode: IpAccessMode,
+  password: string,
 ): Promise<IpAccessModeState> {
   try {
     const raw = await http.put<unknown, IpAccessModePayload>(
@@ -191,6 +197,7 @@ export async function updateIpAccessMode(
       {
         company_id: activeCompanyId('IP access control'),
         ip_access_mode: mode,
+        password,
       },
     )
     return toIpAccessModeState(ipAccessModeResponseSchema.parse(raw))

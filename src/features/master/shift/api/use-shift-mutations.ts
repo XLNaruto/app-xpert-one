@@ -20,11 +20,24 @@ export function useCreateShift(companyId?: number) {
   })
 }
 
-/** PATCH /user/shifts/:id — update a shift, then refresh the list + detail. */
+/**
+ * PATCH /user/shifts/:id — update a shift, then refresh the list, detail and
+ * history (all three hang off `shift.all`, and an edit can append a version).
+ *
+ * `withEffectiveDate` says whether this save writes a new dated version or amends
+ * the one in force — see `updateShift`. The caller decides it from what the form
+ * actually moved, since name and status aren't versioned.
+ */
 export function useUpdateShift(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (values: ShiftFormValues) => updateShift(id, values),
+    mutationFn: ({
+      values,
+      withEffectiveDate,
+    }: {
+      values: ShiftFormValues
+      withEffectiveDate: boolean
+    }) => updateShift(id, values, withEffectiveDate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.shift.all })
     },

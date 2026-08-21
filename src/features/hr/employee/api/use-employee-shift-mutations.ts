@@ -18,7 +18,7 @@ import {
  * resolved-shift card has to re-read alongside the table that was written to.
  */
 
-/** POST /user/employees/:id/shifts — assign a shift or rotation, or end an assignment. */
+/** POST /user/employees/:id/shifts — assign a shift, or end an assignment. */
 export function useCreateEmployeeShiftAssignment(employeeId: number) {
   const queryClient = useQueryClient()
   return useMutation({

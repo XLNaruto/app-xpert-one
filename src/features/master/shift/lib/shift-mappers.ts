@@ -3,8 +3,14 @@ import type {
   ShiftFormValues,
   ShiftResponse,
   ShiftUpdatePayload,
+  ShiftVersionResponse,
 } from '../schemas'
-import type { Shift } from '../types'
+import type { Shift, ShiftVersion } from '../types'
+
+/** `2026-09-01T00:00:00Z` → `2026-09-01` — the form and the API both want the day. */
+function toIsoDate(value: string | null | undefined): string {
+  return value ? value.slice(0, 10) : ''
+}
 
 /** `09:00:00` → `09:00` — the API stores seconds, the form doesn't want them. */
 function toHhMm(time: string): string {
@@ -34,6 +40,8 @@ export function toShift(response: ShiftResponse): Shift {
     minHalfDayHours: response.min_half_day_hours,
     weekoffPolicyId: response.weekoff_policy_id ?? null,
     status: response.status,
+    versionId: response.version_id ?? null,
+    effectiveDate: toIsoDate(response.effective_date),
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at ?? '',
     updatedBy: response.updated_by_name ?? null,
@@ -41,17 +49,76 @@ export function toShift(response: ShiftResponse): Shift {
   }
 }
 
+/** API record → one dated version of a shift's rules. */
+export function toShiftVersion(response: ShiftVersionResponse): ShiftVersion {
+  return {
+    id: response.id,
+    shiftId: response.shift_id,
+    effectiveDate: toIsoDate(response.effective_date),
+    startTime: toHhMm(response.start_time),
+    endTime: toHhMm(response.end_time),
+    isNightShift: response.is_night_shift,
+    breakMinutes: response.break_minutes,
+    isLateBreakPenaltyApplicable: response.is_late_break_penalty_applicable,
+    concessionMinutes: response.concession_minutes,
+    isLateCheckInPenaltyApplicable: response.is_late_check_in_penalty_applicable,
+    lateCheckInPenaltyType: response.late_check_in_penalty_type ?? null,
+    lateCheckInPenaltyValue: response.late_check_in_penalty_value ?? null,
+    earlyExitGraceMinutes: response.early_exit_grace_minutes,
+    minFullDayHours: response.min_full_day_hours,
+    minHalfDayHours: response.min_half_day_hours,
+    weekoffPolicyId: response.weekoff_policy_id ?? null,
+    isCurrent: response.is_current,
+    createdBy: response.created_by_name ?? '',
+    createdAt: response.created_at ?? '',
+    updatedBy: response.updated_by_name ?? null,
+    updatedAt: response.updated_at ?? null,
+  }
+}
+
+/** The versioned rules — the fields an edit has to date. Name and status aren't. */
+const VERSIONED_FIELDS = [
+  'effectiveDate',
+  'startTime',
+  'endTime',
+  'breakMinutes',
+  'isLateBreakPenaltyApplicable',
+  'concessionMinutes',
+  'isLateCheckInPenaltyApplicable',
+  'lateCheckInPenaltyType',
+  'lateCheckInPenaltyValue',
+  'minFullDayHours',
+  'minHalfDayHours',
+  'weekoffPolicyId',
+] as const satisfies readonly (keyof ShiftFormValues)[]
+
 /**
- * Validated form values → the request body shared by create and update. The
- * create call adds `company_id` on top; an edit can't move a record between
- * tenants, so the update body stops here.
+ * Did this edit touch anything that lives on a dated version?
+ *
+ * Only `name` and `status` don't — they apply at once — so an edit that moved
+ * neither must NOT carry `effective_date`, or renaming a shift would open a
+ * pointless version on today's date.
+ */
+export function touchesVersionedRules(
+  dirtyFields: Partial<Record<keyof ShiftFormValues, unknown>>,
+): boolean {
+  return VERSIONED_FIELDS.some((field) => Boolean(dirtyFields[field]))
+}
+
+/**
+ * Validated form values → the request body shared by create and update, minus the
+ * date. The create call adds `company_id` and a REQUIRED `effective_date` on top;
+ * an edit can't move a record between tenants and dates its body conditionally, so
+ * the shared part stops here.
  *
  * A blank tolerance field is left out rather than sent as a zero: on create the
  * API applies its own default, and on edit an omitted key leaves the stored
  * value untouched. The form is always hydrated from the record in edit mode, so
  * a field is only ever blank on a fresh create.
  */
-export function shiftToPayload(values: ShiftFormValues): ShiftUpdatePayload {
+export function shiftToPayload(
+  values: ShiftFormValues,
+): Omit<ShiftUpdatePayload, 'effective_date'> {
   /** `{ key: n }` when the field holds something, nothing at all when it's blank. */
   const sent = <K extends string>(key: K, value: string) =>
     value.trim() ? ({ [key]: Number(value) } as Record<K, number>) : undefined
@@ -85,9 +152,15 @@ export function shiftToPayload(values: ShiftFormValues): ShiftUpdatePayload {
 }
 
 /** Hydrate the edit form from a stored shift. */
-export function shiftToFormValues(shift: Shift): ShiftFormValues {
+export function shiftToFormValues(shift: Shift, effectiveDate: string): ShiftFormValues {
   return {
     shiftName: shift.shiftName,
+    /*
+     * NOT the record's own `effectiveDate`. Re-sending that would AMEND the
+     * version in force and rewrite the days already judged against it; an edit
+     * means "from now on", so the field opens on today and the user moves it.
+     */
+    effectiveDate,
     startTime: shift.startTime,
     endTime: shift.endTime,
     breakMinutes: String(shift.breakMinutes),

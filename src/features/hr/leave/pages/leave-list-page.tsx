@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, Check, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, Crown, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Combobox } from '@/components/ui/combobox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -14,7 +13,7 @@ import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { cn, formatDate } from '@/lib/utils'
 import { ScopedDataError } from '@/features/company'
-import { LEAVE_SORT, LEAVE_STATUS_FILTER_OPTIONS } from '../constants'
+import { LEAVE_SORT, LEAVE_TABS } from '../constants'
 import { useLeaveList } from '../hooks/use-leave-list'
 import { LeaveDecisionDialog } from '../components/leave-decision-dialog'
 import { LeaveEmployeeCell } from '../components/leave-employee-cell'
@@ -33,8 +32,14 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
  * Genuinely server-paged, searched and sorted: the register grows without bound,
  * so the endpoint does the work and the table reports pages back as limit/offset.
  *
- * Approve and Reject appear on pending rows only, and those open a dialog,
- * because a decision needs a remark the employee will read and can't be undone.
+ * Approve and Reject are driven by the row's own `canDecide`, NOT by the
+ * permission code. Since the leave approval hierarchy landed, `leaves:update`
+ * only says you may work a leave desk — not that this particular application is
+ * yours. A row on somebody else's level answers a decision with a 403 naming that
+ * level, so the buttons go rather than sit there waiting to fail.
+ *
+ * They still open a dialog, because a decision needs a remark the employee will
+ * read (required on a rejection) and can't be undone.
  */
 export function LeaveListPage() {
   const leave = useLeaveList()
@@ -63,11 +68,13 @@ export function LeaveListPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             {/*
-              The pair belongs to a pending row only. Once a leave is approved or
-              rejected the decision is final — the API answers a second one with a
-              400 — so the buttons go rather than sit there greyed out.
+              `canDecide` is the row's own answer to "may YOU decide this one",
+              and it is false on every already-decided row as well as on any row
+              standing at another level of the approval chain. The permission is
+              still checked alongside it: it says whether this user works a leave
+              desk at all, which is a different question.
             */}
-            {canUpdate && row.original.status === 'PENDING' && (
+            {canUpdate && row.original.canDecide && (
               <>
                 <DecisionButton
                   label="Approve"
@@ -182,6 +189,38 @@ export function LeaveListPage() {
         },
       },
       {
+        id: 'pendingWith',
+        header: 'Pending With',
+        enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
+        // Who the row is with, which is not the same question as whether the
+        // reader may decide it — an owner sees "HR" here on a row they can clear
+        // themselves. A decided row is with nobody.
+        cell: ({ row }) => {
+          const { pendingWithOwner, pendingWithRole } = row.original
+          if (pendingWithOwner) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help">
+                    <Badge variant="warning">
+                      <Crown className="mr-1 size-3" />
+                      Account owner
+                    </Badge>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64 text-pretty font-normal">
+                  No level of the approval hierarchy reaches this employee's
+                  company, so the leave falls to the account owner.
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+          if (pendingWithRole) return <Badge variant="secondary">{pendingWithRole}</Badge>
+          return <span className="text-muted-foreground">—</span>
+        },
+      },
+      {
         id: 'reason',
         header: 'Reason',
         enableSorting: false,
@@ -203,14 +242,6 @@ export function LeaveListPage() {
         description="Record and decide leave for every employee in the company."
         actions={
           <div className="flex items-center gap-2">
-            <Combobox
-              className="w-40"
-              searchable={false}
-              value={leave.statusFilter}
-              onChange={leave.changeStatusFilter}
-              options={LEAVE_STATUS_FILTER_OPTIONS}
-              placeholder="All statuses"
-            />
             {canCreate && (
               <Button onClick={leave.goToCreate}>
                 <Plus className="size-4" />
@@ -220,6 +251,31 @@ export function LeaveListPage() {
           </div>
         }
       />
+
+      {/*
+        "Pending with me" sits beside the status tabs rather than replacing them:
+        it answers a different question (whose desk is this on) from the statuses
+        (what happened to it), and the plain list is deliberately unchanged —
+        visibility is not routing.
+      */}
+      <div className="mb-4 flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
+        {LEAVE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => leave.changeStatusFilter(tab.value)}
+            aria-pressed={leave.statusFilter === tab.value}
+            className={cn(
+              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              leave.statusFilter === tab.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {leave.isError ? (
         <ScopedDataError
@@ -248,14 +304,22 @@ export function LeaveListPage() {
           emptyState={
             <EmptyState
               icon={CalendarDays}
-              title={leave.search ? 'No matching leave records' : 'No leave recorded yet'}
+              title={
+                leave.search
+                  ? 'No matching leave records'
+                  : leave.isMyQueue
+                    ? 'Nothing waiting on you'
+                    : 'No leave recorded yet'
+              }
               description={
                 leave.search
                   ? 'Try a different search term.'
-                  : 'Record a leave against an employee to get started.'
+                  : leave.isMyQueue
+                    ? 'No pending leave is standing at your level of the approval hierarchy.'
+                    : 'Record a leave against an employee to get started.'
               }
               action={
-                leave.search
+                leave.search || leave.isMyQueue
                   ? undefined
                   : canCreate && (
                       <Button onClick={leave.goToCreate}>

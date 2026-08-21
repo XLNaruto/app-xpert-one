@@ -336,14 +336,30 @@ export function toEmployeeExperience(
     toDate: response.to_date ?? '',
     designation: response.designation ?? '',
     salary: response.salary ?? '',
+    ctcType: response.ctc_type ?? null,
     leavingReason: response.leaving_reason ?? '',
     contactPersonName: response.contact_person_name ?? '',
     contactPersonNumber: response.contact_person_number ?? '',
+    contactPersonEmail: response.contact_email ?? '',
+    isVerified: response.is_verified ?? false,
+    verifiedBy: response.verified_by ?? null,
+    verifiedByName: response.verified_by_name ?? '',
+    verificationReview: response.verification_review ?? '',
     ...auditOf(response),
   }
 }
 
-/** Both dates go out as bare `YYYY-MM` — the endpoint rejects a full date. */
+/**
+ * Both dates go out as bare `YYYY-MM` — the endpoint rejects a full date.
+ *
+ * The verification block travels whole, and that is what makes the same body
+ * correct for a POST and a PATCH: `is_verified: true` (re-)stamps the caller as the
+ * verifier, and `is_verified: false` clears the verifier AND the review — which is
+ * why the remark is forced to `null` there rather than sent as typed. Sending a
+ * non-null remark alongside `false` is a 400, not a partial instruction.
+ *
+ * `verified_by` is never sent: the API stamps the logged-in user itself.
+ */
 export function experienceToPayload(
   values: EmployeeExperienceFormValues,
 ): EmployeeExperiencePayload {
@@ -353,9 +369,13 @@ export function experienceToPayload(
     to_date: values.toDate.trim(),
     designation: values.designation.trim(),
     salary: orNull(values.salary),
+    ctc_type: values.ctcType === '' ? null : values.ctcType,
     leaving_reason: orNull(values.leavingReason),
     contact_person_name: orNull(values.contactPersonName),
     contact_person_number: orNull(values.contactPersonNumber),
+    contact_email: orNull(values.contactPersonEmail),
+    is_verified: values.isVerified,
+    verification_review: values.isVerified ? orNull(values.verificationReview) : null,
   }
 }
 
@@ -368,9 +388,14 @@ export function experienceToFormValues(
     toDate: toFormMonth(experience.toDate),
     designation: experience.designation,
     salary: experience.salary,
+    ctcType: experience.ctcType ?? '',
     leavingReason: experience.leavingReason,
     contactPersonName: experience.contactPersonName,
     contactPersonNumber: experience.contactPersonNumber,
+    contactPersonEmail: experience.contactPersonEmail,
+    isVerified: experience.isVerified,
+    verificationReview: experience.verificationReview,
+    verifiedByName: experience.verifiedByName,
   }
 }
 

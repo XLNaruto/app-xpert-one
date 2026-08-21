@@ -49,11 +49,22 @@ export const leaveSchema = z
 
 export type LeaveFormValues = z.infer<typeof leaveSchema>
 
-/** The Approve / Reject decision on a pending leave. */
-export const leaveDecisionSchema = z.object({
-  status: z.enum(['APPROVED', 'REJECTED']),
-  remark: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
-})
+/**
+ * The Approve / Reject decision on a pending leave.
+ *
+ * The remark is REQUIRED on a rejection and optional on an approval: a rejection
+ * with no reason leaves the employee nothing to act on, and the API answers a
+ * blank one with a 400.
+ */
+export const leaveDecisionSchema = z
+  .object({
+    status: z.enum(['APPROVED', 'REJECTED']),
+    remark: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
+  })
+  .refine((v) => v.status !== 'REJECTED' || v.remark.trim() !== '', {
+    path: ['remark'],
+    message: 'Say why the leave is being rejected',
+  })
 
 export type LeaveDecisionFormValues = z.infer<typeof leaveDecisionSchema>
 
@@ -78,6 +89,13 @@ export const leaveResponseSchema = z.object({
   status: z.enum(['PENDING', 'APPROVED', 'REJECTED']),
   status_remark: z.string().nullish(),
   status_at: z.string().nullish(),
+  /**
+   * The approval block. Present on the list rows and on the detail read; all
+   * three are null/false once the leave has been decided.
+   */
+  pending_with_role: z.string().nullish(),
+  pending_with_owner: z.boolean().nullish(),
+  can_decide: z.boolean().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),

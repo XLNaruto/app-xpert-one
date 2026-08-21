@@ -1,10 +1,11 @@
-import { useNavigate } from '@tanstack/react-router'
-import { decryptId, encryptId } from '@/lib/crypto'
-import { useBanks } from '@/features/master/bank'
-import { useStates } from '@/features/master/state'
-import { useDistricts } from '@/features/master/district'
-import { useLeaves } from '@/features/hr/leave'
-import { useEmployee } from '../api/use-employees'
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
+import { decryptId, encryptId, encryptParams } from "@/lib/crypto";
+import { useBanks } from "@/features/master/bank";
+import { useStates } from "@/features/master/state";
+import { useDistricts } from "@/features/master/district";
+import { useLeaves } from "@/features/hr/leave";
+import { useEmployee } from "../api/use-employees";
 import {
   useEmployeeAssets,
   useEmployeeDocuments,
@@ -14,10 +15,10 @@ import {
   useEmployeeKyc,
   useEmployeeTransfers,
   useEmployeeWageStructure,
-} from '../api/use-employee-steps'
+} from "../api/use-employee-steps";
 
 /** How many leave rows the detail screen previews — the register holds the rest. */
-const LEAVE_PREVIEW_LIMIT = 5
+const LEAVE_PREVIEW_LIMIT = 5;
 
 /**
  * Everything the read-only employee screen reads and derives.
@@ -33,54 +34,61 @@ const LEAVE_PREVIEW_LIMIT = 5
  * as the whole master, which is hundreds of rows.
  */
 export function useEmployeeDetail(data?: string) {
-  const navigate = useNavigate()
-  const employeeId = decryptId(data)
-  const id = employeeId ?? Number.NaN
+  const navigate = useNavigate();
+  const employeeId = decryptId(data);
+  const id = employeeId ?? Number.NaN;
 
-  const detail = useEmployee(id)
-  const employee = detail.data
+  const detail = useEmployee(id);
+  const employee = detail.data;
 
-  const kyc = useEmployeeKyc(id)
-  const wage = useEmployeeWageStructure(id)
-  const family = useEmployeeFamily(id)
-  const educations = useEmployeeEducations(id)
-  const experiences = useEmployeeExperiences(id)
-  const documents = useEmployeeDocuments(id)
-  const assets = useEmployeeAssets(id)
-  const transfers = useEmployeeTransfers(id)
+  const kyc = useEmployeeKyc(id);
+  const wage = useEmployeeWageStructure(id);
+  const family = useEmployeeFamily(id);
+  const educations = useEmployeeEducations(id);
+  const experiences = useEmployeeExperiences(id);
+  const documents = useEmployeeDocuments(id);
+  const assets = useEmployeeAssets(id);
+  const transfers = useEmployeeTransfers(id);
   // The register itself lives in Leave Management; this is its last few rows.
   const leaves = useLeaves(
     { limit: LEAVE_PREVIEW_LIMIT, offset: 0 },
     { employeeId: id },
-  )
+  );
 
-  const banks = useBanks()
-  const states = useStates({ enabled: employee !== undefined })
+  const banks = useBanks();
+  const states = useStates({ enabled: employee !== undefined });
   const currentDistricts = useDistricts(employee?.currentStateId ?? undefined, {
     enabled: employee?.currentStateId != null,
-  })
-  const permanentDistricts = useDistricts(employee?.permanentStateId ?? undefined, {
-    enabled: employee?.permanentStateId != null,
-  })
+  });
+  const permanentDistricts = useDistricts(
+    employee?.permanentStateId ?? undefined,
+    {
+      enabled: employee?.permanentStateId != null,
+    },
+  );
 
   /** A stored state id → the name the screen shows. */
   const stateName = (stateId: number | null) =>
     stateId === null
-      ? ''
-      : (states.data?.find((state) => state.id === stateId)?.stateName ?? '')
+      ? ""
+      : (states.data?.find((state) => state.id === stateId)?.stateName ?? "");
 
   const districtName = (
     stateId: number | null,
     districtId: number | null,
-    which: 'current' | 'permanent',
+    which: "current" | "permanent",
   ) => {
-    if (stateId === null || districtId === null) return ''
-    const list = which === 'current' ? currentDistricts.data : permanentDistricts.data
-    return list?.find((district) => district.id === districtId)?.districtName ?? ''
-  }
+    if (stateId === null || districtId === null) return "";
+    const list =
+      which === "current" ? currentDistricts.data : permanentDistricts.data;
+    return (
+      list?.find((district) => district.id === districtId)?.districtName ?? ""
+    );
+  };
 
   const bankName =
-    (banks.data?.items ?? []).find((bank) => bank.id === kyc.data?.bankId)?.bankName ?? ''
+    (banks.data?.items ?? []).find((bank) => bank.id === kyc.data?.bankId)
+      ?.bankName ?? "";
 
   /**
    * The posting the header names. `service` on the employee row carries the
@@ -88,10 +96,12 @@ export function useEmployeeDetail(data?: string) {
    * open row (or the newest one, on someone who has left) supplies them.
    */
   const posting =
-    transfers.data?.find((transfer) => transfer.isCurrent) ?? transfers.data?.[0] ?? null
+    transfers.data?.find((transfer) => transfer.isCurrent) ??
+    transfers.data?.[0] ??
+    null;
 
-  const leavingDate = employee?.service?.leavingDate ?? ''
-  const isActive = employee?.service != null && leavingDate === ''
+  const leavingDate = employee?.service?.leavingDate ?? "";
+  const isActive = employee?.service != null && leavingDate === "";
 
   return {
     employeeId,
@@ -114,9 +124,35 @@ export function useEmployeeDetail(data?: string) {
     stateName,
     districtName,
 
-    goToList: () => navigate({ to: '/hr/employee' }),
+    goToList: () => navigate({ to: "/hr/employee" }),
     goToEdit: () =>
       employeeId !== undefined &&
-      navigate({ to: '/hr/employee/create', search: { data: encryptId(employeeId) } }),
-  }
+      navigate({
+        to: "/hr/employee/create",
+        search: { data: encryptId(employeeId) },
+      }),
+    /**
+     * This person's attendance month.
+     *
+     * The month screen answers a timesheet rather than an employee record, so
+     * the token carries the name and code it has to print. There's no group to
+     * come from here, which the screen already tolerates: no employee switcher,
+     * and Back lands on the attendance list.
+     */
+    goToAttendance: () =>
+      employeeId !== undefined &&
+      navigate({
+        to: "/hr/attendance/employee",
+        search: {
+          data: encryptParams({
+            employeeId,
+            name: [employee?.prefix, employee?.name].filter(Boolean).join(" "),
+            code: employee?.code ?? "",
+            groupBy: "department",
+            groupId: 0,
+            date: format(new Date(), "yyyy-MM-dd"),
+          }),
+        },
+      }),
+  };
 }

@@ -46,14 +46,12 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
 }
 
 /**
- * What a timeline entry is being written for. The API tells the three apart by
- * which ids the body carries — a shift, a rotation, or neither — and "neither" is
- * the meaningful way to END an assignment, so it's an option here rather than a
- * missing selection.
+ * What a timeline entry is being written for. The API tells the two apart by
+ * whether the body carries a `shift_id` — and its absence is the meaningful way
+ * to END an assignment, so it's an option here rather than a missing selection.
  */
 export const ASSIGNMENT_MODE_OPTIONS: ComboboxOption[] = [
   { label: 'A single shift', value: 'shift' },
-  { label: 'A rotation cycle', value: 'rotation' },
   { label: 'Back to the default (ends the assignment)', value: 'default' },
 ]
 
@@ -304,6 +302,15 @@ export const EMPTY_EMPLOYEE_FAMILY_FORM: EmployeeFamilyFormValues = {
   isNominee: false,
 }
 
+/**
+ * What a prior employer's salary was quoted for. Nullable on the record — rows
+ * entered before the column existed don't say, and a guess would be a claim.
+ */
+export const EXPERIENCE_CTC_TYPE_OPTIONS: ComboboxOption[] = [
+  { label: 'Per month', value: 'MONTHLY' },
+  { label: 'Per year', value: 'YEARLY' },
+]
+
 export const EMPTY_EMPLOYEE_EDUCATION_FORM: EmployeeEducationFormValues = {
   educationName: '',
   board: '',
@@ -317,9 +324,14 @@ export const EMPTY_EMPLOYEE_EXPERIENCE_FORM: EmployeeExperienceFormValues = {
   toDate: '',
   designation: '',
   salary: '',
+  ctcType: '',
   leavingReason: '',
   contactPersonName: '',
   contactPersonNumber: '',
+  contactPersonEmail: '',
+  isVerified: false,
+  verificationReview: '',
+  verifiedByName: '',
 }
 
 export const EMPTY_EMPLOYEE_DOCUMENT_FORM: EmployeeDocumentFormValues = {

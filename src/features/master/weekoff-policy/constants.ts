@@ -1,5 +1,6 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
 import type { WeekoffPolicyFormValues } from './schemas'
+import type { WeekoffOffType } from './types'
 
 /**
  * The `sort` values `/user/weekoff-policies` accepts. Sorting is server-side, so
@@ -94,11 +95,35 @@ export const WEEKOFF_PRESETS: {
   },
 ]
 
+/**
+ * The two shapes a policy can take. FIXED names the weekdays; FLEXIBLE names a
+ * count and lets the rota decide which days — which is the only way to describe a
+ * shop, warehouse or hospital that runs seven days.
+ */
+export const WEEKOFF_OFF_TYPE_OPTIONS: {
+  value: WeekoffOffType
+  label: string
+  description: string
+}[] = [
+  {
+    value: 'FIXED',
+    label: 'Fixed days',
+    description: 'Name the weekdays that are off — the same every week.',
+  },
+  {
+    value: 'FLEXIBLE',
+    label: 'Any days',
+    description: 'Name how many days a week are off and let the rota pick them.',
+  },
+]
+
 /** Blank form values for a new policy — Sunday off, the commonest starting point. */
 export const EMPTY_WEEKOFF_POLICY_FORM: WeekoffPolicyFormValues = {
   name: '',
+  offType: 'FIXED',
   everyWeekDays: [0],
   rules: [],
+  weeklyOffDays: '',
   status: true,
 }
 

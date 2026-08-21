@@ -42,8 +42,8 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
   return (
     <div>
       <PageHeader
-        title={form.isEdit ? 'Edit XpertOne Talk Credential' : 'Issue XpertOne Talk Credential'}
-        description="The email address is the XpertOne Talk login, and it has to be unused across the whole Talk platform. The reach below decides who this person can talk to."
+        title={form.isEdit ? 'Edit Talk Credential' : 'Issue Talk Credential'}
+        description="The email address is the Talk login, and it has to be unused across the whole Talk platform. The reach below decides who this person can talk to."
         actions={
           <Button variant="outline" onClick={form.goToList}>
             <ArrowLeft className="size-4" />
@@ -67,7 +67,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this XpertOne Talk credential."}
+                : "Couldn't load this Talk credential."}
             </p>
           ) : (
             <form
@@ -78,7 +78,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
               <FormSection
                 icon={UserRound}
                 title="Employee"
-                description="Who this XpertOne Talk login is for. One employee may hold only one credential, and it can never be moved to someone else."
+                description="Who this Talk login is for. One employee may hold only one credential, and it can never be moved to someone else."
                 className="mt-0"
               />
 
@@ -123,11 +123,11 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
 
               <FormSection
                 icon={KeyRound}
-                title="XpertOne Talk Login"
+                title="Talk Login"
                 description={
                   form.isEdit
-                    ? "XpertOne Talk's own credential, not the panel one. Leave the password blank to keep the current one — filling it replaces it."
-                    : "XpertOne Talk's own credential, not the panel one. The address is the username, and it must be unused across the whole Talk platform."
+                    ? "Talk's own credential, not the panel one. Leave the password blank to keep the current one — filling it replaces it."
+                    : "Talk's own credential, not the panel one. The address is the username, and it must be unused across the whole Talk platform."
                 }
               />
 

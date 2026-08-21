@@ -18,6 +18,10 @@ import type { LeaveDecisionFormValues } from '../schemas'
  * A decision gets a dialog of its own — unlike an edit, it can't be undone (the
  * API only moves a leave out of `PENDING`, never back) and it carries a remark
  * the employee reads.
+ *
+ * The remark is REQUIRED on a rejection and optional on an approval: a rejection
+ * with no reason leaves the employee nothing to act on, and the API answers a
+ * blank one with a 400.
  */
 export function LeaveDecisionDialog({
   open,
@@ -58,12 +62,18 @@ export function LeaveDecisionDialog({
         >
           <Field
             label="Remark"
+            required={isReject}
             error={form.formState.errors.remark?.message}
-            hint="Shown to the employee alongside the decision."
+            hint={
+              isReject
+                ? "Required. It's what the employee reads, and it's the only thing they have to act on."
+                : 'Shown to the employee alongside the decision.'
+            }
           >
             <Textarea
               rows={3}
               placeholder={isReject ? 'Reason for rejecting' : 'Optional note'}
+              aria-invalid={form.formState.errors.remark ? true : undefined}
               {...form.register('remark')}
             />
           </Field>

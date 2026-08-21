@@ -1,19 +1,21 @@
-import { mockDelay } from '@/lib/utils'
+import { http } from '@/lib/http'
+import { endpoints } from '@/lib/endpoints'
+import { toApiError } from '@/lib/api-error'
+import { myProfileResponseSchema } from '../schemas'
+import { toMyProfile } from '../lib/profile-mappers'
 import type { MyProfile } from '../types'
 
 /**
- * The signed-in user's profile. No backend yet — this returns mock data so the
- * profile screen renders. When the API is ready, swap this for a
- * `GET /me` call that validates and maps the response to `MyProfile`.
+ * GET /user/me — the signed-in account overview: the organization, the
+ * subscription it is running (with the entitlements it was bought at), the
+ * employee/company usage against those limits, and the company last picked in
+ * the switcher. The user comes from the token, so there is no id to pass.
  */
 export async function fetchMyProfile(): Promise<MyProfile> {
-  return mockDelay<MyProfile>({
-    id: 1,
-    phone: '+919876543210',
-    displayName: 'XpertOne Admin',
-    email: 'admin@xpertone.com',
-    status: 'active',
-    createdAt: '2025-01-15T09:30:00.000Z',
-    dateOfJoining: '2025-01-15',
-  })
+  try {
+    const raw = await http.get<unknown>(endpoints.ME.GET)
+    return toMyProfile(myProfileResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't load your profile.")
+  }
 }

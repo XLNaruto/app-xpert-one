@@ -12,8 +12,8 @@ import {
  * which link of the precedence chain answered.
  *
  * The date is part of the key: asking about another day is a different question,
- * not a refetch of this one. Any date works, past or future, so the tab can walk a
- * rotation forward without anything being materialised.
+ * not a refetch of this one. Any date works, past or future, so the tab can look
+ * ahead without anything being materialised.
  */
 export function useEmployeeShiftOnDay(employeeId: number, date: string) {
   return useQuery({

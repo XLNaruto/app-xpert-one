@@ -12,7 +12,32 @@ export type LeaveDuration = 'FULL_DAY' | 'HALF_DAY'
 export type LeavePayType = 'PAID' | 'UNPAID'
 export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
-export interface Leave extends AuditFields {
+/**
+ * Who a pending leave sits with, and whether the reader may decide it.
+ *
+ * Read the three as ONE statement, not as three flags: `canDecide` describes YOU,
+ * the other two describe the ROW. An owner sees `canDecide: true` on a row that
+ * says `pendingWithRole: "HR"`, because the owner decides anything.
+ *
+ * All three are null/false on an already-decided row — there is no decision left
+ * to own, and drawing a button there would produce a 400.
+ */
+export interface LeaveApproval {
+  /** The chain level holding it, e.g. `"HR"`. `null` once decided. */
+  pendingWithRole: string | null
+  /** It fell through the whole chain to the account owner. */
+  pendingWithOwner: boolean
+  /**
+   * May YOU press Approve / Reject on THIS row?
+   *
+   * Drive the buttons off this, never off the permission code: `leaves:update`
+   * now only says you may work a leave desk, not that this particular application
+   * is yours.
+   */
+  canDecide: boolean
+}
+
+export interface Leave extends AuditFields, LeaveApproval {
   id: number
   employeeId: number
   employeeName: string

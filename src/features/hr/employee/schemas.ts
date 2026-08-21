@@ -3,6 +3,7 @@ import { shiftResponseSchema } from '@/features/master/shift'
 import {
   AADHAAR_RE,
   AMOUNT_RE,
+  EMAIL_RE,
   MOBILE_RE,
   PERSON_NAME_RE,
   PIN_CODE_RE,
@@ -833,9 +834,20 @@ export const employeeExperienceRowSchema = z.object({
   toDate: z.string(),
   designation: z.string(),
   salary: z.string(),
+  /** What `salary` is quoted for. Blank means the row doesn't say. */
+  ctcType: z.enum(['', 'MONTHLY', 'YEARLY']),
   leavingReason: z.string(),
   contactPersonName: z.string(),
   contactPersonNumber: z.string(),
+  contactPersonEmail: z.string(),
+  /**
+   * The verification block moves as a unit — the API refuses a remark nobody
+   * signed, and clears the verifier when the switch goes off.
+   */
+  isVerified: z.boolean(),
+  verificationReview: z.string(),
+  /** Read-only, seeded from the list read so the card can name the verifier. */
+  verifiedByName: z.string(),
 })
 
 export type EmployeeExperienceFormValues = z.infer<typeof employeeExperienceRowSchema>
@@ -847,9 +859,11 @@ export const EXPERIENCE_ROW_KEYS = [
   'toDate',
   'designation',
   'salary',
+  'ctcType',
   'leavingReason',
   'contactPersonName',
   'contactPersonNumber',
+  'contactPersonEmail',
 ] as const
 
 /** Per-row rules for prior employment. */
@@ -931,6 +945,40 @@ function refineExperienceRows(
         message: 'Enter a valid 10-digit mobile number',
       })
     }
+
+    const contactEmail = row.contactPersonEmail.trim()
+    if (contactEmail !== '' && !EMAIL_RE.test(contactEmail)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'contactPersonEmail'],
+        message: 'Enter a valid email address',
+      })
+    } else if (contactEmail.length > 255) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'contactPersonEmail'],
+        message: 'Keep the email address under 255 characters',
+      })
+    }
+
+    /*
+     * A remark nobody signed is a 400 on the API — the switch is what authorises
+     * it — so the form refuses it here rather than letting the save fail.
+     */
+    if (!row.isVerified && row.verificationReview.trim() !== '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'verificationReview'],
+        message: 'Turn Verified on before recording what the verifier said',
+      })
+    }
+    if (row.verificationReview.trim().length > 2000) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'verificationReview'],
+        message: 'Keep the review under 2000 characters',
+      })
+    }
   })
 }
 
@@ -969,6 +1017,14 @@ export const employeeExperienceResponseSchema = z.object({
   leaving_reason: z.string().nullish(),
   contact_person_name: z.string().nullish(),
   contact_person_number: z.string().nullish(),
+  contact_email: z.string().nullish(),
+  ctc_type: z.enum(['MONTHLY', 'YEARLY']).nullish(),
+  is_verified: z.boolean().nullish(),
+  /** A `users.id`. Stamped by the API from the caller — never sent by us. */
+  verified_by: z.number().nullish(),
+  verification_review: z.string().nullish(),
+  /** List rows only — the single-row GET resolves no name. */
+  verified_by_name: z.string().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -982,15 +1038,24 @@ export const employeeExperienceListResponseSchema = z.object({
   total: z.number(),
 })
 
+/**
+ * The experience body. `verified_by` is deliberately absent: the API stamps the
+ * logged-in user whenever `is_verified: true` arrives, so nobody can attribute a
+ * verification to a colleague.
+ */
 export interface EmployeeExperiencePayload {
   company_name: string
   from_date: string
   to_date: string
   designation: string
   salary: string | null
+  ctc_type: 'MONTHLY' | 'YEARLY' | null
   leaving_reason: string | null
   contact_person_name: string | null
   contact_person_number: string | null
+  contact_email: string | null
+  is_verified: boolean
+  verification_review: string | null
 }
 
 /* ── Step 6 — documents ──────────────────────────────────────────────────── */
@@ -1360,22 +1425,20 @@ export interface LeaveServicePayload {
 /* ── Step 9 — shift & roster ─────────────────────────────────────────────── */
 
 /**
- * Put the employee on a shift or a rotation from a date.
+ * Put the employee on a shift from a date.
  *
- * All three cases go through this one form, and which one is meant is read off the
- * mode: a shift, a rotation, or NEITHER — the last being how an assignment ends
- * ("back to the department or company default from this date"). The API takes the
- * absence of both ids as that instruction, so "default" is a deliberate choice on
- * the form rather than an empty one.
+ * Both cases go through this one form, and which one is meant is read off the
+ * mode: a shift, or NO shift — the latter being how an assignment ends ("back to
+ * the department or company default from this date"). The API takes the absence
+ * of `shift_id` as that instruction, so "default" is a deliberate choice on the
+ * form rather than an empty one.
  */
 export const employeeShiftAssignmentSchema = z
   .object({
     /** Which kind of assignment is being written. */
-    mode: z.enum(['shift', 'rotation', 'default']),
-    /** A shift id as the dropdown's string; empty in the other two modes. */
+    mode: z.enum(['shift', 'default']),
+    /** A shift id as the dropdown's string; empty in the "default" mode. */
     shiftId: z.string().trim(),
-    /** A rotation id as the dropdown's string; empty in the other two modes. */
-    rotationId: z.string().trim(),
     effectiveDate: z
       .string()
       .trim()
@@ -1388,13 +1451,6 @@ export const employeeShiftAssignmentSchema = z
         code: z.ZodIssueCode.custom,
         path: ['shiftId'],
         message: 'Pick the shift to assign',
-      })
-    }
-    if (values.mode === 'rotation' && !values.rotationId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['rotationId'],
-        message: 'Pick the rotation to assign',
       })
     }
   })
@@ -1422,8 +1478,6 @@ export const employeeShiftAssignmentResponseSchema = z.object({
   employee_service_id: z.number(),
   shift_id: z.number().nullish(),
   shift_name: z.string().nullish(),
-  rotation_id: z.number().nullish(),
-  rotation_name: z.string().nullish(),
   effective_date: z.string(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
@@ -1478,6 +1532,12 @@ export const employeeShiftOnDayResponseSchema = z.object({
   shift: shiftResponseSchema.nullable(),
   source: z.string().nullish(),
   is_week_off: z.boolean(),
+  /**
+   * Set only under a FLEXIBLE week-off policy, and when it is set neither
+   * `is_week_off` nor an empty weekday list means "nothing is off" — the employee
+   * simply hasn't taken their day yet.
+   */
+  weekoff_flexible_days: z.number().nullish(),
 })
 
 export type EmployeeShiftOnDayResponse = z.infer<
@@ -1485,13 +1545,12 @@ export type EmployeeShiftOnDayResponse = z.infer<
 >
 
 /**
- * The assignment body. Sending NEITHER id is the meaningful way to end an
- * assignment, so both are optional — and `null` travels rather than the key being
- * dropped, to say it outright.
+ * The assignment body. Sending NO shift is the meaningful way to end an
+ * assignment, so `shift_id` is nullable — and `null` travels rather than the key
+ * being dropped, to say it outright.
  */
 export interface EmployeeShiftAssignmentPayload {
   shift_id: number | null
-  rotation_id: number | null
   effective_date: string
 }
 

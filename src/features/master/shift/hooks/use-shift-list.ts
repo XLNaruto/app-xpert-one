@@ -50,6 +50,8 @@ export function useShiftList(companyId?: number) {
   /** The row the form above the list is editing, or `null` while it's adding. */
   const [editing, setEditing] = useState<Shift | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Shift | null>(null)
+  /** The row whose update history is open, or `null` while the dialog is shut. */
+  const [historyFor, setHistoryFor] = useState<Shift | null>(null)
 
   const confirmDelete = () => {
     if (!pendingDelete) return
@@ -93,6 +95,8 @@ export function useShiftList(companyId?: number) {
     forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
     editing,
     setEditing,
+    historyFor,
+    setHistoryFor,
     pendingDelete,
     setPendingDelete,
     confirmDelete,

@@ -13,7 +13,7 @@ import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ScopedDataError } from '@/features/company'
 import { WEEKOFF_POLICY_SORT } from '../constants'
-import { ruleLabel } from '../lib/weekoff-policy-mappers'
+import { flexibleWeekoffCaption, ruleLabel } from '../lib/weekoff-policy-mappers'
 import { useWeekoffPolicyList } from '../hooks/use-weekoff-policy-list'
 import { WeekoffDefaultDialog } from '../components/weekoff-default-dialog'
 import type { WeekoffPolicy } from '../types'
@@ -95,7 +95,17 @@ export function WeekoffPolicyListPage() {
         enableSorting: false,
         meta: { className: 'min-w-64' },
         cell: ({ row }) =>
-          row.original.days.length === 0 ? (
+          /*
+            A flexible policy names no weekday at all — that's the point of it, not
+            a gap — so the count is the pattern rather than an empty badge list.
+          */
+          row.original.offType === 'FLEXIBLE' ? (
+            <Badge variant="secondary">
+              {row.original.weeklyOffDays === null
+                ? 'Any days'
+                : flexibleWeekoffCaption(row.original.weeklyOffDays)}
+            </Badge>
+          ) : row.original.days.length === 0 ? (
             <span className="text-muted-foreground">No rules</span>
           ) : (
             <div className="flex flex-wrap gap-1.5">

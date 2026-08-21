@@ -5,7 +5,6 @@ import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
 import { shiftOptions, useShifts } from '@/features/master/shift'
-import { shiftRotationOptions, useShiftRotations } from '@/features/master/shift-rotation'
 import {
   employeeRosterSchema,
   employeeShiftAssignmentSchema,
@@ -60,18 +59,17 @@ function shiftMonth(from: string, months: number): { from: string; to: string } 
  * Three things sit on the tab, and they are three different kinds of statement:
  *
  * 1. **The resolved answer for a date.** Not stored anywhere — the server walks
- *    roster → rotation → assignment → department → company and says which link
+ *    roster → assignment → department → company and says which link
  *    answered. That `source` is the point of the card: it separates "General,
  *    because it's the company default" (nothing here to undo) from "General,
  *    because somebody rostered it" (one row to remove).
  * 2. **The assignment timeline.** Effective-dated and append-only. Writing one is
  *    only necessary when the employee DEVIATES from the default, and an entry
- *    naming neither a shift nor a rotation is how a deviation ENDS.
+ *    naming no shift is how a deviation ENDS.
  * 3. **The roster.** Per-date overrides, read a month at a time, outranking
  *    everything. Safe to delete, unlike a timeline entry.
  *
- * The shift and rotation dropdowns are scoped to the employee's own company — a
- * rotation may only name shifts of the company it belongs to.
+ * The shift dropdown is scoped to the employee's own company.
  */
 export function useEmployeeShiftTab(employeeId: number) {
   const sessionCompanyId = useAuthStore((state) => state.user?.companyId ?? undefined)
@@ -90,7 +88,6 @@ export function useEmployeeShiftTab(employeeId: number) {
 
   // Whole masters, not pages — these are dropdowns.
   const shifts = useShifts(undefined, companyId)
-  const rotations = useShiftRotations(undefined, companyId)
 
   const createAssignment = useCreateEmployeeShiftAssignment(employeeId)
   const deleteAssignment = useDeleteEmployeeShiftAssignment(employeeId)
@@ -108,7 +105,6 @@ export function useEmployeeShiftTab(employeeId: number) {
     defaultValues: {
       mode: 'shift',
       shiftId: '',
-      rotationId: '',
       effectiveDate: todayIso(),
     },
   })
@@ -122,16 +118,11 @@ export function useEmployeeShiftTab(employeeId: number) {
     () => shiftOptions(shifts.data?.items ?? []),
     [shifts.data],
   )
-  const rotationSelectOptions = useMemo(
-    () => shiftRotationOptions(rotations.data?.items ?? []),
-    [rotations.data],
-  )
 
   const openAssign = () => {
     assignForm.reset({
       mode: 'shift',
       shiftId: '',
-      rotationId: '',
       effectiveDate: todayIso(),
     })
     setDialog('assign')
@@ -239,9 +230,7 @@ export function useEmployeeShiftTab(employeeId: number) {
     rosterError: roster.error,
 
     shiftSelectOptions,
-    rotationSelectOptions,
     isShiftsLoading: shifts.isLoading,
-    isRotationsLoading: rotations.isLoading,
     /** Nothing to assign yet — the company has no shifts. */
     hasNoShifts: !shifts.isLoading && shiftSelectOptions.length === 0,
 

@@ -39,6 +39,25 @@ export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
   { label: 'Rejected', value: 'REJECTED' },
 ]
 
+/**
+ * The register's tabs. `MINE` is `pending_with_me=true`, which implies
+ * `status=PENDING` — the leaves this user is the one to answer.
+ *
+ * It sits BESIDE the status tabs rather than replacing them, because visibility
+ * is not routing: the plain list is unchanged, and an owner goes on seeing every
+ * company's rows whether or not any hierarchy user can.
+ */
+export const LEAVE_TABS = [
+  { value: '', label: 'All statuses' },
+  { value: 'MINE', label: 'Pending with me' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'APPROVED', label: 'Approved' },
+  { value: 'REJECTED', label: 'Rejected' },
+] as const
+
+/** The tab value that means "my own queue" rather than a status. */
+export const LEAVE_TAB_MINE = 'MINE'
+
 export const EMPTY_LEAVE_FORM: LeaveFormValues = {
   employeeId: '',
   leaveTypeId: '',

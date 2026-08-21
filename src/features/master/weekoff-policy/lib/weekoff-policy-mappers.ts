@@ -28,6 +28,9 @@ export function toWeekoffPolicy(response: WeekoffPolicyResponse): WeekoffPolicy 
     companyId: response.company_id,
     name: response.name,
     status: response.status,
+    // Records predating the column are the shape they always were.
+    offType: response.off_type ?? 'FIXED',
+    weeklyOffDays: response.weekly_off_days ?? null,
     days: response.days.map(
       (day): WeekoffDay => ({
         id: day.id,
@@ -54,6 +57,22 @@ export function toWeekoffPolicy(response: WeekoffPolicyResponse): WeekoffPolicy 
 export function weekoffPolicyToPayload(
   values: WeekoffPolicyFormValues,
 ): WeekoffPolicyUpdatePayload {
+  /*
+   * A flexible policy names a count and no days — a named weekday would
+   * contradict it, and the API answers a 400 for either half of the mismatch.
+   * Switching to FLEXIBLE therefore CLEARS whatever weekday rules the policy
+   * still had, which is why `days` goes out empty rather than being left off.
+   */
+  if (values.offType === 'FLEXIBLE') {
+    return {
+      name: values.name.trim(),
+      status: values.status,
+      off_type: 'FLEXIBLE',
+      weekly_off_days: Number(values.weeklyOffDays),
+      days: [],
+    }
+  }
+
   const everyWeek: WeekoffDayPayload[] = [...values.everyWeekDays]
     .sort((a, b) => a - b)
     .map((weekDay) => ({ week_day: weekDay, week_number: null, is_off: true }))
@@ -67,6 +86,8 @@ export function weekoffPolicyToPayload(
   return {
     name: values.name.trim(),
     status: values.status,
+    // FIXED must NOT carry `weekly_off_days` — the key is left off, not nulled.
+    off_type: 'FIXED',
     days: [...everyWeek, ...occurrences],
   }
 }
@@ -96,8 +117,10 @@ export function weekoffPolicyToFormValues(
 
   return {
     name: policy.name,
+    offType: policy.offType,
     everyWeekDays: everyWeekDays.sort((a, b) => a - b),
     rules,
+    weeklyOffDays: policy.weeklyOffDays === null ? '' : String(policy.weeklyOffDays),
     status: policy.status,
   }
 }
@@ -168,12 +191,28 @@ export function weekoffSummary(days: WeekoffDay[]): string {
 }
 
 /**
+ * `Any 2 days off per week` — the caption a flexible pattern reads as. It answers
+ * the question an empty weekday list can't: nothing being named is the point, not
+ * a gap.
+ */
+export function flexibleWeekoffCaption(weeklyOffDays: number): string {
+  return `Any ${weeklyOffDays} day${weeklyOffDays === 1 ? '' : 's'} off per week`
+}
+
+/** The pattern as one line, whichever shape the policy is. */
+export function weekoffPolicySummary(policy: WeekoffPolicy): string {
+  return policy.offType === 'FLEXIBLE' && policy.weeklyOffDays !== null
+    ? flexibleWeekoffCaption(policy.weeklyOffDays)
+    : weekoffSummary(policy.days)
+}
+
+/**
  * Dropdown options for the pickers that point something at a policy — the shift
  * form and the set-default dialog. The value is the policy's id.
  */
 export function weekoffPolicyOptions(policies: WeekoffPolicy[]): ComboboxOption[] {
   return policies.map((policy) => ({
-    label: `${policy.name} (${weekoffSummary(policy.days)})`,
+    label: `${policy.name} (${weekoffPolicySummary(policy)})`,
     value: String(policy.id),
   }))
 }

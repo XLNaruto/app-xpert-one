@@ -43,6 +43,19 @@ export function isIpEntry(value: string): boolean {
 }
 
 /**
+ * True for an entry that matches every address — the unspecified host
+ * (`0.0.0.0`, `::`) or any `/0` prefix. Syntactically valid, but as a list entry
+ * it is never what someone means: on the allow list it opens the panel to the
+ * whole internet, on the block list it locks everyone out including the author.
+ */
+export function isWildcardIpEntry(value: string): boolean {
+  const [host, prefix] = value.split('/')
+  if (prefix !== undefined && Number(prefix) === 0) return true
+  const bare = host.trim().toLowerCase()
+  return bare === '0.0.0.0' || bare === '::' || bare === '::0'
+}
+
+/**
  * Create/edit form for one IP entry.
  *
  * The address is validated here only to catch typos early — a range that is
@@ -55,7 +68,11 @@ export const ipAddressSchema = z.object({
     .trim()
     .min(1, 'Please enter an IP address')
     .max(49, 'Cannot exceed 49 characters')
-    .refine(isIpEntry, 'Enter a valid IP address or CIDR range (e.g. 10.0.0.0/8)'),
+    .refine(isIpEntry, 'Enter a valid IP address or CIDR range (e.g. 10.0.0.0/8)')
+    .refine(
+      (value) => !isWildcardIpEntry(value),
+      'This matches every address — enter a specific host or a narrower range',
+    ),
   type: ipAddressTypeSchema,
 })
 
@@ -114,8 +131,17 @@ export interface IpAddressPayload {
 /** The update body — an entry can't move between companies. */
 export type IpAddressUpdatePayload = Omit<IpAddressPayload, 'company_id'>
 
-/** The mode write — the company and the mode it should be switched to. */
+/**
+ * The mode write — the company, the mode it should be switched to, and the
+ * caller's own password.
+ *
+ * The password is re-asked because this one switch can lock the panel's own
+ * administrators out; a session cookie alone isn't proof the person at the
+ * keyboard is the account holder. The server verifies it and answers 400 when
+ * it's missing or wrong.
+ */
 export interface IpAccessModePayload {
   company_id: number
   ip_access_mode: IpAccessMode
+  password: string
 }

@@ -4,15 +4,19 @@ import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { activeCompanyId } from '@/lib/active-company'
 import { SHIFT_DEFAULT_SORT } from '../constants'
-import { shiftResponseSchema, shiftsResponseSchema } from '../schemas'
-import { shiftToPayload, toShift } from '../lib/shift-mappers'
+import {
+  shiftHistoryResponseSchema,
+  shiftResponseSchema,
+  shiftsResponseSchema,
+} from '../schemas'
+import { shiftToPayload, toShift, toShiftVersion } from '../lib/shift-mappers'
 import type {
   ShiftDefaultScope,
   ShiftFormValues,
   ShiftPayload,
   ShiftUpdatePayload,
 } from '../schemas'
-import type { Shift } from '../types'
+import type { Shift, ShiftVersion } from '../types'
 
 /**
  * Shifts — `/user/shifts`. Offset-paginated (`?limit=&offset=`, limit capped at
@@ -110,7 +114,12 @@ export async function fetchShift(id: number): Promise<Shift> {
   }
 }
 
-/** POST /user/shifts — add a shift to the company on screen. */
+/**
+ * POST /user/shifts — add a shift to the company on screen.
+ *
+ * `effective_date` is required: it's the day these timings start applying, and it
+ * opens the shift's timeline.
+ */
 export async function createShift(
   values: ShiftFormValues,
   companyId?: number,
@@ -118,6 +127,7 @@ export async function createShift(
   try {
     const raw = await http.post<unknown, ShiftPayload>(endpoints.SHIFTS.POST, {
       company_id: tenantId(companyId),
+      effective_date: values.effectiveDate,
       ...shiftToPayload(values),
     })
     return toShift(shiftResponseSchema.parse(raw))
@@ -130,16 +140,28 @@ export async function createShift(
  * PATCH /user/shifts/:id — the endpoint accepts a partial body and the form
  * always submits every field it captures, so the whole record travels.
  * `is_night_shift` is re-derived server-side whenever either time moves.
+ *
+ * `withEffectiveDate` decides whether this edit opens a NEW dated version or
+ * amends the one in force. It's true whenever the save touched a versioned rule —
+ * that's what "change the shift" means, and it leaves the closed days resolving
+ * against the rules they were actually judged by. A patch that moved only the name
+ * or the status carries no date, because neither is versioned and dating them
+ * would open a version that changes nothing.
+ *
+ * The response is the shift AS OF the date just written, so it shows what was
+ * saved rather than today's still-current timings: future-date a change and the
+ * list row goes on showing the old ones until that date arrives.
  */
 export async function updateShift(
   id: number,
   values: ShiftFormValues,
+  withEffectiveDate: boolean,
 ): Promise<Shift> {
   try {
-    const raw = await http.patch<unknown, ShiftUpdatePayload>(
-      endpoints.SHIFTS.PATCH(id),
-      shiftToPayload(values),
-    )
+    const raw = await http.patch<unknown, ShiftUpdatePayload>(endpoints.SHIFTS.PATCH(id), {
+      ...shiftToPayload(values),
+      ...(withEffectiveDate ? { effective_date: values.effectiveDate } : {}),
+    })
     return toShift(shiftResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't update the shift.")
@@ -147,9 +169,25 @@ export async function updateShift(
 }
 
 /**
+ * GET /user/shifts/:id/history — the shift's dated versions, newest first.
+ *
+ * Gated on `shifts:read`, no permission of its own. Exactly one row is
+ * `isCurrent`, and it is NOT always the first: a change can be dated in the
+ * future, which leaves a scheduled version sitting above the one in force.
+ */
+export async function fetchShiftHistory(id: number): Promise<ShiftVersion[]> {
+  try {
+    const raw = await http.get<unknown>(endpoints.SHIFTS.HISTORY(id))
+    const { items } = shiftHistoryResponseSchema.parse(raw)
+    return items.map(toShiftVersion)
+  } catch (error) {
+    throw toApiError(error, "Couldn't load the shift's history.")
+  }
+}
+
+/**
  * DELETE /user/shifts/:id — refused with 409 while the shift is still a company
- * or department default, or referenced by a rotation, an assignment or a roster
- * entry. The server's reason is what the screen shows.
+ * or department default, or referenced by an assignment or a roster entry. The server's reason is what the screen shows.
  */
 export async function deleteShift(id: number): Promise<void> {
   try {

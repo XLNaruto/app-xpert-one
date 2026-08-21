@@ -165,25 +165,25 @@ export function useTalkCredentialForm(id?: number) {
     if (isEdit) {
       updateCredential.mutate(values, {
         onSuccess: () => {
-          toast.success('XpertOne Talk credential updated')
+          toast.success('Talk credential updated')
           goToList()
         },
         // A moved address is re-checked platform-wide (409); the message says so.
         onError: (err) =>
-          toast.error(getApiErrorMessage(err, "Couldn't update the XpertOne Talk credential.")),
+          toast.error(getApiErrorMessage(err, "Couldn't update the Talk credential.")),
       })
       return
     }
 
     createCredential.mutate(values, {
       onSuccess: () => {
-        toast.success('XpertOne Talk credential issued')
+        toast.success('Talk credential issued')
         goToList()
       },
       // Either the address is taken somewhere on the platform or the employee
       // already holds a credential — both are 409s, worded by the server.
       onError: (err) =>
-        toast.error(getApiErrorMessage(err, "Couldn't issue the XpertOne Talk credential.")),
+        toast.error(getApiErrorMessage(err, "Couldn't issue the Talk credential.")),
     })
   })
 
