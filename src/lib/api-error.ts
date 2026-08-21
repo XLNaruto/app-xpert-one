@@ -9,6 +9,19 @@ interface ApiErrorBody {
   code?: string
   message?: string
   error?: string
+  /** Present on `VALIDATION` failures — one entry per field the endpoint refused. */
+  details?: ApiErrorDetail[]
+}
+
+/**
+ * One field-level complaint inside a `VALIDATION` body. The API mirrors zod's
+ * own issue shape, so the field is named twice — as a JSON pointer
+ * (`/password`, `/details/0/amount`) and as a path array inside `params.issue`.
+ */
+interface ApiErrorDetail {
+  message?: string
+  instancePath?: string
+  params?: { issue?: { message?: string; path?: (string | number)[] } }
 }
 
 /** HTTP status the API uses for a missing permission. */
@@ -16,6 +29,14 @@ export const FORBIDDEN_STATUS = 403
 
 /** The API's error code for a missing permission. */
 export const FORBIDDEN_CODE = 'FORBIDDEN'
+
+/**
+ * The API's error code for a body that failed the endpoint's own schema. Its
+ * top-level `message` is always the generic "Request validation failed"; the
+ * field that actually broke is only in `details`, which is why these bodies get
+ * unpacked instead of shown as-is.
+ */
+export const VALIDATION_CODE = 'VALIDATION'
 
 /**
  * The API's error code for a network-level block — the caller's IP isn't on this
@@ -67,6 +88,81 @@ export class ApiError extends Error {
   }
 }
 
+/** How many field complaints a validation message shows before it summarises. */
+const MAX_VALIDATION_DETAILS = 3
+
+/** `office_name` / `officeName` → `Office name`. */
+function humanizeField(segment: string): string {
+  const words = segment
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+/**
+ * The field a detail is about, e.g. `/password` → `Password` and
+ * `/details/0/amount` → `Amount (row 1)`. Empty when the complaint is about the
+ * body as a whole.
+ */
+function detailLabel(detail: ApiErrorDetail): string {
+  const path = detail.params?.issue?.path?.length
+    ? detail.params.issue.path
+    : (detail.instancePath ?? '').split('/').filter(Boolean)
+
+  const segments = path.map(String)
+  const fields = segments.filter((segment) => !/^\d+$/.test(segment))
+  const index = segments.findLast((segment) => /^\d+$/.test(segment))
+  const field = fields.at(-1)
+  if (!field) return ''
+
+  const label = humanizeField(field)
+  return index === undefined ? label : `${label} (row ${Number(index) + 1})`
+}
+
+/**
+ * Turn the server's zod wording into something a user reads, so a length rule
+ * arrives as "Password must be at least 8 characters" rather than
+ * "Password: String must contain at least 8 character(s)".
+ */
+function humanizeValidationMessage(message: string): string {
+  return message
+    .replace(/^String must contain at least (\d+) character\(s\)$/, 'must be at least $1 characters')
+    .replace(/^String must contain at most (\d+) character\(s\)$/, 'must not exceed $1 characters')
+    .replace(/^String must contain exactly (\d+) character\(s\)$/, 'must be exactly $1 characters')
+    .replace(/^Required$/, 'is required')
+    .replace(/^Invalid$/, 'is invalid')
+}
+
+/**
+ * Flatten a `VALIDATION` body into one line per refused field. Returns
+ * `undefined` when there's nothing usable, so the caller falls back to the
+ * body's own `message`.
+ */
+function getValidationMessage(data: ApiErrorBody | undefined): string | undefined {
+  if (!data?.details?.length) return undefined
+
+  const lines = data.details
+    .map((detail) => {
+      const raw = (detail.message || detail.params?.issue?.message || '').trim()
+      if (!raw) return ''
+      const message = humanizeValidationMessage(raw)
+      const label = detailLabel(detail)
+      if (!label) return message
+      // Our rewrites read as a continuation of the field name ("Password must
+      // be…"); anything else is a sentence of its own and gets a colon.
+      return /^[a-z]/.test(message) ? `${label} ${message}` : `${label}: ${message}`
+    })
+    .filter(Boolean)
+
+  if (!lines.length) return undefined
+
+  const shown = lines.slice(0, MAX_VALIDATION_DETAILS)
+  const hidden = lines.length - shown.length
+  return hidden > 0 ? `${shown.join('\n')}\n(+${hidden} more)` : shown.join('\n')
+}
+
 /** Pull a human-readable message out of any thrown error (Axios or otherwise). */
 export function getApiErrorMessage(
   error: unknown,
@@ -74,7 +170,9 @@ export function getApiErrorMessage(
 ): string {
   if (error instanceof AxiosError) {
     const data = error.response?.data as ApiErrorBody | undefined
-    return data?.message || data?.error || error.message || fallback
+    return (
+      getValidationMessage(data) || data?.message || data?.error || error.message || fallback
+    )
   }
   // A response that didn't match its schema is a developer-facing problem: its
   // `message` is a JSON dump of every failed path, never something to show a

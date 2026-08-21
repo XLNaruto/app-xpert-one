@@ -35,6 +35,18 @@ interface DatePickerProps {
   className?: string
 }
 
+/**
+ * The month react-calendar should open on for an empty field: today when it
+ * falls inside [minDate, maxDate], otherwise the closest bound. `undefined`
+ * leaves the library's own default (today) in place.
+ */
+function nearestAllowedMonth(minDate?: Date, maxDate?: Date): Date | undefined {
+  const today = new Date()
+  if (maxDate && today > maxDate) return maxDate
+  if (minDate && today < minDate) return minDate
+  return undefined
+}
+
 interface PanelCoords {
   left: number
   top: number
@@ -65,6 +77,18 @@ export function DatePicker({
 }: DatePickerProps) {
   const parsed = value ? parseISO(value) : null
   const selected = parsed && isValid(parsed) ? parsed : null
+
+  /*
+   * Which month the panel opens on when there's no value yet.
+   *
+   * react-calendar defaults to today, which for a bounded field (a date of
+   * birth capped at "18 years ago", a joining date that can't be in the future)
+   * is a grid where every single day is disabled — the user has to click the
+   * month arrow a couple of hundred times before reaching a year they're
+   * allowed to pick. Start on the nearest month the bounds actually permit
+   * instead, so the first view is always usable.
+   */
+  const openMonth = nearestAllowedMonth(minDate, maxDate)
 
   const wrapRef = useRef<HTMLDivElement>(null)
   const [host, setHost] = useState<HTMLDivElement | null>(null)
@@ -139,6 +163,7 @@ export function DatePicker({
         onCalendarOpen={() => setOpen(true)}
         onCalendarClose={() => setOpen(false)}
         portalContainer={host}
+        calendarProps={{ defaultActiveStartDate: openMonth }}
         format="dd/MM/yyyy"
         dayPlaceholder="dd"
         monthPlaceholder="mm"

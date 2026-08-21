@@ -414,7 +414,7 @@ export const navGroups: NavGroup[] = [
       companies it is granted, spanning every company of the account — so the
       screen doesn't wait on one being picked.
     */
-    title: "Talk",
+    title: "XpertOne Talk",
     items: [
       {
         // The employees' own Talk logins. A back-office user's Talk access is

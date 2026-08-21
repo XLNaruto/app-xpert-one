@@ -39,7 +39,10 @@ export function Toaster() {
             'toast-pop group pointer-events-auto relative flex w-full cursor-grab touch-pan-y select-none items-center gap-3 rounded-2xl active:cursor-grabbing border border-black/5 bg-popover/95 px-4 py-3 shadow-[0_10px_30px_-8px_rgba(15,23,42,0.28),0_2px_8px_-4px_rgba(15,23,42,0.16)] backdrop-blur-md dark:border-white/10 dark:shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)]',
           icon: 'shrink-0',
           content: 'flex flex-col gap-0.5',
-          title: 'font-sans text-sm font-semibold leading-tight text-popover-foreground',
+          // `whitespace-pre-line`: a validation failure arrives as one line per
+          // refused field (see `getApiErrorMessage`), so the breaks must survive.
+          title:
+            'font-sans text-sm font-semibold leading-tight whitespace-pre-line text-popover-foreground',
           description: 'font-sans text-xs leading-snug text-muted-foreground',
           actionButton:
             'ml-auto cursor-pointer rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background',

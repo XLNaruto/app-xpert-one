@@ -79,11 +79,11 @@ export function useTalkCredentialList() {
     if (!pendingDelete) return
     removeCredential.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Talk credential deleted')
+        toast.success('XpertOne Talk credential deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(getApiErrorMessage(err, "Couldn't delete the Talk credential.")),
+        toast.error(getApiErrorMessage(err, "Couldn't delete the XpertOne Talk credential.")),
     })
   }
 
