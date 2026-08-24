@@ -23,6 +23,17 @@ const VIEWPORT_PADDING = 8
  */
 const PANEL_WIDTH = 288
 
+/**
+ * The month the calendar should open on when the field is empty: today when it
+ * falls inside the allowed range, otherwise the nearest valid bound.
+ */
+function nearestAllowedMonth(minDate?: Date, maxDate?: Date): Date | undefined {
+  const today = new Date()
+  if (maxDate && today > maxDate) return maxDate
+  if (minDate && today < minDate) return minDate
+  return undefined
+}
+
 interface MonthPickerProps {
   /** Selected month as `yyyy-MM`, or `''` when nothing is picked. */
   value: string
@@ -91,6 +102,9 @@ export function MonthPicker({
   const [host, setHost] = useState<HTMLDivElement | null>(null)
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState<PanelCoords | null>(null)
+  const [anchorMonth, setAnchorMonth] = useState<Date | undefined>(() =>
+    nearestAllowedMonth(minDate, maxDate),
+  )
 
   // Anchor the panel to the input in viewport coordinates, and keep it there
   // while the page scrolls or resizes.
@@ -156,7 +170,10 @@ export function MonthPicker({
           onChange(next instanceof Date && isValid(next) ? format(next, ISO_MONTH) : '')
         }
         isOpen={open}
-        onCalendarOpen={() => setOpen(true)}
+        onCalendarOpen={() => {
+          setOpen(true)
+          setAnchorMonth(nearestAllowedMonth(minDate, maxDate))
+        }}
         onCalendarClose={() => setOpen(false)}
         portalContainer={host}
         /* Year view is the deepest the calendar goes, so a tile is a month. */
@@ -168,16 +185,26 @@ export function MonthPicker({
         maxDate={maxDate}
         disabled={disabled}
         calendarAriaLabel="Open month picker"
-        clearAriaLabel="Clear month"
+        clearAriaLabel="Close month picker"
+        clearIcon={null}
+        calendarProps={{ defaultActiveStartDate: anchorMonth }}
         calendarIcon={<CalendarDays className={size === 'sm' ? 'size-3.5' : 'size-4'} />}
-        /* No clear in `long` mode: the month is a heading there, and a screen
-           titled by it has nowhere to go once it's blank. */
-        clearIcon={
-          value && display !== 'long' ? (
-            <X className={size === 'sm' ? 'size-3.5' : 'size-4'} />
-          ) : null
-        }
       />
+
+      {value && display !== 'long' && !disabled && (
+        <button
+          type="button"
+          aria-label="Close month picker"
+          className="absolute right-9 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setOpen(false)
+          }}
+        >
+          <X className={size === 'sm' ? 'size-3.5' : 'size-4'} />
+        </button>
+      )}
 
       {/*
         The host is mounted whether or not the calendar is open, and deliberately.

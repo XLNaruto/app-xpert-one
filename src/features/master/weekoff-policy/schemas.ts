@@ -81,6 +81,16 @@ export const weekoffPolicySchema = z
       })
     }
 
+    // Every weekday off every week is a full-week closure, which the pattern
+    // editor intentionally does not allow because somebody must still be working.
+    if (values.everyWeekDays.length === 7) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['everyWeekDays'],
+        message: "You can't select all seven days as off every week.",
+      })
+    }
+
     if (values.everyWeekDays.length + values.rules.length > MAX_WEEKOFF_RULES) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

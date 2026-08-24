@@ -47,7 +47,7 @@ export function useWeekoffPolicyForm(id?: number) {
     resolver: zodResolver(weekoffPolicySchema),
     defaultValues: EMPTY_WEEKOFF_POLICY_FORM,
   })
-  const { control, setValue, reset, handleSubmit } = form
+  const { control, setValue, reset, handleSubmit, setError, clearErrors } = form
 
   const rules = useFieldArray({ control, name: 'rules' })
 
@@ -75,7 +75,19 @@ export function useWeekoffPolicyForm(id?: number) {
 
   /** Tick / untick one weekday's "off every week" rule. */
   const toggleWeekDay = (weekDay: number) => {
-    const next = everyWeekDays.includes(weekDay)
+    const isSelected = everyWeekDays.includes(weekDay)
+
+    if (!isSelected && everyWeekDays.length >= 6) {
+      setError('everyWeekDays', {
+        type: 'manual',
+        message: "You can't select all seven days as off every week.",
+      })
+      return
+    }
+
+    clearErrors('everyWeekDays')
+
+    const next = isSelected
       ? everyWeekDays.filter((day) => day !== weekDay)
       : [...everyWeekDays, weekDay].sort((a, b) => a - b)
     setValue('everyWeekDays', next, { shouldValidate: true })

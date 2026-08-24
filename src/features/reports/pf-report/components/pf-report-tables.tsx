@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   CodeCell,
   DateCell,
@@ -16,6 +17,24 @@ import {
 } from '@/features/reports/common'
 import { PF_REPORT_TYPES, type PfReportType } from '../constants'
 import type { PfChallanRow, PfEcrRow, PfNewJoiningRow, PfStatementRow } from '../types'
+
+function HeaderTooltip({ shortLabel, fullLabel }: { shortLabel: string; fullLabel?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-help select-none items-center truncate text-center">
+          {shortLabel}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-64 text-pretty text-xs font-normal normal-case tracking-normal"
+      >
+        {fullLabel ?? shortLabel}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
 
 /**
  * The four PF sheets — one table per type, each owning its own columns.
@@ -57,28 +76,28 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
       },
       {
         id: 'pf_number',
-        header: 'PF Number',
+        header: () => <HeaderTooltip shortLabel="PF Number" fullLabel="Provident Fund Number" />,
         enableSorting: canSort('pf_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.pfNumber} />,
       },
       {
         id: 'uan_number',
-        header: 'UAN',
+        header: () => <HeaderTooltip shortLabel="UAN" fullLabel="Universal Account Number" />,
         enableSorting: canSort('uan_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.uanNumber} />,
       },
       {
         id: 'department_name',
-        header: 'Department',
+        header: () => <HeaderTooltip shortLabel="Department" fullLabel="Department Name" />,
         enableSorting: canSort('department_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.departmentName} />,
       },
       {
         id: 'designation_name',
-        header: 'Designation',
+        header: () => <HeaderTooltip shortLabel="Designation" fullLabel="Designation Name" />,
         enableSorting: canSort('designation_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.designationName} />,
@@ -87,35 +106,37 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
         /* The form's own column, and a DAY COUNT despite the name — the money
            base is EPF Wages beside it. */
         id: 'wages',
-        header: 'Wages (Days)',
+        header: () => (
+          <HeaderTooltip shortLabel="Wages (Days)" fullLabel="Wages in Days Worked for the Month" />
+        ),
         enableSorting: canSort('wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.wages} />,
       },
       {
         id: 'epf_wages',
-        header: 'EPF Wages',
+        header: () => <HeaderTooltip shortLabel="EPF Wages" fullLabel="Employee Provident Fund Wages" />,
         enableSorting: canSort('epf_wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epfWages} />,
       },
       {
         id: 'ee',
-        header: 'EE',
+        header: () => <HeaderTooltip shortLabel="EE" fullLabel="Employee's Share Contribution" />,
         enableSorting: canSort('ee'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.ee} />,
       },
       {
         id: 'ncp_days',
-        header: 'NCP Days',
+        header: () => <HeaderTooltip shortLabel="NCP Days" fullLabel="Non-Contributing Period Days" />,
         enableSorting: canSort('ncp_days'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.ncpDays} />,
       },
       {
         id: 'dol',
-        header: 'DOL',
+        header: () => <HeaderTooltip shortLabel="DOL" fullLabel="Date of Leaving" />,
         enableSorting: canSort('dol'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <DateCell value={row.original.dol} />,
@@ -126,21 +147,21 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
          and unsortable because the API declines to order a constant column. */
       {
         id: 'rfl',
-        header: 'RFL',
+        header: () => <HeaderTooltip shortLabel="RFL" fullLabel="Reason for Leaving" />,
         enableSorting: false,
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.rfl} />,
       },
       {
         id: 'wag',
-        header: 'WAG',
+        header: () => <HeaderTooltip shortLabel="WAG" fullLabel="Wage Arrears / Wages on Arrears" />,
         enableSorting: false,
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.wag} />,
       },
       {
         id: 'ee_transfer',
-        header: 'EE Transfer',
+        header: () => <HeaderTooltip shortLabel="EE Transfer" fullLabel="Employee Share Transfer In / Out" />,
         enableSorting: false,
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.eeTransfer} />,
@@ -149,14 +170,14 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
         /* `er + eps` is the employer's whole PF for the month — the form splits
            one payment into two columns, it does not add a cost. */
         id: 'er',
-        header: 'ER',
+        header: () => <HeaderTooltip shortLabel="ER" fullLabel="Employer's Contribution" />,
         enableSorting: canSort('er'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.er} />,
       },
       {
         id: 'eps',
-        header: 'EPS',
+        header: () => <HeaderTooltip shortLabel="EPS" fullLabel="Employee Pension Scheme" />,
         enableSorting: canSort('eps'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.eps} />,
@@ -188,28 +209,28 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
       },
       {
         id: 'pf_number',
-        header: 'PF Number',
+        header: () => <HeaderTooltip shortLabel="PF Number" fullLabel="Provident Fund Number" />,
         enableSorting: canSort('pf_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.pfNumber} />,
       },
       {
         id: 'uan_number',
-        header: 'UAN',
+        header: () => <HeaderTooltip shortLabel="UAN" fullLabel="Universal Account Number" />,
         enableSorting: canSort('uan_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.uanNumber} />,
       },
       {
         id: 'department_name',
-        header: 'Department',
+        header: () => <HeaderTooltip shortLabel="Department" fullLabel="Department Name" />,
         enableSorting: canSort('department_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.departmentName} />,
       },
       {
         id: 'designation_name',
-        header: 'Designation',
+        header: () => <HeaderTooltip shortLabel="Designation" fullLabel="Designation Name" />,
         enableSorting: canSort('designation_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.designationName} />,
@@ -218,7 +239,7 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
         /* Null for a FIXED contribution — the snapshot holds rupees in that mode
            and a "%" reading of it would say 1,800%. */
         id: 'pf_rate_percent',
-        header: 'PF Rate',
+        header: () => <HeaderTooltip shortLabel="PF Rate" fullLabel="Provident Fund Rate" />,
         enableSorting: canSort('pf_rate_percent'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <PercentCell value={row.original.pfRatePercent} />,
@@ -228,21 +249,21 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
            `epf_wages`: a statement is read against the wage, a challan against
            the days worked. */
         id: 'wages',
-        header: 'Wages',
+        header: () => <HeaderTooltip shortLabel="Wages" fullLabel="Monthly Wages" />,
         enableSorting: canSort('wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.wages} />,
       },
       {
         id: 'total',
-        header: 'Total',
+        header: () => <HeaderTooltip shortLabel="Total" fullLabel="Total Employer Contribution" />,
         enableSorting: canSort('total'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.total} />,
       },
       {
         id: 'pf_amount',
-        header: 'PF Amount',
+        header: () => <HeaderTooltip shortLabel="PF Amount" fullLabel="Provident Fund Amount" />,
         enableSorting: canSort('pf_amount'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.pfAmount} />,
@@ -251,7 +272,9 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
         /* 0 past the pension age limit, when the whole employer contribution
            goes to PF — which is why PF Amount jumps to the combined rate there. */
         id: 'pension_amount',
-        header: 'Pension Amount',
+        header: () => (
+          <HeaderTooltip shortLabel="Pension Amount" fullLabel="Employee Pension Scheme Amount" />
+        ),
         enableSorting: canSort('pension_amount'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.pensionAmount} />,
@@ -283,84 +306,84 @@ export function PfNewJoiningTable({ rows, ...table }: TableProps<PfNewJoiningRow
       },
       {
         id: 'gender',
-        header: 'Gender',
+        header: () => <HeaderTooltip shortLabel="Gender" fullLabel="Gender" />,
         enableSorting: canSort('gender'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.gender} />,
       },
       {
         id: 'relative_type',
-        header: 'Relation',
+        header: () => <HeaderTooltip shortLabel="Relation" fullLabel="Relationship" />,
         enableSorting: canSort('relative_type'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.relativeType} />,
       },
       {
         id: 'relative_name',
-        header: 'Relative Name',
+        header: () => <HeaderTooltip shortLabel="Relative Name" fullLabel="Nominee / Relative Name" />,
         enableSorting: canSort('relative_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.relativeName} />,
       },
       {
         id: 'birth_date',
-        header: 'Birth Date',
+        header: () => <HeaderTooltip shortLabel="Birth Date" fullLabel="Date of Birth" />,
         enableSorting: canSort('birth_date'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <DateCell value={row.original.birthDate} />,
       },
       {
         id: 'joining_date',
-        header: 'Joining Date',
+        header: () => <HeaderTooltip shortLabel="Joining Date" fullLabel="Date of Joining" />,
         enableSorting: canSort('joining_date'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <DateCell value={row.original.joiningDate} />,
       },
       {
         id: 'primary_mobile',
-        header: 'Mobile',
+        header: () => <HeaderTooltip shortLabel="Mobile" fullLabel="Mobile Number" />,
         enableSorting: canSort('primary_mobile'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.primaryMobile} />,
       },
       {
         id: 'bank_account_number',
-        header: 'Bank Account',
+        header: () => <HeaderTooltip shortLabel="Bank Account" fullLabel="Bank Account Number" />,
         enableSorting: canSort('bank_account_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.bankAccountNumber} />,
       },
       {
         id: 'city_name',
-        header: 'City',
+        header: () => <HeaderTooltip shortLabel="City" fullLabel="City Name" />,
         enableSorting: canSort('city_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.cityName} />,
       },
       {
         id: 'state_name',
-        header: 'State',
+        header: () => <HeaderTooltip shortLabel="State" fullLabel="State Name" />,
         enableSorting: canSort('state_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.stateName} />,
       },
       {
         id: 'marital_status',
-        header: 'Marital Status',
+        header: () => <HeaderTooltip shortLabel="Marital Status" fullLabel="Marital Status" />,
         enableSorting: canSort('marital_status'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.maritalStatus} />,
       },
       {
         id: 'department_name',
-        header: 'Department',
+        header: () => <HeaderTooltip shortLabel="Department" fullLabel="Department Name" />,
         enableSorting: canSort('department_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.departmentName} />,
       },
       {
         id: 'designation_name',
-        header: 'Designation',
+        header: () => <HeaderTooltip shortLabel="Designation" fullLabel="Designation Name" />,
         enableSorting: canSort('designation_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.designationName} />,
@@ -385,14 +408,14 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
         /* The key the portal files on — first column, because a line without one
            isn't on this report at all. */
         id: 'uan_number',
-        header: 'UAN',
+        header: () => <HeaderTooltip shortLabel="UAN" fullLabel="Universal Account Number" />,
         enableSorting: canSort('uan_number'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <CodeCell value={row.original.uanNumber} />,
       },
       {
         id: 'employee_name',
-        header: 'Name',
+        header: () => <HeaderTooltip shortLabel="Name" fullLabel="Employee Name" />,
         enableSorting: canSort('employee_name'),
         meta: { className: 'min-w-56' },
         cell: ({ row }) => (
@@ -401,28 +424,28 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
       },
       {
         id: 'department_name',
-        header: 'Department',
+        header: () => <HeaderTooltip shortLabel="Department" fullLabel="Department Name" />,
         enableSorting: canSort('department_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.departmentName} />,
       },
       {
         id: 'designation_name',
-        header: 'Designation',
+        header: () => <HeaderTooltip shortLabel="Designation" fullLabel="Designation Name" />,
         enableSorting: canSort('designation_name'),
         meta: { className: PLAIN_CELL },
         cell: ({ row }) => <TextCell value={row.original.designationName} />,
       },
       {
         id: 'gross_wages',
-        header: 'Gross Wages',
+        header: () => <HeaderTooltip shortLabel="Gross Wages" fullLabel="Gross Monthly Wages" />,
         enableSorting: canSort('gross_wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.grossWages} />,
       },
       {
         id: 'epf_wages',
-        header: 'EPF Wages',
+        header: () => <HeaderTooltip shortLabel="EPF Wages" fullLabel="Employee Provident Fund Wages" />,
         enableSorting: canSort('epf_wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epfWages} />,
@@ -430,42 +453,42 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
       {
         /* Falls to 0 past the pension age limit, as does EDLI beside it. */
         id: 'eps_wages',
-        header: 'EPS Wages',
+        header: () => <HeaderTooltip shortLabel="EPS Wages" fullLabel="Employee Pension Scheme Wages" />,
         enableSorting: canSort('eps_wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epsWages} />,
       },
       {
         id: 'edli_wages',
-        header: 'EDLI Wages',
+        header: () => <HeaderTooltip shortLabel="EDLI Wages" fullLabel="Employee Deposit Linked Insurance Wages" />,
         enableSorting: canSort('edli_wages'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.edliWages} />,
       },
       {
         id: 'epf_contribution',
-        header: 'EPF Contribution',
+        header: () => <HeaderTooltip shortLabel="EPF Contribution" fullLabel="Employee Provident Fund Contribution" />,
         enableSorting: canSort('epf_contribution'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epfContribution} />,
       },
       {
         id: 'eps_contribution',
-        header: 'EPS Contribution',
+        header: () => <HeaderTooltip shortLabel="EPS Contribution" fullLabel="Employee Pension Scheme Contribution" />,
         enableSorting: canSort('eps_contribution'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epsContribution} />,
       },
       {
         id: 'epf_eps_diff',
-        header: 'EPF–EPS Diff',
+        header: () => <HeaderTooltip shortLabel="EPF–EPS Diff" fullLabel="Difference Between EPF and EPS Contributions" />,
         enableSorting: canSort('epf_eps_diff'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.epfEpsDiff} />,
       },
       {
         id: 'ncp_days',
-        header: 'NCP Days',
+        header: () => <HeaderTooltip shortLabel="NCP Days" fullLabel="Non-Contributing Period Days" />,
         enableSorting: canSort('ncp_days'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.ncpDays} />,
@@ -474,7 +497,7 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
         /* Always 0 — an advance refund is an EPFO-side adjustment with no source
            here, and the API won't order a constant column. */
         id: 'refund',
-        header: 'Refund',
+        header: () => <HeaderTooltip shortLabel="Refund" fullLabel="Advance Refund" />,
         enableSorting: false,
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <MoneyCell value={row.original.refund} />,

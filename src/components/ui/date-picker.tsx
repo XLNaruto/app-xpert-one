@@ -88,12 +88,13 @@ export function DatePicker({
    * allowed to pick. Start on the nearest month the bounds actually permit
    * instead, so the first view is always usable.
    */
-  const openMonth = nearestAllowedMonth(minDate, maxDate)
-
   const wrapRef = useRef<HTMLDivElement>(null)
   const [host, setHost] = useState<HTMLDivElement | null>(null)
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState<PanelCoords | null>(null)
+  const [anchorMonth, setAnchorMonth] = useState<Date | undefined>(() =>
+    nearestAllowedMonth(minDate, maxDate),
+  )
 
   // Anchor the panel to the input in viewport coordinates, and keep it there
   // while the page scrolls or resizes.
@@ -160,10 +161,13 @@ export function DatePicker({
           onChange(next instanceof Date && isValid(next) ? format(next, ISO_DATE) : '')
         }
         isOpen={open}
-        onCalendarOpen={() => setOpen(true)}
+        onCalendarOpen={() => {
+          setOpen(true)
+          setAnchorMonth(nearestAllowedMonth(minDate, maxDate))
+        }}
         onCalendarClose={() => setOpen(false)}
         portalContainer={host}
-        calendarProps={{ defaultActiveStartDate: openMonth }}
+        calendarProps={{ defaultActiveStartDate: anchorMonth }}
         format="dd/MM/yyyy"
         dayPlaceholder="dd"
         monthPlaceholder="mm"
@@ -172,10 +176,25 @@ export function DatePicker({
         maxDate={maxDate}
         disabled={disabled}
         calendarAriaLabel="Open calendar"
-        clearAriaLabel="Clear date"
+        clearAriaLabel="Close date picker"
+        clearIcon={null}
         calendarIcon={<CalendarDays className="size-4 text-muted-foreground" />}
-        clearIcon={value ? <X className="size-4 text-muted-foreground" /> : null}
       />
+
+      {value && !disabled && (
+        <button
+          type="button"
+          aria-label="Close date picker"
+          className="absolute right-9 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            setOpen(false)
+          }}
+        >
+          <X className="size-4" />
+        </button>
+      )}
 
       {createPortal(
         <div
