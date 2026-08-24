@@ -102,6 +102,10 @@ interface PanelCoords {
  * never clipped by an `overflow-hidden`/`overflow-auto` ancestor (e.g. the
  * FilterBar panel). Closes on outside-click or Escape.
  */
+function normalizeComboboxValue(value: string) {
+  return value.trim().replace(/[-_\s]+/g, '').toLowerCase()
+}
+
 export function Combobox(props: ComboboxProps) {
   const {
     options,
@@ -127,6 +131,12 @@ export function Combobox(props: ComboboxProps) {
     : props.value
       ? [props.value]
       : []
+
+  const selectedOptions = options.filter((option) =>
+    selectedValues.some((value) => normalizeComboboxValue(value) === normalizeComboboxValue(option.value)),
+  )
+
+  const fallbackSelectedValue = selectedValues.find((value) => value.trim() !== '') ?? ''
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -185,9 +195,6 @@ export function Combobox(props: ComboboxProps) {
       document.removeEventListener('keydown', onKey)
     }
   }, [open])
-
-  /** The picked options, in the order the *list* holds them. */
-  const selectedOptions = options.filter((o) => selectedValues.includes(o.value))
 
   // With server-side search the parent already returns the matching page, so
   // show options verbatim; otherwise filter the loaded options locally.
@@ -291,7 +298,7 @@ export function Combobox(props: ComboboxProps) {
             selectedOptions.length === 0 && 'text-muted-foreground',
           )}
         >
-          {selectedOptions[0]?.label ?? placeholder ?? ''}
+          {selectedOptions[0]?.label ?? (fallbackSelectedValue || placeholder || '')}
         </span>
       )}
       {/* Reserves the slot the clear overlay occupies, left of the chevron. */}
@@ -393,7 +400,9 @@ export function Combobox(props: ComboboxProps) {
                   <li className="px-2 py-2 text-center text-sm text-muted-foreground">No results</li>
                 ) : (
                   filtered.map((o) => {
-                    const active = selectedValues.includes(o.value)
+                    const active = selectedValues.some(
+                      (value) => normalizeComboboxValue(value) === normalizeComboboxValue(o.value),
+                    )
                     return (
                       <li key={o.value}>
                         <button

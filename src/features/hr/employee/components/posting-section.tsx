@@ -182,16 +182,52 @@ export function PostingSection({
         <Controller
           control={control}
           name="grade"
-          render={({ field }) => (
-            <Combobox
-              className="w-full"
-              searchable={false}
-              value={field.value}
-              onChange={field.onChange}
-              options={GRADE_OPTIONS}
-              placeholder="Select grade"
-            />
-          )}
+          render={({ field }) => {
+            // Try to find an option that matches either the stored value or a
+            // seeded label. Normalise both sides for tolerant matching.
+            const normalize = (v: string) => String(v ?? '').trim().replace(/[-_\s]+/g, '').toLowerCase()
+
+            const match = GRADE_OPTIONS.find(
+              (option) =>
+                normalize(option.value) === normalize(field.value) ||
+                normalize(option.label) === normalize(field.value),
+            )
+
+            // If the form was seeded with a label (or a value with different
+            // formatting), update it to the canonical option value so the
+            // Combobox shows the chosen option correctly. Run inside an effect
+            // to avoid updating during render — move the effect into a tiny
+            // inline component so hooks are called from a component body.
+            const MatchUpdater = ({
+              match,
+              field,
+            }: {
+              match: (typeof GRADE_OPTIONS)[number] | undefined
+              field: { value: unknown; onChange: (value: unknown) => void }
+            }) => {
+              useEffect(() => {
+                if (match && field.value !== match.value) {
+                  field.onChange(match.value)
+                }
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+              }, [match?.value])
+              return null
+            }
+
+            return (
+              <>
+                <MatchUpdater match={match} field={field} />
+              <Combobox
+                className="w-full"
+                searchable={false}
+                value={field.value}
+                onChange={field.onChange}
+                options={GRADE_OPTIONS}
+                placeholder="Select grade"
+              />
+              </>
+            )
+          }}
         />
       </Field>
 

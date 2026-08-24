@@ -26,6 +26,7 @@ import {
   useTransferEmployee,
   useUpdateEmployeeService,
 } from '../api/use-employee-step-mutations'
+import { useEmployee } from '../api/use-employees'
 import { serviceDetailToEditFormValues } from '../lib/employee-step-mappers'
 import { deriveRenewalDate, toFormDate, todayIso } from '../lib/employee-dates'
 import { usePostingOptions } from './use-posting-options'
@@ -65,6 +66,7 @@ function maxIso(a: string, b: string): string {
  */
 export function useEmployeeTransferTab(employeeId: number) {
   const list = useEmployeeTransfers(employeeId)
+  const employee = useEmployee(employeeId)
   const transferEmployee = useTransferEmployee(employeeId)
   const updateService = useUpdateEmployeeService(employeeId)
   const leaveService = useLeaveEmployeeService(employeeId)
@@ -79,6 +81,7 @@ export function useEmployeeTransferTab(employeeId: number) {
   /** The open posting: the newest row with no leaving date. */
   const openPosting = rows.find((row) => row.isCurrent && !row.leavingDate)
   const latestPosting = rows.find((row) => row.isLatest) ?? rows[0]
+  const currentService = employee.data?.service
   /**
    * The employee has left — every posting is closed. A new posting can still be
    * added (they rejoin); only the two closing actions have nothing to act on.
@@ -86,6 +89,53 @@ export function useEmployeeTransferTab(employeeId: number) {
   const isRejoining = openPosting === undefined && latestPosting !== undefined
   /** The posting a new one is seeded from — the open one, or the last one held. */
   const postingToFollow = openPosting ?? latestPosting
+  const serviceToFollow = postingToFollow ?? currentService
+
+  const transferSeedValues = useMemo(() => {
+    const posting = postingToFollow
+    const service = serviceToFollow
+    const baseJoiningDate = posting?.joiningDate ?? service?.joiningDate ?? ''
+    const baseLeavingDate = posting?.leavingDate ?? service?.leavingDate ?? ''
+    const leavingDate = isRejoining
+      ? toFormDate(baseLeavingDate)
+      : maxIso(todayIso(), toFormDate(baseJoiningDate))
+    const startDate = isRejoining
+      ? maxIso(todayIso(), nextDayIso(leavingDate))
+      : nextDayIso(leavingDate)
+
+    return {
+      ...EMPTY_EMPLOYEE_TRANSFER_FORM,
+      leavingDate,
+      joiningDate: startDate,
+      confirmationDate: startDate,
+      companyId: String(posting?.companyId ?? employee.data?.companyId ?? ''),
+      branchId:
+        (posting?.branchId ?? service?.branchId ?? null) === null
+          ? ''
+          : String(posting?.branchId ?? service?.branchId ?? ''),
+      departmentId:
+        (posting?.departmentId ?? service?.departmentId ?? null) === null
+          ? ''
+          : String(posting?.departmentId ?? service?.departmentId ?? ''),
+      designationId:
+        (posting?.designationId ?? service?.designationId ?? null) === null
+          ? ''
+          : String(posting?.designationId ?? service?.designationId ?? ''),
+      grade: posting?.grade || service?.grade || EMPTY_EMPLOYEE_TRANSFER_FORM.grade,
+      employmentType:
+        posting?.employmentType ||
+        service?.employmentType ||
+        EMPTY_EMPLOYEE_TRANSFER_FORM.employmentType,
+      contractPeriod:
+        (posting?.contractPeriod ?? service?.contractPeriod ?? null) === null
+          ? ''
+          : String(posting?.contractPeriod ?? service?.contractPeriod ?? ''),
+      contractPeriodType:
+        posting?.contractPeriodType ||
+        service?.contractPeriodType ||
+        EMPTY_EMPLOYEE_TRANSFER_FORM.contractPeriodType,
+    }
+  }, [employee.data?.companyId, isRejoining, postingToFollow, serviceToFollow])
 
   /* ── Forms ─────────────────────────────────────────────────────────────── */
 
@@ -234,33 +284,28 @@ export function useEmployeeTransferTab(employeeId: number) {
    * repeats, and the new posting starts today — or the day after the exit, when
    * they left today, since the schema won't take the two on the same day.
    */
+  useEffect(() => {
+    if (dialog !== 'transfer' || employee.isLoading || !employee.data) return
+    console.log('[transfer-seed]', {
+      dialog,
+      employeeGrade: employee.data?.service?.grade,
+      transferSeedGrade: transferSeedValues.grade,
+      transferSeedValues,
+    })
+    transferForm.reset(transferSeedValues)
+    // If the computed seed didn't include a grade but the employee's current
+    // service record does, write it explicitly so the UI shows the grade.
+    if (!transferSeedValues.grade && employee.data?.service?.grade) {
+      transferForm.setValue('grade', String(employee.data.service.grade))
+    }
+  }, [dialog, employee.data, employee.isLoading, transferForm, transferSeedValues])
+
   const startTransfer = () => {
     const posting = postingToFollow
-    if (!posting) return
+    const service = serviceToFollow
+    if (!posting && !service) return
 
-    /*
-     * Today, but never before the posting opened — that joining date is the
-     * field's own floor, and a seed below it would be clamped for display while
-     * the form kept (and sent) the earlier day.
-     */
-    const leavingDate = isRejoining
-      ? toFormDate(posting.leavingDate)
-      : maxIso(todayIso(), toFormDate(posting.joiningDate))
-    const startDate = isRejoining
-      ? maxIso(todayIso(), nextDayIso(leavingDate))
-      : nextDayIso(leavingDate)
-
-    setActiveServiceId(posting.id)
-    transferForm.reset({
-      ...EMPTY_EMPLOYEE_TRANSFER_FORM,
-      leavingDate,
-      joiningDate: startDate,
-      confirmationDate: startDate,
-      companyId: String(posting.companyId),
-      branchId: posting.branchId === null ? '' : String(posting.branchId),
-      departmentId: posting.departmentId === null ? '' : String(posting.departmentId),
-      designationId: posting.designationId === null ? '' : String(posting.designationId),
-    })
+    setActiveServiceId(posting?.id ?? service?.id)
     setDialog('transfer')
   }
 

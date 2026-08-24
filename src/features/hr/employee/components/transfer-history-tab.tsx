@@ -478,6 +478,7 @@ function PostingDetailDialog({
   isError: boolean
   error: unknown
 }) {
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl" onClose={() => onOpenChange(false)}>

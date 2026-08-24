@@ -1,4 +1,3 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { formatAmount } from '@/lib/currency'
 import { formatDate } from '@/lib/utils'
 
@@ -77,19 +76,7 @@ export function EmployeeCell({ name, code }: { name: string; code: string }) {
  * The "Sr No." column. It numbers rows within the WHOLE report, not the page —
  * a register's line 21 is line 21 on page three too, which is how it's quoted.
  */
-export function serialColumn<TRow>(offset: number): ColumnDef<TRow> {
-  return {
-    id: 'serial',
-    header: 'Sr No.',
-    enableSorting: false,
-    meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground tabular-nums">{offset + row.index + 1}</span>
-    ),
-  }
-}
+// `serialColumn` moved to serial-column.tsx so this file exports only components
 
 /** Right-aligned tabular numerals — every money and count column wears this. */
-export const NUMERIC_CELL = 'whitespace-nowrap text-right tabular-nums'
-/** Left-aligned but non-wrapping — identifiers, dates, short labels. */
-export const PLAIN_CELL = 'whitespace-nowrap'
+// constants moved to report-cell-constants.tsx to keep this file component-only

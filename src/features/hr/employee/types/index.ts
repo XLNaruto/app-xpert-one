@@ -367,6 +367,10 @@ export interface EmployeeTransfer extends AuditFields {
   departmentName: string
   designationId: number | null
   designationName: string
+  grade: string
+  employmentType: string
+  contractPeriod: number | null
+  contractPeriodType: string
   joiningDate: string
   leavingDate: string
   isCurrent: boolean

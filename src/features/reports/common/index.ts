@@ -18,12 +18,11 @@ export {
   DaysCell,
   EmployeeCell,
   MoneyCell,
-  NUMERIC_CELL,
-  PLAIN_CELL,
   PercentCell,
   TextCell,
-  serialColumn,
 } from './components/report-cells'
+export { serialColumn } from './components/serial-column'
+export { NUMERIC_CELL, PLAIN_CELL } from './components/report-cell-constants'
 
 export { useReportScreen } from './hooks/use-report-screen'
 

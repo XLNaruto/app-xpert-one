@@ -399,9 +399,10 @@ export function useSalaryForm() {
    * changed. It's a walk over at most 200 rows on a hook that re-renders only
    * when dirtiness moves.
    */
-  const dirtyRows = new Set<number>()
+  const dirtyRowsRef = useRef<Set<number>>(new Set())
+  dirtyRowsRef.current.clear()
   ;(dirtyFields.rows ?? []).forEach((row, index) => {
-    if (isDirty(row)) dirtyRows.add(index)
+    if (isDirty(row)) dirtyRowsRef.current.add(index)
   })
 
   /* ── Selection ─────────────────────────────────────────────────────────── */
@@ -454,16 +455,19 @@ export function useSalaryForm() {
    * react-hook-form rebuilds in place every render, so a memo would be pinned to
    * the empty set read straight after `reset()`. It's a walk over at most 200 rows.
    */
-  const saveTargets: number[] = []
-  rows.forEach((row, index) => {
-    if (row.isPaid) return
-    if (selected.size > 0) {
-      if (selected.has(row.employeeServiceId)) saveTargets.push(index)
-      return
-    }
-    if (status === 'complete' && !dirtyRows.has(index)) return
-    saveTargets.push(index)
-  })
+  const computeSaveTargets = useCallback(() => {
+    const targets: number[] = []
+    rows.forEach((row, index) => {
+      if (row.isPaid) return
+      if (selected.size > 0) {
+        if (selected.has(row.employeeServiceId)) targets.push(index)
+        return
+      }
+      if (status === 'complete' && !dirtyRowsRef.current.has(index)) return
+      targets.push(index)
+    })
+    return targets
+  }, [rows, selected, status])
 
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false)
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false)
@@ -473,6 +477,7 @@ export function useSalaryForm() {
       toast.error('Select a company first')
       return
     }
+    const saveTargets = computeSaveTargets()
     if (saveTargets.length === 0) {
       toast.info(
         status === 'complete'
@@ -508,7 +513,7 @@ export function useSalaryForm() {
           values.rows[index],
           headConfigs,
           statutoryIds,
-          liveRow(rows[index], dirtyRows.has(index)),
+          liveRow(rows[index], dirtyRowsRef.current.has(index)),
           rates,
           filters.month,
         ),
@@ -558,8 +563,7 @@ export function useSalaryForm() {
     companyId,
     status,
     rows,
-    saveTargets,
-    dirtyRows,
+    computeSaveTargets,
     headConfigs,
     statutoryIds,
     rates,
@@ -779,14 +783,14 @@ export function useSalaryForm() {
     reload,
 
     /* Editing. */
-    dirtyRows,
+    dirtyRows: dirtyRowsRef.current,
     selected,
     toggleRow,
     toggleAll,
     selectableCount: selectableRows.length,
 
     /* Writing. */
-    saveCount: saveTargets.length,
+    saveCount: computeSaveTargets().length,
     saveConfirmOpen,
     setSaveConfirmOpen,
     askSave,

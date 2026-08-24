@@ -97,7 +97,7 @@ export const PF_REPORT_TYPES: readonly ReportTypeOption<PfReportType>[] = [
     label: 'New Joining PF',
     description:
       'The EPFO new-member sheet. The only type read off POSTINGS rather than payroll, so a joiner can be registered before their first month is processed — which is why nothing on it is money and a re-join is a second line.',
-    defaultSort: { id: 'joining_date', desc: false },
+    defaultSort: { id: 'employee_name', desc: false },
     sortable: NEW_JOINING_SORTABLE,
   },
   {

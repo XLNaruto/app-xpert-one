@@ -35,11 +35,8 @@ import { formatAmount } from "@/lib/currency";
 import { getApiErrorMessage, isForbiddenError } from "@/lib/api-error";
 import { useMediaResolver, useMediaUrl } from "@/hooks/use-media-url";
 import { PageHeader } from "@/components/common/page-header";
-import {
-  CollapsibleSection,
-  CollapsibleSectionGroup,
-  useCollapsibleSectionGroup,
-} from "@/components/common/collapsible-section";
+import { CollapsibleSection, CollapsibleSectionGroup } from "@/components/common/collapsible-section";
+import { useCollapsibleSectionGroup } from "@/components/common/use-collapsible-section-group";
 import { DetailItem } from "@/components/common/detail-item";
 import { EmptyState } from "@/components/common/empty-state";
 import { ImageWithFallback } from "@/components/common/image-with-fallback";

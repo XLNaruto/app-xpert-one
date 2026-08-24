@@ -159,9 +159,10 @@ export function useBulkWageForm() {
    * had changed. It's a walk over at most a couple of hundred rows on a hook
    * that only re-renders when dirtiness actually moves, so it costs nothing.
    */
-  const dirtyRows = new Set<number>()
+  const dirtyRowsRef = useRef<Set<number>>(new Set())
+  dirtyRowsRef.current.clear()
   ;(dirtyFields.rows ?? []).forEach((row, index) => {
-    if (hasChange(row)) dirtyRows.add(index)
+    if (hasChange(row)) dirtyRowsRef.current.add(index)
   })
 
   /* ── Saving ───────────────────────────────────────────────────────────── */
@@ -181,7 +182,7 @@ export function useBulkWageForm() {
       const previous = getValues()
       const keep = new Map<number, BulkWageRow>()
       previous.rows.forEach((row, index) => {
-        if (dirtyRows.has(index) && !savedIds.has(row.designationId)) {
+        if (dirtyRowsRef.current.has(index) && !savedIds.has(row.designationId)) {
           keep.set(row.designationId, row)
         }
       })
@@ -195,7 +196,7 @@ export function useBulkWageForm() {
         if (unsaved) setValue(`rows.${index}`, unsaved, { shouldDirty: true })
       })
     },
-    [getValues, dirtyRows, heads, reset, setValue],
+    [getValues, heads, reset, setValue],
   )
 
   /**
@@ -310,9 +311,9 @@ export function useBulkWageForm() {
    * doesn't show.
    */
   const saveAll = useCallback(() => {
-    const changed = [...dirtyRows].sort((a, b) => a - b)
+    const changed = [...dirtyRowsRef.current].sort((a, b) => a - b)
     saveRows(changed.length > 0 ? changed : configuredRows)
-  }, [saveRows, dirtyRows, configuredRows])
+  }, [saveRows, configuredRows])
 
   /* ── Confirming the save ──────────────────────────────────────────────── */
 
@@ -354,13 +355,13 @@ export function useBulkWageForm() {
     /** One row per designation of the company, in the API's own order. */
     designations,
     heads,
-    dirtyRows,
+    dirtyRows: dirtyRowsRef.current,
     /**
      * Whether Save All has anything to send — a changed row, or a configured one
      * to re-date. False only on a grid with nothing on it worth saving, so the
      * button is never dead while there's an action behind it.
      */
-    canSaveAll: dirtyRows.size > 0 || configuredRows.length > 0,
+    canSaveAll: dirtyRowsRef.current.size > 0 || configuredRows.length > 0,
     changeSalaryType,
     changeWorkingDayCalculationType,
 
@@ -372,7 +373,7 @@ export function useBulkWageForm() {
     /** The month on the toolbar — what the confirmation quotes back. */
     effectiveFrom,
     /** How many rows Save All would send: the changed ones, or the configured. */
-    saveCount: dirtyRows.size > 0 ? dirtyRows.size : configuredRows.length,
+    saveCount: dirtyRowsRef.current.size > 0 ? dirtyRowsRef.current.size : configuredRows.length,
     saveConfirmOpen,
     setSaveConfirmOpen,
     askSaveAll,
