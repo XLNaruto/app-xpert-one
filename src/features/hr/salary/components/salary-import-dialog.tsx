@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { salaryImportContentType } from '../api/salary-api'
+import { checkFileContent } from '@/lib/file-signature'
 
 interface SalaryImportDialogProps {
   open: boolean
@@ -65,11 +66,18 @@ export function SalaryImportDialog({
 
   /* Checked here rather than at the call: the presign only signs `.xlsx` and
      `.csv`, and a rejected file should say so where it was picked. */
-  const take = (picked: File | undefined) => {
+  const take = async (picked: File | undefined) => {
     if (!picked) return
     if (!salaryImportContentType(picked)) {
       setFile(null)
       setProblem('Only .xlsx and .csv sheets can be imported.')
+      return
+    }
+    // The extension is only a claim — an .xlsx has to really be a workbook.
+    const mismatch = await checkFileContent(picked)
+    if (mismatch) {
+      setFile(null)
+      setProblem(mismatch)
       return
     }
     setProblem(null)
@@ -80,7 +88,7 @@ export function SalaryImportDialog({
     event.preventDefault()
     setIsOver(false)
     if (isImporting) return
-    take(event.dataTransfer.files?.[0])
+    void take(event.dataTransfer.files?.[0])
   }
 
   if (!open) return null
@@ -192,7 +200,7 @@ export function SalaryImportDialog({
               accept=".xlsx,.csv"
               className="hidden"
               onChange={(event) => {
-                take(event.target.files?.[0])
+                void take(event.target.files?.[0])
                 /* Cleared so picking the same file twice still fires a change. */
                 event.target.value = ''
               }}

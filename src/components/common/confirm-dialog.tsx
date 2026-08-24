@@ -89,7 +89,7 @@ export function ConfirmDialog({
           </span>
           <DialogTitle className="text-center">{title}</DialogTitle>
           {description ? (
-            <DialogDescription className="text-center leading-relaxed">
+            <DialogDescription className="text-center leading-relaxed break-all">
               {description}
             </DialogDescription>
           ) : null}

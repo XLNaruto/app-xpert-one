@@ -41,9 +41,9 @@ class LoginReplayError extends Error {
  *
  * - **two-factor** — the code plus `challenge_token` *is* the login, so
  *   verifying it hands back a session or nothing; a spent challenge is a
- *   rejection, not a re-issue. There is no resend endpoint either: the
- *   challenge was minted by the login, so asking for another code means
- *   replaying the login for a fresh one.
+ *   rejection, not a re-issue. A resend is asked for with that token and
+ *   answers with a replacement, so the challenge is re-stamped rather than
+ *   the login replayed.
  * - **email** — verifying the address mints nothing, so a success is followed
  *   by replaying the login. That second login is also what reveals a second
  *   factor on an account holding both, which arrives as a new challenge and
@@ -83,10 +83,10 @@ export function useVerifyOtp() {
 
   /**
    * Whether the sign-in can be re-sent. The password is kept out of storage, so
-   * after a reload it is gone and only the two conveniences that need a whole
-   * login are lost — verifying an address can no longer sign the user straight
-   * in, and a two-factor challenge can no longer be re-issued. Entering the
-   * code still works either way; both endpoints identify the user themselves.
+   * after a reload it is gone, and the one convenience that needs a whole login
+   * is lost — verifying an address can no longer sign the user straight in.
+   * Entering a code and asking for a new one still work either way; those
+   * endpoints identify the user themselves.
    */
   const canReplayLogin = Boolean(credentials?.password)
 
@@ -224,17 +224,16 @@ export function useVerifyOtp() {
   }
 
   /**
-   * Mail a fresh code — `resend-email-otp`, for both branches. It replaces any
-   * live code for that address, and a two-factor login code is mailed to that
-   * same address, so it re-arms either kind.
+   * Mail a fresh code — `resend-email-otp`, for both branches, asked for by
+   * whichever handle identifies the pending step: the address on the
+   * unverified-email branch, the `challenge_token` from the login on the
+   * two-factor one. Either way it replaces the live code.
    *
-   * What it does *not* return is a `challenge_token`, so the two-factor branch
-   * keeps the one it has. That token is bound to the login rather than to the
-   * code, but it carries the login's own two-minute life — so a resend renews
-   * the code while the challenge behind it keeps ageing. If a verify comes back
-   * rejected after a resend, that challenge has lapsed and the sign-in has to
-   * be started again; the error surfaces normally and "Back to sign in" is the
-   * way out.
+   * The two-factor branch gets a re-issued `challenge_token` back, since the
+   * old one dies with the code it was minted beside — so the challenge is
+   * re-stamped with it here, and `verify-login-otp` spends the new one. A
+   * resend therefore no longer needs the password replayed, and works after a
+   * reload has dropped it.
    */
   const resend = async () => {
     // Held shut until the live code lapses — see `canResend`.
@@ -242,14 +241,19 @@ export function useVerifyOtp() {
     setError(null)
 
     try {
-      const result = await resendEmailOtp.mutateAsync(credentials.email)
+      const result = await resendEmailOtp.mutateAsync(
+        isTwoFactor
+          ? { challengeToken: challenge.challengeToken }
+          : { email: credentials.email },
+      )
       toastsuccessmsg(result.message)
       // The new code carries its own deadline; putting it on the challenge is
       // what restarts the countdown and clears the boxes (see the effect
-      // above). `challengeToken` rides along untouched — this endpoint has no
-      // say over it, and the two-factor branch still needs it to verify.
+      // above). A server that re-issued no token leaves the current one in
+      // place rather than blanking it.
       replaceChallenge({
         ...challenge,
+        challengeToken: result.challengeToken || challenge.challengeToken,
         otpExpiresIn: result.otpExpiresIn,
         codeExpiresAt: result.codeExpiresAt,
       })

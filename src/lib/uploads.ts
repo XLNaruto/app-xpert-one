@@ -2,6 +2,7 @@ import axios from 'axios'
 import { z } from 'zod'
 import { http } from './http'
 import { toApiError } from './api-error'
+import { checkFileContent } from './file-signature'
 
 /**
  * Presigned direct-to-storage uploads.
@@ -89,6 +90,11 @@ export async function uploadFile(
       'Unsupported file type.',
     )
   }
+
+  // `file.type` above is derived from the file *name*, so a renamed file passes
+  // it. Read the actual bytes before signing anything.
+  const mismatch = await checkFileContent(file, allowed)
+  if (mismatch) throw toApiError(new Error(mismatch), mismatch)
 
   const { uploadUrl, key } = await presignUpload(endpoint, contentType, {
     fileName: file.name,

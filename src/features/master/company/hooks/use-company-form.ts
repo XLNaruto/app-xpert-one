@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { IMAGE_CONTENT_TYPES } from '@/lib/uploads'
+import { checkFileContent } from '@/lib/file-signature'
 import { useStateSelect } from '@/features/master/state'
 import { useDistrictSelect } from '@/features/master/district'
 import { companySchema, type CompanyFormValues } from '../schemas'
@@ -76,10 +77,19 @@ export function useCompanyForm(id?: number) {
    * than at save time — the file dialog is already filtered, but a user who gets
    * an unsupported one through should hear about it now, not lose a save to it.
    */
-  const pickLogoFile = (file: File | null) => {
+  const pickLogoFile = async (file: File | null) => {
     if (file && !(IMAGE_CONTENT_TYPES as readonly string[]).includes(file.type)) {
       toast.error('Logo must be a JPG, PNG or WebP image.')
       return
+    }
+    // `file.type` comes from the name, so anything renamed to .png passes it.
+    // The bytes are what settle it.
+    if (file) {
+      const mismatch = await checkFileContent(file, IMAGE_CONTENT_TYPES)
+      if (mismatch) {
+        toast.error(mismatch)
+        return
+      }
     }
     setLogoFile(file)
   }

@@ -75,6 +75,7 @@ export function DesignationListPage() {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Designation Name" />
         ),
+        meta: { className: 'min-w-64 max-w-72 break-all' },
         cell: ({ row }) => (
           <span className="font-medium text-foreground">
             {row.original.designationName}

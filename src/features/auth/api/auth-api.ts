@@ -17,7 +17,21 @@ export interface ResendResult {
   otpExpiresIn: number
   /** Absolute epoch-ms deadline — see `AuthChallenge.codeExpiresAt`. */
   codeExpiresAt: number
+  /**
+   * The re-issued two-factor challenge, when the resend was asked for with one.
+   * Empty on the unverified-address branch, which has no challenge.
+   */
+  challengeToken: string
 }
+
+/**
+ * Who a resend is for. The API identifies the recipient either way: an
+ * unverified address by the address itself, a two-factor login by the
+ * `challenge_token` its login answered with.
+ */
+export type ResendTarget =
+  | { email: string; challengeToken?: undefined }
+  | { challengeToken: string; email?: undefined }
 
 /**
  * Backend session endpoints. Token *rotation* on a 401 lives in the api-client
@@ -164,23 +178,32 @@ export async function verifyEmailRequest(
 
 /**
  * POST /user/auth/resend-email-otp — mail a fresh verification code, which
- * replaces any live one for that address.
+ * replaces any live one, and serves both challenges.
  *
- * It always answers `200` with the same shape: an unknown address, a
- * deactivated user and an already-verified one are indistinguishable from a
- * code being sent, so this can't double as an account-exists lookup. Nothing in
- * the reply is worth branching on beyond the wording.
+ * Which one is decided by what's sent: the unverified-address step sends the
+ * `email`, and a two-factor login sends the `challenge_token` its login
+ * answered with instead — the token is what identifies the pending sign-in, so
+ * the address is neither needed nor accepted as a stand-in there. That branch
+ * gets a *new* `challenge_token` back, which supersedes the one it was asked
+ * with: the old one dies with the code it was minted beside, so
+ * `verify-login-otp` must be given the returned token from here on.
  *
- * Two-factor has no counterpart — its challenge is minted by the login, so a
- * resend there means replaying the login for a new `challenge_token`.
+ * On the address branch it always answers `200` with the same shape: an unknown
+ * address, a deactivated user and an already-verified one are indistinguishable
+ * from a code being sent, so this can't double as an account-exists lookup.
  */
 export async function resendEmailOtpRequest(
-  email: string,
+  target: ResendTarget,
 ): Promise<ResendResult> {
   try {
-    const raw = await http.post<unknown, { email: string }>(
+    const raw = await http.post<
+      unknown,
+      { email?: string; challenge_token?: string }
+    >(
       endpoints.AUTH.RESEND_EMAIL_OTP,
-      { email },
+      target.challengeToken
+        ? { challenge_token: target.challengeToken }
+        : { email: target.email },
     )
     const data = resendEmailOtpResponseSchema.parse(raw)
     const otpExpiresIn = data.otp_expires_in ?? DEFAULT_OTP_TTL_SECONDS
@@ -192,6 +215,9 @@ export async function resendEmailOtpRequest(
       // The old code is dead the moment this one is mailed, so the countdown
       // restarts from this answer rather than from the original challenge.
       codeExpiresAt: Date.now() + otpExpiresIn * 1000,
+      // A server that re-issues nothing leaves the caller on the token it
+      // already holds, so an absent field must not read as "cleared".
+      challengeToken: data.challenge_token ?? '',
     }
   } catch (error) {
     throw toApiError(error, "Couldn't send a new code. Please try again.")

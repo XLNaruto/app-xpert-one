@@ -1,6 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { asset } from '@/lib/asset'
-import { CompanySelectGate } from '@/features/company'
+import { BrandLogo } from '@/components/common/brand-logo'
+import { CompanySelectGate, useCompanyScopeRedirect } from '@/features/company'
 import { useAppConfig } from '@/features/config'
 import { usePermissions } from '@/features/permissions'
 import { useIpAccessModeGlobal } from '@/features/administration/ip-address'
@@ -18,6 +19,9 @@ export function DashboardLayout() {
   // warms the IP screen's header, and a barred network (`RESTRICTED_IP`) is met
   // by the full-screen overlay on entering the app instead of only on that screen.
   useIpAccessModeGlobal()
+  // Switching the active company invalidates every record id on screen, so a
+  // detail / create / edit page falls back to its module's list.
+  useCompanyScopeRedirect()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -34,11 +38,9 @@ export function DashboardLayout() {
             <div className="flex w-full flex-col items-center justify-between gap-2 text-sm font-medium text-muted-foreground sm:flex-row">
               <p className="inline-flex items-center gap-1.5">
                 <span className="text-[22px] leading-none">©</span>
-                <span>
-                  {new Date().getFullYear()}{' '}
-                  <span className="font-semibold text-foreground">XpertOne</span>.
-                  All Rights Reserved.
-                </span>
+                <span>{new Date().getFullYear()}</span>
+                <BrandLogo className="h-5 w-[70px]" />
+                <span>. All Rights Reserved.</span>
               </p>
               <a
                 href="https://www.xpertlab.com"

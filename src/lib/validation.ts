@@ -158,11 +158,39 @@ export const accountNumberField = (options: FieldOptions = {}) =>
     ...options,
   })
 
-export const aadhaarField = (options: FieldOptions = {}) =>
-  patternField(AADHAAR_RE, 'Enter a valid 12-digit Aadhaar number', {
-    label: 'the Aadhaar number',
-    ...options,
+/**
+ * What's wrong with an Aadhaar number, in the words the user needs — or `null`
+ * when nothing is. Blank passes; a required field reports the missing value
+ * before this runs.
+ *
+ * Two failures, and they read differently on purpose: twelve characters that
+ * aren't twelve digits is a *length* problem, while twelve digits opening with
+ * 0 or 1 is a well-formed number that no Aadhaar can be. Telling the second one
+ * "must be 12 digits" sends the user back to count digits they already have
+ * right.
+ */
+export function aadhaarIssue(value: string): string | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  if (!/^\d{12}$/.test(trimmed)) return 'Aadhaar number must be 12 digits'
+  if (!AADHAAR_RE.test(trimmed)) {
+    return "Not a valid Aadhaar number — it can't start with 0 or 1"
+  }
+  return null
+}
+
+export const aadhaarField = ({ required = false, max }: FieldOptions = {}) => {
+  const base = z.string().trim()
+  const capped = max === undefined ? base : base.max(max, `Cannot exceed ${max} characters`)
+  const required_ = required
+    ? capped.min(1, 'Please enter the Aadhaar number')
+    : capped
+  // superRefine rather than `patternField`: the two failures need two messages.
+  return required_.superRefine((value, ctx) => {
+    const issue = aadhaarIssue(value)
+    if (issue) ctx.addIssue({ code: 'custom', message: issue })
   })
+}
 
 export const uanField = (options: FieldOptions = {}) =>
   patternField(UAN_RE, 'UAN must be 12 digits', { label: 'the UAN', ...options })
@@ -235,17 +263,32 @@ export function personNameField(
  * The name of a record — a company, branch, department, shift. Digits are fine
  * ("Unit 2"); a value with no letter in it at all is not.
  */
+
+// Only letters, digits, and spaces allowed
+const RECORD_NAME_CHARS_RE = /^[a-zA-Z0-9\s]*$/
+// Must contain at least one letter somewhere
+const RECORD_NAME_HAS_LETTER_RE = /[a-zA-Z]/
+
 export function recordNameField(
   label: string,
   { required = true, max = 200 }: Omit<FieldOptions, 'label'> = {},
 ) {
-  const base = z.string().trim().max(max, `Cannot exceed ${max} characters`)
-  const message = `${label} must contain at least one letter`
-  return required
-    ? base.min(1, `Please enter ${label}`).min(2, 'Minimum 2 characters').regex(RECORD_NAME_RE, message)
-    : base.refine((v) => v === '' || RECORD_NAME_RE.test(v), message)
-}
+  const base = z
+    .string()
+    .trim()
+    .max(max, `Cannot exceed ${max} characters`)
+    .regex(RECORD_NAME_CHARS_RE, `${label} can only contain letters, numbers, and spaces`)
 
+  return required
+    ? base
+        .min(1, `Please enter ${label}`)
+        .min(2, 'Minimum 2 characters')
+        .refine((v) => RECORD_NAME_HAS_LETTER_RE.test(v), `${label} must contain at least one letter`)
+    : base.refine(
+        (v) => v === '' || RECORD_NAME_HAS_LETTER_RE.test(v),
+        `${label} must contain at least one letter`,
+      )
+}
 /** A short code beside a name — `CL`, `HRA`, `SHIFT-A`. */
 export function shortCodeField(
   label: string,

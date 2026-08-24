@@ -4,6 +4,7 @@ import { Paperclip, SendHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toasterrormsg } from '@/lib/toast'
+import { checkFileContent } from '@/lib/file-signature'
 import {
   SUPPORT_ATTACHMENT_ACCEPT,
   SUPPORT_ATTACHMENT_MAX_MB,
@@ -44,7 +45,7 @@ export function EmployeeTicketReplyForm({
 }: EmployeeTicketReplyFormProps) {
   const fileInput = useRef<HTMLInputElement>(null)
 
-  const pickFile = (file: File | null) => {
+  const pickFile = async (file: File | null) => {
     if (!file) {
       onAttachmentChange(null)
       return
@@ -55,6 +56,12 @@ export function EmployeeTicketReplyForm({
     }
     if (file.size > SUPPORT_ATTACHMENT_MAX_MB * 1024 * 1024) {
       toasterrormsg(`Keep the file under ${SUPPORT_ATTACHMENT_MAX_MB} MB.`)
+      return
+    }
+    // Both checks above read the file name; this one reads the file.
+    const mismatch = await checkFileContent(file, SUPPORT_ATTACHMENT_CONTENT_TYPES)
+    if (mismatch) {
+      toasterrormsg(mismatch)
       return
     }
     onAttachmentChange(file)
@@ -112,7 +119,7 @@ export function EmployeeTicketReplyForm({
             type="file"
             accept={SUPPORT_ATTACHMENT_ACCEPT}
             className="hidden"
-            onChange={(event) => pickFile(event.target.files?.[0] ?? null)}
+            onChange={(event) => void pickFile(event.target.files?.[0] ?? null)}
           />
           <Button
             type="button"

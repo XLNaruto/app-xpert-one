@@ -1,4 +1,4 @@
-import { Controller, FormProvider } from 'react-hook-form'
+import { Controller, FormProvider, useWatch } from 'react-hook-form'
 import {
   DoorOpen,
   HeartPulse,
@@ -26,6 +26,7 @@ import {
   WEIGHT_UNIT_OPTIONS,
 } from '../constants'
 import { useEmployeeBasicForm } from '../hooks/use-employee-basic-form'
+import { ContractDatesSync, SameAsCurrentMirror } from './basic-detail-sync'
 import { AddressBlock } from './address-block'
 import {
   CURRENT_ADDRESS_FIELDS,
@@ -84,12 +85,19 @@ export function BasicDetailTab({
     onSubmit,
   } = useEmployeeBasicForm({ employee, onCreated, onSaved })
 
+  // Subscribed by name rather than through `form.watch`, which subscribes this
+  // component — the whole step — to the form's value stream.
+  const photo = useWatch({ control, name: 'photo' })
+
   /** Newest date of birth that clears the minimum-age rule. */
   const maxBirthDate = new Date()
   maxBirthDate.setFullYear(maxBirthDate.getFullYear() - MINIMUM_EMPLOYEE_AGE)
 
   return (
     <FormProvider {...form}>
+      {/* Headless: they watch their own fields and render nothing. */}
+      <SameAsCurrentMirror />
+      <ContractDatesSync />
       <form onSubmit={onSubmit} noValidate>
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <FormSection
@@ -101,7 +109,7 @@ export function BasicDetailTab({
 
           <div className="col-span-full">
             <EmployeePhotoField
-              value={form.watch('photo')}
+              value={photo}
               onChange={(key) => form.setValue('photo', key)}
               pendingFile={photoFile}
               onPickFile={pickPhotoFile}

@@ -2,6 +2,7 @@ import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
+import { checkFileContent } from '@/lib/file-signature'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import { ImageWithFallback } from './image-with-fallback'
 
@@ -70,7 +71,14 @@ export function FileDropzone({
   // passes through untouched.
   const previewUrl = useMediaUrl(value?.url)
 
+  // The library's `types` check reads the extension only, so a file renamed to
+  // an allowed one gets this far — the byte check is what stops it.
   const take = async (file: File) => {
+    const mismatch = await checkFileContent(file)
+    if (mismatch) {
+      toasterrormsg(mismatch)
+      return
+    }
     onChange({ name: file.name, url: await readAsDataUrl(file), file })
   }
 

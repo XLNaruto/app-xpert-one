@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { shiftResponseSchema } from '@/features/master/shift'
 import {
-  AADHAAR_RE,
   AMOUNT_RE,
   EMAIL_RE,
   MOBILE_RE,
@@ -9,6 +8,7 @@ import {
   PIN_CODE_RE,
   RECORD_NAME_RE,
   aadhaarField,
+  aadhaarIssue,
   accountNumberField,
   emailField,
   esicNumberField,
@@ -158,6 +158,12 @@ export const employeeBasicSchema = z
     /** Leaving is recorded here for a correction; a real exit goes through step 8. */
     leavingDate: z.string(),
     leavingReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+  })
+  // Two numbers that are the same are one number — the alternate is there to
+  // reach the employee when the first doesn't answer.
+  .refine((v) => !v.mobileNumber2 || v.mobileNumber2.trim() !== v.mobileNumber1.trim(), {
+    path: ['mobileNumber2'],
+    message: 'Alternate mobile must be different from the mobile number',
   })
   // A contract only means something with a period behind it.
   .refine(
@@ -676,12 +682,12 @@ export const employeeFamilyListSchema = z.object({
         })
       }
 
-      const aadhar = row.aadharNumber.trim()
-      if (aadhar !== '' && !AADHAAR_RE.test(aadhar)) {
+      const aadharIssue = aadhaarIssue(row.aadharNumber)
+      if (aadharIssue) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'aadharNumber'],
-          message: 'Aadhaar number must be 12 digits',
+          message: aadharIssue,
         })
       }
     })

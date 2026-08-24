@@ -137,8 +137,16 @@ export const verifyEmailResponseSchema = z.object({
   message: z.string().optional(),
 })
 
-/** `POST /user/auth/resend-email-otp` — always 200, whatever the address. */
+/**
+ * `POST /user/auth/resend-email-otp` — always 200, whatever the address.
+ *
+ * A resend asked for with a `challenge_token` (the two-factor branch) mints a
+ * fresh challenge along with the code, so the reply carries a new token that
+ * *replaces* the one it was asked with. The unverified-address branch has no
+ * challenge to re-issue, so the field is absent there.
+ */
 export const resendEmailOtpResponseSchema = z.object({
+  challenge_token: z.string().optional(),
   otp_expires_in: z.number().optional(),
   masked_email: z.string().optional(),
   message: z.string().optional(),

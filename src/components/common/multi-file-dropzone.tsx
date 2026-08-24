@@ -2,6 +2,7 @@ import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Plus, UploadCloud, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
+import { checkFileContent } from '@/lib/file-signature'
 import { useMediaResolver } from '@/hooks/use-media-url'
 import { ImageWithFallback } from './image-with-fallback'
 import type { DropzoneFile } from './file-dropzone'
@@ -92,6 +93,13 @@ export function MultiFileDropzone({
           `Only ${maxFiles} file${maxFiles === 1 ? '' : 's'} allowed — extra files were skipped.`,
         )
         break
+      }
+      // Extension says one thing, bytes another — a renamed file. Skip it and
+      // say so, the rest of the batch still goes through.
+      const mismatch = await checkFileContent(file)
+      if (mismatch) {
+        toasterrormsg(`${file.name}: ${mismatch}`)
+        continue
       }
       accepted.push({ name: file.name, url: await readAsDataUrl(file), file })
     }

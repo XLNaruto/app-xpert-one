@@ -10,7 +10,7 @@ import {
   verifyEmailRequest,
   verifyLoginOtpRequest,
 } from './auth-api'
-import type { ResendResult } from './auth-api'
+import type { ResendResult, ResendTarget } from './auth-api'
 import type { LoginValues } from '../schemas'
 import type { AuthSession, LoginOutcome } from '../types'
 
@@ -131,13 +131,14 @@ export function useVerifyEmail() {
 }
 
 /**
- * Mail a fresh verification code — `POST /user/auth/resend-email-otp`. Only for
- * the unverified-address step: a two-factor challenge is re-issued by replaying
- * the login instead.
+ * Mail a fresh verification code — `POST /user/auth/resend-email-otp`. Serves
+ * both challenges: the unverified-address step asks by `email`, a two-factor
+ * login asks by `challengeToken` and gets a re-issued one back, which the
+ * caller must put on the challenge before verifying again.
  */
 export function useResendEmailOtp() {
-  return useMutation<ResendResult, Error, string>({
-    mutationFn: (email) => resendEmailOtpRequest(email),
+  return useMutation<ResendResult, Error, ResendTarget>({
+    mutationFn: (target) => resendEmailOtpRequest(target),
   })
 }
 

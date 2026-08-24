@@ -4,6 +4,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { useShifts } from '../api/use-shifts'
 import { useClearDefaultShift, useSetDefaultShift } from '../api/use-shift-mutations'
 import { shiftOptions } from '../lib/shift-mappers'
+import { useNavigate } from '@tanstack/react-router'
 
 interface UseDefaultShiftOptions {
   /** The company whose shift master the dropdown is picked from. */
@@ -39,6 +40,8 @@ export function useDefaultShift({
   const shifts = useShifts(undefined, companyId)
   const setDefault = useSetDefaultShift()
   const clearDefault = useClearDefaultShift()
+  const navigate = useNavigate()
+  
 
   /** The combobox's value — a shift id as a string, or `''` for none. */
   const [shiftId, setShiftId] = useState('')
@@ -49,6 +52,8 @@ export function useDefaultShift({
   }, [currentShiftId])
 
   const options = useMemo(() => shiftOptions(shifts.data?.items ?? []), [shifts.data])
+
+    const goToList = () => navigate({ to: '/master/department' })
 
   const save = () => {
     if (departmentId === undefined) {
@@ -62,7 +67,9 @@ export function useDefaultShift({
     setDefault.mutate(
       { shiftId: Number(shiftId), scope: { department_id: departmentId } },
       {
-        onSuccess: () => toast.success('Default shift saved for this department'),
+        onSuccess: () => {toast.success('Default shift saved for this department');
+          goToList()
+        },
         onError: (err) =>
           toast.error(getApiErrorMessage(err, 'Failed to save the default shift')),
       },

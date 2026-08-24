@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { IMAGE_CONTENT_TYPES } from '@/lib/uploads'
+import { checkFileContent } from '@/lib/file-signature'
 import { useStateSelect } from '@/features/master/state'
 import { useDistrictSelect } from '@/features/master/district'
 import { employeeBasicSchema, type EmployeeBasicFormValues } from '../schemas'
@@ -14,10 +15,8 @@ import {
   useUploadEmployeePhoto,
 } from '../api/use-employee-mutations'
 import { employeeToBasicFormValues } from '../lib/employee-mappers'
-import { deriveRenewalDate } from '../lib/employee-dates'
 import { usePostingOptions } from './use-posting-options'
 import type { Employee } from '../types'
-import { PERMANENT_EMPLOYMENT_TYPE } from '../constants'
 
 /**
  * Step 1 — the person, their address, contact, health and their posting.
@@ -55,7 +54,7 @@ export function useEmployeeBasicForm({
     resolver: zodResolver(employeeBasicSchema),
     defaultValues: EMPTY_EMPLOYEE_BASIC_FORM,
   })
-  const { control, setValue, getValues, reset, handleSubmit } = form
+  const { control, setValue, reset, handleSubmit } = form
 
   /**
    * The picked file, held until Save. Nothing is presigned or PUT while the user
@@ -74,91 +73,14 @@ export function useEmployeeBasicForm({
     }
   }, [employee, reset])
 
-  /* ── Address: the "same as current" mirror ─────────────────────────────── */
-
+  /**
+   * Only what the *layout* depends on is watched here — the permanent block is
+   * hidden while this is on. The address mirror and the contract-date
+   * derivations watch their own fields inside `<SameAsCurrentMirror />` and
+   * `<ContractDatesSync />`, so typing in an address or a contract period
+   * doesn't re-render the whole step.
+   */
   const sameAsCurrent = useWatch({ control, name: 'sameAsCurrent' })
-  const currentAddress = useWatch({
-    control,
-    name: [
-      'currentAddress1',
-      'currentAddress2',
-      'currentAddress3',
-      'currentCountry',
-      'currentStateId',
-      'currentDistrictId',
-      'currentTaluka',
-      'currentCity',
-      'currentPinCode',
-    ],
-  })
-
-  /**
-   * While the switch is on, the permanent block is hidden and mirrored from the
-   * current one — the API stores both address sets, so the copy has to be real
-   * values rather than a flag. Turning it off leaves what was copied in place: the
-   * user's next act is to correct it, not to retype it from nothing.
-   *
-   * Each field is only written when it actually differs. `useWatch` on a list of
-   * names hands back a fresh array every render, so an unconditional `setValue`
-   * here would notify the permanent block's own subscribers, re-render, and run
-   * this again — a loop.
-   */
-  useEffect(() => {
-    if (!sameAsCurrent) return
-
-    const mirror: [keyof EmployeeBasicFormValues, string][] = [
-      ['permanentAddress1', currentAddress[0]],
-      ['permanentAddress2', currentAddress[1]],
-      ['permanentAddress3', currentAddress[2]],
-      ['permanentCountry', currentAddress[3]],
-      ['permanentStateId', currentAddress[4]],
-      ['permanentDistrictId', currentAddress[5]],
-      ['permanentTaluka', currentAddress[6]],
-      ['permanentCity', currentAddress[7]],
-      ['permanentPinCode', currentAddress[8]],
-    ]
-
-    for (const [name, value] of mirror) {
-      if (getValues(name) !== value) setValue(name, value)
-    }
-    // `currentAddress` is a new array each render — the primitives inside it are
-    // what actually change, and the guard above makes a repeat run a no-op.
-  }, [sameAsCurrent, currentAddress, getValues, setValue])
-
-  /* ── Contract dates ────────────────────────────────────────────────────── */
-
-  const joiningDate = useWatch({ control, name: 'joiningDate' })
-  const employmentType = useWatch({ control, name: 'employmentType' })
-  const contractPeriod = useWatch({ control, name: 'contractPeriod' })
-  const contractPeriodType = useWatch({ control, name: 'contractPeriodType' })
-
-  /**
-   * Confirmation defaults to the joining date — most employees are confirmed on
-   * joining, and the schema requires it to be on or after. Only filled while it's
-   * empty, so a date the user chose is never overwritten.
-   */
-  useEffect(() => {
-    if (joiningDate && !getValues('confirmationDate')) {
-      setValue('confirmationDate', joiningDate, { shouldValidate: true })
-    }
-  }, [joiningDate, getValues, setValue])
-
-  /**
-   * Renewal follows from the contract's start and length. Recomputed whenever any
-   * of the three change — a contract's end isn't a free choice, and leaving a
-   * stale date here is what makes a renewal get missed. The field stays editable
-   * for the contract that says otherwise.
-   */
-  useEffect(() => {
-    if (employmentType === PERMANENT_EMPLOYMENT_TYPE) {
-      if (getValues('renewalDate')) setValue('renewalDate', '')
-      return
-    }
-    const derived = deriveRenewalDate(joiningDate, contractPeriod, contractPeriodType)
-    if (derived && derived !== getValues('renewalDate')) {
-      setValue('renewalDate', derived, { shouldValidate: true })
-    }
-  }, [employmentType, joiningDate, contractPeriod, contractPeriodType, getValues, setValue])
 
   /* ── Dropdowns ─────────────────────────────────────────────────────────── */
 
@@ -208,10 +130,19 @@ export function useEmployeeBasicForm({
    * than at save time — the file dialog is already filtered, but a user who gets
    * an unsupported one through should hear about it now, not lose a save to it.
    */
-  const pickPhotoFile = (file: File | null) => {
+  const pickPhotoFile = async (file: File | null) => {
     if (file && !(IMAGE_CONTENT_TYPES as readonly string[]).includes(file.type)) {
       toast.error('Photo must be a JPG, PNG or WebP image.')
       return
+    }
+    // `file.type` comes from the name, so an image-shaped extension on some
+    // other file gets past the line above. The bytes decide.
+    if (file) {
+      const mismatch = await checkFileContent(file, IMAGE_CONTENT_TYPES)
+      if (mismatch) {
+        toast.error(mismatch)
+        return
+      }
     }
     setPhotoFile(file)
   }
@@ -271,7 +202,6 @@ export function useEmployeeBasicForm({
     photoFile,
     pickPhotoFile,
     sameAsCurrent,
-    employmentType,
     currentState,
     currentDistrict,
     permanentState,

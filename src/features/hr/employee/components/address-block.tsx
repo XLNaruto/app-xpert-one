@@ -84,13 +84,12 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
         />
       </Field>
 
-      <Field label="Country" error={errorFor(names.country)}>
-        <Input
-          disabled={disabled}
-          placeholder="Country"
-          {...register(names.country as Path<T>)}
-        />
-      </Field>
+      {/*
+        Country has no field: it isn't asked for. The form still carries the
+        value — 'India' from `EMPTY_EMPLOYEE_BASIC_FORM`, or whatever the record
+        holds — and it still reaches the API, since RHF keeps the value of a
+        field that was never mounted.
+      */}
 
       <Field label="State" error={errorFor(names.stateId)}>
         <Controller
