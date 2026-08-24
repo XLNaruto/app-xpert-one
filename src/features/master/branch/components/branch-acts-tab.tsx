@@ -52,7 +52,6 @@ interface BranchActsTabProps {
  * out of the office-address master.
  */
 export function BranchActsTab({
-  register,
   control,
   errors,
   stateOptions,
@@ -73,7 +72,11 @@ export function BranchActsTab({
         iconTone="text-primary"
       >
         <Field label="PF Code" error={errors.pfCode?.message}>
-          <Input placeholder="PF Code" {...register('pfCode')} />
+          <Controller
+            control={control}
+            name="pfCode"
+            render={({ field }) => <Input placeholder="PF Code" {...field} />}
+          />
         </Field>
         <DateField
           control={control}
@@ -104,13 +107,25 @@ export function BranchActsTab({
           />
         </Field>
         <Field label="PF Username" error={errors.pfUsername?.message}>
-          <Input placeholder="PF Username" {...register('pfUsername')} />
+          <Controller
+            control={control}
+            name="pfUsername"
+            render={({ field }) => <Input placeholder="PF Username" {...field} />}
+          />
         </Field>
         <Field label="PF Password" error={errors.pfPassword?.message}>
-          <PasswordInput
-            autoComplete="new-password"
-            placeholder="PF Password"
-            {...register('pfPassword')}
+          <Controller
+            control={control}
+            name="pfPassword"
+            render={({ field }) => (
+              <PasswordInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                autoComplete="new-password"
+                placeholder="PF Password"
+              />
+            )}
           />
         </Field>
       </ActCard>
@@ -123,7 +138,11 @@ export function BranchActsTab({
         iconTone="text-emerald-600 dark:text-emerald-400"
       >
         <Field label="ESIC Code" error={errors.esicCode?.message}>
-          <Input placeholder="ESIC Code" {...register('esicCode')} />
+          <Controller
+            control={control}
+            name="esicCode"
+            render={({ field }) => <Input placeholder="ESIC Code" {...field} />}
+          />
         </Field>
         <Field label="ESIC Deducts On" error={errors.esicDeductsOn?.message}>
           <Controller
@@ -164,13 +183,25 @@ export function BranchActsTab({
           />
         </Field>
         <Field label="ESIC Username" error={errors.esicUsername?.message}>
-          <Input placeholder="ESIC Username" {...register('esicUsername')} />
+          <Controller
+            control={control}
+            name="esicUsername"
+            render={({ field }) => <Input placeholder="ESIC Username" {...field} />}
+          />
         </Field>
         <Field label="ESIC Password" error={errors.esicPassword?.message}>
-          <PasswordInput
-            autoComplete="new-password"
-            placeholder="ESIC Password"
-            {...register('esicPassword')}
+          <Controller
+            control={control}
+            name="esicPassword"
+            render={({ field }) => (
+              <PasswordInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                autoComplete="new-password"
+                placeholder="ESIC Password"
+              />
+            )}
           />
         </Field>
       </ActCard>
@@ -192,26 +223,37 @@ export function BranchActsTab({
           label="Factory License Number"
           error={errors.factoryLicenseNumber?.message}
         >
-          <Input
-            placeholder="Factory License Number"
-            {...register('factoryLicenseNumber')}
+          <Controller
+            control={control}
+            name="factoryLicenseNumber"
+            render={({ field }) => (
+              <Input placeholder="Factory License Number" {...field} />
+            )}
           />
         </Field>
         <Field label="Factory FIN Number" error={errors.factoryFinNumber?.message}>
-          <Input placeholder="Factory FIN Number" {...register('factoryFinNumber')} />
+          <Controller
+            control={control}
+            name="factoryFinNumber"
+            render={({ field }) => <Input placeholder="Factory FIN Number" {...field} />}
+          />
         </Field>
         <Field label="No. of Employees" error={errors.noOfEmployees?.message}>
-          <Input
-            inputMode="numeric"
-            placeholder="No. of Employees"
-            {...register('noOfEmployees')}
+          <Controller
+            control={control}
+            name="noOfEmployees"
+            render={({ field }) => (
+              <Input inputMode="numeric" placeholder="No. of Employees" {...field} />
+            )}
           />
         </Field>
         <Field label="Electric Horse Power" error={errors.electricHorsePower?.message}>
-          <Input
-            inputMode="numeric"
-            placeholder="Electric Horse Power"
-            {...register('electricHorsePower')}
+          <Controller
+            control={control}
+            name="electricHorsePower"
+            render={({ field }) => (
+              <Input inputMode="numeric" placeholder="Electric Horse Power" {...field} />
+            )}
           />
         </Field>
         <DateField
@@ -264,27 +306,34 @@ export function BranchActsTab({
           label="PEC Registration Number"
           error={errors.ptPecRegistrationNumber?.message}
         >
-          <Input
-            placeholder="PEC Registration Number"
-            {...register('ptPecRegistrationNumber')}
+          <Controller
+            control={control}
+            name="ptPecRegistrationNumber"
+            render={({ field }) => (
+              <Input placeholder="PEC Registration Number" {...field} />
+            )}
           />
         </Field>
         <Field
           label="PRC Registration Number"
           error={errors.ptPrcRegistrationNumber?.message}
         >
-          <Input
-            placeholder="PRC Registration Number"
-            {...register('ptPrcRegistrationNumber')}
+          <Controller
+            control={control}
+            name="ptPrcRegistrationNumber"
+            render={({ field }) => <Input placeholder="PRC Registration Number" {...field} />}
           />
         </Field>
         <Field
           label="Corporation / Gram Panchayat Name"
           error={errors.ptCorporationName?.message}
         >
-          <Input
-            placeholder="Corporation / Gram Panchayat Name"
-            {...register('ptCorporationName')}
+          <Controller
+            control={control}
+            name="ptCorporationName"
+            render={({ field }) => (
+              <Input placeholder="Corporation / Gram Panchayat Name" {...field} />
+            )}
           />
         </Field>
         <Field label="PT State" error={errors.ptStateId?.message}>
@@ -338,9 +387,10 @@ export function BranchActsTab({
           label="LWF Registration Number"
           error={errors.lwfRegistrationNumber?.message}
         >
-          <Input
-            placeholder="LWF Registration Number"
-            {...register('lwfRegistrationNumber')}
+          <Controller
+            control={control}
+            name="lwfRegistrationNumber"
+            render={({ field }) => <Input placeholder="LWF Registration Number" {...field} />}
           />
         </Field>
         <Field label="LWF Office Address" error={errors.lwfOfficeAddressId?.message}>
@@ -360,13 +410,25 @@ export function BranchActsTab({
           />
         </Field>
         <Field label="LWF Username" error={errors.lwfUsername?.message}>
-          <Input placeholder="LWF Username" {...register('lwfUsername')} />
+          <Controller
+            control={control}
+            name="lwfUsername"
+            render={({ field }) => <Input placeholder="LWF Username" {...field} />}
+          />
         </Field>
         <Field label="LWF Password" error={errors.lwfPassword?.message}>
-          <PasswordInput
-            autoComplete="new-password"
-            placeholder="LWF Password"
-            {...register('lwfPassword')}
+          <Controller
+            control={control}
+            name="lwfPassword"
+            render={({ field }) => (
+              <PasswordInput
+                ref={field.ref}
+                value={field.value}
+                onChange={field.onChange}
+                autoComplete="new-password"
+                placeholder="LWF Password"
+              />
+            )}
           />
         </Field>
       </ActCard>
@@ -385,9 +447,10 @@ export function BranchActsTab({
           error={errors.exRegistrationDate?.message}
         />
         <Field label="Registration Number" error={errors.exRegistrationNumber?.message}>
-          <Input
-            placeholder="Registration Number"
-            {...register('exRegistrationNumber')}
+          <Controller
+            control={control}
+            name="exRegistrationNumber"
+            render={({ field }) => <Input placeholder="Registration Number" {...field} />}
           />
         </Field>
         <Field label="Office Address" error={errors.exOfficeAddressId?.message}>

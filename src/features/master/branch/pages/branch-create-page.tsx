@@ -58,6 +58,7 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
     goToList,
   } = useBranchForm(branchId)
 
+
   // Reading this record was refused — show the 403 screen, not a broken form.
   if (isForbidden) {
     return <Forbidden description={forbiddenMessage} />
@@ -147,6 +148,8 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
                   />
                 </TabsContent>
               </Tabs>
+
+              {/* Debug UI removed */}
 
               {/*
                 Actions — shared by both tabs. Step one saves the branch and

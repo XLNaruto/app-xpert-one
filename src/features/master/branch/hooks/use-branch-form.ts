@@ -54,6 +54,11 @@ export function useBranchForm(id?: number) {
   } = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
     defaultValues: EMPTY_BRANCH_FORM,
+    // Keep values for inputs that mount only when their tab is active.
+    // `TabsContent` unmounts inactive panels, and when fields register
+    // after a reset they must still receive the seeded values. Prevent
+    // react-hook-form from unregistering on unmount so the reset sticks.
+    shouldUnregister: false,
   })
 
   // Seed each tab as its own record lands (edit mode only). They arrive from
@@ -70,11 +75,54 @@ export function useBranchForm(id?: number) {
     if (acts.data === undefined) return
     // `null` is a real answer — the branch has no acts row, so the tab opens
     // blank and the first save will POST one.
-    reset({
-      ...getValues(),
-      ...(acts.data ? actsToFormValues(acts.data) : EMPTY_BRANCH_ACTS_FORM),
+    const values = acts.data ? actsToFormValues(acts.data) : EMPTY_BRANCH_ACTS_FORM
+
+    // Apply the acts values to the form while preserving any other values.
+
+    // Update the whole form while preserving any other values. Use `setValue`
+    // per-field so fields that mount later (the Acts tab is unmounted by
+    // default) still see the values when they register.
+    reset({ ...getValues(), ...values })
+    Object.entries(values).forEach(([key, val]) => {
+      // `setValue` expects the exact field name; coerce to the generic type.
+      // Avoid triggering validation on each set to keep UX smooth.
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      setValue(key, val, { shouldValidate: false, shouldDirty: false })
     })
   }, [acts.data, getValues, reset])
+
+  // Re-apply acts values when the Acts tab becomes active. If the acts row
+  // arrived before the user opened the tab, some controls may mount after the
+  // reset and miss their initial value; re-setting here ensures mounted
+  // controllers read the values immediately.
+  useEffect(() => {
+    if (tab !== 'acts' || acts.data === undefined) return
+    const values = acts.data ? actsToFormValues(acts.data) : EMPTY_BRANCH_ACTS_FORM
+    reset({ ...getValues(), ...values })
+    Object.entries(values).forEach(([key, val]) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      setValue(key, val, { shouldValidate: false, shouldDirty: false })
+    })
+  }, [tab, acts.data, getValues, reset, setValue])
+
+  // If both the branch detail and acts responses are present (either may
+  // arrive first), seed the form from both together to avoid a race where
+  // one reset wipes values set by the other. This ensures a single canonical
+  // merged reset once both are available.
+  useEffect(() => {
+    if (detail.data === undefined || acts.data === undefined) return
+    const branchValues = branchToFormValues(detail.data)
+    const actsValues = acts.data ? actsToFormValues(acts.data) : EMPTY_BRANCH_ACTS_FORM
+    const merged = { ...branchValues, ...actsValues }
+    reset({ ...getValues(), ...merged })
+    Object.entries(actsValues).forEach(([key, val]) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      setValue(key, val, { shouldValidate: false, shouldDirty: false })
+    })
+  }, [detail.data, acts.data, getValues, reset, setValue])
 
   const selectedStateId = useWatch({ control, name: 'stateId' })
   const selectedDistrictId = useWatch({ control, name: 'districtId' })
