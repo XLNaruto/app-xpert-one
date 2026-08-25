@@ -37,10 +37,9 @@ export function IpAccessModeCard({
     )
   }
 
-  // The mode read failing — or never being allowed to run, for a role holding
-  // `ip-addresses:list` without `:read` — shouldn't take the list down with it.
-  // The entries below are still readable and editable, so say nothing rather
-  // than error or state a mode nobody answered.
+  // The mode read failing shouldn't take the list down with it. The entries
+  // below are still readable and editable, so say nothing rather than error or
+  // state a mode nobody answered.
   if (access.isError || !access.hasMode) return null
 
   return (

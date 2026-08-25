@@ -116,7 +116,12 @@ export function useCan(): PermissionChecker {
 
 /** The five uniform CRUD answers for one resource, as a screen needs them. */
 export interface ResourceAccess {
-  /** May open the list screen (`<resource>:list`, or `read` where the catalog only has that). */
+  /**
+   * May OPEN the list screen — which is `<resource>:read`, not `<resource>:list`.
+   * Every user holds every `:list` code (see `AMBIENT_ACTIONS`), so it can't
+   * answer this. Kept as its own flag because it reads as the question a list
+   * page is asking, even though it currently equals {@link canView}.
+   */
   canList: boolean
   /** May open a record's detail screen (`<resource>:read`). */
   canView: boolean
@@ -142,7 +147,7 @@ export function useResourceAccess(resource: string): ResourceAccess {
     const canCreate = can(`${resource}:create`)
     const canUpdate = can(`${resource}:update`)
     return {
-      canList: can([`${resource}:list`, `${resource}:read`]),
+      canList: can(`${resource}:read`),
       canView: can(`${resource}:read`),
       canCreate,
       canUpdate,

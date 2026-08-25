@@ -13,9 +13,6 @@ import { PERMISSIONS, requirePermission } from '@/features/permissions'
  */
 export const Route = createFileRoute('/_authenticated/administration/ip-address')({
   beforeLoad: ({ context }) =>
-    requirePermission(context.queryClient, [
-      `${PERMISSIONS.ipAddresses}:list`,
-      `${PERMISSIONS.ipAddresses}:read`,
-    ]),
+    requirePermission(context.queryClient, `${PERMISSIONS.ipAddresses}:read`),
   component: Outlet,
 })

@@ -154,6 +154,43 @@ export const ACCESS_CODES = {
   billing: 'billing:manage',
 } as const
 
+/**
+ * Actions the API hands to EVERY user regardless of role, so holding one proves
+ * nothing about what the user may reach.
+ *
+ * `list` is the whole of it. The server's `USER_DEFAULT_PERMISSION` grants all 36
+ * `<resource>:list` codes to every actor, because a list is REFERENCE DATA — the
+ * designation dropdown on the employee form, the branch picker on a report — and
+ * every screen needs to read collections it doesn't own. It appears against no
+ * checkbox in the role builder: a role can neither be given nor refused it.
+ *
+ * `holdsPermission` therefore skips these when matching a BARE resource, so a
+ * menu row or route gate asks the question it means to ask. `:read` is the code
+ * that actually says "may open this screen". Asking for the exact
+ * `<resource>:list` code still works, and is always true.
+ */
+export const AMBIENT_ACTIONS = ['list'] as const
+
+/**
+ * Codes granted to every user outside the role tree entirely — no checkbox, no
+ * role. Never gate anything on one: the answer is always yes.
+ *
+ * `billing:manage` is the notable one. The Billing row and its route currently
+ * carry `PERMISSIONS.billing`, which every user satisfies; the gate is kept as
+ * documentation of intent, and as the seam to tighten if the API ever moves
+ * billing into the tree.
+ */
+export const UNGATED_CODES = [
+  'billing:manage',
+  'states:list',
+  'states:read',
+  'districts:list',
+  'districts:read',
+  'banks:list',
+  'banks:read',
+  'employee-helpdesk:list',
+] as const
+
 /** The five uniform actions every CRUD resource in the catalog carries. */
 export const ACTIONS = {
   list: 'list',

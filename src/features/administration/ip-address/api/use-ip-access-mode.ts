@@ -25,9 +25,9 @@ import { fetchIpAccessMode } from './ip-address-api'
  * happens to open Administration → IP Access Control.
  *
  * Two things keep the global mount from spending a request that can only fail:
- * the endpoint is guarded by `ip-addresses:read` (a separate code from the
- * `ip-addresses:list` the entries need, so a role holding only `list` reaches the
- * screen legitimately and simply gets no header), and it is company-scoped —
+ * the endpoint is guarded by `ip-addresses:read`, which is also what the screen
+ * itself is gated on — so the query only ever runs for someone already entitled
+ * to the header; and it is company-scoped —
  * asking before a company is active would throw `NO_ACTIVE_COMPANY` client-side.
  */
 export function useIpAccessMode() {

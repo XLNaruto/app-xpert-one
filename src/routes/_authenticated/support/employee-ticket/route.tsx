@@ -7,6 +7,6 @@ import { PERMISSIONS, requirePermission } from '@/features/permissions'
  */
 export const Route = createFileRoute('/_authenticated/support/employee-ticket')({
   beforeLoad: ({ context }) =>
-    requirePermission(context.queryClient, PERMISSIONS.employeeHelpdesk),
+    requirePermission(context.queryClient, `${PERMISSIONS.employeeHelpdesk}:read`),
   component: Outlet,
 })

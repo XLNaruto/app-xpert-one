@@ -28,7 +28,7 @@ export type {
   CompanyRefResponse,
   TalkGrantResponse,
 } from './schemas'
-export { PERMISSIONS, ACCESS_CODES, ACTIONS } from './constants'
+export { PERMISSIONS, ACCESS_CODES, ACTIONS, AMBIENT_ACTIONS, UNGATED_CODES } from './constants'
 export type {
   MyRole,
   AccessLevel,
