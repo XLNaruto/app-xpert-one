@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 /**
  * Back / Next for a step with nothing of its own to save.
  *
- * Two steps are like that. Wage Structure is read-only — the structure is inherited
- * from the designation and stored nowhere on the employee. Service History is
- * append-only, and every write there happens inside a dialog. A Save button on
- * either would have nothing to send, so these two wear the same pair of buttons as
+ * Two steps are like that. Wage Structure reads the wage in force and writes the
+ * employee's own versions one dialog at a time; Service History is append-only,
+ * and every write there happens inside a dialog too. A Save button on either
+ * would have nothing left to send, so these two wear the same pair of buttons as
  * every other step, minus the save.
  */
 export function StepNavFooter({

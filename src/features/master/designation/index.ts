@@ -24,22 +24,35 @@ export type { DesignationFormValues, WageStructureRow } from './schemas'
 
 export { useWageHeads } from './api/use-wage-heads'
 export type { WageHead, WageHeads } from './lib/wage-structure-mappers'
+/**
+ * The grid itself. Two screens render it: this master's own effective-dated
+ * history, and HR's employee wage override, which is the same forty columns
+ * against one person instead of a title. It's typed structurally on the form
+ * hook, so a screen supplies its own `use…WageForm` of the same shape.
+ */
+export { WageStructureGrid } from './components/wage-structure-grid'
+export { revealFirstError } from './lib/wage-grid-errors'
+export { NO_WAGE_HEADS } from './lib/wage-structure-mappers'
 export {
   blankWageStructureRow,
+  carryForwardWageRow,
   toWageStructure,
   wageRowToPayload,
   wageStructureToRow,
+  zeroedWageStructureRow,
 } from './lib/wage-structure-mappers'
 export { deriveOvertimeRate, deriveWages } from './lib/wage-structure-calculations'
 export { effectiveMonthBounds, formatMonth } from './lib/effective-month'
 export {
   missingWageField,
   salaryComponentResponseSchema,
+  wageStructureFormSchema,
   wageStructureResponseSchema,
   wageStructureRowBaseSchema,
 } from './schemas'
 export type {
   SalaryComponentPayload,
+  WageStructureFormValues,
   WageStructurePayload,
   WageStructureResponse,
 } from './schemas'

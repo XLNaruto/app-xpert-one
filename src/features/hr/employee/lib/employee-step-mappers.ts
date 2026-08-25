@@ -23,6 +23,7 @@ import type {
   EmployeeTransferFormValues,
   EmployeeTransferPayload,
   EmployeeTransferResponse,
+  EmployeeWageComponentResponse,
   EmployeeWageStructureResponse,
   LeaveServiceFormValues,
   LeaveServicePayload,
@@ -36,6 +37,7 @@ import type {
   EmployeeKyc,
   EmployeeTransfer,
   EmployeeTransferDetail,
+  EmployeeWageComponent,
   EmployeeWageStructure,
 } from '../types'
 import { PERMANENT_EMPLOYMENT_TYPE } from '../constants'
@@ -231,16 +233,27 @@ export function toEmployeeWageStructure(
     isTdsActApplicable: response.is_tds_act_applicable ?? false,
     isDisability: response.is_disability ?? false,
 
-    salaryComponents: (response.salary_components ?? []).map((component) => ({
-      payComponentId: component.pay_component_id,
-      componentType: component.component_type ?? '',
-      sortOrder: component.sort_order,
-      amount: component.amount,
-      amountType: component.amount_type,
-      pfApplicable: component.pf_applicable ?? false,
-      esicApplicable: component.esic_applicable ?? false,
-      ptApplicable: component.pt_applicable ?? false,
-    })),
+    salaryComponents: (response.salary_components ?? []).map(toEmployeeWageComponent),
+  }
+}
+
+/**
+ * One allowance / deduction head as a wage carries it. Shared by the inherited
+ * structure above and the employee's own wage read, which answer the same heads:
+ * the catalog is the designation's either way.
+ */
+export function toEmployeeWageComponent(
+  component: EmployeeWageComponentResponse,
+): EmployeeWageComponent {
+  return {
+    payComponentId: component.pay_component_id,
+    componentType: component.component_type ?? '',
+    sortOrder: component.sort_order,
+    amount: component.amount,
+    amountType: component.amount_type,
+    pfApplicable: component.pf_applicable ?? false,
+    esicApplicable: component.esic_applicable ?? false,
+    ptApplicable: component.pt_applicable ?? false,
   }
 }
 

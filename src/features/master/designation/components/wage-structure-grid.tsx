@@ -48,7 +48,21 @@ import {
   NO_VALUE,
 } from '@/components/common/wage-grid-fields'
 
-type WageForm = ReturnType<typeof useDesignationWageForm>
+/**
+ * What the grid needs of a screen's form hook. The designation master's
+ * `useDesignationWageForm` is the reference shape; HR's employee wage override
+ * supplies the same members against its own endpoints.
+ */
+type WageForm = ReturnType<typeof useDesignationWageForm> & {
+  /**
+   * Withdraw a SAVED version, when the screen has somewhere for it to fall back
+   * to. The designation's history has nowhere — it *is* the bottom tier, and the
+   * months it priced are the audit trail — so that screen leaves this out and no
+   * bin appears. An employee's override does: dropping a version puts them back
+   * on their designation's terms, which is the only way to undo an override.
+   */
+  deleteRow?: (row: DesignationWageStructure) => void
+}
 type Ctl = Control<WageStructureFormValues>
 type Reg = UseFormRegister<WageStructureFormValues>
 
@@ -555,6 +569,7 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
                 row={row}
                 columns={layout.columns}
                 onEdit={form.editRow}
+                onDelete={form.deleteRow}
               />
             ) : (
               <DraftRow
@@ -1487,6 +1502,7 @@ const SavedRow = memo(function SavedRow({
   measureRef,
   columns,
   onEdit,
+  onDelete,
 }: {
   row: DesignationWageStructure
   /** Its index in the virtual window, and the ref that measures it back down. */
@@ -1494,6 +1510,8 @@ const SavedRow = memo(function SavedRow({
   measureRef: (el: HTMLTableRowElement | null) => void
   columns: WageColumn[]
   onEdit: (row: DesignationWageStructure) => void
+  /** Omitted where a saved version has nothing to fall back to — see `WageForm`. */
+  onDelete?: (row: DesignationWageStructure) => void
 }) {
   return (
     <tr
@@ -1513,7 +1531,7 @@ const SavedRow = memo(function SavedRow({
            */
           className={cn(CELL, 'text-center', column.pin !== undefined && STICKY)}
         >
-          <SavedCell column={column} row={row} onEdit={onEdit} />
+          <SavedCell column={column} row={row} onEdit={onEdit} onDelete={onDelete} />
         </td>
       ))}
     </tr>
@@ -1525,10 +1543,12 @@ function SavedCell({
   column,
   row,
   onEdit,
+  onDelete,
 }: {
   column: WageColumn
   row: DesignationWageStructure
   onEdit: (row: DesignationWageStructure) => void
+  onDelete?: (row: DesignationWageStructure) => void
 }) {
   if (column.head) {
     const value = savedHeadValue(row, column.head)
@@ -1680,23 +1700,39 @@ function SavedCell({
 
     case 'action':
       /*
-       * A saved version is never removed — the history is the audit trail — but
-       * it can be corrected. This pulls it onto the grid as an editable row that
-       * saves back over the same version, for fixing a row that was entered
-       * wrong. A *revision* is a new row instead, so that the months already paid
-       * on the old figures keep them.
+       * A saved version can always be corrected: this pulls it onto the grid as an
+       * editable row that saves back over the same version, for fixing a row that
+       * was entered wrong. A *revision* is a new row instead, so that the months
+       * already paid on the old figures keep them.
+       *
+       * Withdrawing it is offered only where the screen has somewhere for the
+       * months to fall back to — see `deleteRow` on `WageForm`.
        */
       return (
-        <CellTooltip label="Correct this version in place">
-          <button
-            type="button"
-            onClick={() => onEdit(row)}
-            className="mx-auto flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            aria-label={`Correct the wage structure effective ${formatMonth(row.effectiveFrom)}`}
-          >
-            <Pencil className="size-3.5" />
-          </button>
-        </CellTooltip>
+        <div className="flex items-center justify-center gap-1">
+          <CellTooltip label="Correct this version in place">
+            <button
+              type="button"
+              onClick={() => onEdit(row)}
+              className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              aria-label={`Correct the wage structure effective ${formatMonth(row.effectiveFrom)}`}
+            >
+              <Pencil className="size-3.5" />
+            </button>
+          </CellTooltip>
+          {onDelete && (
+            <CellTooltip label="Withdraw this version">
+              <button
+                type="button"
+                onClick={() => onDelete(row)}
+                className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                aria-label={`Withdraw the wage version effective ${formatMonth(row.effectiveFrom)}`}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </CellTooltip>
+          )}
+        </div>
       )
 
     default:

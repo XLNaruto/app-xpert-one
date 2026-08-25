@@ -20,6 +20,11 @@ export {
   useEmployeeShiftAssignments,
   useEmployeeRoster,
 } from './api/use-employee-shifts'
+/**
+ * Step 3's read — what the employee is actually paid and by which tier (their own
+ * override, or the designation's template). Payroll screens ask the same question.
+ */
+export { useEmployeeWage } from './api/use-employee-wage'
 export { employeeOptions, employeePickerOptions } from './lib/employee-mappers'
 export { assignmentLabel, SHIFT_SOURCE_LABELS } from './lib/employee-shift-mappers'
 
@@ -43,5 +48,8 @@ export type {
   EmployeeShiftOnDay,
   EmployeeTransfer,
   EmployeeTransferDetail,
+  EmployeeWage,
+  EmployeeWageSource,
   EmployeeWageStructure,
+  EmployeeWageVersion,
 } from './types'

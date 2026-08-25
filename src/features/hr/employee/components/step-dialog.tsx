@@ -54,7 +54,15 @@ export function StepDialog({
           noValidate
           className="mt-4"
         >
-          <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">{children}</div>
+          {/*
+            The body scrolls rather than the dialog growing past the viewport —
+            a long form otherwise pushes its own footer off the bottom of the
+            screen, where the Save button can't be reached. The negative margin
+            keeps focus rings from being clipped by the scrollport.
+          */}
+          <div className="-mx-1 grid max-h-[65vh] grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto px-1 sm:grid-cols-2">
+            {children}
+          </div>
 
           <DialogFooter className="mt-6">
             <Button

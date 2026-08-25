@@ -250,6 +250,15 @@ export const endpoints = {
     KYC: (id: number) => `/user/employees/${id}/kyc`,
     WAGE_STRUCTURE: (id: number) => `/user/employees/${id}/wage-structure`,
     /**
+     * The employee's OWN wage — the override that outranks the designation's
+     * template. `GET` answers both candidates and which one won; `POST` puts the
+     * employee on their own terms from a month onward, and each version is
+     * corrected or withdrawn through `WAGE_VERSION`.
+     */
+    WAGE: (id: number) => `/user/employees/${id}/wage`,
+    WAGE_VERSION: (id: number, wageId: number) =>
+      `/user/employees/${id}/wage/${wageId}`,
+    /**
      * The per-YEAR paid-allowance grant for one employee — the top tier of the
      * quota lookup, overriding their designation's standing policy. `PUT` is a
      * WHOLE-LIST REPLACE: a leave type left out of `rows` is cleared, and falls

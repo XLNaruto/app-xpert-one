@@ -427,6 +427,11 @@ export const queryKeys = {
     /** Step 3 — the wage structure inherited from the current designation. */
     wageStructure: (id: number) =>
       [...queryKeys.employee.all, 'wage-structure', id] as const,
+    /**
+     * Step 3 — the employee's own wage: both candidates (their override and the
+     * designation's template), which one is in force, and the override's history.
+     */
+    wage: (id: number) => [...queryKeys.employee.all, 'wage', id] as const,
     /** Step 4 — every family member. */
     family: (id: number) => [...queryKeys.employee.all, 'family', id] as const,
     /** Step 5a — every qualification. */

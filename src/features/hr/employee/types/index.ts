@@ -1,5 +1,6 @@
 import type { AuditFields } from '@/types/audit'
 import type { Shift } from '@/features/master/shift'
+import type { DesignationWageStructure } from '@/features/master/designation'
 
 /**
  * UI-facing records for the employee module.
@@ -265,6 +266,53 @@ export interface EmployeeWageStructure {
   isDisability: boolean
 
   salaryComponents: EmployeeWageComponent[]
+}
+
+/* ── Step 3 — the employee's own wage ────────────────────────────────────── */
+
+/** Which tier priced the employee — their own override, or the designation. */
+export type EmployeeWageSource = 'EMPLOYEE' | 'DESIGNATION'
+
+/**
+ * One wage as this screen reads it — the employee's own version, the
+ * designation's template, or whichever of the two is in force. All three carry
+ * the same fields, so one shape covers them and the caller says which it holds.
+ *
+ * Modelled off the designation's wage structure because it *is* one, a tier up:
+ * the same figures, the same acts, priced the same way. What it drops are the
+ * allowance / deduction cells — the head catalog is always the designation's, and
+ * an override never changes it — and what it adds are the four settings the
+ * designation's grid has no column for.
+ */
+export interface EmployeeWageVersion
+  extends Omit<DesignationWageStructure, 'designationId' | 'allowances' | 'deductions'> {
+  /** The posting the version was saved against; `null` on a designation's own. */
+  employeeServiceId: number | null
+  lwfDeductFromWages: boolean
+  pfApplicableOnOvertime: boolean
+  esicApplicableOnOvertime: boolean
+  ptApplicableOnOvertime: boolean
+}
+
+/**
+ * What the employee is paid and by which tier — the answer to the whole of step
+ * 3. `effectiveWage` is whichever candidate won, so the screen renders one block
+ * either way; `ownWage` and `designationWage` are the two candidates, so an
+ * override can be shown against what it overrides.
+ */
+export interface EmployeeWage {
+  employeeId: number
+  employeeServiceId: number
+  designationId: number | null
+  /** `null` when neither tier has priced this employee yet. */
+  source: EmployeeWageSource | null
+  effectiveWage: EmployeeWageVersion | null
+  ownWage: EmployeeWageVersion | null
+  designationWage: EmployeeWageVersion | null
+  /** Always the designation's heads — an override carries none of its own. */
+  salaryComponents: EmployeeWageComponent[]
+  /** The override's own history, newest effective month first. */
+  versions: EmployeeWageVersion[]
 }
 
 /* ── Step 4 — family ─────────────────────────────────────────────────────── */

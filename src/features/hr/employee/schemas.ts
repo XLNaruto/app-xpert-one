@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { shiftResponseSchema } from '@/features/master/shift'
 import {
+  wageStructureResponseSchema,
+  type WageStructurePayload,
+} from '@/features/master/designation'
+import {
   AMOUNT_RE,
   EMAIL_RE,
   MOBILE_RE,
@@ -526,6 +530,10 @@ export const employeeWageComponentResponseSchema = z.object({
   pt_applicable: z.boolean().nullish(),
 })
 
+export type EmployeeWageComponentResponse = z.infer<
+  typeof employeeWageComponentResponseSchema
+>
+
 export const employeeWageStructureResponseSchema = z.object({
   employee_id: z.number(),
   employee_service_id: z.number(),
@@ -574,6 +582,79 @@ export const employeeWageStructureResponseSchema = z.object({
 export type EmployeeWageStructureResponse = z.infer<
   typeof employeeWageStructureResponseSchema
 >
+
+
+/* ── Step 3 — the employee's OWN wage ────────────────────────────────────── */
+
+/**
+ * One stored version of the employee's own wage.
+ *
+ * The same forty-odd fields a designation's wage structure carries — the override
+ * is priced the same way, it just sits a tier above — so the designation kit's own
+ * response schema parses it, extended with the posting the version was saved
+ * against. There is no `salary_components` on it: the allowance / deduction
+ * catalog is always the designation's, and an override never changes it.
+ */
+export const employeeWageVersionResponseSchema = wageStructureResponseSchema.extend({
+  employee_service_id: z.number(),
+})
+
+export type EmployeeWageVersionResponse = z.infer<
+  typeof employeeWageVersionResponseSchema
+>
+
+/**
+ * `GET /user/employees/:id/wage` — what the employee is paid, and by which tier.
+ *
+ * `source` answers the priority question, and `effective_wage` is whichever
+ * candidate won it, so the screen renders one block either way. The two
+ * candidates come back beside it so an override can be shown against what it
+ * overrides, and `versions` is the override's own history, newest first.
+ */
+export const employeeWageResponseSchema = z.object({
+  employee_id: z.number(),
+  employee_service_id: z.number(),
+  designation_id: z.number().nullish(),
+  /** `null` when neither tier has priced this employee yet. */
+  source: z.enum(['EMPLOYEE', 'DESIGNATION']).nullish(),
+  effective_wage: wageStructureResponseSchema.nullish(),
+  own_wage: employeeWageVersionResponseSchema.nullish(),
+  designation_wage_structure: wageStructureResponseSchema.nullish(),
+  /** Always the designation's heads — the override carries none of its own. */
+  salary_components: z.array(employeeWageComponentResponseSchema).nullish(),
+  versions: z.array(employeeWageVersionResponseSchema).nullish(),
+})
+
+export type EmployeeWageResponse = z.infer<typeof employeeWageResponseSchema>
+
+/*
+ * There is no form schema here. The override is captured on the SAME grid the
+ * designation's history uses — `wageStructureFormSchema` and its rows — because
+ * it is the same wage structure, priced one tier up. See
+ * `hooks/use-employee-wage-form.ts`.
+ */
+
+/**
+ * The body both wage writes take.
+ *
+ * `effective_from` is required on the POST — the month the employee goes onto
+ * their own terms — and optional on the PATCH, where sending it *corrects* the
+ * month of the version being edited rather than moving the pay to a later one.
+ *
+ * Every field the grid carries is sent on both, blank ones included: an omitted
+ * field on a POST inherits whatever priced the employee before, and on a PATCH
+ * stays as stored — either way, leaving one out would silently keep a value the
+ * user just cleared.
+ *
+ * Two things are deliberately absent. `salary_components`, because the heads are
+ * always the designation's. And the four settings the grid has no column for
+ * (PF/ESIC/PT on overtime, recovering LWF from wages) — not sending them is what
+ * carries them forward, by the same seed-and-keep rule.
+ */
+export interface EmployeeWagePayload
+  extends Omit<WageStructurePayload, 'salary_components'> {
+  effective_from?: string
+}
 
 
 /* ── Repeatable row lists ────────────────────────────────────────────────── */
