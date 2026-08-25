@@ -28,6 +28,7 @@ export const EMPLOYEE_TABS = [
   'assets',
   'transfers',
   'shifts',
+  'leaveQuota',
 ] as const
 
 export type EmployeeTab = (typeof EMPLOYEE_TABS)[number]
@@ -43,6 +44,7 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
   assets: 'Assets',
   transfers: 'Employee Service History',
   shifts: 'Shift & Roster',
+  leaveQuota: 'Leave Allowance',
 }
 
 /**
@@ -59,11 +61,12 @@ export const ASSIGNMENT_MODE_OPTIONS: ComboboxOption[] = [
  * The seven steps that count toward completion, paired with the flag on the
  * employee record's `completed_steps` that reports each one.
  *
- * Transfer history and Shift & Roster are deliberately absent: both are ongoing
- * registers rather than steps you finish, and the API tracks no flag for either —
- * so the progress ring reads `n/7`, not `n/9`. An employee on their department's
- * default shift needs no shift row at all, so counting it would mark a complete
- * record incomplete.
+ * Transfer history, Shift & Roster and Leave Allowance are deliberately absent:
+ * all three are ongoing registers rather than steps you finish, and the API tracks
+ * no flag for any of them — so the progress ring reads `n/7`, not `n/10`. An
+ * employee on their department's default shift needs no shift row at all, and one
+ * whose designation already carries the allowance needs no grant of their own, so
+ * counting either would mark a complete record incomplete.
  */
 export const EMPLOYEE_PROGRESS_STEPS = [
   { tab: 'basic', flag: 'basicDetail' },

@@ -8,6 +8,7 @@ import {
   Phone,
   RefreshCw,
   ShieldCheck,
+  User,
   Users,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
@@ -21,6 +22,7 @@ import type { StatusTone } from '../constants'
 import {
   accountStatusTone,
   initialsOf,
+  shouldShowUserDetails,
   statusLabel,
   subscriptionStatusTone,
   usagePercent,
@@ -161,6 +163,7 @@ function UsageMeter({
 export function MyProfilePage() {
   const { data, isLoading, isError, error } = useMyProfile()
 
+  const user = data?.user
   const account = data?.account
   const subscription = data?.subscription
   const usage = data?.usage
@@ -254,6 +257,54 @@ export function MyProfilePage() {
               tint="bg-amber-500/10 text-amber-600 dark:text-amber-400"
             />
           </div>
+
+          {/* The signed-in user — an owner who holds no role *is* the account,
+              so their details would only repeat the block above. */}
+          {user && shouldShowUserDetails(user) ? (
+            <section className="space-y-3">
+              <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                User Details
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Field
+                  icon={User}
+                  label="Name"
+                  value={user.name}
+                  tint="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                />
+                <Field
+                  icon={Mail}
+                  label="Email"
+                  value={user.email}
+                  tint="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                />
+                <Field
+                  icon={Phone}
+                  label="Mobile Number"
+                  value={formatPhone(user.mobileNumber) ?? undefined}
+                  tint="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                />
+                <Field
+                  icon={BadgeCheck}
+                  label="Role"
+                  value={user.roleName ?? (user.isOwner ? 'Owner' : 'N/A')}
+                  tint="bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400"
+                />
+                <Field
+                  icon={ShieldCheck}
+                  label="Status"
+                  value={statusLabel(user.status)}
+                  tint="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                />
+                <Field
+                  icon={CalendarDays}
+                  label="Joined On"
+                  value={formatDate(user.createdAt)}
+                  tint="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                />
+              </div>
+            </section>
+          ) : null}
 
           {/* Plan & usage — the running subscription and what's left of it. */}
           <section className="space-y-3">

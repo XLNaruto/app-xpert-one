@@ -45,6 +45,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Forbidden, NotFound } from "@/features/error";
+import { LeaveBalanceCard, formatDays } from "@/features/hr/leave";
 import { PERMISSIONS, useResourceAccess } from "@/features/permissions";
 import {
   EMPLOYMENT_TYPE_OPTIONS,
@@ -92,6 +93,8 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     assets,
     transfers,
     leaves,
+    leaveGroups,
+    leaveBalance,
     posting,
     isActive,
     bankName,
@@ -144,7 +147,8 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
   const documentRows = documents.data ?? [];
   const assetRows = assets.data ?? [];
   const transferRows = transfers.data ?? [];
-  const leaveRows = leaves.data?.items ?? [];
+  // One line per application, not per stored row — see `groupLeaves`.
+  const leaveRows = leaveGroups;
   // const faces = employee.faces // Registered Faces section is hidden for now.
 
   return (
@@ -1129,33 +1133,53 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             <CollapsibleSection
               icon={CalendarDays}
               title="Leave History"
-              description="The five most recent records — the full register is under Leave Management"
+              description="The five most recent records, and what's left of each paid allowance"
               defaultOpen={false}
               isLoading={leaves.isLoading}
               badge={<CountBadge count={leaveRows.length} />}
             >
+              {/*
+                The allowance first, the history second: the question a desk opens
+                this section with is "can they take more", and only the per-type
+                lines answer it — allowances never pool between leave types.
+              */}
+              <LeaveBalanceCard
+                balance={leaveBalance.data}
+                isLoading={leaveBalance.isLoading}
+                className="mb-4"
+              />
+
               {leaveRows.length === 0 ? (
                 <EmptyState icon={CalendarDays} title="No leave recorded." />
               ) : (
                 <div className="divide-y divide-border">
+                  {/*
+                    One line per APPLICATION. A leave whose range outran the type's
+                    paid allowance is stored as two rows — a paid one and an unpaid
+                    one — and was filed as a single thing, so it reads as one here
+                    with the split spelled out.
+                  */}
                   {leaveRows.map((leave) => (
                     <Row
-                      key={leave.id}
+                      key={leave.applicationRef}
                       primary={
-                        leave.leaveTypeName || leave.leaveType || "Leave"
+                        leave.leaveType || leave.leaveTypeName || "Leave"
                       }
                       secondary={`${onDate(leave.fromDate) ?? "—"} → ${
                         onDate(leave.toDate) ?? "—"
                       }`}
                       trailing={
                         <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              leave.payType === "PAID" ? "default" : "warning"
-                            }
-                          >
-                            {leave.payType}
-                          </Badge>
+                          {leave.paidDays > 0 && (
+                            <Badge variant="default">
+                              {formatDays(leave.paidDays)} paid
+                            </Badge>
+                          )}
+                          {leave.unpaidDays > 0 && (
+                            <Badge variant="warning">
+                              {formatDays(leave.unpaidDays)} unpaid
+                            </Badge>
+                          )}
                           <Badge
                             variant={
                               leave.status === "APPROVED"

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { ShieldAlert, ShieldCheck } from 'lucide-react'
-import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { PasswordConfirmDialog } from '@/components/common/password-confirm-dialog'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
+import { usePasswordConfirm } from '@/hooks/use-password-confirm'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { useSetTwoFactor } from '../api/use-two-factor'
@@ -14,21 +15,24 @@ import { useSetTwoFactor } from '../api/use-two-factor'
  *
  * The state comes off the auth session rather than a query — nothing on the API
  * reports the flag, so it is inferred at sign-in and moved by these two calls
- * (see `AuthState.twoFactorEnabled`). Turning it *off* weakens the account, so
- * that direction asks first; turning it on doesn't.
+ * (see `AuthState.twoFactorEnabled`). Both directions are gated on the user
+ * re-entering their own password: turning it *off* weakens the account, and
+ * turning it *on* changes how they sign in from the next login — neither should
+ * be doable from a browser someone walked away from.
  */
 export function TwoFactorCard() {
   const enabled = useAuthStore((s) => s.twoFactorEnabled)
   const email = useAuthStore((s) => s.user?.email)
   const setTwoFactor = useSetTwoFactor()
-  const [confirmOff, setConfirmOff] = useState(false)
+  /** Which way the switch was thrown — the dialog words itself from it. */
+  const [turningOn, setTurningOn] = useState(false)
+  const gate = usePasswordConfirm()
 
   const handleChange = (next: boolean) => {
-    if (!next) {
-      setConfirmOff(true)
-      return
-    }
-    setTwoFactor.mutate(true)
+    setTurningOn(next)
+    // `mutate`, not `mutateAsync`: the hook already toasts its own failure, and
+    // by then the dialog is closed.
+    gate.request(() => setTwoFactor.mutate(next))
   }
 
   return (
@@ -76,22 +80,27 @@ export function TwoFactorCard() {
           <Switch
             checked={enabled}
             onCheckedChange={handleChange}
-            disabled={setTwoFactor.isPending}
+            disabled={setTwoFactor.isPending || gate.open}
             aria-label="Two-factor authentication"
           />
         </div>
       </Card>
 
-      <ConfirmDialog
-        open={confirmOff}
-        onOpenChange={setConfirmOff}
-        variant="destructive"
-        icon={ShieldAlert}
-        title="Turn off two-factor authentication?"
-        description="Your password alone will be enough to sign in. You can turn it back on at any time."
-        confirmLabel="Turn off"
-        loading={setTwoFactor.isPending}
-        onConfirm={() => setTwoFactor.mutate(false)}
+      <PasswordConfirmDialog
+        {...gate.dialogProps}
+        variant={turningOn ? 'default' : 'destructive'}
+        icon={turningOn ? ShieldCheck : ShieldAlert}
+        title={
+          turningOn
+            ? 'Turn on two-factor authentication?'
+            : 'Turn off two-factor authentication?'
+        }
+        description={
+          turningOn
+            ? 'From your next sign-in, a six-digit code will be emailed to you. Enter your password to confirm.'
+            : 'Your password alone will be enough to sign in. Enter your password to confirm.'
+        }
+        confirmLabel={turningOn ? 'Turn on' : 'Turn off'}
       />
     </>
   )

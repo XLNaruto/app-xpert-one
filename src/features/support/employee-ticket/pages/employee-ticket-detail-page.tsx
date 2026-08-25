@@ -52,12 +52,9 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
   const detail = useEmployeeTicketDetail(decryptId(data))
   const { ticket } = detail
 
-  /** Every action on this screen is a write. Gated on either spelling. */
+  /** Every action on this screen is a write — replying, or moving the status. */
   const { can } = useCan()
-  const canWrite = can([
-    `${PERMISSIONS.employeeSupport}:update`,
-    `${PERMISSIONS.support}:update`,
-  ])
+  const canWrite = can(`${PERMISSIONS.employeeHelpdesk}:update`)
 
   if (detail.isForbidden) return <Forbidden description={detail.forbiddenMessage} />
 

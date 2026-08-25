@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { PERMISSIONS, type PermissionSpec } from "@/features/permissions";
+import { env } from "@/config/env";
 import {
   Banknote,
   Boxes,
@@ -29,6 +30,8 @@ import {
   LifeBuoy,
   LayoutDashboard,
   MapPinned,
+  MessageCircle,
+  MessagesSquare,
   Network,
   Percent,
   ReceiptIndianRupee,
@@ -66,6 +69,20 @@ export interface NavItem {
    * one). A parent survives if any of its children are marked.
    */
   companyIndependent?: boolean;
+  /**
+   * Open the row in a NEW BROWSER TAB instead of navigating the shell.
+   *
+   * For the few screens that are a workspace rather than a page — they run
+   * full-screen without the sidebar, and are meant to be left open beside the
+   * panel rather than navigated away from. The row renders as a plain anchor
+   * with `target="_blank"`, so it never takes the active highlight: nothing in
+   * this tab changed.
+   *
+   * `to` may be an ABSOLUTE URL here (a different app entirely, e.g. Talk).
+   * Those are kept out of `routableNavItems`, so they never name a page or
+   * appear in a breadcrumb — they aren't routes of this app.
+   */
+  newTab?: boolean;
 }
 
 export interface NavGroup {
@@ -432,8 +449,38 @@ export const navGroups: NavGroup[] = [
       companies it is granted, spanning every company of the account — so the
       screen doesn't wait on one being picked.
     */
-    title: "Talk",
+    title: "Communication",
     items: [
+      {
+        /*
+          Talk itself — the chat app, a separate deployment with its own login,
+          so the panel only links to it (`VITE_APP_TALK_URL`) and never calls it.
+          Ungated: whether the account may chat is Talk's own door to answer, and
+          account-scoped, so it doesn't wait on a company being picked.
+        */
+        label: "Chat",
+        to: env.VITE_APP_TALK_URL,
+        icon: MessageCircle,
+        companyIndependent: true,
+        newTab: true,
+      },
+      {
+        /*
+          Read-only oversight of the account's conversations — the directory of
+          who holds a Talk identity, the chats each is in, and the threads
+          themselves. OWNER ONLY on the API however a role is ticked, and the
+          thread read is gated again on `talk-monitoring:read`, which is the
+          entitlement the subscription sells.
+        */
+        label: "Chat Monitoring",
+        to: "/talk/monitoring",
+        icon: MessagesSquare,
+        permission: PERMISSIONS.talkMonitoring,
+        companyIndependent: true,
+        // A three-pane reading workspace, not a page: it runs full-screen
+        // outside the shell and is meant to sit open in its own tab.
+        newTab: true,
+      },
       {
         // The employees' own Talk logins. A back-office user's Talk access is
         // part of their panel login instead, edited on Administration → Users.
@@ -467,13 +514,12 @@ export const navGroups: NavGroup[] = [
         companyIndependent: true,
       },
       {
-        // ANY-of: the catalog's exact spelling for this desk isn't confirmed, so
-        // the bare `support` resource keeps the row rather than losing it to a
-        // name. See `PERMISSIONS.employeeSupport`.
+        // Its own resource on the API, separate from `support` above: this desk
+        // points the other way. See `PERMISSIONS.employeeHelpdesk`.
         label: "Employee Support",
         to: "/support/employee-ticket",
         icon: Headset,
-        permission: [PERMISSIONS.employeeSupport, PERMISSIONS.support],
+        permission: PERMISSIONS.employeeHelpdesk,
         companyIndependent: true,
       },
     ],
@@ -551,7 +597,11 @@ const extraTitles: Record<string, string> = {
 const routableNavItems = navGroups
   .flatMap((group) => group.items)
   .flatMap((item) => [item, ...(item.children ?? [])])
-  .filter((item): item is NavItem & { to: string } => Boolean(item.to))
+  // Absolute URLs (a `newTab` row pointing at another app) are not routes of
+  // this app — they must not name a page or show up in a breadcrumb.
+  .filter((item): item is NavItem & { to: string } =>
+    Boolean(item.to) && !/^https?:\/\//.test(item.to!),
+  )
   .sort((a, b) => b.to.length - a.to.length);
 
 /** Nav item matching a pathname (exact first, then longest prefix). */
@@ -565,6 +615,17 @@ function navItemForPath(pathname: string): (NavItem & { to: string }) | undefine
 /** Human-readable page name for a pathname, or undefined if unknown. */
 export function pageNameForPath(pathname: string): string | undefined {
   return navItemForPath(pathname)?.label ?? extraTitles[pathname];
+}
+
+/**
+ * The sidebar icon for a pathname — the same mark the menu row carries, for a
+ * header that wants to title itself the way the row does.
+ *
+ * Undefined for a path that isn't in the nav at all (which `extraTitles` can
+ * still name, but has no icon to lend).
+ */
+export function pageIconForPath(pathname: string): LucideIcon | undefined {
+  return navItemForPath(pathname)?.icon;
 }
 
 export interface BreadcrumbCrumb {

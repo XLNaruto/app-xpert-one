@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, Check, Crown, Plus, X } from 'lucide-react'
+import { CalendarDays, Check, Crown, Paperclip, Plus, Split, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -12,12 +13,14 @@ import { TableRowActions } from '@/components/common/table-row-actions'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { cn, formatDate } from '@/lib/utils'
+import { useMediaUrl } from '@/hooks/use-media-url'
 import { ScopedDataError } from '@/features/company'
-import { LEAVE_SORT, LEAVE_TABS } from '../constants'
+import { LEAVE_PAY_TYPE_FILTER_OPTIONS, LEAVE_SORT, LEAVE_TABS } from '../constants'
 import { useLeaveList } from '../hooks/use-leave-list'
+import { describeGroupSpan, formatDays, formatSplit } from '../lib/leave-summary'
 import { LeaveDecisionDialog } from '../components/leave-decision-dialog'
 import { LeaveEmployeeCell } from '../components/leave-employee-cell'
-import type { Leave } from '../types'
+import type { LeaveGroup } from '../types'
 
 /** Status → badge colour. */
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
@@ -32,6 +35,13 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
  * Genuinely server-paged, searched and sorted: the register grows without bound,
  * so the endpoint does the work and the table reports pages back as limit/offset.
  *
+ * **One line per APPLICATION, not per stored row.** Nobody picks paid or unpaid: a
+ * leave type carries its own yearly paid allowance, the server spends what's left
+ * of it, and the rest of the range is unpaid — which stores the application as two
+ * rows sharing an `applicationRef`. The endpoint answers those rows; this screen
+ * folds them back into the one thing that was filed, and the Paid / Unpaid column
+ * shows how the days fell on either side of the allowance.
+ *
  * Approve and Reject are driven by the row's own `canDecide`, NOT by the
  * permission code. Since the leave approval hierarchy landed, `leaves:update`
  * only says you may work a leave desk — not that this particular application is
@@ -39,7 +49,8 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'destructive'> = {
  * level, so the buttons go rather than sit there waiting to fail.
  *
  * They still open a dialog, because a decision needs a remark the employee will
- * read (required on a rejection) and can't be undone.
+ * read (required on a rejection), covers the whole application, and can't be
+ * undone.
  */
 export function LeaveListPage() {
   const leave = useLeaveList()
@@ -47,7 +58,7 @@ export function LeaveListPage() {
   // Which of this screen's buttons this role may see.
   const { canCreate, canUpdate, canDelete } = useResourceAccess(PERMISSIONS.leaves)
 
-  const columns = useMemo<ColumnDef<Leave>[]>(
+  const columns = useMemo<ColumnDef<LeaveGroup>[]>(
     () => [
       {
         id: 'serial',
@@ -124,14 +135,43 @@ export function LeaveListPage() {
       {
         id: LEAVE_SORT.payType,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Pay Type" />
+          <DataTableColumnHeader column={column} title="Paid / Unpaid" />
         ),
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => (
-          <Badge variant={row.original.payType === 'PAID' ? 'default' : 'warning'}>
-            {row.original.payType}
-          </Badge>
-        ),
+        /*
+          A single badge can't tell the truth about a split application: the days
+          fall on BOTH sides of the allowance. So the cell shows the breakdown,
+          and flags the split — the desk needs to know part of what was filed is
+          unpaid, because payroll will read it that way.
+        */
+        cell: ({ row }) => {
+          const { paidDays, unpaidDays, split } = row.original
+          return (
+            <div className="flex items-center gap-1.5">
+              {paidDays > 0 && <Badge variant="default">{formatDays(paidDays)} paid</Badge>}
+              {unpaidDays > 0 && (
+                <Badge variant="warning">{formatDays(unpaidDays)} unpaid</Badge>
+              )}
+              {paidDays === 0 && unpaidDays === 0 && (
+                <span className="text-muted-foreground">—</span>
+              )}
+              {split && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-help text-warning">
+                      <Split className="size-3.5" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-72 text-pretty font-normal">
+                    One application, split by the allowance: the leave type's paid
+                    days ran out inside the range, so the rest is unpaid. It is
+                    approved, rejected and removed as one.
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )
+        },
       },
       {
         id: LEAVE_SORT.leaveType,
@@ -139,9 +179,14 @@ export function LeaveListPage() {
           <DataTableColumnHeader column={column} title="Leave Type" />
         ),
         meta: { className: 'min-w-40 whitespace-nowrap' },
+        /*
+          `leaveType` is the name AS FILED — a snapshot that survives a rename or a
+          deletion of the master row, which is what makes the register readable
+          months later. The catalog's current name is only the fallback.
+        */
         cell: ({ row }) => (
           <span className="font-medium text-foreground">
-            {row.original.leaveTypeName || row.original.leaveType || '—'}
+            {row.original.leaveType || row.original.leaveTypeName || '—'}
           </span>
         ),
       },
@@ -225,7 +270,10 @@ export function LeaveListPage() {
         header: 'Reason',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.original.leaveReason || '—'}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground">{row.original.leaveReason || '—'}</span>
+            {row.original.attachment && <AttachmentLink attachment={row.original.attachment} />}
+          </div>
         ),
       },
     ],
@@ -258,23 +306,39 @@ export function LeaveListPage() {
         (what happened to it), and the plain list is deliberately unchanged —
         visibility is not routing.
       */}
-      <div className="mb-4 flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
-        {LEAVE_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            type="button"
-            onClick={() => leave.changeStatusFilter(tab.value)}
-            aria-pressed={leave.statusFilter === tab.value}
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-              leave.statusFilter === tab.value
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
+          {LEAVE_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => leave.changeStatusFilter(tab.value)}
+              aria-pressed={leave.statusFilter === tab.value}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                leave.statusFilter === tab.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/*
+          A view filter, not a choice: `pay_type` is decided by the server from
+          what was left of the leave type's allowance. Filtering to "unpaid only"
+          answers "what will payroll deduct", which is the question it exists for.
+        */}
+        <Combobox
+          className="w-48"
+          searchable={false}
+          value={leave.payTypeFilter}
+          onChange={leave.changePayTypeFilter}
+          options={LEAVE_PAY_TYPE_FILTER_OPTIONS}
+          placeholder="Paid & unpaid"
+        />
       </div>
 
       {leave.isError ? (
@@ -337,6 +401,7 @@ export function LeaveListPage() {
         open={leave.deciding !== null}
         onOpenChange={(open) => !open && leave.closeDecision()}
         status={leave.deciding?.status}
+        leave={leave.deciding?.leave}
         form={leave.decisionForm}
         onSubmit={leave.onSubmitDecision}
         isPending={leave.isDeciding}
@@ -348,9 +413,21 @@ export function LeaveListPage() {
         variant="destructive"
         icon={CalendarDays}
         title="Remove this leave record?"
+        // A delete removes the WHOLE application, both halves of a split — so the
+        // warning names every day it takes with it, not just the row that was
+        // clicked.
         description={
           leave.pendingDelete
-            ? `The leave from ${formatDate(leave.pendingDelete.fromDate)} will be removed, and its days will stop counting as leave on the attendance calendar.`
+            ? `This will remove ${describeGroupSpan(leave.pendingDelete)} from ${formatDate(leave.pendingDelete.fromDate)}${
+                leave.pendingDelete.toDate &&
+                leave.pendingDelete.toDate !== leave.pendingDelete.fromDate
+                  ? ` to ${formatDate(leave.pendingDelete.toDate)}`
+                  : ''
+              }${
+                leave.pendingDelete.split
+                  ? ` — the application was split into a paid and an unpaid part (${formatSplit(leave.pendingDelete)}) and both go together`
+                  : ''
+              }, and those days will stop counting as leave on the attendance calendar.`
             : undefined
         }
         confirmLabel="Remove"
@@ -359,6 +436,27 @@ export function LeaveListPage() {
         onConfirm={leave.confirmDelete}
       />
     </div>
+  )
+}
+
+/** The proof file on a leave, opened in a new tab. */
+function AttachmentLink({ attachment }: { attachment: string }) {
+  const url = useMediaUrl(attachment)
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open the attached proof"
+          className="inline-flex text-muted-foreground transition-colors hover:text-primary"
+        >
+          <Paperclip className="size-3.5" />
+        </a>
+      </TooltipTrigger>
+      <TooltipContent>Open the attached proof</TooltipContent>
+    </Tooltip>
   )
 }
 

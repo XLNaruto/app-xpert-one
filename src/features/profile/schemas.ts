@@ -12,9 +12,9 @@ export const twoFactorResponseSchema = z.object({
 export type TwoFactorResponse = z.infer<typeof twoFactorResponseSchema>
 
 /**
- * `GET /user/me` — the signed-in account, the subscription it is running, its
- * usage against that subscription's limits, and the company last picked in the
- * switcher.
+ * `GET /user/me` — the signed-in user, the account they belong to, the
+ * subscription it is running, its usage against that subscription's limits, and
+ * the company last picked in the switcher.
  *
  * `status` and the subscription's `status` are free strings on the wire
  * (`active`, `trialing`, `past_due`, …), so they stay strings here and are
@@ -22,6 +22,20 @@ export type TwoFactorResponse = z.infer<typeof twoFactorResponseSchema>
  * has never subscribed has none, and the screen has to say so rather than crash.
  */
 export const myProfileResponseSchema = z.object({
+  user: z.object({
+    id: z.number(),
+    name: z.string(),
+    email: z.string(),
+    mobile_number: z.string().nullable(),
+    status: z.string(),
+    role_id: z.number().nullable(),
+    role_name: z.string().nullable(),
+    is_owner: z.boolean(),
+    company_id: z.number().nullable(),
+    employee_id: z.number().nullable(),
+    two_factor_auth: z.boolean(),
+    created_at: z.string(),
+  }),
   account: z.object({
     id: z.number(),
     organization_name: z.string(),

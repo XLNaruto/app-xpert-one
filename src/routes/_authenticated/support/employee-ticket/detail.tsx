@@ -6,10 +6,7 @@ import { validateDataSearch } from '@/lib/route-search'
 /** `?data=<encrypted-id>` names the ticket whose thread is being opened. */
 export const Route = createFileRoute('/_authenticated/support/employee-ticket/detail')({
   beforeLoad: ({ context }) =>
-    requirePermission(context.queryClient, [
-      `${PERMISSIONS.employeeSupport}:read`,
-      `${PERMISSIONS.support}:read`,
-    ]),
+    requirePermission(context.queryClient, `${PERMISSIONS.employeeHelpdesk}:read`),
   validateSearch: validateDataSearch,
   component: RouteComponent,
 })

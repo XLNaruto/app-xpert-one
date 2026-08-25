@@ -24,6 +24,7 @@ export const endpoints = {
   ME: {
     GET: '/user/me',
     COMPANIES: '/user/my/companies',
+    VERIFY_PASSWORD: '/user/me/verify-password',
     TWO_FACTOR_ENABLE: '/user/me/two-factor/enable',
     TWO_FACTOR_DISABLE: '/user/me/two-factor/disable',
     MY_ROLE: '/user/my-role',
@@ -51,6 +52,17 @@ export const endpoints = {
     GET: (id: number) => `/user/talk-credentials/${id}`,
     PATCH: (id: number) => `/user/talk-credentials/${id}`,
     DELETE: (id: number) => `/user/talk-credentials/${id}`,
+  },
+  /**
+   * Talk monitoring — the owner's read-only window onto the account's chats.
+   * Three reads, one per pane of the screen: the people who have a Talk
+   * identity, one person's conversations, and one conversation's messages.
+   */
+  TALK_MONITORING: {
+    PEOPLE: '/user/talk/monitoring/people',
+    CHATS: (talkUserId: number) => `/user/talk/monitoring/people/${talkUserId}/chats`,
+    MESSAGES: (talkUserId: number, chatId: number) =>
+      `/user/talk/monitoring/people/${talkUserId}/chats/${chatId}/messages`,
   },
   BILLING: {
     PLANS: '/user/plans',
@@ -175,6 +187,12 @@ export const endpoints = {
     BULK_WAGE_GRID: '/user/designations/wage-structures',
     BULK_WAGE_HISTORY: '/user/designations/wage-structures/history',
     BULK_UPDATE: '/user/designations/bulk-update',
+    /**
+     * The designation's standing paid-allowance policy — no year, applying to
+     * everyone in the role, and the normal home of an allowance. `PUT` is a
+     * WHOLE-LIST REPLACE, like the employee grant above.
+     */
+    LEAVE_QUOTAS: (id: number) => `/user/designations/${id}/leave-quotas`,
   },
   LEAVE_TYPES: {
     LIST: '/user/leave-types',
@@ -231,6 +249,13 @@ export const endpoints = {
     DELETE_FACE: (id: number) => `/user/employees/${id}/face`,
     KYC: (id: number) => `/user/employees/${id}/kyc`,
     WAGE_STRUCTURE: (id: number) => `/user/employees/${id}/wage-structure`,
+    /**
+     * The per-YEAR paid-allowance grant for one employee — the top tier of the
+     * quota lookup, overriding their designation's standing policy. `PUT` is a
+     * WHOLE-LIST REPLACE: a leave type left out of `rows` is cleared, and falls
+     * back to the designation.
+     */
+    LEAVE_QUOTAS: (id: number) => `/user/employees/${id}/leave-quotas`,
     FAMILY: (id: number) => `/user/employees/${id}/family`,
     FAMILY_MEMBER: (id: number, memberId: number) =>
       `/user/employees/${id}/family/${memberId}`,
@@ -266,6 +291,12 @@ export const endpoints = {
     PATCH: (id: number) => `/user/employee-leaves/${id}`,
     DELETE: (id: number) => `/user/employee-leaves/${id}`,
     STATUS: (id: number) => `/user/employee-leaves/${id}/status`,
+    /**
+     * One employee's paid-allowance ledger for a year — per leave type, plus the
+     * headline. Read it before warning that a range will overflow the allowance;
+     * never to BLOCK an application, which the API always accepts.
+     */
+    BALANCE: '/user/employee-leaves/balance',
   },
   /**
    * The account's leave approval chain — ONE ordered list of role names that

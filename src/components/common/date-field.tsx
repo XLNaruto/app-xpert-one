@@ -14,6 +14,8 @@ interface DateFieldProps<T extends FieldValues> {
   error?: string
   minDate?: Date
   maxDate?: Date
+  /** Read-only: the value is shown but can't be changed. */
+  disabled?: boolean
   className?: string
 }
 
@@ -31,6 +33,7 @@ export function DateField<T extends FieldValues>({
   error,
   minDate,
   maxDate,
+  disabled = false,
   className,
 }: DateFieldProps<T>) {
   return (
@@ -50,6 +53,7 @@ export function DateField<T extends FieldValues>({
             onChange={field.onChange}
             minDate={minDate}
             maxDate={maxDate}
+            disabled={disabled}
           />
         )}
       />

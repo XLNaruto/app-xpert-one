@@ -129,13 +129,11 @@ export const PERMISSIONS = {
    * (`features/support/employee-ticket`). A separate desk from `support`, so a
    * separate resource.
    *
-   * Gated as `[employeeSupport, support]` (an ANY-of) wherever it's used: the
-   * catalog's exact spelling for this desk isn't confirmed from the panel, and
-   * an account that only carries the one `support` resource must not lose the
-   * screen over a name. Collapse it to the single code once
-   * `GET /user/roles/assignable-permissions` confirms which one is real.
+   * The catalog carries `list`, `read`, `update` and `delete` on it — no
+   * `create`, because a ticket here is opened by an employee in the app, never
+   * by a panel user.
    */
-  employeeSupport: 'employee-support',
+  employeeHelpdesk: 'employee-helpdesk',
 
   // ── Lookups (dropdown data) ───────────────────────────────────────────────
   states: 'states',

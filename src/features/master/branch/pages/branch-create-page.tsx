@@ -1,5 +1,5 @@
 import { ArrowLeft, Building2, Lock, Scale } from 'lucide-react'
-import { decryptId } from '@/lib/crypto'
+import { decryptId, decryptParams } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,13 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Forbidden } from '@/features/error'
 import { BranchDetailTab } from '../components/branch-detail-tab'
 import { BranchActsTab } from '../components/branch-acts-tab'
-import { useBranchForm, type BranchFormTab } from '../hooks/use-branch-form'
+import {
+  asBranchFormTab,
+  useBranchForm,
+  type BranchFormTab,
+} from '../hooks/use-branch-form'
 
 interface BranchCreatePageProps {
   /**
-   * Encrypted branch id from the `?data=` search param. When present the page
-   * switches to edit mode (GET to seed, PATCH to save); otherwise it's a fresh
-   * create. The same page and form handle both.
+   * Encrypted `?data=` token. It carries the branch id — present means edit mode
+   * (GET to seed, PATCH to save), absent means a fresh create — and, in edit mode,
+   * which step is open, so a refresh comes back to it. The same page and form
+   * handle both modes.
    */
   data?: string
 }
@@ -26,8 +31,15 @@ interface BranchCreatePageProps {
  * submit saves the branch detail and every applicable act together.
  */
 export function BranchCreatePage({ data }: BranchCreatePageProps) {
-  // Decrypt the params from the URL; missing/malformed → create mode.
+  /*
+   * Decrypt the params from the URL; missing/malformed → create mode. The token
+   * carries the open step alongside the id, so the two come out of the one read
+   * and a refresh lands back on the step that was open.
+   */
   const branchId = decryptId(data)
+  const openTab = asBranchFormTab(
+    data ? decryptParams<{ tab?: string }>(data)?.tab : undefined,
+  )
 
   const {
     register,
@@ -56,7 +68,7 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
     isForbidden,
     forbiddenMessage,
     goToList,
-  } = useBranchForm(branchId)
+  } = useBranchForm(branchId, openTab)
 
 
   // Reading this record was refused — show the 403 screen, not a broken form.

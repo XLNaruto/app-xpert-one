@@ -166,3 +166,16 @@ export type TwoFactorChallengeResponse = z.infer<
 export type VerifyEmailResponse = z.infer<typeof verifyEmailResponseSchema>
 export type ResendEmailOtpResponse = z.infer<typeof resendEmailOtpResponseSchema>
 export type TokenResponse = z.infer<typeof tokenResponseSchema>
+
+/**
+ * `POST /user/me/verify-password` — the answer to "is this the caller's own
+ * password". A wrong password lands here too, as `valid: false`, so the schema
+ * covers both outcomes; only the rate-limit (429) leaves through a throw.
+ */
+export const verifyPasswordResponseSchema = z.object({
+  valid: z.boolean(),
+  attempts_remaining: z.number(),
+  message: z.string(),
+})
+
+export type VerifyPasswordResponse = z.infer<typeof verifyPasswordResponseSchema>

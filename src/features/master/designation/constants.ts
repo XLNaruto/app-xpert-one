@@ -26,7 +26,7 @@ export const DESIGNATION_DEFAULT_SORT = { id: DESIGNATION_SORT.createdAt, desc: 
  * screen's `?tab=` search param, so the route can validate against this list and
  * a refresh comes back to the tab that was open.
  */
-export const DESIGNATION_FORM_TABS = ['basic', 'wage'] as const
+export const DESIGNATION_FORM_TABS = ['basic', 'wage', 'leave'] as const
 
 export type DesignationFormTab = (typeof DESIGNATION_FORM_TABS)[number]
 

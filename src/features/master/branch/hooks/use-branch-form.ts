@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { encryptId } from '@/lib/crypto'
+import { encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useStateSelect } from '@/features/master/state'
 import { useDistrictSelect } from '@/features/master/district'
@@ -18,7 +18,18 @@ import { actsToFormValues } from '../lib/act-mappers'
 import { useActLookups } from './use-act-lookups'
 
 /** The two tabs of the create/edit screen. */
-export type BranchFormTab = 'detail' | 'acts'
+export const BRANCH_FORM_TABS = ['detail', 'acts'] as const
+
+export type BranchFormTab = (typeof BRANCH_FORM_TABS)[number]
+
+/**
+ * Read a tab name off the `?data=` token. Anything the screen doesn't have — a
+ * stale link, a tampered token — falls back to step one rather than rendering no
+ * tab at all.
+ */
+export function asBranchFormTab(value: unknown): BranchFormTab {
+  return BRANCH_FORM_TABS.find((tab) => tab === value) ?? 'detail'
+}
 
 /**
  * Owns the branch form for both create and edit — both tabs, and both endpoints
@@ -30,12 +41,43 @@ export type BranchFormTab = 'detail' | 'acts'
  * branch exists there's nothing for an acts row to hang off, so the acts tab
  * stays locked and saving step one unlocks it. The page consumes this and only
  * lays out fields.
+ *
+ * **The open tab lives in the URL, not in state.** It rides inside the encrypted
+ * `?data=` token alongside the branch id, so a refresh, a bookmark or a shared
+ * link comes back to the step that was open instead of dropping the user on step
+ * one with their place lost. It goes in that one token rather than a `?tab=` of
+ * its own, because splitting one of the screen's params out would put half its
+ * state in the clear.
+ *
+ * Switching tabs REPLACES the history entry rather than pushing one: the two are
+ * views of one record, so Back belongs to the screen the user arrived from, not to
+ * the tab they just left.
  */
-export function useBranchForm(id?: number) {
+export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
   const isEdit = id !== undefined
   const navigate = useNavigate()
 
-  const [tab, setTab] = useState<BranchFormTab>('detail')
+  /**
+   * Create mode has no id to carry a token, and step two is locked there anyway —
+   * so before the branch exists there is only ever step one.
+   */
+  const tab: BranchFormTab = isEdit ? openTab : 'detail'
+
+  /** Open a tab of a SAVED branch — the id is what the token is built around. */
+  const openTabOf = (
+    branchId: number,
+    next: BranchFormTab,
+    options: { replace?: boolean } = {},
+  ) =>
+    navigate({
+      to: '/master/branch/create',
+      search: { data: encryptParams({ id: branchId, tab: next }) },
+      replace: options.replace ?? true,
+    })
+
+  const setTab = (next: BranchFormTab) => {
+    if (id !== undefined) void openTabOf(id, next)
+  }
 
   const detail = useBranch(id ?? Number.NaN)
   const acts = useBranchActs(id ?? Number.NaN)
@@ -255,11 +297,13 @@ export function useBranchForm(id?: number) {
       createBranch.mutate(values, {
         onSuccess: (branch) => {
           toast.success('Branch created — now add its applicable acts')
-          setTab('acts')
-          navigate({
-            to: '/master/branch/create',
-            search: { data: encryptId(branch.id) },
-          })
+          /*
+           * One navigation carries both: the screen becomes that branch's edit
+           * screen AND opens step two, which now has something to hang off. Pushed
+           * rather than replaced, so Back returns to the create form the user came
+           * from.
+           */
+          void openTabOf(branch.id, 'acts', { replace: false })
         },
         onError: (err) =>
           toast.error(err instanceof Error ? err.message : 'Failed to create branch'),

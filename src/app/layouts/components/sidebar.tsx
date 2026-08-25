@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { ChevronDown, PanelLeft, PanelLeftClose, X } from 'lucide-react'
+import { ChevronDown, ExternalLink, PanelLeft, PanelLeftClose, X } from 'lucide-react'
 import {
   filterNavByCompany,
   filterNavByPermission,
@@ -254,6 +254,30 @@ function NavLeaf({
 }) {
   const Icon = item.icon
   if (!item.to) return null
+
+  // A `newTab` row is a plain anchor, not a <Link>: the router must not treat
+  // it as a navigation, and it must never take the active highlight — whatever
+  // opens in the other tab, nothing in this one changed.
+  if (item.newTab) {
+    return (
+      <SidebarTooltip label={item.label} enabled={collapsed}>
+        <a
+          href={item.to}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onNavigate}
+          className={leafClasses(collapsed)}
+        >
+          <Icon className="size-[18px] shrink-0" />
+          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && (
+            <ExternalLink className="ml-auto size-3.5 shrink-0 opacity-50" />
+          )}
+        </a>
+      </SidebarTooltip>
+    )
+  }
+
   return (
     <SidebarTooltip label={item.label} enabled={collapsed}>
       <Link

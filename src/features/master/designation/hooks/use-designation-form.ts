@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
+import { encryptParams } from '@/lib/crypto'
 import { toast } from 'sonner'
 import { useAllowanceDeductions } from '@/features/master/allowance-deduction'
 import {
@@ -28,6 +29,10 @@ export interface HeadRow {
  * the two come apart: the title is renamed through the Basic Info tab (see
  * `useDesignationBasicInfoForm`) and pay is revised version by version on the
  * Wage Structure tab, so nothing here is reused for editing.
+ *
+ * A successful create hands off to the saved designation's Leave Allowance tab —
+ * the one thing the create form can't do, because an allowance is stored against
+ * the designation's id and there isn't one until this call answers.
  */
 export function useDesignationForm() {
   const navigate = useNavigate()
@@ -107,9 +112,23 @@ export function useDesignationForm() {
 
   const onSubmit = handleSubmit((values) => {
     createDesignation.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (designation) => {
         toast.success('Designation created')
-        goToList()
+        /*
+         * Go to the saved designation's LEAVE ALLOWANCE tab rather than back to
+         * the list. That tab is locked on the create form — an allowance is stored
+         * against `/user/designations/:id/leave-quotas`, and there is no id until
+         * this call answers — so landing on it IS how it unlocks, with the record
+         * behind it now.
+         *
+         * `replace` so Back doesn't return to a create form that has already been
+         * submitted, which would invite a duplicate.
+         */
+        navigate({
+          to: '/master/designation/create',
+          search: { data: encryptParams({ id: designation.id, tab: 'leave' }) },
+          replace: true,
+        })
       },
       onError: (err) =>
         toast.error(

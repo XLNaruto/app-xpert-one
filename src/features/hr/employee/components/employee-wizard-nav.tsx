@@ -16,14 +16,15 @@ export function EmployeeWizardProgress({
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       {/*
-        Service History and Shift & Roster are ongoing registers, not steps to
-        finish — an employee on their department's default shift has nothing to
-        record there at all, so counting them would mark a complete record
-        incomplete.
+        Service History, Shift & Roster and Leave Allowance are ongoing registers,
+        not steps to finish — an employee on their department's default shift has
+        nothing to record there at all, and one whose designation already carries
+        the leave allowance needs no grant of their own, so counting them would
+        mark a complete record incomplete.
       */}
       <p className="text-xs text-muted-foreground">
-        Service History and Shift &amp; Roster are ongoing registers and aren't
-        counted.
+        Service History, Shift &amp; Roster and Leave Allowance are ongoing
+        registers and aren't counted.
       </p>
 
       <div className="flex items-center gap-3">

@@ -33,6 +33,16 @@ const envSchema = z.object({
    */
   VITE_RAZORPAY_KEY_ID: z.string().default(''),
 
+  /**
+   * Origin of the Talk chat app — the sidebar's Communication → Chat row opens
+   * it in a new tab. Talk is a separate deployment with its own session, so the
+   * panel only ever links to it; nothing here is called as an API.
+   */
+  VITE_APP_TALK_URL: z
+    .string()
+    .default('https://talk.dev.xpertoneindia.com/')
+    .transform((v) => v || 'https://talk.dev.xpertoneindia.com/'),
+
   /** Secret used to derive the key that encrypts persisted client storage. */
   VITE_APP_ENCRYPT_KEY: z.string().default('xpertone-storage-key'),
 })

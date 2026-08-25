@@ -29,6 +29,8 @@ interface TimeFieldProps<T extends FieldValues> {
   error?: string
   /** Minutes between one offered minute and the next. */
   minuteStep?: number
+  /** Read-only: the value is shown but can't be changed. */
+  disabled?: boolean
   className?: string
 }
 
@@ -40,6 +42,7 @@ export function TimeField<T extends FieldValues>({
   hint,
   error,
   minuteStep,
+  disabled = false,
   className,
 }: TimeFieldProps<T>) {
   return (
@@ -58,6 +61,7 @@ export function TimeField<T extends FieldValues>({
             value={(field.value as string) ?? ''}
             onChange={field.onChange}
             minuteStep={minuteStep}
+            disabled={disabled}
             // Only optional fields get a clear control — a required time has
             // nothing meaningful to clear to.
             clearable={!required}

@@ -1,4 +1,3 @@
-import type { Leave } from '../types'
 
 /**
  * Who the leave belongs to — the column a reader scans by.
@@ -7,7 +6,16 @@ import type { Leave } from '../types'
  * person's initials. The code sits under the name because it's what tells two
  * people with the same name apart, and it's how the API's search matches too.
  */
-export function LeaveEmployeeCell({ leave }: { leave: Leave }) {
+export function LeaveEmployeeCell({
+  leave,
+}: {
+  /**
+   * Structurally typed rather than tied to `Leave`: the register renders grouped
+   * applications and the employee panels render rows, and the name and the code
+   * are all this cell has ever needed from either.
+   */
+  leave: { employeeName: string; employeeCode: string }
+}) {
   const name = leave.employeeName || 'Unknown employee'
 
   return (

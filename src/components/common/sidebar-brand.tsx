@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Building2 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import { useCompanyStore } from '@/stores/company-store'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,12 @@ import { cn } from '@/lib/utils'
  *
  * `collapsed` renders the square rail form; expanded gives the logo a wide box
  * and fits it whole, since tenant logos come in every aspect ratio.
+ *
+ * The company's name is always the tooltip — on the logo as much as on the
+ * fallback, since a mark alone doesn't spell out which tenant it belongs to and
+ * an expanded fallback truncates a long name. It's the app's own `<Tooltip>`
+ * rather than a `title` attribute: the browser's native bubble is unstyled,
+ * slow to appear and out of place beside every other tooltip in the shell.
  */
 export function SidebarBrand({
   collapsed = false,
@@ -36,8 +43,8 @@ export function SidebarBrand({
   // logo would pin every later company to the fallback.
   useEffect(() => setFailed(false), [src])
 
-  if (logo && !failed) {
-    return (
+  const mark =
+    logo && !failed ? (
       <img
         src={src}
         alt={name ?? 'Company logo'}
@@ -48,24 +55,31 @@ export function SidebarBrand({
           className,
         )}
       />
+    ) : (
+      // No logo on the record: the name stands in for it. On the rail there's no
+      // room for it, so the icon carries the slot and the tooltip does the rest.
+      <span
+        className={cn(
+          'flex shrink-0 items-center justify-center gap-2 text-sidebar-foreground',
+          collapsed ? 'size-9' : 'h-11 w-36',
+          className,
+        )}
+      >
+        <Building2 className="size-5 shrink-0 opacity-70" />
+        {!collapsed && (
+          <span className="truncate text-sm font-semibold">{name ?? 'XpertOne'}</span>
+        )}
+      </span>
     )
-  }
 
-  // No logo on the record: the name stands in for it. On the rail there's no
-  // room for it, so the icon carries the slot and the name is the tooltip.
+  // Nothing to say when the company has no name — an empty bubble on hover is
+  // worse than no bubble at all.
+  if (!name) return mark
+
   return (
-    <span
-      title={name ?? undefined}
-      className={cn(
-        'flex shrink-0 items-center justify-center gap-2 text-sidebar-foreground',
-        collapsed ? 'size-9' : 'h-11 w-36',
-        className,
-      )}
-    >
-      <Building2 className="size-5 shrink-0 opacity-70" />
-      {!collapsed && (
-        <span className="truncate text-sm font-semibold">{name ?? 'XpertOne'}</span>
-      )}
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>{mark}</TooltipTrigger>
+      <TooltipContent side="bottom">{name}</TooltipContent>
+    </Tooltip>
   )
 }

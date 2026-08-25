@@ -57,10 +57,21 @@ export function TabsList({
 export function TabsTrigger({
   value,
   className,
+  disabled = false,
+  onDisabledClick,
   children,
 }: {
   value: string
   className?: string
+  /**
+   * The tab exists but can't be opened yet — a step that depends on something not
+   * saved. It stays a real button rather than an `HTMLButton` `disabled`, because a
+   * locked tab has to be able to SAY WHY it's locked, and a disabled button fires
+   * no click and swallows the tooltip.
+   */
+  disabled?: boolean
+  /** What a click on a locked tab does instead of switching — say why. */
+  onDisabledClick?: () => void
   children: React.ReactNode
 }) {
   const ctx = useTabs()
@@ -68,13 +79,17 @@ export function TabsTrigger({
   return (
     <button
       type="button"
-      onClick={() => ctx.setValue(value)}
+      aria-disabled={disabled || undefined}
+      onClick={() => (disabled ? onDisabledClick?.() : ctx.setValue(value))}
       data-state={active ? 'active' : 'inactive'}
       className={cn(
-        'inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all',
+        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all',
+        disabled
+          ? 'cursor-not-allowed text-muted-foreground/60'
+          : 'cursor-pointer',
         active
           ? 'bg-background text-foreground shadow-sm'
-          : 'hover:text-foreground',
+          : !disabled && 'hover:text-foreground',
         className,
       )}
     >

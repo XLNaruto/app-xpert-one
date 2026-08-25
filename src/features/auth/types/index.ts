@@ -51,3 +51,19 @@ export interface AuthChallenge {
 export type LoginOutcome =
   | { status: 'authenticated'; session: AuthSession }
   | { status: 'challenge'; challenge: AuthChallenge }
+
+/**
+ * The answer to a "confirm your password" check (`POST /user/me/verify-password`).
+ *
+ * A wrong password arrives here as `valid: false` rather than as a failure —
+ * the question was asked and answered, so callers branch on `valid` instead of
+ * on a thrown error.
+ */
+export interface PasswordCheck {
+  /** Was that the signed-in user's password? */
+  valid: boolean
+  /** Guesses left in the current window (5 per 15 minutes; reset once correct). */
+  attemptsRemaining: number
+  /** The API's own wording, shown verbatim under the field. */
+  message: string
+}

@@ -65,11 +65,18 @@ export function UnitAmountField({
   valueType,
   onValueTypeChange,
   disabled = false,
+  invalid = false,
   children,
 }: {
   valueType: 'Percentage' | 'Fixed'
   onValueTypeChange: (value: 'Percentage' | 'Fixed') => void
   disabled?: boolean
+  /**
+   * Whether the amount inside is in error. Carried here rather than left to the
+   * input's own `aria-invalid`: the input is borderless and the border belongs
+   * to this wrapper, so it's the only thing that can show it.
+   */
+  invalid?: boolean
   /** The `<Input>` for the amount — registered by the caller. */
   children: ReactNode
 }) {
@@ -82,6 +89,7 @@ export function UnitAmountField({
       className={cn(
         'flex h-7 items-stretch overflow-hidden rounded-md border border-input bg-background',
         disabled && 'opacity-50',
+        invalid && 'border-destructive',
       )}
     >
       <CellTooltip label={action}>

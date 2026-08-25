@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { ArrowLeft, Briefcase, IndianRupee, Wallet } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { ArrowLeft, Briefcase, CalendarDays, IndianRupee, Lock, Wallet } from 'lucide-react'
 import { decryptId, decryptParams } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { Field } from '@/components/common/form-field'
@@ -9,9 +9,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { toast } from 'sonner'
 import { DesignationSalarySection } from '../components/designation-salary-section'
 import { AllowanceDeductionSection } from '../components/allowance-deduction-section'
 import { WageStructureTab } from '../components/wage-structure-tab'
+import { DesignationLeaveQuotaTab } from '@/features/hr/leave-quota'
 import { useDesignationForm } from '../hooks/use-designation-form'
 import { useDesignationBasicInfoForm } from '../hooks/use-designation-basic-info-form'
 import { asTab, useDesignationFormTab } from '../hooks/use-designation-form-tab'
@@ -57,8 +60,21 @@ export function DesignationCreatePage({ data }: DesignationCreatePageProps) {
   )
 }
 
-/** Create mode: the whole designation, saved in one call. */
+/**
+ * Create mode: the whole designation, saved in one call.
+ *
+ * The screen shows the edit screen's tabs so the shape doesn't change under the
+ * user, but **Leave Allowance is LOCKED until the designation is saved.** That
+ * isn't a UI preference: an allowance is stored against
+ * `/user/designations/:id/leave-quotas`, and there is no `:id` until the POST
+ * answers — so there is genuinely nothing for the grid to write to yet.
+ *
+ * Saving unlocks it by ARRIVING there: a successful create lands on the saved
+ * designation's Leave Allowance tab (see `useDesignationForm`), which is the same
+ * tab, now backed by a record.
+ */
 function CreateView() {
+  const [tab, setTab] = useState<DesignationFormTab>('basic')
   const form = useDesignationForm()
 
   return (
@@ -68,43 +84,85 @@ function CreateView() {
       goToList={form.goToList}
     >
       <form onSubmit={form.onSubmit} noValidate>
-        <DesignationSalarySection
-          register={form.register}
-          control={form.control}
-          errors={form.errors}
-          wagePerDay={form.wagePerDay}
-          workingDayCalculationType={form.workingDayCalculationType}
-          changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
-          pfActApplicable={form.pfActApplicable}
-          pfDeductionType={form.pfDeductionType}
-          esicActApplicable={form.esicActApplicable}
-          ptActApplicable={form.ptActApplicable}
-          ptActType={form.ptActType}
-          tdsActApplicable={form.tdsActApplicable}
-          lwfActApplicable={form.lwfActApplicable}
-          lwfActType={form.lwfActType}
-          overtimeApplicable={form.overtimeApplicable}
-        />
+        <Tabs value={tab} onValueChange={(next) => setTab(asTab(next))}>
+          <TabsList>
+            <TabsTrigger value="basic">
+              <IndianRupee className="mr-1.5 size-4" />
+              Designation &amp; Salary
+            </TabsTrigger>
+            {/*
+              Locked, and it says why on click rather than doing nothing — the
+              allowance has nowhere to be stored until the designation has an id.
+            */}
+            <Tooltip>
+              {/*
+                Wrapped in a span because Radix's `asChild` hands the trigger a ref
+                and its event handlers, and `TabsTrigger` is a plain function
+                component that would drop both — leaving a tooltip that never opens.
+              */}
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <TabsTrigger
+                    value="leave"
+                    disabled
+                    onDisabledClick={() =>
+                      toast.warning(
+                        'Save the designation first — a leave allowance is stored against it.',
+                      )
+                    }
+                  >
+                    <Lock className="mr-1.5 size-3.5" />
+                    Leave Allowance
+                  </TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 text-pretty font-normal">
+                Available once the designation is saved. Creating it opens this tab
+                next.
+              </TooltipContent>
+            </Tooltip>
+          </TabsList>
 
-        <FormSection
-          icon={Wallet}
-          title="Allowance & Deduction"
-          description="Every head in the master, listed for this designation"
-        />
+          <TabsContent value="basic">
+            <DesignationSalarySection
+              register={form.register}
+              control={form.control}
+              errors={form.errors}
+              wagePerDay={form.wagePerDay}
+              workingDayCalculationType={form.workingDayCalculationType}
+              changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
+              pfActApplicable={form.pfActApplicable}
+              pfDeductionType={form.pfDeductionType}
+              esicActApplicable={form.esicActApplicable}
+              ptActApplicable={form.ptActApplicable}
+              ptActType={form.ptActType}
+              tdsActApplicable={form.tdsActApplicable}
+              lwfActApplicable={form.lwfActApplicable}
+              lwfActType={form.lwfActType}
+              overtimeApplicable={form.overtimeApplicable}
+            />
 
-        <div className="mt-5">
-          <AllowanceDeductionSection
-            register={form.register}
-            control={form.control}
-            errors={form.errors}
-            allowanceHeads={form.allowanceHeads}
-            deductionHeads={form.deductionHeads}
-            componentsLoading={form.componentsLoading}
-            pfActApplicable={form.pfActApplicable}
-            esicActApplicable={form.esicActApplicable}
-            ptActApplicable={form.ptActApplicable}
-          />
-        </div>
+            <FormSection
+              icon={Wallet}
+              title="Allowance & Deduction"
+              description="Every head in the master, listed for this designation"
+            />
+
+            <div className="mt-5">
+              <AllowanceDeductionSection
+                register={form.register}
+                control={form.control}
+                errors={form.errors}
+                allowanceHeads={form.allowanceHeads}
+                deductionHeads={form.deductionHeads}
+                componentsLoading={form.componentsLoading}
+                pfActApplicable={form.pfActApplicable}
+                esicActApplicable={form.esicActApplicable}
+                ptActApplicable={form.ptActApplicable}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <FormActions
           goToList={form.goToList}
@@ -148,6 +206,16 @@ function EditView({
               <IndianRupee className="mr-1.5 size-4" />
               Wage Structure
             </TabsTrigger>
+            {/*
+              The paid-leave allowance is the designation's standing policy — set
+              once here and it applies to everyone in the role, with no year
+              attached. An employee's own grid overrides it only as a per-year
+              exception, so this is the tab an allowance normally belongs on.
+            */}
+            <TabsTrigger value="leave">
+              <CalendarDays className="mr-1.5 size-4" />
+              Leave Allowance
+            </TabsTrigger>
           </TabsList>
 
           {/*
@@ -187,6 +255,10 @@ function EditView({
 
           <TabsContent value="wage">
             <WageStructureTab designationId={designationId} />
+          </TabsContent>
+
+          <TabsContent value="leave">
+            <DesignationLeaveQuotaTab designationId={designationId} />
           </TabsContent>
         </Tabs>
       </StateGate>

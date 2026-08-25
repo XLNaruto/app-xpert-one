@@ -1,12 +1,26 @@
 import type { MyProfileResponse } from '../schemas'
-import type { MyProfile } from '../types'
+import type { MyProfile, ProfileUser } from '../types'
 import { ACCOUNT_STATUS_TONES, SUBSCRIPTION_STATUS_TONES } from '../constants'
 import type { StatusTone } from '../constants'
 
-/** `GET /user/me` → the account, its subscription, its usage. */
+/** `GET /user/me` → the user, the account, its subscription, its usage. */
 export function toMyProfile(response: MyProfileResponse): MyProfile {
-  const { account, subscription, usage } = response
+  const { user, account, subscription, usage } = response
   return {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      mobileNumber: user.mobile_number,
+      status: user.status,
+      roleId: user.role_id,
+      roleName: user.role_name,
+      isOwner: user.is_owner,
+      companyId: user.company_id,
+      employeeId: user.employee_id,
+      twoFactorAuth: user.two_factor_auth,
+      createdAt: user.created_at,
+    },
     account: {
       id: account.id,
       organizationName: account.organization_name,
@@ -40,6 +54,19 @@ export function toMyProfile(response: MyProfileResponse): MyProfile {
     },
     lastSelectedCompanyId: response.last_selected_company_id,
   }
+}
+
+/**
+ * Whether the screen should show the user's own details alongside the
+ * organization's.
+ *
+ * An owner with no role is the account — repeating their name, email and status
+ * under the organization's would say the same thing twice — so they see the
+ * organization only. Anyone else (a role holder, or a non-owner login) is a
+ * separate person from the account and gets their own block.
+ */
+export function shouldShowUserDetails(user: ProfileUser): boolean {
+  return !(user.isOwner && user.roleId === null)
 }
 
 /** `past_due` → "Past Due". The wire is snake_case, the screen isn't. */

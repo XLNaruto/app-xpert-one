@@ -1,10 +1,11 @@
+import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { decryptId, encryptId, encryptParams } from "@/lib/crypto";
 import { useBanks } from "@/features/master/bank";
 import { useStates } from "@/features/master/state";
 import { useDistricts } from "@/features/master/district";
-import { useLeaves } from "@/features/hr/leave";
+import { groupLeaves, useLeaveBalance, useLeaves } from "@/features/hr/leave";
 import { useEmployee } from "../api/use-employees";
 import {
   useEmployeeAssets,
@@ -54,6 +55,24 @@ export function useEmployeeDetail(data?: string) {
     { limit: LEAVE_PREVIEW_LIMIT, offset: 0 },
     { employeeId: id },
   );
+
+  /*
+   * The register answers one row per stored ROW, and an application whose range
+   * outran the leave type's paid allowance is stored as two — a paid row and an
+   * unpaid one. Grouping them puts the preview back to one line per leave the
+   * employee actually filed.
+   */
+  const leaveGroups = useMemo(
+    () => groupLeaves(leaves.data?.items ?? []),
+    [leaves.data],
+  );
+
+  /**
+   * What's left of each leave type's paid allowance this year. It is the other
+   * half of the leave story: the history says what was taken, this says what is
+   * still paid for.
+   */
+  const leaveBalance = useLeaveBalance(id, new Date().getFullYear());
 
   const banks = useBanks();
   const states = useStates({ enabled: employee !== undefined });
@@ -117,6 +136,8 @@ export function useEmployeeDetail(data?: string) {
     assets,
     transfers,
     leaves,
+    leaveGroups,
+    leaveBalance,
 
     posting,
     isActive,

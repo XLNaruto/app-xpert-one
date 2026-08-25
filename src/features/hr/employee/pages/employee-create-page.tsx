@@ -20,6 +20,8 @@ import { DocumentDetailTab } from '../components/document-detail-tab'
 import { AssetDetailTab } from '../components/asset-detail-tab'
 import { TransferHistoryTab } from '../components/transfer-history-tab'
 import { ShiftRosterTab } from '../components/shift-roster-tab'
+import { StepNavFooter } from '../components/step-nav-footer'
+import { EmployeeLeaveQuotaTab } from '@/features/hr/leave-quota'
 
 interface EmployeeCreatePageProps {
   /**
@@ -224,6 +226,24 @@ function StepBody({
           employeeId={employeeId}
           onContinue={goToNextTab}
           onBack={goToPrevTab}
+        />
+      )
+    /*
+      The employee's own paid-leave allowance — the per-YEAR exception to their
+      designation's standing policy, which is where an allowance normally lives.
+      An ongoing register rather than a step to finish, so it isn't counted toward
+      completion: an employee whose designation already covers them needs no grant
+      of their own.
+    */
+    case 'leaveQuota':
+      return (
+        <EmployeeLeaveQuotaTab
+          employeeId={employeeId}
+          footer={
+            <StepNavFooter onContinue={goToNextTab} onBack={goToPrevTab} continueLabel="Finish">
+              An allowance set here overrides the designation for this year only.
+            </StepNavFooter>
+          }
         />
       )
     default:

@@ -88,6 +88,49 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.talkCredential.all, 'detail', id] as const,
   },
   /**
+   * Talk monitoring — `features/talk/monitoring`.
+   *
+   * ACCOUNT-scoped and read-only, so nothing here carries the session's tenant
+   * and nothing ever invalidates it: the screen owns no mutation. One key per
+   * pane, each carrying exactly what its request varies on.
+   *
+   * `people(search)` carries the term because the SERVER matches it; the
+   * Employees / Admins segments are not in the key, because the endpoint offers
+   * no filter for them and the pane cuts the matched set up itself.
+   */
+  talkMonitoring: {
+    all: ['talk-monitoring'] as const,
+    people: (search?: string) =>
+      [...queryKeys.talkMonitoring.all, 'people', search ?? ''] as const,
+    /**
+     * One person's conversations. `type` is the pane's tab — `undefined` is the
+     * All tab, which the endpoint answers by omitting the filter.
+     */
+    chats: (talkUserId: number, type?: string, search?: string) =>
+      [
+        ...queryKeys.talkMonitoring.all,
+        'chats',
+        talkUserId,
+        type ?? 'all',
+        search ?? '',
+      ] as const,
+    /**
+     * A tab's badge count, read on its own with `limit: 1` so the two inactive
+     * tabs can show a number without fetching their rows.
+     */
+    chatCount: (talkUserId: number, type: string, search?: string) =>
+      [
+        ...queryKeys.talkMonitoring.all,
+        'chat-count',
+        talkUserId,
+        type,
+        search ?? '',
+      ] as const,
+    /** One thread. No search term: the screen offers no in-conversation search. */
+    messages: (talkUserId: number, chatId: number) =>
+      [...queryKeys.talkMonitoring.all, 'messages', talkUserId, chatId] as const,
+  },
+  /**
    * Billing — `features/administration/billing`.
    *
    * Account-scoped, not tenant-scoped: no key here carries a company. The three
@@ -437,6 +480,24 @@ export const queryKeys = {
           ] as const)
         : ([...queryKeys.leave.all, 'list', employeeId ?? 0] as const),
     detail: (id: number) => [...queryKeys.leave.all, 'detail', id] as const,
+    /**
+     * One employee's paid-allowance ledger for a calendar year. The year is in
+     * the key because it IS the answer's scope — the allowances reset with it.
+     */
+    balance: (employeeId: number, year: number) =>
+      [...queryKeys.leave.all, 'balance', employeeId, year] as const,
+  },
+  /**
+   * The paid-allowance grids the balance above is computed from — two tiers,
+   * two keys. The employee grant is scoped to a year; the designation policy is
+   * standing and has none.
+   */
+  leaveQuota: {
+    all: ['leave-quota'] as const,
+    employee: (employeeId: number, year: number) =>
+      [...queryKeys.leaveQuota.all, 'employee', employeeId, year] as const,
+    designation: (designationId: number) =>
+      [...queryKeys.leaveQuota.all, 'designation', designationId] as const,
   },
   /**
    * The account's leave approval chain. ACCOUNT-scoped, so no company in the key:

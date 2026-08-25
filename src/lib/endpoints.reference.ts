@@ -155,6 +155,27 @@
  * NOT report `two_factor_auth` — no endpoint does (see below).
  *
  * ───────────────────────────────────────────────────────────────────────────
+ * ME.VERIFY_PASSWORD — POST /user/me/verify-password         (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * →  { "password": "…" }
+ * ←  { "valid": true | false, "attempts_remaining": 4, "message": "…" }
+ * Notes: the "confirm your password" dialog, as one call. It answers whether
+ * the password is that of the user BEHIND THE TOKEN and does nothing else —
+ * nothing is changed, no token is issued or rotated, no session is signed out,
+ * so it is safe to call before a sensitive save and safe to call again. There
+ * is no `email`/`user_id` in the body by design: an endpoint that could NAME a
+ * user would be a password oracle. A WRONG password is a 200 with
+ * `valid: false`, never a 401 (a 401 would make the client sign the user out
+ * mid-dialog) — branch on `valid`. Guesses are counted per user, 5 per 15
+ * minutes and reset the moment the password is right; running out answers 429
+ * with the wait in its message, which is why the dialog shows
+ * `attempts_remaining` under the field instead of walking into it. Carries no
+ * permission code — every signed-in user may call it, owner or not.
+ * Code: `features/auth/api/verify-password-api.ts`,
+ *       `features/auth/api/use-verify-password.ts`,
+ *       `components/common/password-confirm-dialog.tsx` (+ `hooks/use-password-confirm.ts`)
+ *
+ * ───────────────────────────────────────────────────────────────────────────
  * ME.TWO_FACTOR_ENABLE  — POST /user/me/two-factor/enable    (bearer, no body)
  * ME.TWO_FACTOR_DISABLE — POST /user/me/two-factor/disable   (bearer, no body)
  * ───────────────────────────────────────────────────────────────────────────
@@ -362,6 +383,78 @@
  * and RELEASES the address (every uniqueness index here is partial on
  * `deleted_at is null`), so the same employee can be re-issued at it afterwards.
  * Prefer suspension while an investigation is open.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * TALK_MONITORING — /user/talk/monitoring/*                  (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * The owner's READ-ONLY window onto the account's conversations. Three GETs,
+ * one per pane of the screen, all `?limit=&offset=` answering `{ items, total }`
+ * — and no writes at all, which is the point of a monitoring resource.
+ *
+ * OWNER ONLY: an admin user is refused 403 however their role is ticked. The
+ * MESSAGES call is gated a second time, on `talk-monitoring:read` rather than
+ * `:list` — opening a conversation is the entitlement the subscription sells,
+ * so an account that never bought it gets 403 even for the owner.
+ *
+ * ACCOUNT-scoped, not tenant-scoped: no call takes a `company_id`. Every
+ * company of the account is included with no picker and no filter, because the
+ * caller's reach is every company by construction.
+ *
+ * PEOPLE — the first sidebar. Every person of the account holding a TALK
+ * IDENTITY, not the employee master: somebody without a credential has no
+ * conversations to monitor and is absent, while a back-office user has plenty
+ * and is present. Both arms are here, told apart by `is_employee` — a workforce
+ * credential (TALK_CREDENTIALS) and a panel login whose identity comes from the
+ * Talk switch on ADMIN_USERS. `search` matches the NAME alone, case-insensitive
+ * and partial; there is NO filter for `is_employee` or `status`, which is why
+ * the screen reads the whole directory and segments it client-side. A SUSPENDED
+ * credential (`status: inactive`) still lists: they cannot sign in, but what
+ * they said is still the account's record. `photo` is a storage KEY.
+ *
+ * CHATS — /people/:talk_user_id/chats, the second sidebar. `type` is the tab
+ * (`direct` | `group`; omitted returns both, newest first) and `total` is what
+ * that tab's badge counts, which is why each tab is its own call rather than
+ * one call the client splits. `search` matches the chat's TITLE — a group on
+ * its own `name`, a direct chat on the OTHER participant's, since a direct chat
+ * has no name of its own and is drawn with theirs (`counterpart_*`).
+ *
+ * `participant` is the MONITORED PERSON's state of the chat, never the
+ * monitor's: `member_role`, and whether they left, were removed, were blocked
+ * from posting, or cleared the chat from their own app. All four still return
+ * the conversation — what a participant chose to stop seeing is not what
+ * oversight is looking at. There is NO unread count anywhere: the monitor is in
+ * none of these threads, so the product has no honest answer.
+ * `last_message_preview` arrives READY TO RENDER (a system event already read
+ * as its sentence, a withdrawn message already reading "This message was
+ * deleted"), and `last_message_deleted_for_everyone` must be checked BEFORE
+ * `last_message_type`, which is still the ORIGINAL type on a deleted photo.
+ * 404 for a `talk_user_id` that isn't this account's.
+ *
+ * MESSAGES — /people/:talk_user_id/chats/:chat_id/messages, the thread.
+ * Oldest-first WITHIN the window, but the window is taken from the NEWEST end:
+ * `offset: 0` is the latest exchange and paging walks UP through history, so a
+ * client renders its pages reversed and prepends. `total` is the whole thread,
+ * or the whole match set when `search` (a full-text match on the body) is sent.
+ *
+ * BOTH ids are checked and the PAIRING enforced — the person must be this
+ * account's and the chat one they are a MEMBER of, or 404; otherwise the second
+ * sidebar would be decoration and any chat id of the account would be readable
+ * through any person. A member who has since LEFT still resolves.
+ *
+ * What comes back is the conversation AS IT STANDS: messages a participant hid
+ * for themselves, or that fall before they cleared the chat, are NOT filtered
+ * out. Two things are invisible, neither by policy — a message deleted for
+ * everyone returns as a TOMBSTONE (`is_deleted_for_everyone`, `body` null,
+ * original `type` intact) because its text was cleared from the row at deletion,
+ * and the ordinary soft delete is excluded as it is everywhere else. No pins and
+ * no read receipts: a pin is a participant's arrangement and the ticks are the
+ * sender's information.
+ *
+ * A `system` message has no sender; its `body` is the READY-TO-RENDER sentence
+ * and `system_data` the operands it was rendered from, carrying the names and
+ * photos participants had AT THE TIME. `media[].file_url`, every `*_photo` and
+ * a group's `avatar_url` are storage KEYS — prefix with `media_path` from
+ * `GET /config` (`lib/media.mediaUrl`).
  *
  * ───────────────────────────────────────────────────────────────────────────
  * BILLING — /user/plans · /user/subscription                 (bearer)
@@ -846,6 +939,115 @@
  * no reason leaves the employee nothing to act on, and a blank one is a 400. A
  * 403 is also possible there even holding `leaves:update`, when the leave stands
  * at somebody else's level; the message names that level, so surface it.
+ *
+ * NOBODY PICKS PAID OR UNPAID. There is NO `pay_type` on any leave body, and one
+ * sent is ignored. The choice is the leave TYPE; each type carries its own yearly
+ * PAID ALLOWANCE (see LEAVE_QUOTAS below), the server spends what is left of it,
+ * and every day past it is UNPAID, without limit. Two consequences:
+ *
+ *   1. A request is NEVER refused for want of allowance. Running out only stops
+ *      paying for it — never show "insufficient leave balance" as a blocking
+ *      error. Warn before submitting; do not validate.
+ *   2. ONE request can become TWO ROWS — a paid one and an unpaid one — sharing
+ *      an `application_ref`. They are approved, rejected and DELETED TOGETHER.
+ *
+ * ALLOWANCES DO NOT POOL. Casual leave never eats into the sick allowance, so a
+ * headline "6 days available" can be six sick days and no casual ones. Always
+ * read the per-type line before telling a user what they can take.
+ *
+ * `POST`, `PATCH` and `STATUS` therefore answer the APPLICATION, not a row:
+ * `{ application_ref, from_date, to_date, status, paid_days, unpaid_days, split,
+ * rows[] }`. Show ONE confirmation, and when `split: true` say so outright — the
+ * desk needs to know part of what it just recorded is unpaid, because payroll
+ * will read it that way. `LIST`, by contrast, answers ONE ROW PER ROW: GROUP BY
+ * `application_ref` so a split request renders as the one line it was filed as.
+ *
+ * `leave_type` is a SNAPSHOT of the type's name when the leave was filed;
+ * `leave_type_name` is the catalog's current name (`null` once the type is
+ * deleted). RENDER `leave_type` — it is what keeps an old register readable.
+ *
+ * `from_date` must be TOMORROW OR LATER in IST — the API's business day is IST,
+ * not the browser's zone, so compute the floor in IST or the form will disagree
+ * with the server about which date tomorrow is.
+ *
+ * `PATCH` reads TWO WAYS, and a screen has to pick one deliberately:
+ *
+ *   - only `leave_reason` and/or `attachment` → allowed at ANY status, written to
+ *     every row of the application, `id`s unchanged;
+ *   - any of `leave_type_id`, `from_date`, `to_date`, `duration` → `PENDING`
+ *     ONLY. It RE-RUNS THE SPLIT, so the rows are rewritten and THEIR `id`s
+ *     CHANGE (`application_ref` survives). RE-BIND FROM THE RESPONSE. On a
+ *     decided application it answers 409 — lock those inputs and leave only the
+ *     reason and the attachment editable.
+ *
+ * `DELETE` removes the WHOLE application, both halves of a split, whichever row
+ * the id names — so warn with the day counts on both sides, not the row clicked.
+ *
+ * `BALANCE` (`?employee_id=` required, `?year=` defaulting to this one) is the
+ * paid-allowance ledger. `items` IS THE ANSWER, per leave type: `total` (the
+ * yearly allowance), `used` (approved), `pending` (awaiting a decision, and it
+ * already reduces what's free), `available` = `max(0, total − used − pending)`
+ * and `overflow` = `max(0, used + pending − total)`, plus `quota_source`
+ * (`EMPLOYEE` · `DESIGNATION` · `NONE`). Three readings to get right:
+ *
+ *   - `available: null` on an UNPAID type means UNLIMITED, never `0`.
+ *   - `quota_source: "NONE"` with `total: 0` means NO PAID DAYS of that type —
+ *     also NOT "unlimited". Every day of it is unpaid, and it still doesn't stop
+ *     the employee applying.
+ *   - `paid`/`unpaid` are the HEADLINE, summed from each leave row's own
+ *     snapshot — so days filed under a since-DELETED leave type count there and
+ *     appear in no line of `items`. `items` can add up to LESS than the headline;
+ *     don't assert they match. `paid.available` is a sum of per-type remainders
+ *     and does not mean any one type has room. `unpaid.effective` =
+ *     `unpaid.used + unpaid.pending + paid.overflow` — the payroll-facing figure.
+ *
+ * ALL DAY COUNTS CAN BE FRACTIONAL (`0.5` for a half day). Never render as ints.
+ *
+ * The attachment is a two-step: presign at `UPLOADS.LEAVE_ATTACHMENT`
+ * (`image/jpeg` · `image/png` · `image/webp` · `application/pdf`), PUT the file at
+ * `upload_url` with the same content type, then send the `key` as `attachment` —
+ * never the file itself.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * LEAVE_QUOTAS — /user/{designations,employees}/:id/leave-quotas (bearer)
+ * ───────────────────────────────────────────────────────────────────────────
+ * Where the paid allowances above come from. TWO TIERS, looked up in order:
+ *
+ *     employee_leave_quota    (this employee, this type, THIS YEAR)  ← a GRANT
+ *       ↓ no row
+ *     designation_leave_quota (their designation, this type)         ← a POLICY
+ *       ↓ no row
+ *     NONE → no paid days of that type; every day of it is unpaid
+ *
+ * The DESIGNATION grid is the normal home of an allowance — set once, applies to
+ * everyone in the role, NO YEAR. The EMPLOYEE grid is the per-year exception, and
+ * `?year=` scopes both its GET and its PUT; other years are untouched.
+ *
+ * A row is `{ leave_type_id, short_code, leave_type, pay_type,
+ * annual_paid_leave, unlimited }`; the employee grid adds `falls_back_to` and
+ * `fallback_source`, which is what an empty cell should show as its placeholder.
+ * `unlimited: true` is an UNPAID type — render READ-ONLY as "Unlimited", never as
+ * a number, because it is unpaid from day one and has no allowance to set.
+ * `annual_paid_leave: null` is an empty cell: nothing set AT THIS TIER.
+ *
+ * Both `PUT`s take `{ rows: [{ leave_type_id, annual_paid_leave }] }` and are a
+ * WHOLE-LIST REPLACE: a type left out has its allowance at that tier CLEARED and
+ * falls through to the one below. `{ rows: [] }` clears the tier.
+ * `annual_paid_leave` is an integer 0–366.
+ *
+ * `0` AND OMITTING THE ROW ARE DIFFERENT. `0` is stored — "no paid days of this
+ * type". Omitted means "nothing set here", which falls back. AN EMPTY INPUT BOX
+ * MUST SEND NOTHING, NOT `0`.
+ *
+ * Three 400s, all preventable client-side by building `rows` from the returned
+ * `items`, skipping `unlimited: true` and skipping empty cells: `Unknown leave
+ * type for this company: 99`, `Leave type listed more than once: 16`, and `These
+ * leave types are unpaid and have no paid allowance to set: LWP`.
+ *
+ * Both answer the freshly rendered grid — re-bind from it. Permissions follow the
+ * host record, not the leave module: the designation grid is
+ * `designations:read` / `designations:update`, the employee grid `leaves:read` /
+ * `leaves:update`.
  *
  * ───────────────────────────────────────────────────────────────────────────
  * LEAVE_APPROVAL_CHAIN — /user/leave-approval-chain            (bearer)

@@ -26,9 +26,15 @@ export const LEAVE_DURATION_OPTIONS: ComboboxOption[] = [
   { label: 'Half Day', value: 'HALF_DAY' },
 ]
 
-export const LEAVE_PAY_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Paid', value: 'PAID' },
-  { label: 'Unpaid', value: 'UNPAID' },
+/**
+ * The pay-type filter. It narrows what you're LOOKING at, which is a different
+ * thing from choosing it: nobody picks paid or unpaid on a leave — the server
+ * spends the type's allowance and the rest falls through as unpaid.
+ */
+export const LEAVE_PAY_TYPE_FILTER_OPTIONS: ComboboxOption[] = [
+  { label: 'Paid & unpaid', value: '' },
+  { label: 'Paid only', value: 'PAID' },
+  { label: 'Unpaid only', value: 'UNPAID' },
 ]
 
 /** Status filter on the leave register — `''` is every status. */
@@ -58,6 +64,24 @@ export const LEAVE_TABS = [
 /** The tab value that means "my own queue" rather than a status. */
 export const LEAVE_TAB_MINE = 'MINE'
 
+/** What the leave-attachment presign will sign for. */
+export const LEAVE_ATTACHMENT_CONTENT_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+] as const
+
+/** The same set as a file input's `accept`. */
+export const LEAVE_ATTACHMENT_ACCEPT = LEAVE_ATTACHMENT_CONTENT_TYPES.join(',')
+
+/**
+ * The opening form. **No `payType`** — it isn't collected: the leave TYPE is the
+ * only choice, and the server decides which of the days it pays for.
+ *
+ * `status` opens on `APPROVED` because a back-office desk recording a leave *is*
+ * the approval.
+ */
 export const EMPTY_LEAVE_FORM: LeaveFormValues = {
   employeeId: '',
   leaveTypeId: '',
@@ -66,7 +90,7 @@ export const EMPTY_LEAVE_FORM: LeaveFormValues = {
   duration: 'FULL_DAY',
   fromTime: '',
   toTime: '',
-  payType: 'PAID',
   status: 'APPROVED',
   leaveReason: '',
+  attachment: '',
 }

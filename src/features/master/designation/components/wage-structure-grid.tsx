@@ -4,6 +4,7 @@ import {
   useFormState,
   useWatch,
   type Control,
+  type FieldPath,
   type UseFormRegister,
 } from 'react-hook-form'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -1093,7 +1094,7 @@ function WorkingDaysCell({ index, control, register }: CellProps) {
 function BasicPayCell({ index, control, register }: CellProps) {
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const wagePerDay = useWatch({ control, name: `rows.${index}.wagePerDay` })
-  const invalid = useFieldInvalid(control, index, 'basicPay')
+  const error = useFieldError(control, `rows.${index}.basicPay`)
 
   if (salaryType === 'Daily') {
     return <DerivedAmount value={deriveWages({ salaryType, basicPay: '', wagePerDay }).basicPay} />
@@ -1101,7 +1102,8 @@ function BasicPayCell({ index, control, register }: CellProps) {
   return (
     <GridAmountInput
       placeholder="0.00"
-      aria-invalid={invalid}
+      aria-invalid={!!error}
+      title={error}
       {...register(`rows.${index}.basicPay`)}
     />
   )
@@ -1114,7 +1116,7 @@ function BasicPayCell({ index, control, register }: CellProps) {
 function WagePerDayCell({ index, control, register }: CellProps) {
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const basicPay = useWatch({ control, name: `rows.${index}.basicPay` })
-  const invalid = useFieldInvalid(control, index, 'wagePerDay')
+  const error = useFieldError(control, `rows.${index}.wagePerDay`)
 
   if (salaryType === 'Monthly') {
     return (
@@ -1124,24 +1126,34 @@ function WagePerDayCell({ index, control, register }: CellProps) {
   return (
     <GridAmountInput
       placeholder="0.00"
-      aria-invalid={invalid}
+      aria-invalid={!!error}
+      title={error}
       {...register(`rows.${index}.wagePerDay`)}
     />
   )
 }
 
 /**
- * Whether one field of one row is currently in error. Scoped to that field, so
- * the cell re-renders when its error appears or clears rather than on every
- * keystroke — the inputs stay uncontrolled.
+ * The message standing against one field of one row, or `undefined` while it's
+ * fine. Scoped to that field, so the cell re-renders when its error appears or
+ * clears rather than on every keystroke — the inputs stay uncontrolled.
+ *
+ * Read off the path by hand: `errors` mirrors the row's shape, and a head's
+ * amount is four levels down (`rows.0.allowances.2.amount`), which no indexed
+ * lookup expresses without casting at every step anyway.
  */
-function useFieldInvalid(
+function useFieldError(
   control: Ctl,
-  index: number,
-  field: 'basicPay' | 'wagePerDay',
-): boolean {
-  const { errors } = useFormState({ control, name: `rows.${index}.${field}` })
-  return Boolean(errors.rows?.[index]?.[field])
+  name: FieldPath<WageStructureFormValues>,
+): string | undefined {
+  const { errors } = useFormState({ control, name })
+  const node = name
+    .split('.')
+    .reduce<unknown>(
+      (at, key) => (at as Record<string, unknown> | undefined)?.[key],
+      errors,
+    ) as { message?: string } | undefined
+  return typeof node?.message === 'string' ? node.message : undefined
 }
 
 /**
@@ -1215,6 +1227,7 @@ function PfSwitchCell({
 
 function PfAmountCell({ index, control, register }: CellProps) {
   const applicable = useWatch({ control, name: `rows.${index}.pfActApplicable` })
+  const error = useFieldError(control, `rows.${index}.pfValue`)
   return (
     <Controller
       control={control}
@@ -1224,10 +1237,13 @@ function PfAmountCell({ index, control, register }: CellProps) {
           valueType={field.value}
           onValueTypeChange={field.onChange}
           disabled={!applicable}
+          invalid={!!error}
         >
           <GridInput
             placeholder="12"
             disabled={!applicable}
+            aria-invalid={!!error}
+            title={error}
             {...register(`rows.${index}.pfValue`)}
           />
         </UnitAmountField>
@@ -1334,15 +1350,22 @@ function TdsPercentCell({ index, control, register }: CellProps) {
 
 /** One allowance head in a draft row — its value, then the acts it counts to. */
 function AllowanceCell({ index, at, control, register }: CellProps & { at: number }) {
+  const error = useFieldError(control, `rows.${index}.allowances.${at}.amount`)
   return (
     <div className="space-y-1">
       <Controller
         control={control}
         name={`rows.${index}.allowances.${at}.valueType`}
         render={({ field }) => (
-          <UnitAmountField valueType={field.value} onValueTypeChange={field.onChange}>
+          <UnitAmountField
+            valueType={field.value}
+            onValueTypeChange={field.onChange}
+            invalid={!!error}
+          >
             <GridInput
               placeholder="0"
+              aria-invalid={!!error}
+              title={error}
               {...register(`rows.${index}.allowances.${at}.amount`)}
             />
           </UnitAmountField>
@@ -1410,14 +1433,21 @@ function AllowanceMarker({
 
 /** One deduction head in a draft row — a value and the unit it's in. */
 function DeductionCell({ index, at, control, register }: CellProps & { at: number }) {
+  const error = useFieldError(control, `rows.${index}.deductions.${at}.amount`)
   return (
     <Controller
       control={control}
       name={`rows.${index}.deductions.${at}.valueType`}
       render={({ field }) => (
-        <UnitAmountField valueType={field.value} onValueTypeChange={field.onChange}>
+        <UnitAmountField
+          valueType={field.value}
+          onValueTypeChange={field.onChange}
+          invalid={!!error}
+        >
           <GridInput
             placeholder="0.00"
+            aria-invalid={!!error}
+            title={error}
             {...register(`rows.${index}.deductions.${at}.amount`)}
           />
         </UnitAmountField>

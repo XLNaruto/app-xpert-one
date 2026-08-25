@@ -3,6 +3,34 @@
  * response by `lib/profile-mappers`.
  */
 
+/**
+ * The signed-in user themselves — distinct from the account they belong to.
+ *
+ * An owner who carries no role (`isOwner` with a null `roleId`) *is* the
+ * account, so the screen shows the organization only and leaves this out; every
+ * other user (a role holder, or a non-owner) gets their own details as well.
+ */
+export interface ProfileUser {
+  id: number
+  name: string
+  email: string
+  /** Null when no number was recorded against the user. */
+  mobileNumber: string | null
+  /** The API's own user status (`active`, `inactive`, …) — kept verbatim. */
+  status: string
+  /** Null for the account owner, who holds every permission by birthright. */
+  roleId: number | null
+  roleName: string | null
+  isOwner: boolean
+  /** The company this login is scoped to, null for an account-wide login. */
+  companyId: number | null
+  /** Set when the login is tied to an employee record. */
+  employeeId: number | null
+  twoFactorAuth: boolean
+  /** ISO date-time the user was created. */
+  createdAt: string
+}
+
 /** The account itself — the organization the signed-in user administers. */
 export interface ProfileAccount {
   id: number
@@ -50,6 +78,7 @@ export interface ProfileUsage {
  * `lastSelectedCompanyId` is null until the user picks a company.
  */
 export interface MyProfile {
+  user: ProfileUser
   account: ProfileAccount
   subscription: ProfileSubscription | null
   usage: ProfileUsage

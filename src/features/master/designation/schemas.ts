@@ -23,6 +23,32 @@ const optionalPercent = z
     'Enter a percentage between 0 and 100',
   )
 
+/** What a value read as a percentage is told when it runs over the cap. */
+export const PERCENT_CAP_MESSAGE = 'A percentage cannot exceed 100'
+
+/**
+ * A value entered in `%` is a rate, so it can't run over 100 — the API refuses
+ * the whole save when one does, and only says so after the round-trip ("Amount
+ * (row 1): …"), naming a component index the user can't map back to a column.
+ * Caught on the form instead, against the cell that holds it.
+ *
+ * Only the unit decides it: the same figure is perfectly valid as a rupee
+ * amount, so switching the cell to `₹` clears it. A blank or malformed value is
+ * left to the field's own rule rather than answered twice.
+ */
+function capPercentAmount(
+  row: { valueType: 'Percentage' | 'Fixed'; amount: string },
+  ctx: z.RefinementCtx,
+  /* Which field the complaint lands on — the head rows call it as a refinement
+     of their own object, where it's `amount`; the PF share names itself. */
+  path = 'amount',
+) {
+  const amount = row.amount.trim()
+  if (row.valueType !== 'Percentage') return
+  if (amount === '' || !AMOUNT_RE.test(amount) || Number(amount) <= 100) return
+  ctx.addIssue({ code: 'custom', path: [path], message: PERCENT_CAP_MESSAGE })
+}
+
 /**
  * One head as configured on this designation. The head itself is fixed — every
  * head in the master gets a row — so only its value and act markers are
@@ -33,14 +59,16 @@ const optionalPercent = z
  * pay-component catalog decides which side it lands on, and the request never
  * says which.
  */
-const componentRowSchema = z.object({
-  componentId: z.string().trim(),
-  valueType: z.enum(['Percentage', 'Fixed']),
-  amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-  pfApplicable: z.boolean(),
-  esicApplicable: z.boolean(),
-  ptApplicable: z.boolean(),
-})
+const componentRowSchema = z
+  .object({
+    componentId: z.string().trim(),
+    valueType: z.enum(['Percentage', 'Fixed']),
+    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    pfApplicable: z.boolean(),
+    esicApplicable: z.boolean(),
+    ptApplicable: z.boolean(),
+  })
+  .superRefine(capPercentAmount)
 
 /**
  * Create/edit form for a designation master record. Covers the whole screen:
@@ -134,21 +162,25 @@ export type DesignationBasicInfoValues = z.infer<typeof designationBasicInfoSche
  * the master's record — `componentId` is its `pay_component_id`, which is how the
  * cell reaches the API's `salary_components` without a code lookup.
  */
-const wageAllowanceRowSchema = z.object({
-  componentId: z.number(),
-  valueType: z.enum(['Percentage', 'Fixed']),
-  amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-  pfApplicable: z.boolean(),
-  esicApplicable: z.boolean(),
-  ptApplicable: z.boolean(),
-})
+const wageAllowanceRowSchema = z
+  .object({
+    componentId: z.number(),
+    valueType: z.enum(['Percentage', 'Fixed']),
+    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    pfApplicable: z.boolean(),
+    esicApplicable: z.boolean(),
+    ptApplicable: z.boolean(),
+  })
+  .superRefine(capPercentAmount)
 
 /** One deduction head as valued in a draft wage structure row. */
-const wageDeductionRowSchema = z.object({
-  componentId: z.number(),
-  valueType: z.enum(['Percentage', 'Fixed']),
-  amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-})
+const wageDeductionRowSchema = z
+  .object({
+    componentId: z.number(),
+    valueType: z.enum(['Percentage', 'Fixed']),
+    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  })
+  .superRefine(capPercentAmount)
 
 /**
  * Every field a wage structure row carries, before the cross-field rule below.
@@ -252,6 +284,11 @@ export const wageStructureRowSchema = wageStructureRowBaseSchema.superRefine(
     const missing = missingWageField(row)
     if (missing) {
       ctx.addIssue({ code: 'custom', path: [missing.path], message: missing.message })
+    }
+    /* The PF share is the one act value whose unit is the row's to choose, so
+       it's the one that can be typed as a percentage over 100. */
+    if (row.pfActApplicable) {
+      capPercentAmount({ valueType: row.pfValueType, amount: row.pfValue }, ctx, 'pfValue')
     }
   },
 )

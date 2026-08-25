@@ -59,16 +59,9 @@ const OPEN_ONLY_OPTIONS = [
 export function EmployeeTicketListPage() {
   const list = useEmployeeTicketList()
 
-  /**
-   * Opening a thread is a read on this desk. Gated on either spelling of the
-   * resource — see the note on `PERMISSIONS.employeeSupport`.
-   */
+  /** Opening a thread is a read on this desk. */
   const { can } = useCan()
-  const canView = can([
-    `${PERMISSIONS.employeeSupport}:read`,
-    `${PERMISSIONS.employeeSupport}:list`,
-    `${PERMISSIONS.support}:read`,
-  ])
+  const canView = can(`${PERMISSIONS.employeeHelpdesk}:read`)
 
   const columns = useMemo<ColumnDef<EmployeeTicket>[]>(
     () => [
