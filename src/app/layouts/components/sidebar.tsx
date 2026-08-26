@@ -68,8 +68,13 @@ export function Sidebar() {
 
   // Only the menu rows this user's role reaches — `GET /user/my-role`. With no
   // company selected the survivors are narrowed again to the company-independent
-  // rows, so the only way on is the Company master. Permission first: a row the
-  // role can't reach must never come back through the company pass.
+  // rows, leaving at most the Company master and Billing & Subscription.
+  //
+  // BOTH gates must pass, and permission runs FIRST on purpose: `companyIndependent`
+  // only exempts a row from the company check, never from the role check, so a
+  // Company or Billing row the role can't reach can't come back through the
+  // company pass. A user with neither permission and no company selected sees an
+  // empty sidebar — correct, since every screen would 403 or show the picker.
   const visibleGroups = useMemo(() => {
     const permitted = filterNavByPermission(navGroups, can)
     return selectedCompanyId == null ? filterNavByCompany(permitted) : permitted
