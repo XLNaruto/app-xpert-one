@@ -57,16 +57,31 @@ export function toMyProfile(response: MyProfileResponse): MyProfile {
 }
 
 /**
+ * Whether this login *is* the account rather than a person within it.
+ *
+ * The owner holds every permission by birthright and so carries no role; a role
+ * on the login means somebody was granted it, which only happens to a person
+ * other than the account itself. `is_owner` alone isn't enough — the API has
+ * been seen setting it on role-holding logins too — so the absent role is what
+ * decides.
+ *
+ * Both the profile screen and the topbar branch on this, so they always name
+ * the same party.
+ */
+export function isAccountItself(user: ProfileUser): boolean {
+  return user.isOwner && user.roleName === null && user.roleId === null
+}
+
+/**
  * Whether the screen should show the user's own details alongside the
  * organization's.
  *
- * An owner with no role is the account — repeating their name, email and status
- * under the organization's would say the same thing twice — so they see the
- * organization only. Anyone else (a role holder, or a non-owner login) is a
- * separate person from the account and gets their own block.
+ * The account itself would only repeat its name, email and status under the
+ * organization's, so it sees the organization only. Anyone else is a separate
+ * person from the account and gets their own block.
  */
 export function shouldShowUserDetails(user: ProfileUser): boolean {
-  return !(user.isOwner && user.roleId === null)
+  return !isAccountItself(user)
 }
 
 /** `past_due` → "Past Due". The wire is snake_case, the screen isn't. */

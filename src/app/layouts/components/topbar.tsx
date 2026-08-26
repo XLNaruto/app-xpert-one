@@ -15,7 +15,7 @@ import {
 import { useUiStore } from '@/stores/ui-store'
 import { useAuthStore } from '@/stores/auth-store'
 import { useLogout } from '@/features/auth'
-import { useMyProfile } from '@/features/profile'
+import { useMyProfile, isAccountItself } from '@/features/profile'
 import { CompanySwitcher } from '@/features/company'
 import { cn } from '@/lib/utils'
 
@@ -35,13 +35,28 @@ export function Topbar() {
     })
   }
 
-  // Prefer the live `/user/me` account; fall back to the token-derived user.
-  const name = profile?.account.organizationName ?? user?.name ?? 'User'
-  const phone =
-    profile?.account.organizationMobileNumber?.replace(/^\+91/, '') ??
-    user?.phone?.replace(/^\+91/, '') ??
-    profile?.account.organizationEmail ??
-    user?.email
+  /*
+   * Whose name the menu wears, on the same rule the profile screen uses: the
+   * owner *is* the account, so they see the organization; a role holder is a
+   * person within it and sees themselves.
+   *
+   * Until `/user/me` answers, which of the two this login is isn't known, so
+   * the fallback stays on the token-derived user — the common case — and only
+   * an owner's first paint settles to the organization.
+   */
+  const identity =
+    profile && isAccountItself(profile.user)
+      ? {
+          name: profile.account.organizationName,
+          contact: profile.account.organizationMobileNumber ?? profile.account.organizationEmail,
+        }
+      : {
+          name: profile?.user.name ?? user?.name,
+          contact: profile?.user.mobileNumber ?? user?.phone ?? profile?.user.email ?? user?.email,
+        }
+
+  const name = identity.name ?? 'User'
+  const phone = identity.contact?.replace(/^\+91/, '')
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
