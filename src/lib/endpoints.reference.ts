@@ -77,7 +77,7 @@
  * Notes: takes the ADDRESS, not a handle, so the user can finish from the mail
  * on a device that never saw the login response — which user gets verified
  * still comes out of the stored code. Single-use, lives two minutes, and three
- * wrong guesses burn it; wrong / expired / too-many all answer 401. NO token is
+ * wrong guesses burn it; wrong / expired / too-many all answer 400. NO token is
  * issued, so the screen replays the login once this succeeds — which is also
  * what surfaces a `two_factor_required` on an account holding both.
  * Code: `features/auth/api/auth-api.ts` → `verifyEmailRequest`

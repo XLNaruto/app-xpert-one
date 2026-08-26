@@ -162,7 +162,7 @@ export function useVerifyOtp() {
 
   /**
    * A spent code can't be re-entered, so a failed replay ends the step rather
-   * than leaving the user staring at boxes that will only 401 from here on.
+   * than leaving the user staring at boxes that will only 400 from here on.
    */
   const abandon = (cause: unknown, fallback: string) => {
     toasterrormsg(getApiErrorMessage(cause, fallback))

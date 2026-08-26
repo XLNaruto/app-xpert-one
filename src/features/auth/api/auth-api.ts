@@ -155,7 +155,10 @@ export async function loginRequest({
  * is also what surfaces a second factor on an account holding both.
  *
  * The code is single-use and lives two minutes, and three wrong guesses burn
- * it; wrong, expired and too-many-attempts all answer 401 alike.
+ * it; wrong, expired and too-many-attempts all answer 400 alike. A 400 (rather
+ * than a 401) is what keeps a rejected code from reaching the api-client's
+ * 401 branch, which would sign the user out mid-verification — see the note on
+ * `verifyEmailRequest`'s caller in `use-verify-otp.ts`.
  */
 export async function verifyEmailRequest(
   email: string,
