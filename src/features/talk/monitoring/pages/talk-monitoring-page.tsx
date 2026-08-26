@@ -16,8 +16,9 @@ import { useTalkMonitoring } from '../hooks/use-talk-monitoring'
  *
  * ACCOUNT-scoped, not tenant-scoped: every company of the account is in the
  * directory with no picker and no filter, because whoever can open this screen
- * reaches all of them by construction. That's why the sidebar row is marked
- * `companyIndependent` and why nothing here waits on a company being selected.
+ * reaches all of them by construction — nothing on the screen itself reads the
+ * selected company. The sidebar row is still hidden until one is picked, though:
+ * only Company and Billing stand without a company.
  *
  * OWNER ONLY, enforced twice — the route guard on `talk-monitoring`, and the
  * thread read on `talk-monitoring:read`, which is the entitlement the

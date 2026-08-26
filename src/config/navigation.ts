@@ -63,10 +63,10 @@ export interface NavItem {
    */
   permission?: PermissionSpec;
   /**
-   * Set on the few rows that work without an active company. Everything else is
-   * tenant-scoped, so until a company is selected `filterNavByCompany` hides it —
-   * the Company master is the one place the user can still go (to create or pick
-   * one). A parent survives if any of its children are marked.
+   * Set on the only two rows that stand without an active company — the Company
+   * master (where the user creates or picks one) and Billing & Subscription (the
+   * account's own plan). Everything else is hidden by `filterNavByCompany` until
+   * a company is selected. A parent survives if any of its children are marked.
    */
   companyIndependent?: boolean;
   /**
@@ -386,7 +386,6 @@ export const navGroups: NavGroup[] = [
         to: "/administration/admin-user",
         icon: UsersRound,
         permission: PERMISSIONS.users,
-        companyIndependent: true,
       },
       {
         label: "Roles & Permissions",
@@ -409,20 +408,19 @@ export const navGroups: NavGroup[] = [
           hierarchies land beside it as they're built.
 
           ACCOUNT-scoped: the leave chain is authored once and every company of
-          the account follows it, which is the whole point of it — so the row
-          doesn't wait on a company being picked.
+          the account follows it, which is the whole point of it. It still waits
+          on a company being picked, though — the sidebar is empty but for
+          Company and Billing until one is.
         */
         label: "Hierarchy Management",
         icon: Workflow,
         permission: PERMISSIONS.hierarchy,
-        companyIndependent: true,
         children: [
           {
             label: "Leave",
             to: "/administration/leave-approval-chain",
             icon: CalendarCheck,
             permission: PERMISSIONS.leaveApprovalChain,
-            companyIndependent: true,
           },
         ],
       },
@@ -446,8 +444,7 @@ export const navGroups: NavGroup[] = [
       Credential) beside the admin ones, and the rows land here as they're built.
 
       ACCOUNT-scoped: a credential names an employee and reaches whichever
-      companies it is granted, spanning every company of the account — so the
-      screen doesn't wait on one being picked.
+      companies it is granted, spanning every company of the account.
     */
     title: "Communication",
     items: [
@@ -455,13 +452,11 @@ export const navGroups: NavGroup[] = [
         /*
           Talk itself — the chat app, a separate deployment with its own login,
           so the panel only links to it (`VITE_APP_TALK_URL`) and never calls it.
-          Ungated: whether the account may chat is Talk's own door to answer, and
-          account-scoped, so it doesn't wait on a company being picked.
+          Ungated: whether the account may chat is Talk's own door to answer.
         */
         label: "Chat",
         to: env.VITE_APP_TALK_URL,
         icon: MessageCircle,
-        companyIndependent: true,
         newTab: true,
       },
       {
@@ -476,7 +471,6 @@ export const navGroups: NavGroup[] = [
         to: "/talk/monitoring",
         icon: MessagesSquare,
         permission: PERMISSIONS.talkMonitoring,
-        companyIndependent: true,
         // A three-pane reading workspace, not a page: it runs full-screen
         // outside the shell and is meant to sit open in its own tab.
         newTab: true,
@@ -488,7 +482,6 @@ export const navGroups: NavGroup[] = [
         to: "/talk/credential",
         icon: KeyRound,
         permission: PERMISSIONS.talkCredentials,
-        companyIndependent: true,
       },
     ],
   },
@@ -501,8 +494,7 @@ export const navGroups: NavGroup[] = [
       carries a subscription-priced deadline, the other a queue with none.
 
       Both are ACCOUNT-scoped — a platform ticket names no company, and the
-      employee queue deliberately spans every company of the account — so
-      neither waits on a company being picked.
+      employee queue deliberately spans every company of the account.
     */
     title: "Help & Support",
     items: [
@@ -511,7 +503,6 @@ export const navGroups: NavGroup[] = [
         to: "/support/ticket",
         icon: LifeBuoy,
         permission: PERMISSIONS.support,
-        companyIndependent: true,
       },
       {
         // Its own resource on the API, separate from `support` above: this desk
@@ -520,7 +511,6 @@ export const navGroups: NavGroup[] = [
         to: "/support/employee-ticket",
         icon: Headset,
         permission: PERMISSIONS.employeeHelpdesk,
-        companyIndependent: true,
       },
     ],
   },
@@ -562,9 +552,9 @@ export function filterNavByPermission(
 
 /**
  * Drop every row that needs an active company, keeping only the ones flagged
- * `companyIndependent` (today: the Company master). Runs *after*
- * `filterNavByPermission`, so a user who can't reach the company master is left
- * with an empty sidebar rather than a row they'd be forbidden on.
+ * `companyIndependent` — the Company master and Billing & Subscription. Runs
+ * *after* `filterNavByPermission`, so a user who can't reach either is left with
+ * an empty sidebar rather than a row they'd be forbidden on.
  *
  * Applied by the sidebar only while no company is selected — every other screen
  * would just render the "Select a company" picker, so offering the row is noise.
