@@ -3,15 +3,18 @@ import { useRouter } from '@tanstack/react-router'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { getApiErrorMessage, isForbiddenError, isRestrictedIpError } from '@/lib/api-error'
+import { isStaleChunkError } from '../lib/stale-chunk'
 import { Forbidden } from './forbidden'
 import { RestrictedIp } from './restricted-ip'
+import { StaleApp } from './stale-app'
 
 /**
  * The router's default error boundary. A forbidden (403) failure — the user
  * lacks permission for this page, thrown either by `requirePermission()` in a
  * route's `beforeLoad` or by a loader's own API call — renders the dedicated
- * {@link Forbidden} screen with the server's message; anything else falls back
- * to a generic "something went wrong" screen with a retry. Wired via
+ * {@link Forbidden} screen with the server's message; a route whose code failed
+ * to download renders {@link StaleApp}, which reloads the document; anything else
+ * falls back to a generic "something went wrong" screen with a retry. Wired via
  * `defaultErrorComponent` so every route is covered.
  */
 export function RouteError({ error, reset }: { error: unknown; reset?: () => void }) {
@@ -23,6 +26,12 @@ export function RouteError({ error, reset }: { error: unknown; reset?: () => voi
   }
   if (isForbiddenError(error)) {
     return <Forbidden description={getApiErrorMessage(error)} />
+  }
+  // The screen's own JS never arrived, so there is nothing here to retry —
+  // `reset()` would re-import the same missing file. Only a document reload can
+  // fix it, which StaleApp does itself.
+  if (isStaleChunkError(error)) {
+    return <StaleApp />
   }
   return <GenericError message={getApiErrorMessage(error)} reset={reset} />
 }

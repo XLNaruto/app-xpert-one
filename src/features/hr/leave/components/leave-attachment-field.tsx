@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Eye, Loader2, Upload, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useMediaUrl } from '@/hooks/use-media-url'
+import { ImageLightbox } from '@/components/common/image-lightbox'
+import { useFilePreview } from '@/hooks/use-file-preview'
 import { cn } from '@/lib/utils'
 import { LEAVE_ATTACHMENT_ACCEPT } from '../constants'
 
@@ -34,7 +35,6 @@ export function LeaveAttachmentField({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [pickedName, setPickedName] = useState('')
-  const fileUrl = useMediaUrl(value)
 
   const pick = async (file: File | undefined) => {
     if (!file) return
@@ -51,6 +51,14 @@ export function LeaveAttachmentField({
   /** The last path segment of the key — the stored file's own name. */
   const storedName = value ? (value.split('/').pop() ?? value) : ''
   const name = pickedName || storedName
+
+  // The eye opens the file in the app's viewer — a PDF embedded, an image
+  // zoomable — instead of handing the form's tab over to the browser.
+  const files = useMemo(
+    () => (value ? [{ name: storedName, url: value }] : []),
+    [value, storedName],
+  )
+  const preview = useFilePreview(files)
 
   return (
     <div className="flex gap-2">
@@ -72,15 +80,14 @@ export function LeaveAttachmentField({
         <>
           <Tooltip>
             <TooltipTrigger asChild>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => preview.open(0)}
                 aria-label="Preview the uploaded file"
-                className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 transition-colors hover:bg-primary/20 hover:ring-primary/40"
+                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md bg-primary/10 text-primary ring-1 ring-inset ring-primary/20 transition-colors hover:bg-primary/20 hover:ring-primary/40"
               >
                 <Eye className="size-4" />
-              </a>
+              </button>
             </TooltipTrigger>
             <TooltipContent>Preview file</TooltipContent>
           </Tooltip>
@@ -137,6 +144,13 @@ export function LeaveAttachmentField({
         accept={LEAVE_ATTACHMENT_ACCEPT}
         className="hidden"
         onChange={(event) => void pick(event.target.files?.[0])}
+      />
+
+      <ImageLightbox
+        slides={preview.slides}
+        index={preview.index}
+        onIndexChange={preview.setIndex}
+        onClose={preview.close}
       />
     </div>
   )

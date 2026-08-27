@@ -1285,7 +1285,9 @@ input[type='number'] {
   height: 40px;
   padding: 0;
   line-height: 0;
-  border-radius: 9999px;
+  /* Squared off, not pills: the controls line up as one row of even tiles, and
+     read as chrome rather than as the app's round action buttons. */
+  border-radius: 10px;
   color: rgba(255, 255, 255, 0.85);
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
@@ -1327,28 +1329,108 @@ input[type='number'] {
   box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
 }
 
-/* Counter: a pill in the corner, not loose text on the backdrop. */
-.xl-lightbox .xl-lightbox__counter {
-  top: unset;
-  bottom: 16px;
-  left: 16px;
-  padding: 4px 10px;
-  border-radius: 9999px;
+/* A PDF slide gets the same card treatment as an image — the embedded viewer
+   sits inside the rounded, lifted sheet rather than bleeding to the edges. */
+.xl-lightbox .xl-lightbox__pdf {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* A format nothing can embed: the same sheet, sized to its message. */
+.xl-lightbox .xl-lightbox__file {
+  display: flex;
+  width: min(90vw, 420px);
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--card-foreground);
+  text-align: center;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* The title bar owns the left half of the top band; the toolbar owns the right,
+   so the file's name stops well short of the controls instead of running
+   underneath them. */
+.xl-lightbox .xl-lightbox__title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 72px;
+  max-width: calc(100% - 22rem);
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+/* A band behind the title and toolbar so both stay readable over a light
+   image — the slide is inset far enough that it never reaches under it. */
+.xl-lightbox .yarl__container::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 72px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55),
+    rgba(0, 0, 0, 0.25) 60%,
+    transparent
+  );
+}
+
+/* The zoom level reads as a value, not an icon — a pill wide enough for it. */
+.xl-lightbox .xl-lightbox__zoom {
+  gap: 6px;
+  width: auto;
+  padding: 0 12px;
   font-size: 12px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.75);
-  background: rgba(0, 0, 0, 0.45);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
+  line-height: 1;
 }
 
 /* The caption sits under the image, clear of it. */
 .xl-lightbox .xl-lightbox__footer {
   position: absolute;
-  bottom: -56px;
+  bottom: -48px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   pointer-events: none;
+}
+
+/* Thumbnail strip: one surface with the backdrop, the current file lit by the
+   brand ring rather than by a border of its own. */
+.xl-lightbox .yarl__thumbnails_container {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 16px 14px;
+}
+.xl-lightbox .yarl__thumbnails_thumbnail {
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0.55;
+  transition:
+    opacity 150ms ease,
+    box-shadow 150ms ease;
+}
+.xl-lightbox .yarl__thumbnails_thumbnail:hover {
+  opacity: 0.85;
+}
+.xl-lightbox .yarl__thumbnails_thumbnail_active {
+  opacity: 1;
+  box-shadow: inset 0 0 0 2px var(--primary);
 }

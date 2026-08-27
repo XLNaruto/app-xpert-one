@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
 import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
 import { checkFileContent } from '@/lib/file-signature'
 import { useMediaUrl } from '@/hooks/use-media-url'
+import { isImageFile, useFilePreview } from '@/hooks/use-file-preview'
 import { ImageWithFallback } from './image-with-fallback'
+import { ImageLightbox } from './image-lightbox'
 
 export interface DropzoneFile {
   name: string
@@ -31,9 +34,6 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file)
   })
 }
-
-const isImage = (f: DropzoneFile) =>
-  f.url.startsWith('data:image') || /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(f.name)
 
 /**
  * Translate an `accept` mime/extension string into the uppercase extension list
@@ -70,6 +70,10 @@ export function FileDropzone({
   // Stored files carry a storage path; freshly picked ones a `data:` URL, which
   // passes through untouched.
   const previewUrl = useMediaUrl(value?.url)
+  // The tile is too small to read a document off — clicking it opens the file in
+  // the app's viewer (a PDF embedded, an image zoomable), not a new tab.
+  const files = useMemo(() => (value ? [value] : []), [value])
+  const preview = useFilePreview(files)
 
   // The library's `types` check reads the extension only, so a file renamed to
   // an allowed one gets this far — the byte check is what stops it.
@@ -94,8 +98,13 @@ export function FileDropzone({
           className,
         )}
       >
-        {isImage(value) ? (
-          <>
+        {isImageFile(value) ? (
+          <button
+            type="button"
+            onClick={() => preview.open(0)}
+            aria-label={`Preview ${value.name}`}
+            className="absolute inset-0 h-full w-full cursor-zoom-in"
+          >
             <ImageWithFallback
               src={previewUrl}
               alt={value.name}
@@ -105,25 +114,40 @@ export function FileDropzone({
             <span className="absolute inset-x-0 bottom-0 truncate bg-linear-to-t from-black/70 to-transparent px-3 py-2 pr-10 text-left text-xs font-medium text-white">
               {value.name}
             </span>
-          </>
+          </button>
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 py-6 text-center">
+          <button
+            type="button"
+            onClick={() => preview.open(0)}
+            title={value.name}
+            className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 px-4 py-6 text-center"
+          >
             <span className="flex size-11 items-center justify-center rounded-lg border border-border bg-background text-primary">
               <FileText className="size-6" />
             </span>
             <span className="max-w-full truncate text-sm font-medium text-foreground">
               {value.name}
             </span>
-          </div>
+          </button>
         )}
         <button
           type="button"
-          onClick={() => onChange(null)}
+          onClick={() => {
+            preview.close()
+            onChange(null)
+          }}
           aria-label="Remove file"
           className="absolute right-2 top-2 z-10 flex size-7 cursor-pointer items-center justify-center rounded-md bg-background/80 text-muted-foreground shadow-sm backdrop-blur-sm hover:bg-destructive/10 hover:text-destructive"
         >
           <X className="size-4" />
         </button>
+
+        <ImageLightbox
+          slides={preview.slides}
+          index={preview.index}
+          onIndexChange={preview.setIndex}
+          onClose={preview.close}
+        />
       </div>
     )
   }

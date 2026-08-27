@@ -131,7 +131,7 @@ export const employeeBasicSchema = z
     mobileNumber1: mobileField({ required: true, label: 'a mobile number' }),
     mobileNumber2: mobileField(),
     landlineNumber: optionalPattern(/^\d{6,12}$/, 'Enter 6 to 12 digits'),
-    email: emailField(),
+    email: emailField({ required: true }),
 
     bloodGroup: z.string(),
     height: optionalPattern(AMOUNT_RE, 'Enter a number, e.g. 170 or 5.8'),

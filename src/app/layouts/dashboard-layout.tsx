@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { asset } from '@/lib/asset'
 import { BrandLogo } from '@/components/common/brand-logo'
-import { CompanySelectGate, useCompanyScopeRedirect } from '@/features/company'
+import { CompanySelectGate, useCompanyScope } from '@/features/company'
 import { useAppConfig } from '@/features/config'
 import { usePermissions } from '@/features/permissions'
 import { useIpAccessModeGlobal } from '@/features/administration/ip-address'
@@ -19,9 +19,12 @@ export function DashboardLayout() {
   // warms the IP screen's header, and a barred network (`RESTRICTED_IP`) is met
   // by the full-screen overlay on entering the app instead of only on that screen.
   useIpAccessModeGlobal()
-  // Switching the active company invalidates every record id on screen, so a
-  // detail / create / edit page falls back to its module's list.
-  useCompanyScopeRedirect()
+  /* Switching the active company invalidates every record id on screen: a
+     detail / create / edit page falls back to its module's list, and the key
+     below re-mounts whatever screen is showing so nothing it was holding —
+     a picked designation, a branch filter, a half-filled form — survives into
+     a tenant that doesn't own it. */
+  const companyScopeKey = useCompanyScope()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -32,7 +35,7 @@ export function DashboardLayout() {
         <Topbar />
         <main className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-6">
           <div className="min-w-0 flex-1">
-            <Outlet />
+            <Outlet key={companyScopeKey} />
           </div>
           <footer className="mt-6 border-t pt-4">
             <div className="flex w-full flex-col items-center justify-between gap-2 text-sm font-medium text-muted-foreground sm:flex-row">

@@ -1,12 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { decryptId, encryptId, encryptParams } from "@/lib/crypto";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useBanks } from "@/features/master/bank";
 import { useStates } from "@/features/master/state";
 import { useDistricts } from "@/features/master/district";
 import { groupLeaves, useLeaveBalance, useLeaves } from "@/features/hr/leave";
-import { useEmployee } from "../api/use-employees";
+import { EMPLOYEE_SORT } from "../constants";
+import { useEmployee, useEmployees } from "../api/use-employees";
 import {
   useEmployeeAssets,
   useEmployeeDocuments,
@@ -20,6 +22,10 @@ import {
 
 /** How many leave rows the detail screen previews — the register holds the rest. */
 const LEAVE_PREVIEW_LIMIT = 5;
+
+/** How many names the header's employee picker holds at a time — the rest are
+    reached by typing, since the search is the endpoint's own. */
+const SWITCHER_LIMIT = 25;
 
 /**
  * Everything the read-only employee screen reads and derives.
@@ -73,6 +79,25 @@ export function useEmployeeDetail(data?: string) {
    * still paid for.
    */
   const leaveBalance = useLeaveBalance(id, new Date().getFullYear());
+
+  /**
+   * The header's employee picker — read another person's record without going
+   * back to the list for them.
+   *
+   * The options are the company's own employees, searched server-side: the
+   * roster outgrows any one page, so a typed name is fetched rather than
+   * filtered over what happens to be loaded. Debounced for the same reason
+   * `usePagination` debounces — not a request per keystroke.
+   */
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(employeeSearch, 300);
+  const employeeOptions = useEmployees({
+    limit: SWITCHER_LIMIT,
+    offset: 0,
+    sort: EMPLOYEE_SORT.name,
+    sortBy: "asc",
+    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+  });
 
   const banks = useBanks();
   const states = useStates({ enabled: employee !== undefined });
@@ -145,6 +170,25 @@ export function useEmployeeDetail(data?: string) {
     stateName,
     districtName,
 
+    /** The header's employee switcher: who is on show, and the roster behind it. */
+    employeeOptions: employeeOptions.data?.items ?? [],
+    employeesLoading: employeeOptions.isFetching,
+    employeeSearch,
+    setEmployeeSearch,
+    /**
+     * Show another employee's record. It's a navigation, not local state: the
+     * screen answers whoever the `?data=` token names, so the token is what has
+     * to change — a refresh or a Back then stays honest.
+     */
+    changeEmployee: (id: number) => {
+      if (id === employeeId) return;
+      setEmployeeSearch("");
+      void navigate({
+        to: "/hr/employee/detail",
+        search: { data: encryptId(id) },
+      });
+    },
+
     goToList: () => navigate({ to: "/hr/employee" }),
     goToEdit: () =>
       employeeId !== undefined &&
@@ -157,8 +201,10 @@ export function useEmployeeDetail(data?: string) {
      *
      * The month screen answers a timesheet rather than an employee record, so
      * the token carries the name and code it has to print. There's no group to
-     * come from here, which the screen already tolerates: no employee switcher,
-     * and Back lands on the attendance list.
+     * come from here, which the screen already tolerates: no employee switcher.
+     * `from: 'employee'` is what keeps the hierarchy honest — the month screen
+     * was entered from this record, so its Back returns here rather than
+     * dropping into Attendance Management, which was never on the way.
      */
     goToAttendance: () =>
       employeeId !== undefined &&
@@ -169,8 +215,7 @@ export function useEmployeeDetail(data?: string) {
             employeeId,
             name: [employee?.prefix, employee?.name].filter(Boolean).join(" "),
             code: employee?.code ?? "",
-            groupBy: "department",
-            groupId: 0,
+            from: "employee",
             date: format(new Date(), "yyyy-MM-dd"),
           }),
         },

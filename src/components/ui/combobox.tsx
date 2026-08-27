@@ -136,7 +136,24 @@ export function Combobox(props: ComboboxProps) {
     selectedValues.some((value) => normalizeComboboxValue(value) === normalizeComboboxValue(option.value)),
   )
 
-  const fallbackSelectedValue = selectedValues.find((value) => value.trim() !== '') ?? ''
+  /**
+   * What the trigger shows for a selected value that matches no loaded option.
+   *
+   * A value can outlive its option list two ways: the options are still being
+   * fetched, or the list they came from has been replaced — a company switch
+   * reloads every master, and an id picked under the previous tenant is not in
+   * the new one's. Either way the raw value is all there is to print.
+   *
+   * Printing it is right when the value is a code someone reads — a grade like
+   * `A1`, which is also stored as its own label — and wrong when it is a record
+   * id, where "20" tells the reader nothing and reads like a real selection. So
+   * a bare number falls through to the placeholder instead: the field shows as
+   * empty, which for a stale id is the truth.
+   */
+  const fallbackSelectedValue =
+    selectedValues.find(
+      (value) => value.trim() !== '' && !/^\d+$/.test(value.trim()),
+    ) ?? ''
 
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')

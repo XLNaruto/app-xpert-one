@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -40,9 +40,12 @@ import { useCollapsibleSectionGroup } from "@/components/common/use-collapsible-
 import { DetailItem } from "@/components/common/detail-item";
 import { EmptyState } from "@/components/common/empty-state";
 import { ImageWithFallback } from "@/components/common/image-with-fallback";
+import { ImageLightbox } from "@/components/common/image-lightbox";
+import { useFilePreview } from "@/hooks/use-file-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Forbidden, NotFound } from "@/features/error";
 import { LeaveBalanceCard, formatDays } from "@/features/hr/leave";
@@ -103,6 +106,10 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     goToList,
     goToEdit,
     goToAttendance,
+    employeeOptions,
+    employeesLoading,
+    setEmployeeSearch,
+    changeEmployee,
   } = useEmployeeDetail(data);
 
   // The Edit button is the only write this screen offers.
@@ -119,6 +126,26 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     useCollapsibleSectionGroup();
 
   const resolveMedia = useMediaResolver();
+
+  /* Every attached document goes into one preview set: the eye opens the file
+     in the app's own viewer — and pages through the rest of the set — instead
+     of handing the tab over to the browser. The stored key's last segment is
+     the file's real name, which is what tells the viewer whether it can render
+     it and what the download is saved as. */
+  const { documentFiles, documentSlideOf } = useMemo(() => {
+    const files: { name: string; url: string }[] = [];
+    const slideOf = new Map<number, number>();
+    for (const doc of documents.data ?? []) {
+      if (!doc.document) continue;
+      slideOf.set(doc.id, files.length);
+      files.push({
+        name: doc.document.split("/").pop() || doc.documentName || "Document",
+        url: doc.document,
+      });
+    }
+    return { documentFiles: files, documentSlideOf: slideOf };
+  }, [documents.data]);
+  const documentPreview = useFilePreview(documentFiles);
 
   // No usable token — nothing to show.
   if (employeeId === undefined) return <NotFound />;
@@ -195,6 +222,10 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           employee={employee}
           posting={posting}
           isActive={isActive}
+          options={employeeOptions}
+          optionsLoading={employeesLoading}
+          onSearchChange={setEmployeeSearch}
+          onChangeEmployee={changeEmployee}
         />
 
         <CollapsibleSectionGroup signal={signal}>
@@ -983,18 +1014,18 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                         </div>
                         {document.document && (
                           <div className="grid grid-cols-2 gap-2 border-t p-3">
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                              })}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                documentPreview.open(
+                                  documentSlideOf.get(document.id) ?? 0,
+                                )
+                              }
                             >
                               <Eye className="size-4" />
                               Preview
-                            </a>
+                            </Button>
                             <a
                               href={href}
                               download
@@ -1201,8 +1232,39 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           </div>
         </CollapsibleSectionGroup>
       </div>
+
+      <ImageLightbox
+        slides={documentPreview.slides}
+        index={documentPreview.index}
+        onIndexChange={documentPreview.setIndex}
+        onClose={documentPreview.close}
+      />
     </div>
   );
+}
+
+/** One employee → the picker line that names them. */
+function employeeLabel(employee: Pick<Employee, "prefix" | "name" | "code">) {
+  const name =
+    [employee.prefix, employee.name].filter(Boolean).join(" ") || "Unnamed";
+  return employee.code ? `${name} · ${employee.code}` : name;
+}
+
+/**
+ * The switcher's options: the roster, with the record on show pinned in.
+ *
+ * A search term narrows the roster server-side, so the current employee can
+ * drop out of it — and a Combobox with no matching option renders no value.
+ * Keeping them in the list keeps the header naming the record it is showing.
+ */
+function employeeChoices(current: Employee, roster: Employee[]) {
+  const rows = roster.some((row) => row.id === current.id)
+    ? roster
+    : [current, ...roster];
+  return rows.map((row) => ({
+    value: String(row.id),
+    label: employeeLabel(row),
+  }));
 }
 
 /**
@@ -1213,10 +1275,18 @@ function EmployeeHero({
   employee,
   posting,
   isActive,
+  options,
+  optionsLoading,
+  onSearchChange,
+  onChangeEmployee,
 }: {
   employee: Employee;
   posting: EmployeeTransfer | null;
   isActive: boolean;
+  options: Employee[];
+  optionsLoading: boolean;
+  onSearchChange: (value: string) => void;
+  onChangeEmployee: (id: number) => void;
 }) {
   const photoUrl = useMediaUrl(employee.photo);
   const fullName =
@@ -1248,9 +1318,22 @@ function EmployeeHero({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-heading text-xl font-semibold text-foreground">
-              {fullName}
-            </h2>
+            {/* The name doubles as the record switcher — read anyone else's
+                record without going back to the list for them. The record on
+                show is always in the list, even when a typed term wouldn't
+                have returned it, so the picker never shows an empty name. */}
+            <Combobox
+              value={String(employee.id)}
+              onChange={(value) => onChangeEmployee(Number(value))}
+              options={employeeChoices(employee, options)}
+              onSearchChange={onSearchChange}
+              loading={optionsLoading}
+              placeholder={fullName}
+              searchPlaceholder="Search name or code…"
+              triggerClassName="h-auto w-auto max-w-full gap-1.5 border-0 bg-transparent px-0 font-heading text-xl font-semibold text-foreground shadow-none hover:bg-transparent focus-visible:ring-0"
+              className="w-auto"
+              panelMinWidth={288}
+            />
             {employee.code && (
               <Badge variant="default" className="font-mono">
                 #{employee.code}

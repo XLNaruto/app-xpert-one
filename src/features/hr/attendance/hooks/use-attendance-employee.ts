@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { addMonths, format, parseISO } from 'date-fns'
-import { decryptParams, encryptParams } from '@/lib/crypto'
+import { decryptParams, encryptId, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { ATTENDANCE_MAX_LIMIT } from '../constants'
@@ -22,6 +22,12 @@ interface AttendanceEmployeeParams {
   groupBy: AttendanceGroupBy
   groupId: number
   date: string
+  /**
+   * Which screen opened this one, so Back retraces the way in rather than
+   * always landing in Attendance Management. `'employee'` is the employee's own
+   * record; `'attendance'` (the default) is the group calendar.
+   */
+  from: 'employee' | 'attendance'
 }
 
 /** `yyyy-MM` of the month a `yyyy-MM-dd` day falls in — today's when there's none. */
@@ -55,6 +61,7 @@ export function useAttendanceEmployee(token?: string) {
       groupBy: raw.groupBy === 'designation' ? 'designation' : 'department',
       groupId: Number(raw.groupId) || 0,
       date: typeof raw.date === 'string' ? raw.date : '',
+      from: raw.from === 'employee' ? 'employee' : 'attendance',
     } satisfies AttendanceEmployeeParams
   }, [token])
 
@@ -138,8 +145,23 @@ export function useAttendanceEmployee(token?: string) {
   const stepMonth = (delta: number) =>
     setMonth(format(addMonths(parseISO(`${month}-01`), delta), 'yyyy-MM'))
 
-  /** Back to the group the row was clicked in, on the same day it was read. */
+  /**
+   * Back up one level, along the way this screen was actually reached.
+   *
+   * Opened from an employee's record, that record is the parent — Back returns
+   * to it, not to a list the reader never passed through. Opened from a group's
+   * day, it is the group that is the parent, on the same day it was read. Only
+   * a token with neither (an old or hand-made link) falls back to the top of
+   * Attendance Management.
+   */
   const goBack = () => {
+    if (parsed?.from === 'employee') {
+      void navigate({
+        to: '/hr/employee/detail',
+        search: { data: encryptId(parsed.employeeId) },
+      })
+      return
+    }
     if (!parsed?.groupId) {
       void navigate({ to: '/hr/attendance' })
       return

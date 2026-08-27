@@ -4,7 +4,9 @@ import { cn } from '@/lib/utils'
 import { toasterrormsg } from '@/lib/toast'
 import { checkFileContent } from '@/lib/file-signature'
 import { useMediaResolver } from '@/hooks/use-media-url'
+import { isImageFile, useFilePreview } from '@/hooks/use-file-preview'
 import { ImageWithFallback } from './image-with-fallback'
+import { ImageLightbox } from './image-lightbox'
 import type { DropzoneFile } from './file-dropzone'
 
 interface MultiFileDropzoneProps {
@@ -25,19 +27,6 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error)
     reader.readAsDataURL(file)
   })
-}
-
-const isImage = (f: DropzoneFile) =>
-  f.url.startsWith('data:image') || /\.(png|jpe?g|gif|webp|svg|avif)$/i.test(f.name)
-
-// Open a file preview in a new tab. Freshly-picked files have a `data:` URL,
-// which browsers refuse to open as a top-level tab (it just lands on
-// about:blank) — so for those we open a short-lived object (blob:) URL from the
-// raw File instead. Already-stored files open at their resolved media URL.
-function openFilePreview(f: DropzoneFile, resolvedUrl: string) {
-  const url = f.file ? URL.createObjectURL(f.file) : resolvedUrl
-  window.open(url, '_blank', 'noopener,noreferrer')
-  if (f.file) setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 /**
@@ -76,6 +65,9 @@ export function MultiFileDropzone({
   // Resolves each stored file's path against the media base URL; the `data:`
   // URLs of freshly picked files pass through untouched.
   const resolveMedia = useMediaResolver()
+  // Clicking any tile opens the whole set in the app's viewer — images and PDFs
+  // in one carousel — rather than throwing the file at a new tab.
+  const preview = useFilePreview(value)
 
   const take = async (fileList: File[]) => {
     const incoming = fileList
@@ -106,13 +98,18 @@ export function MultiFileDropzone({
     if (accepted.length) onChange([...value, ...accepted])
   }
 
-  const removeAt = (index: number) => onChange(value.filter((_, i) => i !== index))
+  const removeAt = (index: number) => {
+    // The slides are about to shift under the viewer; close it rather than
+    // leave it showing whatever slid into that position.
+    preview.close()
+    onChange(value.filter((_, i) => i !== index))
+  }
 
   const isEmpty = value.length === 0
   const canAdd = !maxFiles || value.length < maxFiles
   // When the only content is document(s) (e.g. a single RC-book PDF), let the
   // tile grow to fill the whole dropzone box instead of a short strip.
-  const onlyDocs = value.length > 0 && value.every((f) => !isImage(f))
+  const onlyDocs = value.length > 0 && value.every((f) => !isImageFile(f))
 
   const uploaderProps = {
     handleChange: (files: File | File[]) =>
@@ -169,7 +166,7 @@ export function MultiFileDropzone({
         )}
       >
         {value.map((file, i) => {
-          const image = isImage(file)
+          const image = isImageFile(file)
           return (
             <div
               key={`${file.name}-${i}`}
@@ -181,18 +178,26 @@ export function MultiFileDropzone({
               )}
             >
               {image ? (
-                <ImageWithFallback
-                  src={resolveMedia(file.url)}
-                  alt={file.name}
-                  wrapperClassName="size-full"
-                  className="object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => preview.open(i)}
+                  aria-label={`Preview ${file.name}`}
+                  title={file.name}
+                  className="size-full cursor-zoom-in"
+                >
+                  <ImageWithFallback
+                    src={resolveMedia(file.url)}
+                    alt={file.name}
+                    wrapperClassName="size-full"
+                    className="object-cover"
+                  />
+                </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => openFilePreview(file, resolveMedia(file.url))}
+                  onClick={() => preview.open(i)}
                   title={file.name}
-                  className="flex size-full items-center gap-3 p-3 text-left text-primary"
+                  className="flex size-full cursor-pointer items-center gap-3 p-3 text-left text-primary"
                 >
                   <FileText className="size-6 shrink-0" />
                   <span className="min-w-0 flex-1 truncate pr-6 text-xs font-medium text-foreground">
@@ -223,6 +228,13 @@ export function MultiFileDropzone({
       </div>
 
       {hint ? <p className="mt-2 text-xs text-muted-foreground">{hint}</p> : null}
+
+      <ImageLightbox
+        slides={preview.slides}
+        index={preview.index}
+        onIndexChange={preview.setIndex}
+        onClose={preview.close}
+      />
     </div>
   )
 }

@@ -128,6 +128,7 @@ export function useAttendanceDetail(token?: string) {
           groupBy: filters.groupBy,
           groupId: filters.groupId,
           date: detail.data?.date ?? date,
+          from: 'attendance',
         }),
       },
     })

@@ -149,6 +149,16 @@ export function useLeaveList() {
     onPaginationChange({ limit, offset: 0 })
   }
 
+  /**
+   * Clears the filter panel — search and pay type. The status tabs are not part
+   * of it: they sit outside the panel and are the view itself, not a filter on it.
+   */
+  const resetFilters = () => {
+    setSearch('')
+    setPayTypeFilter('')
+    onPaginationChange({ limit, offset: 0 })
+  }
+
   const isForbidden = isForbiddenError(list.error)
 
   return {
@@ -171,6 +181,7 @@ export function useLeaveList() {
     changeStatusFilter,
     payTypeFilter,
     changePayTypeFilter,
+    resetFilters,
     isMyQueue,
     isLoading: list.isLoading,
     isError: list.isError && !isForbidden,

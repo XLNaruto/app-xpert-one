@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, Check, Crown, Paperclip, Plus, Split, X } from 'lucide-react'
+import { CalendarDays, Check, Crown, Paperclip, Plus, Split, Wallet, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Combobox } from '@/components/ui/combobox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { FilterBar } from '@/components/common/filter-bar'
 import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
 import { TableRowActions } from '@/components/common/table-row-actions'
@@ -306,39 +306,23 @@ export function LeaveListPage() {
         (what happened to it), and the plain list is deliberately unchanged —
         visibility is not routing.
       */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
-          {LEAVE_TABS.map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => leave.changeStatusFilter(tab.value)}
-              aria-pressed={leave.statusFilter === tab.value}
-              className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                leave.statusFilter === tab.value
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/*
-          A view filter, not a choice: `pay_type` is decided by the server from
-          what was left of the leave type's allowance. Filtering to "unpaid only"
-          answers "what will payroll deduct", which is the question it exists for.
-        */}
-        <Combobox
-          className="w-48"
-          searchable={false}
-          value={leave.payTypeFilter}
-          onChange={leave.changePayTypeFilter}
-          options={LEAVE_PAY_TYPE_FILTER_OPTIONS}
-          placeholder="Paid & unpaid"
-        />
+      <div className="mb-4 flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
+        {LEAVE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => leave.changeStatusFilter(tab.value)}
+            aria-pressed={leave.statusFilter === tab.value}
+            className={cn(
+              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              leave.statusFilter === tab.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {leave.isError ? (
@@ -352,7 +336,6 @@ export function LeaveListPage() {
           columns={columns}
           data={leave.rows}
           isLoading={leave.isLoading}
-          searchPlaceholder="Search leaves…"
           itemName="leave records"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -362,6 +345,36 @@ export function LeaveListPage() {
           onPaginationChange={leave.onPaginationChange}
           searchValue={leave.search}
           onSearchChange={leave.setSearch}
+          /*
+            Pay type lives in the Filters panel with the search box, not as a
+            loose dropdown: it is a view filter, not a choice — `pay_type` is
+            decided by the server from what was left of the leave type's
+            allowance, and "unpaid only" answers "what will payroll deduct".
+            The status tabs stay outside, above the table: they are the view.
+          */
+          toolbar={
+            <FilterBar
+              search={{
+                value: leave.search,
+                onChange: leave.setSearch,
+                placeholder: 'Search leaves…',
+              }}
+              facets={[
+                {
+                  key: 'payType',
+                  label: 'Paid / unpaid',
+                  icon: Wallet,
+                  value: leave.payTypeFilter,
+                  onChange: leave.changePayTypeFilter,
+                  options: LEAVE_PAY_TYPE_FILTER_OPTIONS,
+                  searchable: false,
+                  // '' is "both" — the API simply gets no `pay_type`.
+                  clearValue: '',
+                },
+              ]}
+              onReset={leave.resetFilters}
+            />
+          }
           manualSorting
           sorting={leave.sorting}
           onSortingChange={leave.onSortingChange}
