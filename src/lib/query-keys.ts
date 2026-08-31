@@ -402,6 +402,37 @@ export const queryKeys = {
       params
         ? ([...queryKeys.asset.all, 'list', params] as const)
         : ([...queryKeys.asset.all, 'list'] as const),
+    detail: (id: number) => [...queryKeys.asset.all, 'detail', id] as const,
+    /**
+     * The asset's whole stock ledger — its own lines and its variants'. Keyed
+     * apart from `assetVariant.movements`: asset 7 and variant 7 are unrelated
+     * rows, so a stock level is cached by level AND id, never by id alone.
+     */
+    movements: (id: number, params?: PageParams) =>
+      params
+        ? ([...queryKeys.asset.all, 'movements', id, params] as const)
+        : ([...queryKeys.asset.all, 'movements', id] as const),
+  },
+  /**
+   * Asset variants and their stock ledger. A variant is addressed through its
+   * asset, so the asset id is part of every key here — never cache a variant by
+   * its own id alone.
+   */
+  assetVariant: {
+    all: ['asset-variant'] as const,
+    /** Everything under one asset — what a variant/stock mutation invalidates. */
+    ofAsset: (assetId: number) => [...queryKeys.assetVariant.all, assetId] as const,
+    list: (assetId: number, params?: PageParams) =>
+      params
+        ? ([...queryKeys.assetVariant.ofAsset(assetId), 'list', params] as const)
+        : ([...queryKeys.assetVariant.ofAsset(assetId), 'list'] as const),
+    detail: (assetId: number, id: number) =>
+      [...queryKeys.assetVariant.ofAsset(assetId), 'detail', id] as const,
+    /** The stock ledger of one variant. */
+    movements: (assetId: number, id: number, params?: PageParams) =>
+      params
+        ? ([...queryKeys.assetVariant.ofAsset(assetId), 'movements', id, params] as const)
+        : ([...queryKeys.assetVariant.ofAsset(assetId), 'movements', id] as const),
   },
   /**
    * The employee and its nine steps. Every step is its own sub-resource keyed by

@@ -15,7 +15,7 @@ export type RowAction = {
   separated?: boolean
 }
 
-const MENU_WIDTH = 224
+const MENU_WIDTH = 216
 const GAP = 6
 
 /**
@@ -127,7 +127,7 @@ export function RowActionsMenu({
                       action.destructive ? 'text-destructive' : 'text-muted-foreground',
                     )}
                   />
-                  {action.label}
+                  <span className="whitespace-nowrap">{action.label}</span>
                 </button>
               </React.Fragment>
             ))}

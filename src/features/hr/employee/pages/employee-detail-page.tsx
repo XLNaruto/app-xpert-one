@@ -57,7 +57,7 @@ import {
 } from "../constants";
 import { useEmployeeDetail } from "../hooks/use-employee-detail";
 import { isDocumentExpired } from "../lib/employee-step-mappers";
-import type { Employee, EmployeeTransfer } from "../types";
+import type { Employee, EmployeeAsset, EmployeeTransfer } from "../types";
 
 /** An option value → its label, falling back to the stored value. */
 function labelOf(
@@ -1049,6 +1049,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             <CollapsibleSection
               icon={Boxes}
               title="Assets"
+              description="Everything issued, and what is still out with them"
               defaultOpen={false}
               isLoading={assets.isLoading}
               badge={<CountBadge count={assetRows.length} />}
@@ -1056,28 +1057,9 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               {assetRows.length === 0 ? (
                 <EmptyState icon={Boxes} title="No assets issued." />
               ) : (
-                <div className="divide-y divide-border">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {assetRows.map((asset) => (
-                    <Row
-                      key={asset.id}
-                      primary={asset.assetName || "Asset"}
-                      secondary={
-                        asset.assignedDate
-                          ? `Issued ${onDate(asset.assignedDate)}`
-                          : "—"
-                      }
-                      trailing={
-                        <Badge
-                          variant={
-                            asset.status === "ASSIGNED"
-                              ? "success"
-                              : "secondary"
-                          }
-                        >
-                          {asset.status || "—"}
-                        </Badge>
-                      }
-                    />
+                    <AssetCard key={asset.id} asset={asset} />
                   ))}
                 </div>
               )}
@@ -1490,6 +1472,142 @@ function CountBadge({ count }: { count: number }) {
     <Badge variant="warning">No data</Badge>
   ) : (
     <Badge variant="secondary">{count}</Badge>
+  );
+}
+
+/** Handout status → the card's accent: issued is live, returned is closed, lost needs chasing. */
+const ASSET_STATUS: Record<
+  string,
+  { badge: "success" | "secondary" | "destructive"; strip: string }
+> = {
+  ASSIGNED: { badge: "success", strip: "bg-success" },
+  RETURNED: { badge: "secondary", strip: "bg-muted-foreground/40" },
+  LOST: { badge: "destructive", strip: "bg-destructive" },
+};
+
+/** One labelled fact inside an asset card. */
+function AssetFact({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "danger";
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-0.5 truncate text-sm font-semibold",
+          tone === "danger" ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * One handout, as a card.
+ *
+ * The list used to say only name / issued / status, which leaves out what the
+ * section is actually opened to answer: WHICH unit went out (an asset with
+ * variants means nothing without its variant), whether it is still out, when it
+ * is due back, and anything noted on it — a serial number lives in `remarks`.
+ *
+ * "Still out" is driven off `stockHeld`, never off the status: a consumable
+ * reads RETURNED and still holds its unit, because a consumed unit never goes
+ * back on the shelf.
+ */
+function AssetCard({ asset }: { asset: EmployeeAsset }) {
+  const look = ASSET_STATUS[asset.status] ?? {
+    badge: "secondary" as const,
+    strip: "bg-border",
+  };
+  // Overdue only matters while the unit is genuinely still out.
+  const overdue =
+    asset.stockHeld &&
+    asset.validTill !== "" &&
+    new Date(`${asset.validTill}T23:59:59`) < new Date();
+
+  return (
+    // `h-full` + `mt-auto` on the footer: the cards sit in a grid, so a card
+    // with remarks is taller than one without and their audit strips would
+    // otherwise float at different heights across the row.
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-card">
+      <div className={cn("h-1 w-full", look.strip)} />
+
+      {/* `flex-1` on the header: its badge row wraps to two lines on one card
+          and one on the next, so the slack is absorbed HERE and every band
+          below starts at the same height across the row. */}
+      <div className="flex flex-1 items-start gap-3 p-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Boxes className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {asset.assetName || "Asset"}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {/* A handout written before variants existed carries none — the
+                asset stands alone rather than showing an empty badge. */}
+            {asset.variantName && (
+              <Badge variant="outline">{asset.variantName}</Badge>
+            )}
+            <Badge variant={look.badge}>{asset.status || "—"}</Badge>
+            {asset.stockHeld && <Badge variant="warning">Holding a unit</Badge>}
+            {overdue && <Badge variant="destructive">Overdue</Badge>}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 border-t px-4 py-3">
+        <AssetFact
+          label="Issued"
+          value={onDate(asset.assignedDate) ?? "Not recorded"}
+        />
+        <AssetFact
+          label="Due back"
+          value={onDate(asset.validTill) ?? "No return date"}
+          tone={overdue ? "danger" : undefined}
+        />
+      </div>
+
+      {/* Rendered even when empty — a card that skipped the block would push
+          its neighbours' footers out of line. */}
+      <div className="border-t px-4 py-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Remarks
+        </p>
+        <p
+          className={cn(
+            "mt-0.5 break-words text-sm",
+            asset.remarks ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {asset.remarks || "None noted"}
+        </p>
+      </div>
+
+      {/* `createdBy`/`updatedBy` already carry the NAME — see `auditOf`. */}
+      <div className="mt-auto flex flex-col gap-0.5 border-t bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
+        <span>
+          Issued by {asset.createdBy || "—"}
+          {onDate(asset.createdAt) ? ` · ${onDate(asset.createdAt)}` : ""}
+        </span>
+        {asset.updatedBy && asset.updatedAt !== asset.createdAt && (
+          <span>
+            Updated by {asset.updatedBy}
+            {onDate(asset.updatedAt) ? ` · ${onDate(asset.updatedAt)}` : ""}
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
 

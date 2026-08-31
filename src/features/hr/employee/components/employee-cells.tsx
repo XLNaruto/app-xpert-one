@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Eye,
+  History,
   Mail,
   Pencil,
   ScanFace,
@@ -47,7 +48,9 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
  *
  * View and Edit are the two ways into the record and are always there. The rest
  * are optional: each renders only when its handler is passed, so nothing dead
- * shows in the menu. There is no Delete on this screen — the API exposes no
+ * shows in the menu. Service History opens the wizard straight on step 8 —
+ * closing a posting is the register's own action, and reaching it shouldn't mean
+ * walking the whole wizard. There is no Delete on this screen — the API exposes no
  * `DELETE /user/employees/:id`, and deliberately so, since payroll, attendance
  * and leave history all reference the row. Taking someone off strength means
  * closing their open posting, which is done from the Service History tab where
@@ -56,6 +59,7 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
 export function EmployeeRowActions({
   onView,
   onEdit,
+  onServiceHistory,
   onViewFaces,
   onDeleteFaces,
   faceCount = 0,
@@ -67,6 +71,8 @@ export function EmployeeRowActions({
   /** Omitted when the role may not read / edit an employee — the entry is dropped. */
   onView?: () => void
   onEdit?: () => void
+  /** Jumps into the Employee Service History step of the wizard. */
+  onServiceHistory?: () => void
   /** Both shown only when the row actually carries face images. */
   onViewFaces?: () => void
   onDeleteFaces?: () => void
@@ -80,6 +86,12 @@ export function EmployeeRowActions({
 
   if (onView) actions.push({ label: 'View Details', icon: Eye, onSelect: onView })
   if (onEdit) actions.push({ label: 'Edit Details', icon: Pencil, onSelect: onEdit })
+  if (onServiceHistory)
+    actions.push({
+      label: 'Service History',
+      icon: History,
+      onSelect: onServiceHistory,
+    })
 
   // An employee with no enrolled face has nothing to show and nothing to clear,
   // so both entries are absent rather than disabled.

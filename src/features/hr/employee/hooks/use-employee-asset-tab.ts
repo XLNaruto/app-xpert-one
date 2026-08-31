@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -26,7 +26,8 @@ import { useRowSeed } from './use-row-seed'
  *
  * An asset coming back is a **status change**, not a removal: the row records that
  * it was issued, and flipping it to `RETURNED` keeps that fact. The bin is for a card
- * entered by mistake — which is why the footer says so.
+ * entered by mistake — which is why the footer says so. It empties the list when
+ * that's the last card: holding no assets is a valid state for the step.
  */
 export function useEmployeeAssetTab({
   employeeId,
@@ -63,25 +64,88 @@ export function useEmployeeAssetTab({
     setRemovedIds([])
   })
 
+  /**
+   * The asset master, by id — what tells the form whether the picked asset holds
+   * its own stock or hands that job to its variants. `variantCount` rides on the
+   * LIST rows, which is what this read returns.
+   */
+  const assetsById = useMemo(
+    () => new Map((assetMaster.data?.items ?? []).map((asset) => [String(asset.id), asset])),
+    [assetMaster.data],
+  )
+
   const assetOptions = useMemo(
     () =>
       (assetMaster.data?.items ?? []).map((asset) => ({
         label: asset.assetName,
         value: String(asset.id),
+        // An asset holds stock or its variants do, so the hint says which and
+        // how much. Legacy assets all read 0 until someone refills them.
+        hint:
+          asset.variantCount > 0
+            ? `${asset.variantCount} variant${asset.variantCount === 1 ? '' : 's'}`
+            : asset.quantity === 0
+              ? 'No stock'
+              : `${asset.quantity} left`,
       })),
     [assetMaster.data],
   )
 
+  /**
+   * Which saved handouts are holding a unit right now, by row id.
+   *
+   * `stock_held` is the truth, not the status: a consumable reads `RETURNED` and
+   * still holds its unit, because a consumed unit never goes back on the shelf.
+   */
+  const heldById = useMemo(
+    () => new Map((list.data ?? []).map((asset) => [asset.id, asset.stockHeld])),
+    [list.data],
+  )
+
   const addRow = () => rows.append({ ...EMPTY_EMPLOYEE_ASSET_FORM })
 
+  /**
+   * Picking a different asset invalidates the variant under it — a variant id
+   * from the previous asset answers 400 ("does not belong to the selected
+   * asset"), so it's cleared rather than carried across.
+   */
+  const onAssetChange = (index: number, assetId: string) => {
+    form.setValue(`rows.${index}.assetId`, assetId, { shouldValidate: false })
+    form.setValue(`rows.${index}.variantId`, '', { shouldValidate: false })
+    // Whether a variant is required travels with the asset, and the master row
+    // already carries the count — no second read to find out.
+    form.setValue(
+      `rows.${index}.hasVariants`,
+      (assetsById.get(assetId)?.variantCount ?? 0) > 0,
+      { shouldValidate: false },
+    )
+  }
+
+  /**
+   * Keep every row's `hasVariants` true to the master.
+   *
+   * The rows are seeded from the handouts, which may land before the asset
+   * master does — and a legacy row on an asset that has since grown variants
+   * would otherwise stay marked as needing none. `variant_count` is the answer,
+   * so the rows are re-settled whenever it arrives.
+   */
+  useEffect(() => {
+    if (assetsById.size === 0) return
+    form.getValues('rows').forEach((row, index) => {
+      const next = (assetsById.get(row.assetId)?.variantCount ?? 0) > 0
+      if (row.hasVariants === next) return
+      form.setValue(`rows.${index}.hasVariants`, next, { shouldValidate: false })
+    })
+  }, [assetsById, form])
+
+  /**
+   * The bin takes the card away, the last one included: an employee who holds
+   * nothing is a real answer here, unlike the steps that must have a row. What's
+   * left is an empty list with its Add button.
+   */
   const removeRow = (index: number) => {
     const row = form.getValues(`rows.${index}`)
     if (row?.id !== undefined) setRemovedIds((previous) => [...previous, row.id as number])
-
-    if (rows.fields.length === 1) {
-      rows.update(0, { ...EMPTY_EMPLOYEE_ASSET_FORM })
-      return
-    }
     rows.remove(index)
   }
 
@@ -89,6 +153,7 @@ export function useEmployeeAssetTab({
     const savable = values.rows.filter(
       (row) => !isBlankRow(row as Record<string, unknown>, ASSET_ROW_KEYS),
     )
+
 
     setIsSaving(true)
     try {
@@ -115,6 +180,9 @@ export function useEmployeeAssetTab({
     addRow,
     removeRow,
     assetOptions,
+    assetsById,
+    onAssetChange,
+    heldById,
     isAssetsLoading: assetMaster.isLoading,
     isLoading: list.isLoading,
     isError: list.isError && !isForbidden,

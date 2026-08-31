@@ -14,10 +14,10 @@ import { useCompanyGate } from '../hooks/use-company-gate'
 
 /**
  * Post-login company gate. The active company is session state the server keeps
- * on the token; until one is set, this blocks the app with a non-dismissable
- * modal. Multi-company users pick one (highlight, then Confirm); single-company
- * users get it resolved for them and only see a brief "preparing" state. A sign
- * out escape hatch is offered for anyone who reached the wrong account.
+ * on the token; until the session submits a selection, this blocks the app with
+ * a non-dismissable modal. Every account picks one (highlight, then Confirm) —
+ * a single-company account included, with its one company pre-highlighted. A
+ * sign out escape hatch is offered for anyone who reached the wrong account.
  *
  * Mounted inside the authenticated shell; shares the `/user/my/companies` cache
  * with the topbar switcher, so it costs no extra request.
@@ -37,79 +37,65 @@ export function CompanySelectGate() {
               <Building2 className="size-5" />
             </div>
             <div>
-              <DialogTitle>
-                {gate.isResolvingOnly ? 'Preparing your workspace' : 'Select Company'}
-              </DialogTitle>
-              <DialogDescription>
-                {gate.isResolvingOnly
-                  ? 'Setting up your company…'
-                  : 'Choose your company'}
-              </DialogDescription>
+              <DialogTitle>Select Company</DialogTitle>
+              <DialogDescription>Choose your company</DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {gate.isResolvingOnly ? (
-          <div className="mt-6 flex justify-center">
-            {gate.isPending && (
-              <Loader2 className="size-6 animate-spin text-muted-foreground" />
-            )}
-          </div>
-        ) : (
-          <div className="mt-4 flex flex-col gap-3">
-            {gate.companies.map((company) => {
-              const isSelected = gate.selectedId === company.id
-              const logo = resolveMedia(company.logo)
-              return (
-                <button
-                  key={company.id}
-                  type="button"
-                  disabled={gate.busy}
-                  onClick={() => gate.select(company.id)}
-                  aria-pressed={isSelected}
-                  className={cn(
-                    'flex w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
-                    isSelected
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'bg-background hover:border-primary/50 hover:bg-accent',
-                  )}
-                >
-                  {logo ? (
-                    <img
-                      src={logo}
-                      alt=""
-                      className="size-8 shrink-0 rounded-md object-contain"
-                    />
-                  ) : (
-                    <span
-                      className={cn(
-                        'grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold uppercase',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground',
-                      )}
-                    >
-                      {company.name.charAt(0)}
-                    </span>
-                  )}
-                  <span className="flex-1 overflow-hidden">
-                    <span className="block truncate text-sm font-semibold text-foreground">
-                      {company.name}
-                    </span>
-                    {company.code && (
-                      <span className="block truncate text-xs text-muted-foreground">
-                        Code: {company.code}
-                      </span>
+        <div className="mt-4 flex flex-col gap-3">
+          {gate.companies.map((company) => {
+            const isSelected = gate.selectedId === company.id
+            const logo = resolveMedia(company.logo)
+            return (
+              <button
+                key={company.id}
+                type="button"
+                disabled={gate.busy}
+                onClick={() => gate.select(company.id)}
+                aria-pressed={isSelected}
+                className={cn(
+                  'flex w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                  isSelected
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                    : 'bg-background hover:border-primary/50 hover:bg-accent',
+                )}
+              >
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt=""
+                    className="size-8 shrink-0 rounded-md object-contain"
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      'grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold uppercase',
+                      isSelected
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground',
                     )}
+                  >
+                    {company.name.charAt(0)}
                   </span>
-                  {isSelected && (
-                    <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                )}
+                <span className="flex-1 overflow-hidden">
+                  <span className="block truncate text-sm font-semibold text-foreground">
+                    {company.name}
+                  </span>
+                  {company.code && (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      Code: {company.code}
+                    </span>
                   )}
-                </button>
-              )
-            })}
-          </div>
-        )}
+                </span>
+                {isSelected && (
+                  <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                )}
+              </button>
+            )
+          })}
+        </div>
 
         {gate.error && (
           <p className="mt-3 text-sm text-destructive">{gate.error.message}</p>
@@ -129,33 +115,18 @@ export function CompanySelectGate() {
             )}
             Sign out
           </Button>
-          {gate.isResolvingOnly ? (
-            // Nothing to choose — the only action left is retrying a failed
-            // auto-selection.
-            gate.error && (
-              <Button disabled={gate.busy} onClick={gate.retry} className="gap-2">
-                {gate.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Check className="size-4" />
-                )}
-                Retry
-              </Button>
-            )
-          ) : (
-            <Button
-              disabled={gate.busy || gate.selectedId == null}
-              onClick={gate.confirm}
-              className="gap-2"
-            >
-              {gate.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Check className="size-4" />
-              )}
-              Confirm
-            </Button>
-          )}
+          <Button
+            disabled={gate.busy || gate.selectedId == null}
+            onClick={gate.confirm}
+            className="gap-2"
+          >
+            {gate.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Check className="size-4" />
+            )}
+            Confirm
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

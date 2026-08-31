@@ -19,6 +19,9 @@ export function Toaster() {
       gap={10}
       offset={20}
       swipeDirections={['right', 'top']}
+      // Every toast carries its own dismiss control — swiping isn't discoverable
+      // and an error toast can outlive the screen that raised it.
+      closeButton
       // The toast container is always mounted over the page; without this it
       // would swallow clicks/taps on controls beneath it. Keep the container
       // click-through (pointer-events: none) — each toast card re-enables
@@ -44,6 +47,11 @@ export function Toaster() {
           title:
             'font-sans text-sm font-semibold leading-tight whitespace-pre-line text-popover-foreground',
           description: 'font-sans text-xs leading-snug text-muted-foreground',
+          // Sonner only styles its close button when `unstyled` is off, so the
+          // whole look is ours: a small circular chip tucked into the card's
+          // top-right corner, always visible.
+          closeButton:
+            'absolute -right-2 -top-2 grid size-5 cursor-pointer place-items-center rounded-full border border-black/10 bg-popover text-muted-foreground shadow-sm transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/15',
           actionButton:
             'ml-auto cursor-pointer rounded-lg bg-foreground px-2.5 py-1 text-xs font-medium text-background',
         },

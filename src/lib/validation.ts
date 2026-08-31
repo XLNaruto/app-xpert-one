@@ -266,23 +266,46 @@ export function personNameField(
 
 // Only letters, digits, and spaces allowed
 const RECORD_NAME_CHARS_RE = /^[a-zA-Z0-9\s]*$/
+// The same, plus the punctuation a product name carries — see `allowSpecial`.
+// Blank passes here; the required/optional branch below is what refuses it.
+const RECORD_NAME_SPECIAL_CHARS_RE = /^[a-zA-Z0-9\s.,'&()\-/]*$/
 // Must contain at least one letter somewhere
 const RECORD_NAME_HAS_LETTER_RE = /[a-zA-Z]/
 
 export function recordNameField(
   label: string,
-  { required = true, max = 200 }: Omit<FieldOptions, 'label'> = {},
+  {
+    required = true,
+    max = 200,
+    /**
+     * Also accept the punctuation a real product name carries — `T-shirt`,
+     * `Uniform (Large)`, `Nuts & Bolts`. Off by default: most masters name a
+     * place or a department, where a stray symbol is a typo.
+     */
+    allowSpecial = false,
+    /**
+     * Shortest accepted name. Two by default — a one-letter department is a
+     * slip. Drop it to 1 where a single character is the real name, as a
+     * garment size is: `S`, `M`, `L`.
+     */
+    min = 2,
+  }: Omit<FieldOptions, 'label'> & { allowSpecial?: boolean; min?: number } = {},
 ) {
+  const charsRe = allowSpecial ? RECORD_NAME_SPECIAL_CHARS_RE : RECORD_NAME_CHARS_RE
+  const charsMessage = allowSpecial
+    ? `${label} can only use letters, numbers, spaces and . , ' & ( ) - /`
+    : `${label} can only contain letters, numbers, and spaces`
+
   const base = z
     .string()
     .trim()
     .max(max, `Cannot exceed ${max} characters`)
-    .regex(RECORD_NAME_CHARS_RE, `${label} can only contain letters, numbers, and spaces`)
+    .regex(charsRe, charsMessage)
 
   return required
     ? base
         .min(1, `Please enter ${label}`)
-        .min(2, 'Minimum 2 characters')
+        .min(min, `Minimum ${min} character${min === 1 ? '' : 's'}`)
         .refine((v) => RECORD_NAME_HAS_LETTER_RE.test(v), `${label} must contain at least one letter`)
     : base.refine(
         (v) => v === '' || RECORD_NAME_HAS_LETTER_RE.test(v),

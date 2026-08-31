@@ -466,6 +466,9 @@ export function toEmployeeAsset(response: EmployeeAssetResponse): EmployeeAsset 
     employeeId: response.employee_id ?? null,
     assetId: response.asset_id ?? null,
     assetName: response.asset_name ?? '',
+    variantId: response.variant_id ?? null,
+    variantName: response.variant_name ?? '',
+    stockHeld: response.stock_held ?? false,
     assignedDate: response.assigned_date ?? '',
     validTill: response.valid_till ?? '',
     status: response.status ?? '',
@@ -477,6 +480,9 @@ export function toEmployeeAsset(response: EmployeeAssetResponse): EmployeeAsset 
 export function assetToPayload(values: EmployeeAssetFormValues): EmployeeAssetPayload {
   return {
     asset_id: Number(values.assetId),
+    // `null` is meaningful on a PATCH — it detaches the variant and puts the
+    // unit back on the shelf without deleting the handout.
+    variant_id: idOrNull(values.variantId),
     status: values.status,
     assigned_date: toApiDate(values.assignedDate),
     valid_till: toApiDate(values.validTill),
@@ -487,6 +493,9 @@ export function assetToPayload(values: EmployeeAssetFormValues): EmployeeAssetPa
 export function assetToFormValues(asset: EmployeeAsset): EmployeeAssetFormValues {
   return {
     assetId: asset.assetId === null ? '' : String(asset.assetId),
+    variantId: asset.variantId === null ? '' : String(asset.variantId),
+    // A first guess only — the row's variant query corrects it once it loads.
+    hasVariants: asset.variantId !== null,
     status: asset.status || 'ASSIGNED',
     assignedDate: toFormDate(asset.assignedDate),
     validTill: toFormDate(asset.validTill),

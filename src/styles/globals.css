@@ -710,6 +710,20 @@
 .sa-datepicker .react-date-picker__inputGroup__input::placeholder {
   color: var(--muted-foreground);
 }
+/* Disabled — the vendor stylesheet paints a hardcoded `#f0f0f0` box on the root,
+   which in dark mode is a white field on a slate card. Match `<Input>` instead:
+   the field keeps its own surface and is dimmed as a whole. */
+.sa-datepicker.react-date-picker--disabled {
+  background-color: transparent;
+  color: var(--foreground);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.sa-datepicker.react-date-picker--disabled .react-date-picker__inputGroup__input:disabled {
+  color: var(--foreground);
+  -webkit-text-fill-color: var(--foreground);
+  background: transparent;
+}
 /* `<MonthPicker display="long">` — the read-only, month-as-a-heading variant.
 
    The format asks for `MMMM`, and at that point `react-date-picker` swaps the

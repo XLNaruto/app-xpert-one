@@ -1,3 +1,5 @@
 export { AssetListPage } from './pages/asset-list-page'
+export { AssetDetailPage } from './pages/asset-detail-page'
 export { useAssets } from './api/use-assets'
-export type { AssetRecord } from './types'
+export { useAssetVariants } from './api/use-asset-variants'
+export type { AssetRecord, AssetVariant, StockMovement } from './types'

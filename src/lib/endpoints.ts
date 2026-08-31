@@ -221,6 +221,34 @@ export const endpoints = {
     GET: (id: number) => `/user/assets/${id}`,
     PATCH: (id: number) => `/user/assets/${id}`,
     DELETE: (id: number) => `/user/assets/${id}`,
+    /** Refill / write off the asset's OWN stock — only while it has no variants. */
+    STOCK: (id: number) => `/user/assets/${id}/stock`,
+    /**
+     * The asset's WHOLE ledger — its own lines and its variants'. One history,
+     * so an asset that later grew variants keeps the story of what it did
+     * before them.
+     */
+    MOVEMENTS: (id: number) => `/user/assets/${id}/stock-movements`,
+  },
+  /**
+   * Asset variants — the countable thing one level below an asset, and the
+   * stock ledger that follows it.
+   *
+   * A variant is ONLY ever addressed through its asset: `/user/asset-variants/12`
+   * does not exist, and a real variant id under the wrong `assetId` answers 404
+   * rather than 403. That's why every path here takes both ids.
+   */
+  ASSET_VARIANTS: {
+    LIST: (assetId: number) => `/user/assets/${assetId}/variants`,
+    POST: (assetId: number) => `/user/assets/${assetId}/variants`,
+    GET: (assetId: number, id: number) => `/user/assets/${assetId}/variants/${id}`,
+    PATCH: (assetId: number, id: number) => `/user/assets/${assetId}/variants/${id}`,
+    DELETE: (assetId: number, id: number) => `/user/assets/${assetId}/variants/${id}`,
+    /** POST a signed `change` to refill or write off stock. */
+    STOCK: (assetId: number, id: number) => `/user/assets/${assetId}/variants/${id}/stock`,
+    /** The ledger — every line that moved this variant's balance. */
+    MOVEMENTS: (assetId: number, id: number) =>
+      `/user/assets/${assetId}/variants/${id}/stock-movements`,
   },
   DOCUMENT_TYPES: {
     LIST: '/user/document-types',

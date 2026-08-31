@@ -1239,6 +1239,18 @@ export interface EmployeeDocumentPayload {
 export const employeeAssetRowSchema = z.object({
   id: rowId,
   assetId: z.string(),
+  /**
+   * The variant handed over — the countable thing under the asset, and what
+   * actually moves stock. Optional: an asset with no variants is still a valid
+   * handout, and every row written before variants existed is exactly that.
+   */
+  variantId: z.string(),
+  /**
+   * Form-only: does the picked asset actually carry variants? Answered by the
+   * variant query on the row, not by the API payload, and it's what makes the
+   * variant required — an asset with no variants has nothing to pick.
+   */
+  hasVariants: z.boolean(),
   status: z.string(),
   assignedDate: z.string(),
   validTill: z.string(),
@@ -1253,19 +1265,63 @@ export type EmployeeAssetFormValues = z.infer<typeof employeeAssetRowSchema>
  * `status` is deliberately absent: a blank row opens on `ASSIGNED`, so counting it
  * would make every empty card look filled in.
  */
-export const ASSET_ROW_KEYS = ['assetId', 'assignedDate', 'validTill', 'remarks'] as const
+export const ASSET_ROW_KEYS = [
+  'assetId',
+  'variantId',
+  'assignedDate',
+  'validTill',
+  'remarks',
+] as const
 
 export const employeeAssetListSchema = z.object({
   rows: z.array(employeeAssetRowSchema).superRefine((rows, ctx) => {
+    /**
+     * One unit, one row. The dropdowns already grey out what another card holds;
+     * this catches the rest — rows seeded from the server, or a pick made before
+     * the asset master landed. Keyed per variant for an asset that has them, and
+     * on the asset itself for one that doesn't: a variant-less asset has nothing
+     * under it to tell two rows apart.
+     */
+    const seen = new Map<string, number>()
+
     rows.forEach((row, index) => {
       if (!rowNeedsRules(rows, index, ASSET_ROW_KEYS)) return
 
       if (row.assetId.trim() === '') {
         ctx.addIssue({ code: 'custom', path: [index, 'assetId'], message: 'Please select an asset' })
       }
+      if (row.hasVariants && row.variantId.trim() === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'variantId'],
+          message: 'Please select a variant',
+        })
+      }
       if (row.status.trim() === '') {
         ctx.addIssue({ code: 'custom', path: [index, 'status'], message: 'Please select a status' })
       }
+      if (row.assignedDate.trim() === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'assignedDate'],
+          message: 'Please pick an assigned date',
+        })
+      }
+      if (row.assetId.trim() !== '' && (!row.hasVariants || row.variantId.trim() !== '')) {
+        const key = row.hasVariants ? `${row.assetId}|${row.variantId}` : row.assetId
+        if (seen.has(key)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [index, row.hasVariants ? 'variantId' : 'assetId'],
+            message: row.hasVariants
+              ? 'This variant is already on another card'
+              : 'This asset is already on another card',
+          })
+        } else {
+          seen.set(key, index)
+        }
+      }
+
       if (row.assignedDate && row.validTill && row.validTill < row.assignedDate) {
         ctx.addIssue({
           code: 'custom',
@@ -1284,6 +1340,15 @@ export const employeeAssetResponseSchema = z.object({
   employee_id: z.number().nullish(),
   asset_id: z.number().nullish(),
   asset_name: z.string().nullish(),
+  /** Null on every handout written before variants existed — not an error. */
+  variant_id: z.number().nullish(),
+  /** Resolved by the API, so naming the variant costs no second call. */
+  variant_name: z.string().nullish(),
+  /**
+   * Whether this row is holding a unit RIGHT NOW — the truth, not the status. A
+   * consumable reads `RETURNED` and `stock_held: true` at once, quite correctly.
+   */
+  stock_held: z.boolean().nullish(),
   assigned_date: z.string().nullish(),
   valid_till: z.string().nullish(),
   status: z.string().nullish(),
@@ -1303,6 +1368,8 @@ export const employeeAssetListResponseSchema = z.object({
 
 export interface EmployeeAssetPayload {
   asset_id: number
+  /** Nullable on a PATCH: `null` detaches the variant and releases the unit. */
+  variant_id: number | null
   status: string
   assigned_date: string | null
   valid_till: string | null

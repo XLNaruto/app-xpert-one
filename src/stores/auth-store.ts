@@ -68,6 +68,16 @@ interface AuthState {
    * was already what was asked for.
    */
   twoFactorEnabled: boolean
+  /**
+   * Whether `POST /user/auth/select-company` has actually run for *this*
+   * session. The login response carries a `company_id` for a member account,
+   * but that is only the company they belong to — the access token is not
+   * scoped to it until the selection is submitted, so tenant endpoints answer
+   * "Select a company first". The gate therefore keys off this flag, not off
+   * `user.companyId`: false means "still ask", whatever the login said. It is
+   * persisted with the session, so a reload doesn't re-ask.
+   */
+  companySelected: boolean
   /** Record the second factor being switched on or off from the profile screen. */
   setTwoFactorEnabled: (enabled: boolean) => void
   /** Establish a full session after sign-in. */
@@ -109,6 +119,7 @@ export const useAuthStore = create<AuthState>()(
       expiresAt: null,
       accessTokenExpiresAt: null,
       twoFactorEnabled: false,
+      companySelected: false,
       setTwoFactorEnabled: (enabled) => set({ twoFactorEnabled: enabled }),
       setSession: (user, token, refreshToken, options) => {
         const remember = options?.remember ?? false
@@ -121,6 +132,9 @@ export const useAuthStore = create<AuthState>()(
           expiresAt: remember ? Date.now() + REMEMBER_MS : null,
           accessTokenExpiresAt: accessExpiryFrom(options?.expiresIn),
           twoFactorEnabled: options?.twoFactorEnabled ?? false,
+          // A fresh sign-in always goes through the gate again — the new token
+          // carries no active company until select-company says so.
+          companySelected: false,
         })
       },
       setTokens: (token, refreshToken, expiresIn) =>
@@ -130,7 +144,10 @@ export const useAuthStore = create<AuthState>()(
           accessTokenExpiresAt: accessExpiryFrom(expiresIn),
         })),
       setActiveCompany: (companyId) =>
-        set((s) => (s.user ? { user: { ...s.user, companyId } } : {})),
+        set((s) => ({
+          ...(s.user ? { user: { ...s.user, companyId } } : {}),
+          companySelected: companyId != null,
+        })),
       logout: () =>
         set({
           user: null,
@@ -141,6 +158,7 @@ export const useAuthStore = create<AuthState>()(
           expiresAt: null,
           accessTokenExpiresAt: null,
           twoFactorEnabled: false,
+          companySelected: false,
         }),
     }),
     {

@@ -223,8 +223,21 @@ export function useDeleteEmployeeDocument(employeeId: number) {
 
 /* ── Step 7 — assets ─────────────────────────────────────────────────────── */
 
+/**
+ * A handout moves stock, so the variant caches it touched are no longer true.
+ * Cheaper to drop the whole variant tree than to work out which asset moved.
+ */
+function useInvalidateEmployeeAsset() {
+  const invalidateEmployee = useInvalidateEmployee()
+  const queryClient = useQueryClient()
+  return () => {
+    invalidateEmployee()
+    queryClient.invalidateQueries({ queryKey: queryKeys.assetVariant.all })
+  }
+}
+
 export function useCreateEmployeeAsset(employeeId: number) {
-  const invalidate = useInvalidateEmployee()
+  const invalidate = useInvalidateEmployeeAsset()
   return useMutation({
     mutationFn: (values: EmployeeAssetFormValues) =>
       createEmployeeAsset(employeeId, values),
@@ -233,7 +246,7 @@ export function useCreateEmployeeAsset(employeeId: number) {
 }
 
 export function useUpdateEmployeeAsset(employeeId: number) {
-  const invalidate = useInvalidateEmployee()
+  const invalidate = useInvalidateEmployeeAsset()
   return useMutation({
     mutationFn: ({
       assetId,
@@ -247,7 +260,7 @@ export function useUpdateEmployeeAsset(employeeId: number) {
 }
 
 export function useDeleteEmployeeAsset(employeeId: number) {
-  const invalidate = useInvalidateEmployee()
+  const invalidate = useInvalidateEmployeeAsset()
   return useMutation({
     mutationFn: (assetId: number) => deleteEmployeeAsset(employeeId, assetId),
     onSuccess: invalidate,

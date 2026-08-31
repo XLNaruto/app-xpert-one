@@ -346,6 +346,8 @@ export const EMPTY_EMPLOYEE_DOCUMENT_FORM: EmployeeDocumentFormValues = {
 
 export const EMPTY_EMPLOYEE_ASSET_FORM: EmployeeAssetFormValues = {
   assetId: '',
+  variantId: '',
+  hasVariants: false,
   status: 'ASSIGNED',
   assignedDate: '',
   validTill: '',

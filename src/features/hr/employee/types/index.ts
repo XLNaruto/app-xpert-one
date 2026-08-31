@@ -392,6 +392,15 @@ export interface EmployeeAsset extends AuditFields {
   employeeId: number | null
   assetId: number | null
   assetName: string
+  /** `null` on handouts written before variants existed — render the asset alone. */
+  variantId: number | null
+  variantName: string
+  /**
+   * Whether the row is holding a unit right now. Drive any "out with the
+   * employee" wording off this, not off `status`: a consumable can read
+   * `RETURNED` and still hold its unit, because a consumed unit never returns.
+   */
+  stockHeld: boolean
   assignedDate: string
   validTill: string
   status: string

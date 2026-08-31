@@ -19,6 +19,8 @@ import type { MyCompaniesState } from '../types'
 export function useMyCompanies() {
   const setSelectedCompany = useCompanyStore((s) => s.setSelectedCompany)
   const activeCompanyId = useAuthStore((s) => s.user?.companyId ?? null)
+  // Whether select-company has actually run for this session — see the store.
+  const companySelected = useAuthStore((s) => s.companySelected)
 
   const query = useQuery({
     queryKey: queryKeys.myCompany.list(),
@@ -36,8 +38,13 @@ export function useMyCompanies() {
     companies.length > 0 &&
     !companies.some((c) => c.id === activeCompanyId)
   const selectedCompanyId = isStale ? null : activeCompanyId
+  // A login response carries the member's own `company_id`, but the token isn't
+  // scoped to it until `select-company` runs — so the gate asks whenever this
+  // session hasn't submitted a selection yet, not just when the id is missing.
   const requiresSelection =
-    query.isSuccess && companies.length > 0 && selectedCompanyId == null
+    query.isSuccess &&
+    companies.length > 0 &&
+    (selectedCompanyId == null || !companySelected)
 
   const active = companies.find((c) => c.id === selectedCompanyId)
   useEffect(() => {

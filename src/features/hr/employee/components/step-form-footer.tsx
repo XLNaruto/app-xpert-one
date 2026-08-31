@@ -30,9 +30,11 @@ export function StepFormFooter({
 }) {
   return (
     <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      <p className="min-w-0 flex-1 text-xs text-muted-foreground">{hint}</p>
 
-      <div className="flex flex-wrap items-center gap-3">
+      {/* `ml-auto` keeps the pair on the right once a long hint wraps them onto
+          their own line — `justify-between` alone would leave them hanging left. */}
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
         <Button type="button" variant="outline" onClick={onBack} disabled={isSaving}>
           <ArrowLeft className="size-4" />
           Back

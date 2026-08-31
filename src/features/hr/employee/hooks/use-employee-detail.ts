@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { decryptId, encryptId, encryptParams } from "@/lib/crypto";
+import { decryptId, decryptParams, encryptId, encryptParams } from "@/lib/crypto";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useBanks } from "@/features/master/bank";
 import { useStates } from "@/features/master/state";
@@ -43,6 +43,32 @@ const SWITCHER_LIMIT = 25;
 export function useEmployeeDetail(data?: string) {
   const navigate = useNavigate();
   const employeeId = decryptId(data);
+
+  /**
+   * Which screen opened this one, so Back retraces the way in rather than
+   * always landing in the employee list.
+   *
+   * Both asset screens host the stock ledger a handout line is clicked from, and
+   * they are not interchangeable: from `'asset-detail'` Back returns to that
+   * asset with the ledger reopened, from `'asset-list'` it returns to the list.
+   * Sending a reader who came off the list into a detail screen they never
+   * opened is a jump, not a way back.
+   */
+  const origin = useMemo(() => {
+    const raw = data ? decryptParams<{ from?: string; assetId?: number }>(data) : null;
+    const assetIdRaw = Number(raw?.assetId);
+    const withAsset =
+      Number.isFinite(assetIdRaw) && assetIdRaw > 0 ? assetIdRaw : undefined;
+
+    if (raw?.from === "asset-list")
+      return { kind: "asset-list" as const, assetId: withAsset };
+    // `'asset'` is the older spelling of the detail screen, still live in any URL
+    // opened before the two were told apart.
+    if (raw?.from !== "asset-detail" && raw?.from !== "asset") return null;
+    return withAsset !== undefined
+      ? { kind: "asset-detail" as const, assetId: withAsset }
+      : null;
+  }, [data]);
   const id = employeeId ?? Number.NaN;
 
   const detail = useEmployee(id);
@@ -189,7 +215,36 @@ export function useEmployeeDetail(data?: string) {
       });
     },
 
-    goToList: () => navigate({ to: "/hr/employee" }),
+    /**
+     * Back up one level, along the way this screen was actually reached.
+     *
+     * Opened from an asset's stock history, the asset side is the parent — Back
+     * returns to the screen that ledger was opened on (the detail screen with the
+     * ledger reopened, or the asset list), not to a list the reader never passed
+     * through. Everything else falls back to the employee list.
+     */
+    goToList: () => {
+      if (origin?.kind === "asset-detail") {
+        void navigate({
+          to: "/master/asset/detail",
+          search: { data: encryptParams({ id: origin.assetId, history: true }) },
+        });
+        return;
+      }
+      if (origin?.kind === "asset-list") {
+        void navigate({
+          to: "/master/asset",
+          // The ledger was open when they left it, so it comes back open — the
+          // list screen reopens it from this token.
+          search:
+            origin.assetId !== undefined
+              ? { data: encryptParams({ id: origin.assetId, history: true }) }
+              : {},
+        });
+        return;
+      }
+      void navigate({ to: "/hr/employee" });
+    },
     goToEdit: () =>
       employeeId !== undefined &&
       navigate({

@@ -86,6 +86,10 @@ export function EmployeeListPage() {
           <EmployeeRowActions
             onView={canView ? () => goToDetail(row.original.id) : undefined}
             onEdit={canUpdate ? () => goToEdit(row.original.id) : undefined}
+            // Straight to step 8 — the posting register, where an exit is recorded.
+            onServiceHistory={
+              canUpdate ? () => goToEdit(row.original.id, 'transfers') : undefined
+            }
             faceCount={row.original.faces.length}
             onViewFaces={canView ? () => openFaces(row.original) : undefined}
             // Clearing faces edits the employee record rather than removing it.

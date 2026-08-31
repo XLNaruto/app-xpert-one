@@ -11,6 +11,14 @@ const VIEWPORT_PADDING = 8
 export interface ComboboxOption {
   label: string
   value: string
+  /**
+   * Show the option but refuse it — for a choice that exists and simply can't be
+   * taken right now (an asset variant at zero stock, say). A greyed row explains
+   * itself better than letting the pick through to an error toast.
+   */
+  disabled?: boolean
+  /** Muted text to the right of the label — a count, a status. */
+  hint?: string
 }
 
 interface ComboboxBaseProps {
@@ -425,15 +433,25 @@ export function Combobox(props: ComboboxProps) {
                         <button
                           type="button"
                           role="option"
+                          disabled={o.disabled}
                           aria-selected={active}
+                          aria-disabled={o.disabled}
                           onClick={() => choose(o.value)}
                           className={cn(
-                            'flex w-full cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-                            active && 'bg-accent/60 font-medium text-foreground',
+                            'flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+                            o.disabled
+                              ? 'cursor-not-allowed text-muted-foreground opacity-60'
+                              : 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
+                            active && !o.disabled && 'bg-accent/60 font-medium text-foreground',
                           )}
                         >
                           <span className="truncate">{o.label}</span>
-                          {active ? <Check className="size-4 shrink-0 text-primary" /> : null}
+                          <span className="flex shrink-0 items-center gap-2">
+                            {o.hint ? (
+                              <span className="text-xs text-muted-foreground">{o.hint}</span>
+                            ) : null}
+                            {active ? <Check className="size-4 text-primary" /> : null}
+                          </span>
                         </button>
                       </li>
                     )
