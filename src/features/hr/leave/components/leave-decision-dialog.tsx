@@ -85,6 +85,25 @@ export function LeaveDecisionDialog({
               the type's yearly allowance simply ran out inside the range. Payroll
               will read it that way, so the decision has to state it.
             */}
+            {/*
+              Nobody is routed this leave — no level reaches the company and the
+              owner is out of the chain. The buttons stay: `canDecide` is the only
+              thing that drives them, and the owner's override is exactly what this
+              state exists to be cleared by.
+            */}
+            {leave.pendingWithNobody && (
+              <p className="mt-2 flex items-start gap-2 rounded-md bg-destructive/10 p-2 text-xs text-destructive">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  <strong className="font-medium">No approver.</strong> No level of
+                  the approval hierarchy reaches this company and the account owner
+                  is not in the chain, so this leave is routed to nobody. Deciding it
+                  here clears it; repair the chain in Hierarchy Management → Leave so
+                  the next one routes.
+                </span>
+              </p>
+            )}
+
             {leave.split && (
               <p className="mt-2 flex items-start gap-2 rounded-md bg-warning/10 p-2 text-xs">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />

@@ -3,11 +3,12 @@ import { queryKeys } from '@/lib/query-keys'
 import type { EmployeeTicketStatusPayload } from '../schemas'
 import {
   postEmployeeTicketMessage,
+  updateEmployeeTicketAssignee,
   updateEmployeeTicketStatus,
 } from './employee-ticket-api'
 
 /**
- * Both mutations invalidate `employeeSupportTicket.all` — one prefix covering
+ * All three mutations invalidate `employeeSupportTicket.all` — one prefix covering
  * the queue under any filter, the tab strip's counts and the open thread.
  *
  * That breadth is deliberate rather than lazy. A reply is not just a message: an
@@ -38,6 +39,28 @@ export function useUpdateEmployeeTicketStatus(id: number) {
   return useMutation({
     mutationFn: (payload: EmployeeTicketStatusPayload) =>
       updateEmployeeTicketStatus(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.employeeSupportTicket.all })
+    },
+  })
+}
+
+/**
+ * PATCH /user/employee-support-tickets/:id/assignee — hand it to a colleague,
+ * or pass `null` to release it back to the unassigned queue.
+ *
+ * Invalidates the same broad prefix as the others, and needs to: a hand-over
+ * moves the row in and out of the "unassigned only" and "on my plate" views,
+ * closes any open work stretch (so the effort figure and the work-session panel
+ * both move) and flips `needs_pickup` — while leaving the STATUS alone, so the
+ * ticket stays in the tab it was already in.
+ */
+export function useAssignEmployeeTicket(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    // `null` is a real argument here, not an absent one — it's the release.
+    mutationFn: (assignedToUserId: number | null) =>
+      updateEmployeeTicketAssignee(id, assignedToUserId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.employeeSupportTicket.all })
     },

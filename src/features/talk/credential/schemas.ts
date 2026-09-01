@@ -48,17 +48,38 @@ export type DepartmentGrantFormValues = z.infer<typeof departmentGrantFormSchema
  *   an address their colleagues already know, so the endpoint has no field for
  *   it and the form asks for one on create alone.
  *
+ * On CREATE a third thing moves them both: {@link TalkCredentialFormValues.isSameAsPanelCreds}.
+ * Ticked, the endpoint SEEDS the login from the employee the form names — the
+ * address always, and the password too when that employee has a panel account —
+ * so neither box is required here. The password stays optional rather than
+ * forbidden because an employee with no panel account has no password to copy
+ * (they sign into the employee app by OTP), and the client cannot tell the two
+ * apart. When the endpoint answers that it had none to copy, the form re-asks
+ * for one through `requirePanelPassword`, and the box becomes required after
+ * all.
+ *
+ * PATCH carries the same flag and means the same thing, with one difference
+ * worth stating: it RE-SEEDS from the panel credential AS IT STANDS NOW, so a
+ * password typed alongside it is a fallback rather than a rotation. That's why
+ * the form puts the password box away while it's on in both modes — the way to
+ * rotate a panel-seeded credential is to turn the flag off, which is what
+ * sending `false` means.
+ *
  * The REACH is two INDEPENDENT lists. `companyIds` grants whole companies —
  * every department in each, present and future — and the department rows grant
  * single departments. A department may be granted without its company appearing
  * in `companyIds`, and the two need not agree.
  */
 export function talkCredentialSchema({
-  requirePassword,
-  requireEmployee,
+  isEdit,
+  requirePanelPassword = false,
 }: {
-  requirePassword: boolean
-  requireEmployee: boolean
+  isEdit: boolean
+  /**
+   * The endpoint has already answered that this employee has no panel password
+   * to copy, so one has to be typed even with the box ticked.
+   */
+  requirePanelPassword?: boolean
 }) {
   const password = z
     .string()
@@ -70,11 +91,23 @@ export function talkCredentialSchema({
        * Held as a string: it comes from a `<Combobox>`. Only asked for on
        * create — see the note above.
        */
-      employeeId: requireEmployee
-        ? z.string().trim().min(1, 'Pick the employee this credential is for')
-        : z.string().trim(),
-      /** The Talk login itself — unique across the whole PLATFORM, not just this account. */
-      email: emailField({ required: true, max: MAX_TALK_CREDENTIAL_EMAIL }),
+      employeeId: isEdit
+        ? z.string().trim()
+        : z.string().trim().min(1, 'Pick the employee this credential is for'),
+      /**
+       * CREATE ONLY, and never sent on edit. Ticked, the API copies the login
+       * from the employee named above — which is why the employee is picked
+       * first. It records how the credential STARTED, not a live link: Talk
+       * keeps its own hash and nothing re-syncs the two afterwards.
+       */
+      isSameAsPanelCreds: z.boolean(),
+      /**
+       * The Talk login itself — unique across the whole PLATFORM, not just this
+       * account. Required unless the panel credential is being copied, which is
+       * a live form value, so the check lives in the refinement below rather
+       * than on the field.
+       */
+      email: emailField({ required: false, max: MAX_TALK_CREDENTIAL_EMAIL }),
       password,
       /**
        * FRONT-END ONLY — it is never sent. The endpoint takes a single
@@ -136,9 +169,27 @@ export function talkCredentialSchema({
         })
       }
 
+      // Ticked, the endpoint fills both boxes from the employee's panel login,
+      // so neither is asked for here — on create, and on an edit that re-seeds.
+      const seedsFromPanel = values.isSameAsPanelCreds
+
+      // An address is what the person signs in with — unless one is being
+      // copied, there has to be one.
+      if (!seedsFromPanel && !values.email.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['email'],
+          message: 'Please enter the email address',
+        })
+      }
+
       // Issuing a login without a credential is meaningless; on edit, blank is
-      // the ordinary case and means "unchanged".
-      if (requirePassword && !values.password) {
+      // the ordinary case and means "unchanged". With the flag on it means "use
+      // the panel password" — until the endpoint answers that there is none, at
+      // which point one is required whichever mode we're in.
+      const passwordRequired =
+        (!isEdit && !seedsFromPanel) || (seedsFromPanel && requirePanelPassword)
+      if (passwordRequired && !values.password) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['password'],
@@ -204,6 +255,13 @@ export const talkCredentialResponseSchema = z.object({
   employee_name: z.string().nullish(),
   email: z.string(),
   status: z.string().default('active'),
+  /**
+   * Whether the login was SEEDED from the employee's panel credential when it
+   * was issued. Never null; `false` on every credential issued before the flag
+   * existed, and cleared by the API as soon as an edit moves the address or
+   * rotates the password.
+   */
+  is_same_as_panel_creds: z.boolean().default(false),
   /** Null until the credential's first Talk sign-in. */
   last_login_at: z.string().nullish(),
   companies: z.array(talkCredentialCompanyResponseSchema).default([]),
@@ -232,8 +290,24 @@ export const talkCredentialsResponseSchema = z.object({
  */
 export interface TalkCredentialPayload {
   employee_id: number
-  email: string
-  password: string
+  /**
+   * Copy the login from the employee named above instead of typing one. Omitted
+   * entirely, the endpoint behaves exactly as it did before this flag existed.
+   *
+   * Ticked, `email` and `password` become optional: the address is taken from
+   * the employee's panel account (or, failing that, their employee record) and
+   * the password from the panel account — as a hash, never as plaintext. An
+   * employee with no panel account has no password to copy, so one sent here is
+   * still used; sending none is the 409 the form has to recover from.
+   *
+   * On PATCH the same `true` RE-SEEDS from the panel credential as it stands at
+   * that moment, and `false` simply takes the flag down.
+   */
+  is_same_as_panel_creds?: boolean
+  /** Required unless {@link is_same_as_panel_creds} is true. */
+  email?: string
+  /** Required unless {@link is_same_as_panel_creds} is true. */
+  password?: string
   /** WHOLE-COMPANY grants — every department in each, present and future. */
   company_ids: number[]
   /** Single-department grants, each resolved server-side to its own company. */
@@ -245,6 +319,12 @@ export interface TalkCredentialPayload {
  * is what carries "keep the current password".
  *
  * No `employee_id` — the endpoint has no such field (see the schema note above).
+ *
+ * `is_same_as_panel_creds` IS accepted here, and the form always sends it so the
+ * switch on screen is what the credential ends up reading. Omitting it instead
+ * would hand the decision to the save — the API clears the flag if and only if
+ * the address moves or the password is rotated — and a switch that silently
+ * disagrees with the record it just wrote is worse than no switch.
  * The two reach lists REPLACE what is stored when sent and are re-validated
  * TOGETHER whenever either arrives, so they travel together or not at all —
  * which is what the form does.

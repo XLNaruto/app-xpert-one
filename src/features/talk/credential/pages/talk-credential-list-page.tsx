@@ -98,6 +98,14 @@ export function TalkCredentialListPage() {
           <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Mail className="size-3.5 shrink-0" />
             {row.original.email}
+            {/* How the credential STARTED, not a live link — the API clears the
+                flag as soon as an edit moves the address or rotates the
+                password, so a row without it was typed or has since diverged. */}
+            {row.original.isSameAsPanelCreds && (
+              <Badge variant="secondary" className="text-[10px] uppercase">
+                Panel
+              </Badge>
+            )}
           </span>
         ),
       },

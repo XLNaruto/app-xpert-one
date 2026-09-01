@@ -153,11 +153,21 @@ export const leaveResponseSchema = z.object({
   status_remark: z.string().nullish(),
   status_at: z.string().nullish(),
   /**
-   * The approval block. Present on the list rows and on the detail read; all
-   * three are null/false once the leave has been decided.
+   * The approval block. Present on the list rows and on the detail read; all of
+   * it is null/false once the leave has been decided.
    */
   pending_with_role: z.string().nullish(),
+  /**
+   * It fell through the whole chain to the account owner — AND the owner is in
+   * the chain. False once they opt out, where `pending_with_nobody` answers
+   * instead.
+   */
   pending_with_owner: z.boolean().nullish(),
+  /**
+   * It fell through and the owner is OUT of the chain: no approver exists for
+   * this company right now. Never true alongside `pending_with_owner`.
+   */
+  pending_with_nobody: z.boolean().nullish(),
   can_decide: z.boolean().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),

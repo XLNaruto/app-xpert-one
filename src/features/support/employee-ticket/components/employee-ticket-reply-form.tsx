@@ -69,7 +69,7 @@ export function EmployeeTicketReplyForm({
 
   if (disabled) {
     return (
-      <p className="rounded-lg border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+      <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
         This ticket is closed. The thread is over on both sides — the employee
         would never be told about a reply sent now.
       </p>
@@ -82,38 +82,30 @@ export function EmployeeTicketReplyForm({
         event.preventDefault()
         onSubmit()
       }}
-      className="space-y-3"
+      className="space-y-2"
     >
-      <div className="space-y-1.5">
-        <Textarea
-          rows={4}
-          maxLength={MAX_EMPLOYEE_TICKET_MESSAGE}
-          placeholder="Write your reply — the employee is pushed this on their device."
-          {...form.register('body')}
-        />
-        {error && <p className="text-xs text-destructive">{error}</p>}
-      </div>
+      {/* One composer bar: the attach button, the message and Send sit in the
+          same box, the way a chat input does. */}
+      <div className="rounded-2xl border bg-background p-2 shadow-sm focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15">
+        {attachment && (
+          <div className="mb-2 flex w-fit items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm">
+            <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="max-w-64 truncate">{attachment.name}</span>
+            <button
+              type="button"
+              aria-label="Remove attachment"
+              onClick={() => {
+                onAttachmentChange(null)
+                if (fileInput.current) fileInput.current.value = ''
+              }}
+              className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
 
-      {attachment && (
-        <div className="flex w-fit items-center gap-2 rounded-lg border bg-muted/40 px-3 py-1.5 text-sm">
-          <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="max-w-64 truncate">{attachment.name}</span>
-          <button
-            type="button"
-            aria-label="Remove attachment"
-            onClick={() => {
-              onAttachmentChange(null)
-              if (fileInput.current) fileInput.current.value = ''
-            }}
-            className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="flex items-end gap-2">
           <input
             ref={fileInput}
             type="file"
@@ -123,18 +115,52 @@ export function EmployeeTicketReplyForm({
           />
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            size="icon"
+            aria-label="Attach a file"
+            title="Attach a JPG, PNG, WebP or PDF"
+            className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
             onClick={() => fileInput.current?.click()}
           >
             <Paperclip className="size-4" />
-            Attach a file
+          </Button>
+
+          <Textarea
+            rows={1}
+            maxLength={MAX_EMPLOYEE_TICKET_MESSAGE}
+            placeholder="Write your reply — the employee is pushed this on their device."
+            // Enter sends, Shift+Enter breaks the line: a chat's muscle memory.
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                if (!isPending) onSubmit()
+              }
+            }}
+            className="max-h-40 min-h-[2.5rem] resize-none border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+            {...form.register('body')}
+          />
+
+          <Button
+            type="submit"
+            size="icon"
+            aria-label="Send reply"
+            disabled={isPending}
+            className="shrink-0 rounded-full"
+          >
+            <SendHorizontal className="size-4" />
           </Button>
         </div>
+      </div>
 
-        <Button type="submit" disabled={isPending}>
-          <SendHorizontal className="size-4" />
-          {isPending ? 'Sending…' : 'Send Reply'}
-        </Button>
+      <div className="flex items-center justify-between gap-2 px-1">
+        {error ? (
+          <p className="text-xs text-destructive">{error}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Enter to send · Shift + Enter for a new line
+          </p>
+        )}
+        {isPending && <p className="text-xs text-muted-foreground">Sending…</p>}
       </div>
     </form>
   )

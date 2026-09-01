@@ -28,6 +28,7 @@ export function toTalkCredential(response: TalkCredentialResponse): TalkCredenti
     employeeName: response.employee_name ?? null,
     email: response.email,
     status: toStatus(response.status),
+    isSameAsPanelCreds: response.is_same_as_panel_creds,
     lastLoginAt: response.last_login_at ?? null,
     companies: response.companies.map((company) => ({
       id: company.id,
@@ -64,12 +65,31 @@ function reachPayload(values: TalkCredentialFormValues) {
   }
 }
 
-/** Validated form values → the create body. */
+/**
+ * Validated form values → the create body.
+ *
+ * With "same as panel credentials" ticked the endpoint copies the login from the
+ * employee, so the address is left off entirely rather than sent empty — the
+ * server discards anything sent there anyway, and an empty string would be a
+ * 400 on the field. The PASSWORD still travels when one was typed: an employee
+ * with no panel account has none to copy (they sign in by phone OTP), and that
+ * is the one case this box can still answer.
+ */
 export function talkCredentialToPayload(
   values: TalkCredentialFormValues,
 ): TalkCredentialPayload {
+  if (values.isSameAsPanelCreds) {
+    return {
+      employee_id: Number(values.employeeId),
+      is_same_as_panel_creds: true,
+      ...(values.password ? { password: values.password } : {}),
+      ...reachPayload(values),
+    }
+  }
+
   return {
     employee_id: Number(values.employeeId),
+    is_same_as_panel_creds: false,
     email: values.email.trim(),
     password: values.password,
     ...reachPayload(values),
@@ -84,12 +104,34 @@ export function talkCredentialToPayload(
  * Everything else always travels: the two reach lists are re-validated together
  * whatever arrives, and `status` is the suspend/restore switch.
  *
+ * `is_same_as_panel_creds` is sent EVERY time rather than omitted, so the switch
+ * on screen is what the credential reads afterwards. Left off, the endpoint
+ * decides for itself — clearing the flag if and only if this save moves the
+ * address or rotates the password — and the form would be showing a value it
+ * didn't actually write.
+ *
+ * ON, the endpoint RE-SEEDS from the panel credential as it stands now and
+ * ignores `email`, so the address is left off exactly as it is on create. A
+ * password still travels when one was typed, but only as the fallback for an
+ * employee with no panel account — which is why the form hides that box while
+ * the switch is on, and rotating a seeded credential means turning it off.
+ *
  * There is no `employee_id`: a credential cannot be re-pointed at someone else.
  */
 export function talkCredentialToUpdatePayload(
   values: TalkCredentialFormValues,
 ): TalkCredentialUpdatePayload {
+  if (values.isSameAsPanelCreds) {
+    return {
+      is_same_as_panel_creds: true,
+      status: values.status,
+      ...reachPayload(values),
+      ...(values.password ? { password: values.password } : {}),
+    }
+  }
+
   return {
+    is_same_as_panel_creds: false,
     email: values.email.trim(),
     status: values.status,
     ...reachPayload(values),
@@ -126,6 +168,9 @@ export function talkCredentialToFormValues(
   return {
     // Never editable — the field is a read-only statement of who this is for.
     employeeId: credential.employeeId ? String(credential.employeeId) : '',
+    // Editable on both forms: PATCH takes the flag too, where `true` re-seeds
+    // from the panel credential and `false` takes it down.
+    isSameAsPanelCreds: credential.isSameAsPanelCreds,
     email: credential.email,
     password: '',
     confirmPassword: '',

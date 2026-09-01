@@ -714,6 +714,9 @@ export const queryKeys = {
       [...queryKeys.employeeSupportTicket.all, 'summary', filters ?? {}] as const,
     detail: (id: number) =>
       [...queryKeys.employeeSupportTicket.all, 'detail', id] as const,
+    /** The work-session breakdown behind one ticket's hands-on effort. */
+    workSessions: (id: number) =>
+      [...queryKeys.employeeSupportTicket.all, 'work-sessions', id] as const,
   },
   bank: {
     all: ['bank'] as const,

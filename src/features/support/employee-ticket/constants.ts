@@ -61,6 +61,15 @@ export const EMPLOYEE_TICKET_PRIORITY_LABELS: Record<string, string> = {
   critical: 'Critical',
 }
 
+/**
+ * How the ticket became somebody's. Two values, not the platform console's
+ * three — nothing auto-assigns on a desk with no router.
+ */
+export const ASSIGNMENT_SOURCE_LABELS: Record<string, string> = {
+  self: 'Picked up',
+  user: 'Handed over',
+}
+
 export const EMPLOYEE_TICKET_STATUS_LABELS: Record<string, string> = {
   open: 'Open',
   in_progress: 'In Progress',
@@ -92,7 +101,32 @@ export const EMPTY_EMPLOYEE_TICKET_FILTERS: EmployeeTicketFilters = {
   category: ALL_FILTER,
   priority: ALL_FILTER,
   companyId: ALL_FILTER,
+  assignedToUserId: ALL_FILTER,
+  unassignedOnly: false,
 }
+
+/**
+ * The "nobody has taken this" facet.
+ *
+ * `unassigned_only` brings its own status predicate — the three unfinished
+ * statuses — so it is not a status tab and does not pair with "unfinished only".
+ * It's the queue's real starting point.
+ */
+export const UNASSIGNED_ONLY_OPTIONS = [
+  { label: 'Anyone or nobody', value: ALL_FILTER },
+  { label: 'Unassigned only', value: 'true' },
+]
+
+/** The assignee facet's "nobody in particular" row. */
+export const ANY_ASSIGNEE_OPTION = { label: 'Anyone', value: ALL_FILTER }
+
+/**
+ * The wording the platform console uses for the two clocks, copied verbatim so
+ * a reader cannot confuse EFFORT with CALENDAR time. This is the one thing on
+ * the screen a wrong label actively misleads about.
+ */
+export const TIME_SPENT_HINT = 'hands-on effort, not wall clock'
+export const TIME_TO_RESOLVE_HINT = 'raised until resolved, nights and weekends included'
 
 /** What the reply's file picker advertises — the four types the presign signs for. */
 export const SUPPORT_ATTACHMENT_ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf'

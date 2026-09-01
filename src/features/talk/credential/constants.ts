@@ -22,6 +22,17 @@ export const TALK_CREDENTIAL_DEFAULT_SORT = {
   desc: true,
 }
 
+/**
+ * The 409 that means "ticked, but this employee has no panel password to copy".
+ *
+ * Employees sign into the employee app by phone OTP, so only an employee who
+ * ALSO holds a panel account has a password to seed from — and nothing on the
+ * client can tell which of the two an employee is. The form therefore issues
+ * optimistically and matches this on the way back, re-opening the password box
+ * rather than making the user untick and start again.
+ */
+export const NO_PANEL_PASSWORD_ERROR = /no panel password/i
+
 /** The company filter's "no filter" value — every credential of the account. */
 export const ALL_COMPANIES = ''
 
@@ -39,6 +50,9 @@ export const TALK_CREDENTIAL_STATUS_OPTIONS: ComboboxOption[] = [
  */
 export const EMPTY_TALK_CREDENTIAL_FORM: TalkCredentialFormValues = {
   employeeId: '',
+  // The login is typed by default — copying the panel one is the deliberate
+  // choice, and it can only be made once the employee above is picked.
+  isSameAsPanelCreds: false,
   email: '',
   password: '',
   confirmPassword: '',

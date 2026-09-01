@@ -31,11 +31,13 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 /**
  * Who a pending leave sits with, and whether the reader may decide it.
  *
- * Read the three as ONE statement, not as three flags: `canDecide` describes YOU,
- * the other two describe the ROW. An owner sees `canDecide: true` on a row that
- * says `pendingWithRole: "HR"`, because the owner decides anything.
+ * Read the four as ONE statement, not as four flags: `canDecide` describes YOU,
+ * the other three describe the ROW. An owner sees `canDecide: true` on a row that
+ * says `pendingWithRole: "HR"`, because the owner decides anything — and that
+ * override survives them opting out of the chain, since the person who can repair
+ * a chain that stopped resolving is the person who should clear what it stranded.
  *
- * All three are null/false on an already-decided row — there is no decision left
+ * All of them are null/false on an already-decided row — there is no decision left
  * to own, and drawing a button there would produce a 400.
  *
  * The block is per row but IDENTICAL across an application's rows, so the grouped
@@ -44,8 +46,19 @@ export type LeaveStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 export interface LeaveApproval {
   /** The chain level holding it, e.g. `"HR"`. `null` once decided. */
   pendingWithRole: string | null
-  /** It fell through the whole chain to the account owner. */
+  /**
+   * It fell through the whole chain to the account owner (or no chain is
+   * configured) AND the owner is in the chain. FALSE once the owner has opted
+   * out — that case is `pendingWithNobody`, not this one.
+   */
   pendingWithOwner: boolean
+  /**
+   * It fell through and the owner is OUT of the chain: nobody can approve this
+   * row right now. Never true at the same time as `pendingWithOwner`, and only
+   * reachable after a level stopped resolving — the opt-out itself is refused
+   * while any company would be left uncovered.
+   */
+  pendingWithNobody: boolean
   /**
    * May YOU press Approve / Reject on THIS row?
    *

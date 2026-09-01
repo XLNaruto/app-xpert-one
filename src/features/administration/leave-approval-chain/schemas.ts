@@ -19,9 +19,24 @@ export type LeaveApprovalLevelResponse = z.infer<typeof leaveApprovalLevelRespon
  */
 export const leaveApprovalChainResponseSchema = z.object({
   levels: z.array(leaveApprovalLevelResponseSchema),
+  /**
+   * Whether the ACCOUNT OWNER is the chain's implicit last link.
+   *
+   * `true` — the historical behaviour, and the default for every account: a
+   * company no level reaches waits on the owner. `false` — the owner opted out,
+   * so no implicit row is drawn and nothing is pending with them.
+   *
+   * Nullish-tolerant so a server that predates the column still reads as the old
+   * behaviour rather than blanking the screen.
+   */
+  includes_owner: z.boolean().nullish(),
   /** How many companies the account has, for `companies_covered` to be read against. */
   company_count: z.number(),
-  /** The companies whose leave waits on the account owner personally. */
+  /**
+   * Two different statements, told apart by `includes_owner`:
+   * in — the companies whose leave waits on the account owner personally;
+   * out — the companies with NO approver at all, which is a warning.
+   */
   companies_with_owner: z.array(z.object({ id: z.number(), name: z.string() })),
 })
 
@@ -46,4 +61,14 @@ export const leaveApprovalRolesResponseSchema = z.object({
  */
 export interface LeaveApprovalChainPayload {
   role_names: string[]
+  /**
+   * OPTIONAL, and omitted unless the user actually touched the toggle — a save
+   * that only reordered a level must not silently put an opted-out owner back
+   * into the routing.
+   *
+   * `false` is refused with a 400 unless every company of the account is covered
+   * by a level, an empty chain included: an account may not configure itself
+   * into leave nobody can decide.
+   */
+  includes_owner?: boolean
 }

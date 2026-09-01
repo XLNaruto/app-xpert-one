@@ -38,6 +38,15 @@ export interface TalkCredential extends AuditFields {
   email: string
   /** `inactive` keeps the address taken and the history intact — see the delete note. */
   status: TalkCredentialStatus
+  /**
+   * Whether this login was SEEDED from the employee's PANEL credential when it
+   * was issued, rather than typed into the form.
+   *
+   * It records how the credential started, not a live link — Talk stores its own
+   * password hash and nothing keeps the two in step. The API clears it as soon
+   * as an edit moves the address or rotates the password.
+   */
+  isSameAsPanelCreds: boolean
   /** When the credential was last spent. Null until the first Talk sign-in. */
   lastLoginAt: string | null
   /**

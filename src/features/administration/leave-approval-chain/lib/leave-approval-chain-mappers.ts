@@ -12,6 +12,9 @@ export function toLeaveApprovalChain(
       userCount: level.user_count,
       companiesCovered: level.companies_covered,
     })),
+    // Absent means a server that predates the opt-out, which is the old
+    // behaviour: the owner is the last link.
+    includesOwner: response.includes_owner ?? true,
     companyCount: response.company_count,
     companiesWithOwner: response.companies_with_owner.map((company) => ({
       id: company.id,

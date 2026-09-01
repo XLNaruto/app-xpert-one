@@ -19,7 +19,9 @@ import type { LeaveApprovalChain } from '../types'
  * has a live user who can REACH that employee's company — "reach" rather than
  * "belongs to", so one GLOBAL "HR" user covers all ten companies without a role
  * being authored in each. If no level has one, the leave falls to the ACCOUNT
- * OWNER, the chain's implicit last link.
+ * OWNER, the chain's implicit last link — unless the owner has opted OUT
+ * (`includes_owner: false`), in which case that leave has no approver at all and
+ * the screen says so.
  */
 
 /** GET /user/leave-approval-chain — the chain and what it covers. */
@@ -51,14 +53,23 @@ export async function fetchLeaveApprovalRoleNames(): Promise<string[]> {
  * The whole list every time: there is no per-level endpoint, because inserting a
  * level renumbers everything below it. Sending `[]` clears the chain and switches
  * routing off.
+ *
+ * `includesOwner` is left OFF THE BODY when undefined, which is not the same as
+ * sending `true`: the stored choice stays as it is, so a save that only reordered
+ * a level can't silently put an opted-out owner back into the routing. Pass it
+ * only when the user touched the toggle.
  */
 export async function saveLeaveApprovalChain(
   roleNames: string[],
+  includesOwner?: boolean,
 ): Promise<LeaveApprovalChain> {
   try {
     const raw = await http.put<unknown, LeaveApprovalChainPayload>(
       endpoints.LEAVE_APPROVAL_CHAIN.PUT,
-      { role_names: roleNames },
+      {
+        role_names: roleNames,
+        ...(includesOwner === undefined ? {} : { includes_owner: includesOwner }),
+      },
     )
     return toLeaveApprovalChain(leaveApprovalChainResponseSchema.parse(raw))
   } catch (error) {

@@ -37,11 +37,29 @@ export interface LeaveApprovalCompanyRef {
 /** The whole chain plus what it does and doesn't cover. */
 export interface LeaveApprovalChain {
   levels: LeaveApprovalLevel[]
+  /**
+   * Is the ACCOUNT OWNER the chain's implicit last link?
+   *
+   * `true` for every account that hasn't said otherwise. Opting out is only
+   * accepted while every company is covered by a level, so `false` means the
+   * chain answered for everything at the moment it was saved.
+   *
+   * The owner keeps their OVERRIDE on a decision either way — `canDecide` stays
+   * true for them on every pending row — because they are the break-glass for a
+   * chain that stops resolving later. Opting out changes ROUTING, not authority.
+   */
+  includesOwner: boolean
   companyCount: number
   /**
-   * The companies whose leave waits on the ACCOUNT OWNER personally — the chain's
-   * implicit last link, reached when no level has a live user who can get to that
-   * company.
+   * What this list means depends on `includesOwner`.
+   *
+   * IN — the companies whose leave waits on the ACCOUNT OWNER personally, the
+   * chain's implicit last link, reached when no level has a live user who can get
+   * to that company.
+   *
+   * OUT — a WARNING: those companies have no approver at all. It is empty the
+   * moment the opt-out is saved and can only fill later, when a level stops
+   * resolving (a role renamed, a level's last user deactivated).
    */
   companiesWithOwner: LeaveApprovalCompanyRef[]
 }

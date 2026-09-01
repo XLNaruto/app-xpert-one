@@ -14,20 +14,27 @@ export {
   useEmployeeTickets,
   useEmployeeTicket,
   useEmployeeTicketSummary,
+  useEmployeeTicketWorkSessions,
 } from './api/use-employee-tickets'
 export {
+  useAssignEmployeeTicket,
   useReplyToEmployeeTicket,
   useUpdateEmployeeTicketStatus,
 } from './api/use-employee-ticket-mutations'
 
 export {
   ageLabel,
+  assigneeLabel,
+  assignmentSourceLabel,
   canCloseTicket,
   canPickUp,
+  canReassign,
+  canRelease,
   canReply,
   canResolve,
   categoryLabel,
   employeeLabel,
+  formatDuration,
   priorityLabel,
   statusLabel,
 } from './lib/employee-ticket-mappers'
@@ -38,8 +45,11 @@ export type {
   EmployeeTicketFilters,
   EmployeeTicketMessage,
   EmployeeTicketSummary,
+  EmployeeTicketWorkSession,
+  EmployeeTicketWorkSessions,
 } from './types'
 export type {
+  AssignmentSourceValue,
   EmployeeTicketCategoryValue,
   EmployeeTicketPriorityValue,
   EmployeeTicketStatusValue,

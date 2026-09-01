@@ -92,6 +92,10 @@ export const endpoints = {
     GET: (id: number) => `/user/employee-support-tickets/${id}`,
     MESSAGES: (id: number) => `/user/employee-support-tickets/${id}/messages`,
     STATUS: (id: number) => `/user/employee-support-tickets/${id}/status`,
+    /** Hand a ticket to a colleague, or release it back to the unassigned queue. */
+    ASSIGNEE: (id: number) => `/user/employee-support-tickets/${id}/assignee`,
+    /** The stretches behind `active_work_seconds` — unpaged, oldest first. */
+    WORK_SESSIONS: (id: number) => `/user/employee-support-tickets/${id}/work-sessions`,
   },
   COMPANIES: {
     LIST: '/user/companies',

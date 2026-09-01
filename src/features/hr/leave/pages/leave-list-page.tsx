@@ -1,6 +1,16 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarDays, Check, Crown, Paperclip, Plus, Split, Wallet, X } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarDays,
+  Check,
+  Crown,
+  Paperclip,
+  Plus,
+  Split,
+  Wallet,
+  X,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -240,9 +250,36 @@ export function LeaveListPage() {
         meta: { className: 'whitespace-nowrap' },
         // Who the row is with, which is not the same question as whether the
         // reader may decide it — an owner sees "HR" here on a row they can clear
-        // themselves. A decided row is with nobody.
+        // themselves, and still sees the buttons on one that is with NOBODY. A
+        // decided row is with nobody in the other sense: there is no decision left.
         cell: ({ row }) => {
-          const { pendingWithOwner, pendingWithRole } = row.original
+          const { pendingWithNobody, pendingWithOwner, pendingWithRole } = row.original
+          /*
+            No level reaches this company and the owner has opted OUT of the
+            chain, so this leave has no approver at all. It is an error state, not
+            a queue: it can only have happened after the opt-out, when a level
+            stopped resolving, and nothing else on this screen would explain why
+            the row is sitting still.
+          */
+          if (pendingWithNobody) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help">
+                    <Badge variant="destructive">
+                      <AlertTriangle className="mr-1 size-3" />
+                      No approver
+                    </Badge>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64 text-pretty font-normal">
+                  No level of the approval hierarchy reaches this employee's
+                  company and the account owner is not in the chain, so nobody is
+                  routed this leave. Fix it in Hierarchy Management → Leave.
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
           if (pendingWithOwner) {
             return (
               <Tooltip>

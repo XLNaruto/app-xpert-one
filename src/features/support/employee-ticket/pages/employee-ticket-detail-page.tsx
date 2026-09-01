@@ -7,8 +7,11 @@ import {
   Clock,
   HandHelping,
   MessagesSquare,
+  PlayCircle,
   Tags,
+  Timer,
   UserRound,
+  UserRoundCog,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
@@ -22,12 +25,22 @@ import { decryptId } from '@/lib/crypto'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useCan } from '@/features/permissions'
 import { useEmployeeTicketDetail } from '../hooks/use-employee-ticket-detail'
-import { ageLabel, categoryLabel, employeeLabel } from '../lib/employee-ticket-mappers'
+import {
+  ageLabel,
+  assigneeLabel,
+  assignmentSourceLabel,
+  categoryLabel,
+  employeeLabel,
+} from '../lib/employee-ticket-mappers'
 import {
   EmployeeTicketCategoryBadge,
+  EmployeeTicketPickupBadge,
   EmployeeTicketPriorityBadge,
   EmployeeTicketStatusBadge,
+  EmployeeTicketWorkingBadge,
 } from '../components/employee-ticket-badges'
+import { EmployeeTicketTiming } from '../components/employee-ticket-timing'
+import { EmployeeTicketAssignDialog } from '../components/employee-ticket-assign-dialog'
 import { EmployeeTicketAttachment } from '../components/employee-ticket-attachment'
 import { EmployeeTicketThread } from '../components/employee-ticket-thread'
 import { EmployeeTicketReplyForm } from '../components/employee-ticket-reply-form'
@@ -40,11 +53,17 @@ const asMoment = (value: string | null | undefined) =>
 /**
  * One employee query and its whole conversation.
  *
- * The office has three moves here, and they are not the same act: **replying**
- * keeps talking (and, the first time, picks the ticket up on its own),
- * **resolving** answers it and pushes the note to the employee's device, and
- * **closing** files an already-resolved ticket away. Which of them are offered
- * comes from the ticket's own status — the rest would be a 409.
+ * The office has four moves here, and they are not the same act: **replying**
+ * keeps talking (and, the first time, picks the ticket up on its own), **picking
+ * it up** starts the work clock and self-claims it, **resolving** answers it and
+ * pushes the note to the employee's device, and **closing** files an
+ * already-resolved ticket away. Which of them are offered comes from the
+ * ticket's own status — the rest would be a 409. Handing it to a colleague sits
+ * beside them and is the one move that changes nothing about the status.
+ *
+ * What the handling and timing blocks record is what HAPPENED. There is
+ * deliberately no deadline on this desk and nothing overdue: the platform sells
+ * the tenant an SLA, a tenant doesn't sell one to its own staff.
  *
  * The record id arrives encrypted in the `?data=` search param.
  */
@@ -77,6 +96,16 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
               >
                 <HandHelping className="size-4" />
                 Pick Up
+              </Button>
+            )}
+            {canWrite && detail.canReassign && (
+              <Button
+                variant="outline"
+                onClick={detail.openAssign}
+                disabled={detail.isAssigning}
+              >
+                <UserRoundCog className="size-4" />
+                {detail.canRelease ? 'Reassign' : 'Assign'}
               </Button>
             )}
             {canWrite && detail.canResolve && (
@@ -130,6 +159,10 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
                 <EmployeeTicketStatusBadge status={ticket.status} />
                 <EmployeeTicketPriorityBadge priority={ticket.priority} />
                 <EmployeeTicketCategoryBadge category={ticket.category} />
+                {/* The one gap a queue should shout about, and the "somebody is
+                    on it right now" light — neither is derivable from status. */}
+                <EmployeeTicketPickupBadge needsPickup={ticket.needsPickup} />
+                <EmployeeTicketWorkingBadge isBeingWorked={ticket.isBeingWorked} />
                 <span className="text-xs text-muted-foreground">
                   Raised {ageLabel(ticket.ageDays).toLowerCase()} ·{' '}
                   {ticket.messageCount} message
@@ -194,6 +227,56 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
                 value={asMoment(ticket.updatedAt)}
               />
 
+              <FormSection
+                icon={UserRoundCog}
+                title="Handling"
+                description="Nothing auto-assigns here. A ticket belongs to nobody until somebody takes it or is given it."
+              />
+
+              <DetailItem
+                icon={UserRound}
+                label="Handled By"
+                value={
+                  detail.isMine
+                    ? `${assigneeLabel(ticket)} (you)`
+                    : assigneeLabel(ticket)
+                }
+              />
+              <DetailItem
+                icon={HandHelping}
+                // `self` — they picked it up; `user` — a colleague handed it
+                // over. Two values, because nothing routes on this desk.
+                label="How"
+                value={assignmentSourceLabel(ticket.assignmentSource)}
+              />
+              <DetailItem
+                icon={CalendarClock}
+                label="Taken At"
+                value={asMoment(ticket.assignedAt) ?? 'Nobody has taken it'}
+              />
+              <DetailItem
+                icon={PlayCircle}
+                // NOT the first reply: this is when somebody STARTED, that is
+                // when the office first WROTE. Neither derives the other.
+                label="Work Started"
+                value={asMoment(ticket.workStartedAt) ?? 'Not started'}
+              />
+
+              <FormSection
+                icon={Timer}
+                title="Time"
+                description="One of these is effort and three are calendar time. They are not interchangeable."
+              />
+
+              <EmployeeTicketTiming
+                ticket={ticket}
+                workSessions={detail.workSessions}
+                isWorkSessionsOpen={detail.isWorkSessionsOpen}
+                onWorkSessionsOpenChange={detail.setIsWorkSessionsOpen}
+                isLoadingWorkSessions={detail.isLoadingWorkSessions}
+                workSessionsError={detail.workSessionsError}
+              />
+
               <FormSection icon={CircleCheck} title="Resolution" />
 
               {ticket.resolutionNote ? (
@@ -214,8 +297,8 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
 
               <DetailItem
                 icon={UserRound}
-                // There's no assignee on this desk — whoever answered is the
-                // only record of who worked it.
+                // Who ANSWERED it, which needn't be who carried it: a ticket can
+                // change hands, and the handling block above is the record of that.
                 label="Resolved By"
                 value={ticket.resolvedByName}
               />
@@ -264,6 +347,18 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
           </Card>
         </div>
       )}
+
+      <EmployeeTicketAssignDialog
+        code={ticket?.code}
+        currentAssignee={ticket?.assignedToName ?? null}
+        open={detail.isAssignOpen}
+        onOpenChange={detail.setIsAssignOpen}
+        options={detail.assigneeOptions}
+        value={detail.assigneeId}
+        onChange={detail.setAssigneeId}
+        onConfirm={detail.onAssign}
+        loading={detail.isAssigning}
+      />
 
       <EmployeeTicketResolveDialog
         code={ticket?.code}

@@ -86,6 +86,7 @@ export function toLeave(response: LeaveResponse): Leave {
     statusAt: response.status_at ?? '',
     pendingWithRole: response.pending_with_role ?? null,
     pendingWithOwner: response.pending_with_owner ?? false,
+    pendingWithNobody: response.pending_with_nobody ?? false,
     /*
      * Absent means "the API didn't say", and the safe reading of that is the old
      * behaviour: a pending row the caller holds `leaves:update` on is decidable.
@@ -201,6 +202,7 @@ export function groupLeaves(rows: Leave[]): LeaveGroup[] {
       // The approval block is per row but identical across the group.
       pendingWithRole: row.pendingWithRole,
       pendingWithOwner: row.pendingWithOwner,
+      pendingWithNobody: row.pendingWithNobody,
       canDecide: row.canDecide,
     }
     byRef.set(row.applicationRef, group)

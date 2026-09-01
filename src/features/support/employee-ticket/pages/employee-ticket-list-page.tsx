@@ -5,9 +5,11 @@ import {
   Building2,
   Flame,
   Headset,
+  Inbox,
   MessagesSquare,
   Tags,
   Timer,
+  UserRoundCog,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
@@ -19,19 +21,29 @@ import { DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { formatDateTime } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Forbidden } from '@/features/error'
+import { Button } from '@/components/ui/button'
 import { PERMISSIONS, useCan } from '@/features/permissions'
 import {
   ALL_FILTER,
   EMPLOYEE_TICKET_CATEGORY_OPTIONS,
   EMPLOYEE_TICKET_PRIORITY_OPTIONS,
   EMPLOYEE_TICKET_SORT,
+  UNASSIGNED_ONLY_OPTIONS,
 } from '../constants'
-import { ageLabel, employeeLabel } from '../lib/employee-ticket-mappers'
+import {
+  ageLabel,
+  assigneeLabel,
+  assignmentSourceLabel,
+  employeeLabel,
+  formatDuration,
+} from '../lib/employee-ticket-mappers'
 import { useEmployeeTicketList } from '../hooks/use-employee-ticket-list'
 import {
   EmployeeTicketCategoryBadge,
+  EmployeeTicketPickupBadge,
   EmployeeTicketPriorityBadge,
   EmployeeTicketStatusBadge,
+  EmployeeTicketWorkingBadge,
 } from '../components/employee-ticket-badges'
 import type { EmployeeTicket } from '../types'
 
@@ -53,8 +65,10 @@ const OPEN_ONLY_OPTIONS = [
  *   nothing else, so "how long has this waited" is answered by the ticket's age
  *   rather than by a clock somebody promised.
  *
- * There's no assignee either — a ticket is worked by whoever picks it up, and
- * who that was is recorded on the resolution and on each message.
+ * Nothing auto-assigns either. A ticket arrives belonging to NOBODY and stays
+ * there until somebody takes it or is handed it — which is why "needs pickup" is
+ * the badge this queue shouts, and why "unassigned only" is its real starting
+ * point rather than one more facet.
  */
 export function EmployeeTicketListPage() {
   const list = useEmployeeTicketList()
@@ -95,7 +109,7 @@ export function EmployeeTicketListPage() {
         id: EMPLOYEE_TICKET_SORT.code,
         accessorKey: 'code',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Ticket" />,
-        meta: { className: 'whitespace-nowrap' },
+        meta: { className: 'min-w-[9rem] whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="font-mono text-sm font-medium text-foreground">
             {row.original.code}
@@ -107,6 +121,7 @@ export function EmployeeTicketListPage() {
         accessorKey: 'subject',
         header: 'Subject',
         enableSorting: false,
+        meta: { className: 'min-w-[18rem]' },
         cell: ({ row }) => (
           <div className="max-w-md">
             <span className="block truncate font-medium text-foreground">
@@ -122,13 +137,16 @@ export function EmployeeTicketListPage() {
         id: 'employee',
         header: 'Raised By',
         enableSorting: false,
+        // Employee name + code is one identity — wrapping it mid-code makes the
+        // column unreadable, so give it room and keep each line on one line.
+        meta: { className: 'min-w-[16rem] whitespace-nowrap' },
         cell: ({ row }) => (
           <div className="leading-tight">
-            <span className="block text-sm font-medium text-foreground">
+            <span className="block truncate text-sm font-medium text-foreground">
               {employeeLabel(row.original)}
             </span>
             {row.original.companyName && (
-              <span className="block text-xs text-muted-foreground">
+              <span className="block truncate text-xs text-muted-foreground">
                 {row.original.companyName}
               </span>
             )}
@@ -140,6 +158,7 @@ export function EmployeeTicketListPage() {
         accessorKey: 'category',
         header: 'Category',
         enableSorting: false,
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <EmployeeTicketCategoryBadge category={row.original.category} />
         ),
@@ -150,6 +169,7 @@ export function EmployeeTicketListPage() {
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Priority" />
         ),
+        meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <EmployeeTicketPriorityBadge priority={row.original.priority} />
         ),
@@ -158,6 +178,7 @@ export function EmployeeTicketListPage() {
         id: EMPLOYEE_TICKET_SORT.status,
         accessorKey: 'status',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        meta: { className: 'min-w-[13rem] whitespace-nowrap' },
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <EmployeeTicketStatusBadge status={row.original.status} />
@@ -167,6 +188,55 @@ export function EmployeeTicketListPage() {
                 Unanswered
               </Badge>
             )}
+          </div>
+        ),
+      },
+      {
+        id: 'assignee',
+        header: 'Handled By',
+        enableSorting: false,
+        // Name over its pickup/working chip — neither reads if the column is
+        // narrow enough to break them mid-word.
+        meta: { className: 'min-w-[13rem] whitespace-nowrap' },
+        cell: ({ row }) => (
+          <div className="leading-tight">
+            <span
+              className={
+                row.original.assignedToName
+                  ? 'block text-sm font-medium text-foreground'
+                  : 'block text-sm text-muted-foreground'
+              }
+            >
+              {assigneeLabel(row.original)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              {/* Outstanding and nobody's — the one gap in a queue worth shouting. */}
+              <EmployeeTicketPickupBadge needsPickup={row.original.needsPickup} />
+              <EmployeeTicketWorkingBadge isBeingWorked={row.original.isBeingWorked} />
+              {!row.original.needsPickup && !row.original.isBeingWorked && (
+                <span className="text-xs text-muted-foreground">
+                  {assignmentSourceLabel(row.original.assignmentSource) ?? ''}
+                </span>
+              )}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: 'time_spent',
+        header: 'Time Spent',
+        enableSorting: false,
+        meta: { className: 'min-w-[9rem] whitespace-nowrap' },
+        cell: ({ row }) => (
+          <div className="leading-tight">
+            {/* EFFORT above, CALENDAR below — the two are routinely orders of
+                magnitude apart, so they're never shown as one number. */}
+            <span className="block text-sm tabular-nums text-foreground">
+              {formatDuration(row.original.activeWorkSeconds) ?? '—'}
+            </span>
+            <span className="block text-xs tabular-nums text-muted-foreground">
+              {formatDuration(row.original.wallClockSeconds)} elapsed
+            </span>
           </div>
         ),
       },
@@ -187,7 +257,7 @@ export function EmployeeTicketListPage() {
         id: EMPLOYEE_TICKET_SORT.createdAt,
         accessorKey: 'createdAt',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Raised" />,
-        meta: { className: 'whitespace-nowrap' },
+        meta: { className: 'min-w-[11rem] whitespace-nowrap' },
         cell: ({ row }) => (
           <div className="leading-tight">
             {/* No deadline on this desk, so age is what "waiting" is read from. */}
@@ -212,6 +282,31 @@ export function EmployeeTicketListPage() {
       <PageHeader
         title="Employee Support"
         description="What your employees have raised from the app, across every company. Most urgent first — this is work waiting on somebody, and nothing here is on a clock."
+        actions={
+          list.canShowMyDesk && (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* The two questions a desk with no router actually gets asked. */}
+              <Button
+                variant={list.filters.unassignedOnly ? 'default' : 'outline'}
+                onClick={() =>
+                  list.toggleUnassignedOnly(list.filters.unassignedOnly ? '' : 'true')
+                }
+              >
+                <Inbox className="size-4" />
+                Needs pickup
+              </Button>
+              <Button
+                variant={list.isMyDesk ? 'default' : 'outline'}
+                onClick={() =>
+                  list.isMyDesk ? list.changeAssignee(ALL_FILTER) : list.showMyDesk()
+                }
+              >
+                <UserRoundCog className="size-4" />
+                On my plate
+              </Button>
+            </div>
+          )
+        }
       />
 
       {/* The tab strip IS the status filter, with its counts read in one call. */}
@@ -299,6 +394,28 @@ export function EmployeeTicketListPage() {
                     { label: 'Any priority', value: ALL_FILTER },
                     ...EMPLOYEE_TICKET_PRIORITY_OPTIONS,
                   ],
+                  clearValue: ALL_FILTER,
+                  searchable: false,
+                },
+                {
+                  key: 'assignee',
+                  label: 'Handled by',
+                  icon: UserRoundCog,
+                  value: list.filters.assignedToUserId,
+                  onChange: list.changeAssignee,
+                  options: list.assigneeOptions,
+                  clearValue: ALL_FILTER,
+                  searchPlaceholder: 'Search people',
+                },
+                {
+                  // Outstanding AND nobody's. It carries its own status
+                  // predicate, so picking it clears the tab and "unfinished".
+                  key: 'unassigned_only',
+                  label: 'Unassigned',
+                  icon: Inbox,
+                  value: list.filters.unassignedOnly ? 'true' : ALL_FILTER,
+                  onChange: list.toggleUnassignedOnly,
+                  options: UNASSIGNED_ONLY_OPTIONS,
                   clearValue: ALL_FILTER,
                   searchable: false,
                 },

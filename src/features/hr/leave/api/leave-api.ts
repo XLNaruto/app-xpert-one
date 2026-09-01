@@ -55,8 +55,10 @@ export interface LeaveFilters {
    * Your own queue. Implies `status=PENDING`.
    *
    * For an approver it is the companies where you are the level that answered.
-   * FOR THE OWNER it is the FALL-THROUGH — the companies no level covers, i.e.
-   * the ones only they can clear.
+   * FOR THE OWNER it depends on whether they are in the chain: in, it is the
+   * FALL-THROUGH — the companies no level covers, i.e. the ones only they can
+   * clear; opted OUT, it comes back EMPTY, because they are nobody's approver.
+   * An empty owner queue is correct, not a bug.
    *
    * VISIBILITY IS NOT ROUTING: the plain list is unchanged, and the owner goes on
    * seeing every company's rows whether or not any hierarchy user can. The

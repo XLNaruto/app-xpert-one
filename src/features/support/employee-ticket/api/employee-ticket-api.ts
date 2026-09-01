@@ -9,14 +9,17 @@ import {
   employeeTicketMessageResponseSchema,
   employeeTicketResponseSchema,
   employeeTicketSummaryResponseSchema,
+  employeeTicketWorkSessionsResponseSchema,
   employeeTicketsResponseSchema,
 } from '../schemas'
 import {
   toEmployeeTicket,
   toEmployeeTicketMessage,
   toEmployeeTicketSummary,
+  toEmployeeTicketWorkSessions,
 } from '../lib/employee-ticket-mappers'
 import type {
+  EmployeeTicketAssigneePayload,
   EmployeeTicketMessagePayload,
   EmployeeTicketStatusPayload,
 } from '../schemas'
@@ -25,6 +28,7 @@ import type {
   EmployeeTicketFilters,
   EmployeeTicketMessage,
   EmployeeTicketSummary,
+  EmployeeTicketWorkSessions,
 } from '../types'
 
 /**
@@ -54,6 +58,11 @@ function filterParams(filters?: EmployeeTicketFilters) {
     ...(filters?.companyId ? { company_id: Number(filters.companyId) } : {}),
     ...(filters?.category ? { category: filters.category } : {}),
     ...(filters?.priority ? { priority: filters.priority } : {}),
+    // "What is on one person's plate". The summary takes this one too — a count
+    // per status for one desk is a meaningful thing to report.
+    ...(filters?.assignedToUserId
+      ? { assigned_to_user_id: Number(filters.assignedToUserId) }
+      : {}),
   }
 }
 
@@ -61,16 +70,23 @@ function filterParams(filters?: EmployeeTicketFilters) {
  * Order is always sent — left off, the server's own default decides it, and a
  * list whose order isn't pinned can repeat or skip rows as the user pages.
  *
- * `status` and `open_only` are mutually exclusive in practice: the second is
- * "any of the three unfinished statuses", so a specific pick wins over it.
+ * `status`, `open_only` and `unassigned_only` are mutually exclusive in
+ * practice: the last two each mean "any of the three unfinished statuses", so a
+ * specific pick wins over both, and `unassigned_only` — which carries that
+ * predicate itself — wins over `open_only`.
+ *
+ * `unassigned_only` is LIST-ONLY. The summary would report three zeroes by
+ * construction, which is why it isn't in {@link filterParams}.
  */
 function queryParams(params: PageParams, filters?: EmployeeTicketFilters) {
   const status = filters?.status?.trim()
+  const unassignedOnly = Boolean(filters?.unassignedOnly)
   return {
     ...filterParams(filters),
     ...(params.search?.trim() ? { search: params.search.trim() } : {}),
-    ...(status ? { status } : {}),
-    ...(!status && filters?.openOnly ? { open_only: 'true' } : {}),
+    ...(!unassignedOnly && status ? { status } : {}),
+    ...(unassignedOnly ? { unassigned_only: 'true' } : {}),
+    ...(!unassignedOnly && !status && filters?.openOnly ? { open_only: 'true' } : {}),
     sort: params.sort ?? EMPLOYEE_TICKET_DEFAULT_SORT.id,
     sort_by: params.sortBy ?? (EMPLOYEE_TICKET_DEFAULT_SORT.desc ? 'desc' : 'asc'),
   }
@@ -216,5 +232,62 @@ export async function updateEmployeeTicketStatus(
     return toEmployeeTicket(employeeTicketResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't update the ticket.")
+  }
+}
+
+/**
+ * PATCH /user/employee-support-tickets/:id/assignee — hand it over, or let it go.
+ *
+ * `null` is a real value, not an omission: it releases the ticket back to the
+ * unassigned queue. Everything else is the server's — when, by whom, and the
+ * source, which is always `user` from here even when somebody assigns a ticket
+ * to themselves. That's a decision, not a pick-up.
+ *
+ * The STATUS is untouched: a reassigned `in_progress` ticket is still in
+ * progress, just with somebody else. An open work stretch closes on hand-over,
+ * so the outgoing handler keeps the minutes they actually spent, and
+ * `is_being_worked` correctly goes false until the new handler picks it up.
+ *
+ * Idempotent, the null-to-null case included.
+ *
+ * - 404 — the target is not a user of your account, or does not exist
+ * - 409 — the target is inactive, or the ticket is CLOSED (a resolved one can
+ *   be reassigned on purpose: a fix that may not hold is exactly when the
+ *   follow-up goes to somebody else)
+ */
+export async function updateEmployeeTicketAssignee(
+  id: number,
+  assignedToUserId: number | null,
+): Promise<EmployeeTicket> {
+  try {
+    const raw = await http.patch<unknown, EmployeeTicketAssigneePayload>(
+      endpoints.EMPLOYEE_SUPPORT_TICKETS.ASSIGNEE(id),
+      { assigned_to_user_id: assignedToUserId },
+    )
+    return toEmployeeTicket(employeeTicketResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't change who is handling this ticket.")
+  }
+}
+
+/**
+ * GET /user/employee-support-tickets/:id/work-sessions — the "who spent what"
+ * behind the ticket's hands-on effort.
+ *
+ * Oldest first and deliberately NOT paged: a help ticket accumulates a handful
+ * of stretches, not a feed.
+ */
+export async function fetchEmployeeTicketWorkSessions(
+  id: number,
+): Promise<EmployeeTicketWorkSessions> {
+  try {
+    const raw = await http.get<unknown>(
+      endpoints.EMPLOYEE_SUPPORT_TICKETS.WORK_SESSIONS(id),
+    )
+    return toEmployeeTicketWorkSessions(
+      employeeTicketWorkSessionsResponseSchema.parse(raw),
+    )
+  } catch (error) {
+    throw toApiError(error, "Couldn't load the work sessions.")
   }
 }

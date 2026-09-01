@@ -40,10 +40,24 @@ export const employeeTicketStatusSchema = z.enum([
 /** Which side of the thread wrote a message. */
 export const messageAuthorTypeSchema = z.enum(['employee', 'user'])
 
+/**
+ * How the ticket came to be somebody's.
+ *
+ * Two values, not the platform console's three — there is no router on this
+ * desk, so nothing is ever assigned by a machine:
+ *
+ * - `self` — somebody picked the ticket up and thereby took it. The ordinary case.
+ * - `user` — somebody handed it to a colleague by hand, through the assignee
+ *   route. Always `user` from there, even when the person assigns it to
+ *   themselves: that's a decision, not a pick-up.
+ */
+export const assignmentSourceSchema = z.enum(['self', 'user'])
+
 export type EmployeeTicketCategoryValue = z.infer<typeof employeeTicketCategorySchema>
 export type EmployeeTicketPriorityValue = z.infer<typeof employeeTicketPrioritySchema>
 export type EmployeeTicketStatusValue = z.infer<typeof employeeTicketStatusSchema>
 export type MessageAuthorTypeValue = z.infer<typeof messageAuthorTypeSchema>
+export type AssignmentSourceValue = z.infer<typeof assignmentSourceSchema>
 
 /** The content types the support-attachment presign will sign for. */
 export const SUPPORT_ATTACHMENT_CONTENT_TYPES = [
@@ -133,6 +147,55 @@ export const employeeTicketResponseSchema = z.object({
   message_count: z.number().default(0),
   /** Whole days since it was raised — the queue's "how long has this waited". */
   age_days: z.number().default(0),
+
+  /* ── Who is handling it ─────────────────────────────────────────────────── */
+
+  /**
+   * The four assignment fields move together: all null, or all set. There is no
+   * state where a ticket has an assignee but no timestamp.
+   */
+  assigned_to_user_id: z.number().nullish(),
+  /** Null until somebody has taken it. Nothing auto-assigns on this desk. */
+  assigned_to_name: z.string().nullish(),
+  assigned_at: z.string().nullish(),
+  assignment_source: assignmentSourceSchema.nullish(),
+  /**
+   * Outstanding AND unassigned, derived server-side — the badge for "waiting on
+   * somebody to take this". A resolved ticket nobody was assigned is history,
+   * not a gap in the queue, so it reads false.
+   */
+  needs_pickup: z.boolean().default(false),
+
+  /* ── How long it took ───────────────────────────────────────────────────── */
+
+  /**
+   * The first move to `in_progress` — when somebody STARTED. NOT
+   * `first_response_at`, which is when the office first WROTE to the employee;
+   * neither derives the other. Stamped once and never moved, a reopen included.
+   */
+  work_started_at: z.string().nullish(),
+  /**
+   * EFFORT — the sum of every stretch somebody was genuinely on the ticket, an
+   * open one counting up to now. The ONLY number here that isn't calendar time.
+   */
+  active_work_seconds: z.number().default(0),
+  /**
+   * Whether a work stretch is open right now. `in_progress` with this false is
+   * normal and correct: somebody answered and put the ticket down.
+   */
+  is_being_worked: z.boolean().default(false),
+  /** ELAPSED — null until the office has replied. */
+  time_to_first_response_seconds: z.number().nullish(),
+  /** ELAPSED — null until work has begun. */
+  time_to_start_seconds: z.number().nullish(),
+  /** ELAPSED — null until it's resolved. */
+  time_to_resolve_seconds: z.number().nullish(),
+  /**
+   * ELAPSED, and ALWAYS present — it counts up to now while the ticket is
+   * outstanding, which is what an untouched row is aged with.
+   */
+  wall_clock_seconds: z.number().default(0),
+
   created_at: z.string(),
   updated_at: z.string(),
   /** Detail read only — the whole conversation, oldest first. */
@@ -157,6 +220,46 @@ export type EmployeeTicketSummaryResponse = z.infer<
   typeof employeeTicketSummaryResponseSchema
 >
 
+/**
+ * One stretch somebody was on the ticket.
+ *
+ * `ended_at: null` means they have it right now and `seconds` counts up to the
+ * present.
+ */
+export const employeeTicketWorkSessionResponseSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  user_name: z.string().nullish(),
+  started_at: z.string(),
+  ended_at: z.string().nullish(),
+  seconds: z.number().default(0),
+})
+export type EmployeeTicketWorkSessionResponse = z.infer<
+  typeof employeeTicketWorkSessionResponseSchema
+>
+
+/**
+ * `GET /user/employee-support-tickets/:id/work-sessions` — the breakdown behind
+ * `active_work_seconds`. Oldest first and NOT paged: a help ticket accumulates a
+ * handful of stretches, not a feed.
+ *
+ * `summary.seconds` always equals the ticket's `active_work_seconds` — both are
+ * measured by the database, so they cannot drift apart.
+ */
+export const employeeTicketWorkSessionsResponseSchema = z.object({
+  ticket_id: z.number(),
+  summary: z.object({
+    sessions: z.number().default(0),
+    seconds: z.number().default(0),
+    handlers: z.number().default(0),
+    open_sessions: z.number().default(0),
+  }),
+  items: z.array(employeeTicketWorkSessionResponseSchema),
+})
+export type EmployeeTicketWorkSessionsResponse = z.infer<
+  typeof employeeTicketWorkSessionsResponseSchema
+>
+
 /* ── Request bodies ────────────────────────────────────────────────────────── */
 
 /** POST a reply. `attachment_url` is the KEY from the presign, never the file. */
@@ -174,3 +277,13 @@ export type EmployeeTicketStatusPayload =
   | { status: 'in_progress' }
   | { status: 'resolved'; resolution_note: string }
   | { status: 'closed' }
+
+/**
+ * PATCH the assignee. The key is REQUIRED and nullable — `null` is a real value
+ * meaning "release it back to the unassigned queue", not an omission.
+ *
+ * Everything else is the server's: when, by whom, and the `assignment_source`.
+ */
+export interface EmployeeTicketAssigneePayload {
+  assigned_to_user_id: number | null
+}

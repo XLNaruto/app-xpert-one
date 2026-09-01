@@ -4,9 +4,13 @@ import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { ALL_ROWS } from '@/lib/pagination'
+import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '@/features/company'
+import { useAdminUsers } from '@/features/administration/admin-user'
 import {
   ALL_FILTER,
+  ANY_ASSIGNEE_OPTION,
   EMPLOYEE_TICKET_DEFAULT_SORT,
   EMPLOYEE_TICKET_TABS,
   EMPTY_EMPLOYEE_TICKET_FILTERS,
@@ -73,6 +77,38 @@ export function useEmployeeTicketList() {
 
   const { companies } = useMyCompanies()
 
+  /** Who is reading — so "On my plate" is one click rather than a name search. */
+  const currentUser = useAuthStore((state) => state.user)
+  const currentUserId = currentUser?.id ?? null
+
+  /**
+   * The assignee facet, from the account's existing user list — there is no
+   * support-specific roster endpoint and no desk to filter by. Inactive people
+   * stay pickable HERE (unlike the hand-over dialog): they may still be holding
+   * tickets somebody needs to find.
+   */
+  const { data: users } = useAdminUsers(ALL_ROWS)
+
+  const assigneeOptions = useMemo(() => {
+    const roster = (users?.items ?? []).map((user) => ({
+      label: user.id === currentUserId ? `${user.name} (you)` : user.name,
+      value: String(user.id),
+    }))
+    // "On my plate" files the reader's own id into the facet, and the chip that
+    // then appears is labelled from these options — so the reader has to be one
+    // of them even before the roster answers, and whether or not that endpoint
+    // lists them at all (an owner account isn't an admin user). Otherwise the
+    // chip falls back to the raw id and reads as `14`.
+    const hasMe = roster.some((option) => option.value === String(currentUserId))
+    return [
+      ANY_ASSIGNEE_OPTION,
+      ...(currentUser && !hasMe
+        ? [{ label: `${currentUser.name} (you)`, value: String(currentUser.id) }]
+        : []),
+      ...roster,
+    ]
+  }, [users?.items, currentUser, currentUserId])
+
   /**
    * '' is every company — the desk is staffed by people, not by company, so an
    * HR user covering two of them sees both without switching screens.
@@ -114,9 +150,49 @@ export function useEmployeeTicketList() {
       ...prev,
       status: value,
       openOnly: value ? false : prev.openOnly,
+      unassignedOnly: value ? false : prev.unassignedOnly,
     }))
     onPaginationChange({ limit, offset: 0 })
   }
+
+  /**
+   * "Outstanding work nobody has taken" — the queue's real starting point.
+   *
+   * It carries its own status predicate, so turning it on clears both the status
+   * tab and "unfinished only": the API would ignore them, and a chip claiming a
+   * filter that isn't applied lies.
+   */
+  const toggleUnassignedOnly = (value: string) => {
+    const unassignedOnly = value === 'true'
+    setFilters((prev) => ({
+      ...prev,
+      unassignedOnly,
+      status: unassignedOnly ? ALL_FILTER : prev.status,
+      openOnly: unassignedOnly ? false : prev.openOnly,
+      // Nobody's plate and one person's plate are contradictory questions.
+      assignedToUserId: unassignedOnly ? ALL_FILTER : prev.assignedToUserId,
+    }))
+    onPaginationChange({ limit, offset: 0 })
+  }
+
+  /** Narrow to one person's desk. Picking anybody drops "unassigned only". */
+  const changeAssignee = (value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      assignedToUserId: value,
+      unassignedOnly: value ? false : prev.unassignedOnly,
+    }))
+    onPaginationChange({ limit, offset: 0 })
+  }
+
+  /** The one-click "what is on my plate", off the signed-in user's own id. */
+  const showMyDesk = () => {
+    if (!currentUserId) return
+    changeAssignee(String(currentUserId))
+  }
+
+  const isMyDesk =
+    currentUserId !== null && filters.assignedToUserId === String(currentUserId)
 
   const toggleOpenOnly = (value: string) => {
     const openOnly = value === 'true'
@@ -124,6 +200,9 @@ export function useEmployeeTicketList() {
       ...prev,
       openOnly,
       status: openOnly ? ALL_FILTER : prev.status,
+      // "Unassigned only" already means the three unfinished statuses, and wins
+      // over this one server-side — so it can't be left showing as applied.
+      unassignedOnly: openOnly ? false : prev.unassignedOnly,
     }))
     onPaginationChange({ limit, offset: 0 })
   }
@@ -146,7 +225,9 @@ export function useEmployeeTicketList() {
           filters.openOnly ||
           filters.category ||
           filters.priority ||
-          filters.companyId,
+          filters.companyId ||
+          filters.assignedToUserId ||
+          filters.unassignedOnly,
       ),
     [filters],
   )
@@ -170,9 +251,15 @@ export function useEmployeeTicketList() {
     setFilter,
     changeStatus,
     toggleOpenOnly,
+    toggleUnassignedOnly,
+    changeAssignee,
+    showMyDesk,
+    isMyDesk,
+    canShowMyDesk: currentUserId !== null,
     resetFilters,
     hasFilters,
     companyOptions,
+    assigneeOptions,
     tabs,
 
     isLoading,
