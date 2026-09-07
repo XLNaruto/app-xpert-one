@@ -64,8 +64,8 @@ import type {
  *   branch / department / designation is legitimate — those levels are optional
  *   in this product — so it is labelled and kept rather than hidden.
  *
- * `age_band` and `tenure_band` are re-sorted into band order by the hook; every
- * other dimension keeps the response's biggest-first order.
+ * Every dimension keeps the response's own biggest-first order — the six that
+ * remain are all org facets, so there is no band ordering left to impose.
  */
 
 interface BreakdownPanelProps {

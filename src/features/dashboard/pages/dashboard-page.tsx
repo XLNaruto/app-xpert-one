@@ -1,3 +1,4 @@
+import { DatabaseZap } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { Forbidden } from '@/features/error'
 import {
@@ -6,7 +7,6 @@ import {
   PAYROLL_METRICS,
   BREAKDOWN_DIMENSION_LABELS,
   EMPLOYMENT_TYPE_OPTIONS,
-  GENDER_OPTIONS,
   GRADE_OPTIONS,
 } from '../constants'
 import { useDashboardScreen } from '../hooks/use-dashboard-screen'
@@ -84,12 +84,20 @@ export function DashboardPage() {
     shape: 'donut',
   })
 
-  // Leave by type, as the comparative "vs previous" columns the response
-  // already carries both windows for.
+  /*
+   * Leave days by department, as the comparative "vs previous" columns the
+   * response already carries both windows for.
+   *
+   * Not by leave TYPE: that dimension is gone, along with every other one that
+   * lives on a single fact table rather than in the nightly cube's key. Nothing
+   * was lost with it — the status and pay-type splits are fields on `/summary`,
+   * which this screen already holds, so they are drawn on the Leave card
+   * upstairs rather than requested again here.
+   */
   const leaveMix = useBreakdownPanel({
     baseQuery: query,
     measure: 'leave_days',
-    dimension: 'leave_type',
+    dimension: 'department',
     shape: 'comparative',
   })
 
@@ -129,7 +137,31 @@ export function DashboardPage() {
         description="Workforce, attendance, leave, payroll and help desk across the period and population you choose."
       />
 
-      <DashboardFilterBar state={screen} resolvedWindow={screen.resolvedWindow} />
+      <DashboardFilterBar
+        state={screen}
+        resolvedWindow={screen.resolvedWindow}
+        asOf={screen.asOf}
+      />
+
+      {/*
+        The rollup has never run for this account. Every figure below is zero and
+        none of them means "nothing happened" — said outright, because a wall of
+        zeroes is indistinguishable from a genuinely quiet period and reads as
+        the opposite of what it is.
+      */}
+      {screen.isNotYetComputed ? (
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/5 p-4">
+          <DatabaseZap className="mt-0.5 size-4 shrink-0 text-warning" />
+          <div className="text-sm">
+            <p className="font-medium">Not yet computed</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              The nightly rollup behind this dashboard has not run for this
+              account yet, so every figure here reads zero. That is not the same
+              as no activity — the numbers will appear after the next rebuild.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <DashboardKpiStrip
         summary={screen.summary.data}
@@ -169,10 +201,10 @@ export function DashboardPage() {
 
         <RadarPanel panel={radar} />
 
-        <HeatmapPanel panel={heatmap} />
+        <HeatmapPanel panel={heatmap} ignoredFilters={ignoredByPunchGrid(appliedFilters)} />
 
         <BreakdownPanel
-          title="Leave by type"
+          title="Leave by department"
           panel={leaveMix}
           showComparisons={screen.showComparisons}
         />
@@ -198,6 +230,28 @@ export function DashboardPage() {
       </div>
     </div>
   )
+}
+
+/**
+ * The narrowings the weekday/hour heatmap IGNORES — everything below company.
+ *
+ * That grid's rollup is keyed by company alone, because an hour dimension
+ * multiplies its rows by 24. Naming what is being ignored is the alternative to
+ * greying the controls out, which is not open to a filter bar shared by eight
+ * panels.
+ */
+function ignoredByPunchGrid(filters: DashboardFilters): string[] {
+  return (
+    [
+      [filters.branchIds.length > 0, 'branch'],
+      [filters.departmentIds.length > 0, 'department'],
+      [filters.designationIds.length > 0, 'designation'],
+      [Boolean(filters.employmentType), 'employment type'],
+      [Boolean(filters.grade), 'grade'],
+    ] as const
+  )
+    .filter(([applied]) => applied)
+    .map(([, noun]) => noun)
 }
 
 /**
@@ -227,7 +281,6 @@ function populationSummary(filters: DashboardFilters): string {
     [
       [filters.employmentType, EMPLOYMENT_TYPE_OPTIONS],
       [filters.grade, GRADE_OPTIONS],
-      [filters.gender, GENDER_OPTIONS],
     ] as const
   )
     .map(([value, options]) =>

@@ -187,6 +187,35 @@ export function formatWindow(from: string, to: string): string {
   return `${fmt.format(start)} – ${fmt.format(end)}`
 }
 
+/**
+ * `as_of` — WHEN THE NIGHTLY ROLLUP WAS LAST REBUILT, as a caption.
+ *
+ * It is a real instant (unlike a bucket), so it parses and formats normally.
+ * Every figure on the screen is as of this moment rather than live, which is
+ * why the page shows it once: a user asking why this morning's check-in is
+ * missing has this line as the answer.
+ *
+ * `null` is the case that matters. It means the job has NEVER run for this
+ * account — every figure will be zero — and it reads "Not yet computed", NEVER
+ * "no activity". The two are indistinguishable in the data and mean opposite
+ * things: one is a pipeline that has not started, the other is a quiet month.
+ */
+export function formatAsOf(asOf: string | null): string {
+  if (!asOf) return NOT_YET_COMPUTED
+  const parsed = new Date(asOf)
+  if (Number.isNaN(parsed.getTime())) return asOf
+  return `As of ${new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(parsed)}`
+}
+
+/** What an account whose rollup has never run reads as. Not "no activity". */
+export const NOT_YET_COMPUTED = 'Not yet computed'
+
 /** A real date field (`contract_ends_on`, `joining_date`) — a timestamp, so parsed. */
 export function formatDateField(value: string | null): string {
   if (!value) return EM_DASH

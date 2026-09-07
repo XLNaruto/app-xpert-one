@@ -13,11 +13,28 @@
  * are never divided by 100.
  */
 
+// ─── Every response ────────────────────────────────────────────────────────
+
+/**
+ * What every one of the six endpoints carries.
+ *
+ * THESE FIGURES ARE NOT LIVE. They come from a nightly rollup, and `asOf` is
+ * when that rollup was last rebuilt — so today's punches, leaves and tickets are
+ * not in any of them. The screen shows it once, because a user asking why this
+ * morning's check-in is missing has `asOf` as the answer.
+ *
+ * `null` means the job has NEVER run for this account: every figure will be
+ * zero, and that state reads "not yet computed" rather than "no activity". The
+ * two are indistinguishable in the data and mean opposite things.
+ */
+export interface Precomputed {
+  asOf: string | null
+}
+
 // ─── The shared population filter ──────────────────────────────────────────
 
 export type EmploymentTypeFilter = 'PERMANENT' | 'CONTRACTUAL'
 export type GradeFilter = 'SKILLED' | 'HIGH-SKILLED' | 'SEMI-SKILLED' | 'UN-SKILLED'
-export type GenderFilter = 'Male' | 'Female' | 'Transgender' | 'Not Specified'
 
 /** The named date windows the bar offers. `all_time` is the odd one — see below. */
 export type DatePreset =
@@ -63,7 +80,6 @@ export interface DashboardFilters {
   designationIds: string[]
   employmentType: EmploymentTypeFilter | ''
   grade: GradeFilter | ''
-  gender: GenderFilter | ''
 }
 
 // ─── /summary ──────────────────────────────────────────────────────────────
@@ -183,7 +199,7 @@ export interface HelpdeskSummary {
   changePct: number | null
 }
 
-export interface DashboardSummary {
+export interface DashboardSummary extends Precomputed {
   /** The window the server actually measured. Echo it; every panel shares it. */
   from: string
   to: string
@@ -236,7 +252,7 @@ export interface MetricSeries {
   points: SeriesPoint[]
 }
 
-export interface DashboardSeries {
+export interface DashboardSeries extends Precomputed {
   from: string
   to: string
   /**
@@ -264,25 +280,32 @@ export type BreakdownMeasure =
   | 'total_deduction'
   | 'tickets'
 
+/**
+ * THE COMPLETE LIST — the key of the nightly cube every endpoint reads, which is
+ * why you can filter and group by exactly these six and no more.
+ *
+ * `gender`, `marital_status`, `age_band` and `tenure_band` are gone and are not
+ * coming back: they are independent of the org tree, so keying the rollup on
+ * them multiplies it toward one row per employee per day. `leave_type`,
+ * `leave_status`, `leave_pay_type`, `leave_duration`, `attendance_status`,
+ * `ticket_status`, `ticket_category` and `ticket_priority` are gone too — each
+ * lives on one fact table and is not in the key either.
+ *
+ * NO STATUS SPLIT WAS LOST. Everything those would have drawn is already a field
+ * on `/summary`, which the screen fetches anyway — `leave.approved/rejected/
+ * pending`, `leave.paidDays/unpaidDays`, `attendance.presentDays/halfDays`. A
+ * status donut is built from a response already held, not requested.
+ *
+ * The upshot: every measure now pairs with every dimension, so the 400 for an
+ * impossible pair can no longer happen and nothing re-filters the dropdown.
+ */
 export type BreakdownDimension =
   | 'company'
   | 'branch'
   | 'department'
   | 'designation'
-  | 'gender'
   | 'employment_type'
   | 'grade'
-  | 'marital_status'
-  | 'age_band'
-  | 'tenure_band'
-  | 'leave_type'
-  | 'leave_status'
-  | 'leave_pay_type'
-  | 'leave_duration'
-  | 'attendance_status'
-  | 'ticket_status'
-  | 'ticket_category'
-  | 'ticket_priority'
 
 export interface BreakdownItem {
   /**
@@ -301,7 +324,7 @@ export interface BreakdownItem {
   changePct: number | null
 }
 
-export interface DashboardBreakdown {
+export interface DashboardBreakdown extends Precomputed {
   measure: BreakdownMeasure
   dimension: BreakdownDimension
   unit: MetricUnit
@@ -341,7 +364,7 @@ export interface RadarGroup {
   scores: Partial<Record<RadarAxis, number | null>>
 }
 
-export interface DashboardRadar {
+export interface DashboardRadar extends Precomputed {
   groupBy: RadarGroupBy
   /** Drawn in THIS order, always, or shapes stop comparing across screens. */
   axes: RadarAxis[]
@@ -369,7 +392,7 @@ export interface HeatmapCell {
   date: string | null
 }
 
-export interface DashboardHeatmap {
+export interface DashboardHeatmap extends Precomputed {
   shape: HeatmapShape
   metric: HeatmapMetric
   unit: MetricUnit
@@ -419,7 +442,7 @@ export interface AttentionRow {
   joiningDate: string | null
 }
 
-export interface DashboardAttention {
+export interface DashboardAttention extends Precomputed {
   items: AttentionRow[]
   /** The size of the WORKLIST, not of the workforce. */
   total: number

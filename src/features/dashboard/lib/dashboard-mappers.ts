@@ -26,6 +26,9 @@ import type {
 
 export function toSummary(raw: SummaryResponse): DashboardSummary {
   return {
+    // Kept as the raw instant, null included: `null` is "the rollup has never
+    // run", which is a different screen state from "it ran and found nothing".
+    asOf: raw.as_of,
     from: raw.from,
     to: raw.to,
     workforce: {
@@ -105,6 +108,7 @@ export function toSummary(raw: SummaryResponse): DashboardSummary {
 
 export function toSeries(raw: SeriesResponse): DashboardSeries {
   return {
+    asOf: raw.as_of,
     from: raw.from,
     to: raw.to,
     granularity: raw.granularity,
@@ -127,6 +131,7 @@ export function toSeries(raw: SeriesResponse): DashboardSeries {
 
 export function toBreakdown(raw: BreakdownResponse): DashboardBreakdown {
   return {
+    asOf: raw.as_of,
     measure: raw.measure,
     dimension: raw.dimension,
     unit: raw.unit,
@@ -145,6 +150,7 @@ export function toBreakdown(raw: BreakdownResponse): DashboardBreakdown {
 
 export function toRadar(raw: RadarResponse): DashboardRadar {
   return {
+    asOf: raw.as_of,
     groupBy: raw.group_by,
     // Kept in the response's own order. If one screen drew the axes in a
     // different order from another, the shapes would stop being comparable
@@ -161,6 +167,7 @@ export function toRadar(raw: RadarResponse): DashboardRadar {
 
 export function toHeatmap(raw: HeatmapResponse): DashboardHeatmap {
   return {
+    asOf: raw.as_of,
     shape: raw.shape,
     metric: raw.metric,
     unit: raw.unit,
@@ -181,6 +188,7 @@ export function toHeatmap(raw: HeatmapResponse): DashboardHeatmap {
 
 export function toAttention(raw: AttentionResponse): DashboardAttention {
   return {
+    asOf: raw.as_of,
     // Rows arrive ordered by how MANY things are wrong, then by employee id —
     // done in SQL, so `total` and the page always agree. Never re-sorted here:
     // a client-side sort would only reorder the page in hand and break the

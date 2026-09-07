@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { Combobox } from '@/components/ui/combobox'
 import { HeatmapGrid, HeatmapLegend } from '@/components/charts'
 import { HEATMAP_METRIC_LABELS, HEATMAP_SHAPE_OPTIONS } from '../constants'
@@ -26,13 +27,27 @@ import type { HeatmapMetric, HeatmapShape } from '../types'
  *
  * `leave_days` is disabled on the weekday/hour grid, because a leave application
  * has dates and no clock and the endpoint answers 400 for the pair.
+ *
+ * And the grid HONOURS ONLY THE COMPANY FILTER: branch, department, designation,
+ * employment type and grade are ignored on that shape, because the hourly rollup
+ * behind it is keyed by company alone — an hour dimension multiplies its rows by
+ * 24, and "when does this office start" is a company-level question anyway. The
+ * filter bar is shared by every panel on the screen, so those controls cannot be
+ * greyed out from in here without breaking the other seven; the panel says it
+ * instead, and only when a narrowing that is actually being ignored is applied.
+ * Otherwise a user changes a filter and watches nothing happen.
  */
 
 interface HeatmapPanelProps {
   panel: ReturnType<typeof useHeatmapPanel>
+  /**
+   * Population narrowings the weekday/hour grid ignores — everything below
+   * company. Named so the notice can list exactly what is not being applied.
+   */
+  ignoredFilters?: string[]
 }
 
-export function HeatmapPanel({ panel }: HeatmapPanelProps) {
+export function HeatmapPanel({ panel, ignoredFilters = [] }: HeatmapPanelProps) {
   const { data, grid, shape, metric } = panel
 
   // A calendar's X axis is one column per ISO week; labelling every week is
@@ -82,6 +97,17 @@ export function HeatmapPanel({ panel }: HeatmapPanelProps) {
     >
       {data && grid ? (
         <div className="space-y-3">
+          {shape === 'weekday_hour' && ignoredFilters.length > 0 ? (
+            <p className="flex items-start gap-2 rounded-md bg-muted/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+              <Info className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                This grid is keyed by company only, so the{' '}
+                {ignoredFilters.join(', ')} filter
+                {ignoredFilters.length === 1 ? ' is' : 's are'} not applied here.
+                Switch to the calendar to narrow further.
+              </span>
+            </p>
+          ) : null}
           <HeatmapGrid
             rowLabels={grid.rowLabels}
             columnLabels={columnLabels}

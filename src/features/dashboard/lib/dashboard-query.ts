@@ -8,6 +8,12 @@ import type { DashboardFilters } from '../types'
  * here, so two panels on one screen can never end up describing different
  * populations — which is the failure that makes the numbers stop reconciling.
  *
+ * The filter is `from` / `to` / `all_time` / `timezone` / `company_ids` /
+ * `branch_ids` / `department_ids` / `designation_ids` / `employment_type` /
+ * `grade`, and THAT IS THE COMPLETE LIST — it is the nightly cube's key.
+ * `gender` was a filter once and is gone, along with the other dimensions that
+ * are independent of the org tree.
+ *
  * Two rules the serialiser enforces:
  *
  * * **An empty multi-select sends NOTHING.** `?company_ids=` happens to be read
@@ -77,7 +83,6 @@ export function toDashboardQuery(filters: DashboardFilters): DashboardQuery {
     designation_ids: ids(filters.designationIds),
     employment_type: filters.employmentType,
     grade: filters.grade,
-    gender: filters.gender,
   })
 }
 
@@ -99,7 +104,6 @@ export function toPopulationQuery(filters: DashboardFilters): DashboardQuery {
     designation_ids: ids(filters.designationIds),
     employment_type: filters.employmentType,
     grade: filters.grade,
-    gender: filters.gender,
   })
 }
 
@@ -117,7 +121,6 @@ export function activeFilterCount(filters: DashboardFilters): number {
     (filters.departmentIds.length ? 1 : 0) +
     (filters.designationIds.length ? 1 : 0) +
     (filters.employmentType ? 1 : 0) +
-    (filters.grade ? 1 : 0) +
-    (filters.gender ? 1 : 0)
+    (filters.grade ? 1 : 0)
   )
 }

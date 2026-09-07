@@ -34,7 +34,10 @@ import type { DashboardSummary } from '../types'
  * * **Leave.** `approval_rate` is over DECIDED applications, so `pending` is
  *   shown beside it or the figure flatters itself. `pending_overdue` is a
  *   POSITION, not windowed, and is the most actionable number in the block — so
- *   it is a link into the leave queue.
+ *   it is a link into the leave queue. The approved/rejected/pending and
+ *   paid/unpaid splits are drawn here rather than fetched: `leave_status` and
+ *   `leave_pay_type` are not breakdown dimensions any more, and they never
+ *   needed to be — both are fields on this response.
  * * **Payroll.** Filed on the SHEET'S OWN month. A "last 30 days" window
  *   spanning two calendar months therefore covers both months in full, which is
  *   why the tile can look double.
@@ -186,6 +189,14 @@ export function SummarySectionCards({
           label="Avg decision time"
           value={formatHours(leave.averageDecisionHours)}
         />
+        {/*
+          The pay-type split. `leave_pay_type` was a breakdown dimension once and
+          is gone, but nothing was lost with it: the two figures are fields on
+          this same response, so the split is drawn from a payload already held
+          rather than requested again.
+        */}
+        <Stat label="Paid days" value={formatDays(leave.paidDays)} />
+        <Stat label="Unpaid days" value={formatDays(leave.unpaidDays)} />
 
         {/* The most actionable number in the block — and a POSITION, so it does
             not move when the window changes. */}

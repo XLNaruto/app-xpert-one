@@ -1,4 +1,4 @@
-import { Building2, CalendarRange, Clock, Loader2 } from 'lucide-react'
+import { Building2, CalendarRange, Clock, DatabaseZap, Loader2 } from 'lucide-react'
 import { Combobox } from '@/components/ui/combobox'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
@@ -11,17 +11,15 @@ import {
   DATE_PRESET_LABELS,
   DATE_PRESET_OPTIONS,
   EMPLOYMENT_TYPE_OPTIONS,
-  GENDER_OPTIONS,
   GRADE_OPTIONS,
 } from '../constants'
-import { formatWindow } from '../lib/dashboard-format'
+import { formatAsOf, formatWindow } from '../lib/dashboard-format'
 import type { DashboardFilterState } from '../hooks/use-dashboard-filters'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import type {
   DashboardFilters,
   DatePreset,
   EmploymentTypeFilter,
-  GenderFilter,
   GradeFilter,
 } from '../types'
 
@@ -29,7 +27,7 @@ import type {
  * THE filter bar — one row above everything it scopes, collapsed behind a single
  * Filters button.
  *
- * Ten controls laid out flat took two rows and most of the screen's first fold
+ * Nine controls laid out flat took two rows and most of the screen's first fold
  * before a single number appeared, so everything lives in the panel and only the
  * PERIOD stays outside it: the period is the one control a user changes
  * constantly, and burying the screen's primary axis behind a click would cost
@@ -60,14 +58,27 @@ interface DashboardFilterBarProps {
   state: DashboardFilterState
   /** The `from`/`to` the server resolved, once `/summary` has answered. */
   resolvedWindow?: { from: string; to: string }
+  /**
+   * When the nightly rollup was last rebuilt. Shown here because the page shows
+   * it exactly once, and this footer already carries the window and the zone —
+   * the three facts that say what the numbers below actually describe.
+   *
+   * `undefined` = `/summary` has not answered yet. `null` = the rollup has never
+   * run, which is the "not yet computed" state, not a quiet period.
+   */
+  asOf?: string | null
 }
 
-export function DashboardFilterBar({ state, resolvedWindow }: DashboardFilterBarProps) {
+export function DashboardFilterBar({
+  state,
+  resolvedWindow,
+  asOf,
+}: DashboardFilterBarProps) {
   const { filters, options, isDebouncing } = state
   const allTime = filters.allTime
 
   /*
-   * The three single-value narrowings are exactly what a `FilterFacet` is for,
+   * The two single-value narrowings are exactly what a `FilterFacet` is for,
    * so they go through the shared bar's own config rather than being hand-drawn:
    * it renders them in the panel and gives each one a chip for free.
    */
@@ -88,15 +99,6 @@ export function DashboardFilterBar({ state, resolvedWindow }: DashboardFilterBar
       value: filters.grade,
       onChange: (value) => state.setFilter('grade', value as GradeFilter | ''),
       options: GRADE_OPTIONS,
-      searchable: false,
-      clearValue: ANY_VALUE,
-    },
-    {
-      key: 'gender',
-      label: 'Gender',
-      value: filters.gender,
-      onChange: (value) => state.setFilter('gender', value as GenderFilter | ''),
-      options: GENDER_OPTIONS,
       searchable: false,
       clearValue: ANY_VALUE,
     },
@@ -241,6 +243,18 @@ export function DashboardFilterBar({ state, resolvedWindow }: DashboardFilterBar
           </span>
           <span aria-hidden>·</span>
           <span>{filters.timezone}</span>
+          {asOf !== undefined ? (
+            <>
+              <span aria-hidden>·</span>
+              {/* These figures are a nightly rollup, not a live query — today's
+                  punches, leaves and tickets are not in them, and this line is
+                  the answer when somebody asks why. */}
+              <span className="inline-flex items-center gap-1.5">
+                <DatabaseZap className="size-3.5" />
+                {formatAsOf(asOf)}
+              </span>
+            </>
+          ) : null}
           {allTime ? (
             <>
               <span aria-hidden>·</span>

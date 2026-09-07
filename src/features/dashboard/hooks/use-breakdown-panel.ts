@@ -1,13 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
-import { BREAKDOWN_LIMIT, DONUT_LIMIT, type BreakdownChartShape } from '../constants'
-import { useDashboardBreakdown } from '../api/use-dashboard-panels'
+import { useMemo, useState } from 'react'
 import {
-  dimensionsForMeasure,
-  isValidPair,
-  orderedItems,
-  topNamedItem,
-} from '../lib/breakdown-shape'
-import { BREAKDOWN_DIMENSION_LABELS } from '../constants'
+  BREAKDOWN_DIMENSION_OPTIONS,
+  BREAKDOWN_LIMIT,
+  DONUT_LIMIT,
+  type BreakdownChartShape,
+} from '../constants'
+import { useDashboardBreakdown } from '../api/use-dashboard-panels'
+import { orderedItems, topNamedItem } from '../lib/breakdown-shape'
 import type { DashboardQuery } from '../lib/dashboard-query'
 import type { BreakdownDimension, BreakdownMeasure } from '../types'
 
@@ -18,10 +17,10 @@ import type { BreakdownDimension, BreakdownMeasure } from '../types'
  * `previous_value`, so a plain bar, a donut and a grouped "vs previous" column
  * chart all come out of the response already in hand.
  *
- * **The dimension list is re-filtered when the measure changes.** An unresolvable
- * pair is a 400 whose message names the dimensions that measure does accept;
- * preventing it is better than surfacing it, so a measure change that orphans
- * the current dimension snaps to the first one that still works.
+ * **EVERY MEASURE PAIRS WITH EVERY DIMENSION.** All six dimensions are the key
+ * of the nightly cube each measure reads, so there is no unresolvable pair to
+ * guard against and the dropdown never re-filters — changing the measure leaves
+ * the dimension exactly where the user put it.
  */
 
 export interface BreakdownPanelOptions {
@@ -43,38 +42,9 @@ export function useBreakdownPanel({
   shape: initialShape = 'bar',
   limit,
 }: BreakdownPanelOptions) {
-  const [measure, setMeasureState] = useState<BreakdownMeasure>(initialMeasure)
+  const [measure, setMeasure] = useState<BreakdownMeasure>(initialMeasure)
   const [dimension, setDimension] = useState<BreakdownDimension>(initialDimension)
   const [shape, setShape] = useState<BreakdownChartShape>(initialShape)
-
-  const dimensionOptions = useMemo(
-    () =>
-      dimensionsForMeasure(measure).map((value) => ({
-        label: BREAKDOWN_DIMENSION_LABELS[value],
-        value,
-      })),
-    [measure],
-  )
-
-  /**
-   * Changing the measure may orphan the dimension — `leave_type` means nothing
-   * to `headcount`. Snap to the first dimension the new measure accepts (always
-   * `company`, since the common family works with every measure) rather than
-   * letting the request 400.
-   */
-  const setMeasure = useCallback(
-    (next: BreakdownMeasure) => {
-      setMeasureState(next)
-      setDimension((current) => {
-        if (isValidPair(next, current)) return current
-        const [first] = dimensionsForMeasure(next)
-        return first ?? 'company'
-      })
-    },
-    [],
-  )
-
-  const pairIsValid = isValidPair(measure, dimension)
 
   /*
    * The donut names fewer slices than the bar, because each wedge needs its own
@@ -90,10 +60,10 @@ export function useBreakdownPanel({
     [baseQuery, measure, dimension, effectiveLimit],
   )
 
-  const result = useDashboardBreakdown(query, pairIsValid)
+  const result = useDashboardBreakdown(query)
 
-  // Re-sorted for `age_band` / `tenure_band`, whose response order is by size —
-  // and an age histogram running 25-34, 45-54, 18-24 is not a histogram.
+  // Biggest-first as the response sent them, with the two reserved keys moved
+  // to the end — never dropped, or the slices stop summing to `total`.
   const items = useMemo(
     () => (result.data ? orderedItems(result.data) : []),
     [result.data],
@@ -105,7 +75,7 @@ export function useBreakdownPanel({
     setMeasure,
     dimension,
     setDimension,
-    dimensionOptions,
+    dimensionOptions: BREAKDOWN_DIMENSION_OPTIONS,
     shape,
     setShape,
     items,

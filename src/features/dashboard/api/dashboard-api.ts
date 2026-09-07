@@ -45,9 +45,10 @@ import type {
  *
  * * **403** — the user lacks `dashboard:read`. It is ONE code for the whole
  *   screen, so that is a screen-level empty state, not six broken panels.
- * * **400** — an impossible measure/dimension pair, or `leave_days` on the
- *   weekday/hour grid. Both are client bugs the UI prevents, and the message
- *   names the valid options, so the panel surfaces it in place.
+ * * **400** — `leave_days` on the weekday/hour grid, which is now the only one
+ *   the client can produce: a leave application has dates and no clock. It is a
+ *   bug the UI prevents, and the message names the valid options, so the panel
+ *   surfaces it in place rather than as a toast.
  */
 
 /** Per-request axios config — just the abort signal TanStack supplies. */
@@ -99,7 +100,8 @@ export async function fetchDashboardSeries(
  *
  * One request feeds all three shapes, because every item carries both windows:
  * `value` and `previous_value`. There is no separate compare endpoint and no
- * second call for the "vs last period" chart.
+ * second call for the "vs last period" chart. Every measure pairs with every one
+ * of the six dimensions, so there is no impossible combination to reject.
  */
 export async function fetchDashboardBreakdown(
   query: DashboardQuery,

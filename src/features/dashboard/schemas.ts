@@ -102,6 +102,15 @@ const helpdeskSummarySchema = z.object({
 })
 
 export const summaryResponseSchema = z.object({
+  /**
+   * When the nightly rollup was last rebuilt. EVERY figure below is as of this
+   * instant, not live — today's punches, leaves and tickets are not in it.
+   *
+   * `null` means the job has NEVER run for this account, and every figure will
+   * be zero. That reads "not yet computed", never "no activity": the two look
+   * identical in the data and mean opposite things.
+   */
+  as_of: z.string().nullable(),
   from: z.string(),
   to: z.string(),
   workforce: workforceSummarySchema,
@@ -134,6 +143,15 @@ export const metricUnitSchema = z.enum(['count', 'hours', 'days', 'amount'])
 export const granularitySchema = z.enum(['day', 'week', 'month'])
 
 export const seriesResponseSchema = z.object({
+  /**
+   * When the nightly rollup was last rebuilt. EVERY figure below is as of this
+   * instant, not live — today's punches, leaves and tickets are not in it.
+   *
+   * `null` means the job has NEVER run for this account, and every figure will
+   * be zero. That reads "not yet computed", never "no activity": the two look
+   * identical in the data and mean opposite things.
+   */
+  as_of: z.string().nullable(),
   from: z.string(),
   to: z.string(),
   granularity: granularitySchema,
@@ -175,23 +193,20 @@ export const breakdownDimensionSchema = z.enum([
   'branch',
   'department',
   'designation',
-  'gender',
   'employment_type',
   'grade',
-  'marital_status',
-  'age_band',
-  'tenure_band',
-  'leave_type',
-  'leave_status',
-  'leave_pay_type',
-  'leave_duration',
-  'attendance_status',
-  'ticket_status',
-  'ticket_category',
-  'ticket_priority',
 ])
 
 export const breakdownResponseSchema = z.object({
+  /**
+   * When the nightly rollup was last rebuilt. EVERY figure below is as of this
+   * instant, not live — today's punches, leaves and tickets are not in it.
+   *
+   * `null` means the job has NEVER run for this account, and every figure will
+   * be zero. That reads "not yet computed", never "no activity": the two look
+   * identical in the data and mean opposite things.
+   */
+  as_of: z.string().nullable(),
   measure: breakdownMeasureSchema,
   dimension: breakdownDimensionSchema,
   unit: metricUnitSchema,
@@ -223,6 +238,15 @@ export const radarAxisSchema = z.enum([
 export const radarGroupBySchema = z.enum(['company', 'branch', 'department', 'designation'])
 
 export const radarResponseSchema = z.object({
+  /**
+   * When the nightly rollup was last rebuilt. EVERY figure below is as of this
+   * instant, not live — today's punches, leaves and tickets are not in it.
+   *
+   * `null` means the job has NEVER run for this account, and every figure will
+   * be zero. That reads "not yet computed", never "no activity": the two look
+   * identical in the data and mean opposite things.
+   */
+  as_of: z.string().nullable(),
   group_by: radarGroupBySchema,
   axes: z.array(radarAxisSchema),
   groups: z.array(
@@ -253,6 +277,15 @@ export const heatmapMetricSchema = z.enum([
 ])
 
 export const heatmapResponseSchema = z.object({
+  /**
+   * When the nightly rollup was last rebuilt. EVERY figure below is as of this
+   * instant, not live — today's punches, leaves and tickets are not in it.
+   *
+   * `null` means the job has NEVER run for this account, and every figure will
+   * be zero. That reads "not yet computed", never "no activity": the two look
+   * identical in the data and mean opposite things.
+   */
+  as_of: z.string().nullable(),
   shape: heatmapShapeSchema,
   metric: heatmapMetricSchema,
   unit: metricUnitSchema,
@@ -284,6 +317,8 @@ export const attentionSignalSchema = z.enum([
 ])
 
 export const attentionResponseSchema = z.object({
+  /** As of last night, like every other panel — absent on older builds. */
+  as_of: z.string().nullish().transform((value) => value ?? null),
   items: z.array(
     z.object({
       employee_id: z.number(),

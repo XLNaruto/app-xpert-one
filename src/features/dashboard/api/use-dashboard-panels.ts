@@ -53,11 +53,10 @@ export function useDashboardSeries(query: DashboardQuery, enabled = true) {
 }
 
 /**
- * GET /user/dashboard/breakdown.
+ * GET /user/dashboard/breakdown — bar, donut and comparative columns.
  *
- * `enabled` is how an impossible measure/dimension pair is prevented rather than
- * caught: the panel re-filters its dimension dropdown when the measure changes,
- * and holds the request back for the render in between.
+ * No pair guard: every measure now works with every one of the six dimensions,
+ * so the 400 this used to hold requests back from can no longer happen.
  */
 export function useDashboardBreakdown(query: DashboardQuery, enabled = true) {
   return useQuery({

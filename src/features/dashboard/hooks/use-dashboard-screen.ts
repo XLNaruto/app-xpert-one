@@ -13,6 +13,13 @@ import { useDashboardFilters } from './use-dashboard-filters'
  * The page shell with six error cards in it would be six ways of saying the same
  * thing.
  *
+ * **`as_of` is a screen-level fact.** Every one of the six responses carries it
+ * and they all describe the same nightly rollup, so it is read off `/summary`
+ * and shown once. Its NULL is the state that matters: the job has never run for
+ * this account, every figure will be zero, and that is "not yet computed" — not
+ * "no activity". The two are indistinguishable in the data and mean opposite
+ * things.
+ *
  * **Zeroes and nulls everywhere are DATA, not failure.** A COMPANY-scoped user
  * with no companies granted gets valid, empty responses, and so does a
  * brand-new account with no employees. Both want "no data yet" copy and both
@@ -40,6 +47,14 @@ export function useDashboardScreen() {
   const showComparisons = !filterState.appliedFilters.allTime
 
   /**
+   * The rollup has NEVER run for this account. Every figure on the page will be
+   * zero, and none of them means "nothing happened" — the pipeline has simply
+   * not produced anything yet, which is why the page says so outright rather
+   * than letting a wall of zeroes read as a quiet month.
+   */
+  const isNotYetComputed = summary.isSuccess && summary.data.asOf === null
+
+  /**
    * Whether the account has anything at all. Distinguishing this from a failure
    * is the difference between "no data yet" and "something went wrong".
    */
@@ -57,6 +72,12 @@ export function useDashboardScreen() {
     isForbidden,
     showComparisons,
     isEmptyAccount,
+    isNotYetComputed,
+    /**
+     * When the nightly rollup was last rebuilt — `undefined` until `/summary`
+     * answers, `null` when it has never run.
+     */
+    asOf: summary.data?.asOf,
     /** The window the SERVER measured — what every panel on the page describes. */
     resolvedWindow: summary.data
       ? { from: summary.data.from, to: summary.data.to }
