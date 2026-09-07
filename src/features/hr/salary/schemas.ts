@@ -189,7 +189,14 @@ const attendanceSchema = z.object({
 const wageStructureSchema = z
   .object({
     id: z.number(),
-    designation_id: z.number(),
+    /**
+     * Nullish, and not merely nullable: a structure the register sourced from
+     * the EMPLOYEE rather than from the designation (`wage_source: "EMPLOYEE"`
+     * on the row) has no designation behind it, and the key is left off the
+     * object entirely. Requiring it threw away an otherwise good register and
+     * put "Couldn't load the salary register." on the screen.
+     */
+    designation_id: z.number().nullish(),
     applicable_date: z.string().nullable().optional(),
     salary_type: z.string(),
     basic_pay: z.number().nullable(),

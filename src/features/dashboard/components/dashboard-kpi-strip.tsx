@@ -20,7 +20,15 @@ import {
 import type { DashboardSummary } from '../types'
 
 /**
- * The hero strip — six tiles off `/summary`.
+ * The hero strip — seven tiles off `/summary`.
+ *
+ * Seven is a prime, so no column count divides it: a six-across strip leaves
+ * the seventh tile alone in a row beside five tiles' worth of dead space. The
+ * grid is therefore TWELVE columns from `lg` up, and the tiles take two
+ * different spans — four at a quarter of the row, then three at a third. Twelve
+ * divides both, so each row fills edge to edge and nothing is stranded. Below
+ * `lg` it is pairs, with the odd tile spanning the last row rather than sitting
+ * half-width beside a hole.
  *
  * The captions here are load-bearing, and each one is the honest version of a
  * label that would otherwise be wrong:
@@ -41,6 +49,33 @@ import type { DashboardSummary } from '../types'
  *   dates change and the number doesn't.
  */
 
+/**
+ * The two spans the strip is built from, over a 12-column grid.
+ *
+ * Row one is four tiles at 3/12; row two is three at 4/12. The second row's
+ * tiles are a little wider than the first's, which is the price of filling both
+ * — and cheaper than the hole a uniform span leaves.
+ */
+const SPAN_QUARTER = 'sm:col-span-6 lg:col-span-3'
+const SPAN_THIRD = 'sm:col-span-6 lg:col-span-4'
+
+/**
+ * The last tile. At `sm` the strip is pairs and this one is the odd tile out, so
+ * it takes the whole row there instead of leaving a half-width gap beside it.
+ */
+const SPAN_LAST = 'sm:col-span-12 lg:col-span-4'
+
+/** Every tile's span, in the order the tiles are rendered. Drives the skeleton. */
+const TILE_SPANS = [
+  SPAN_QUARTER,
+  SPAN_QUARTER,
+  SPAN_QUARTER,
+  SPAN_QUARTER,
+  SPAN_THIRD,
+  SPAN_THIRD,
+  SPAN_LAST,
+]
+
 interface DashboardKpiStripProps {
   summary?: DashboardSummary
   isLoading: boolean
@@ -57,9 +92,15 @@ export function DashboardKpiStrip({
 }: DashboardKpiStripProps) {
   if (isLoading || !summary) {
     return (
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }, (_, index) => (
-          <Skeleton key={index} className="h-[122px] w-full rounded-xl" />
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-12">
+        {TILE_SPANS.map((span, index) => (
+          <Skeleton
+            key={index}
+            /* The placeholder holds the SAME shape the tiles will land in, so
+               the strip doesn't reflow the page under the reader's eye when the
+               summary arrives. */
+            className={cn('h-[122px] w-full rounded-xl', span)}
+          />
         ))}
       </div>
     )
@@ -70,11 +111,12 @@ export function DashboardKpiStrip({
   return (
     <div
       className={cn(
-        'mb-6 grid gap-4 transition-opacity duration-200 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
+        'mb-6 grid grid-cols-1 gap-4 transition-opacity duration-200 sm:grid-cols-12',
         isFetching && 'opacity-60',
       )}
     >
       <KpiTile
+        className={SPAN_QUARTER}
         label="Headcount"
         value={formatCount(workforce.headcount)}
         icon={Users}
@@ -95,6 +137,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
+        className={SPAN_QUARTER}
         label="Joins"
         value={formatCount(workforce.joined)}
         icon={UserCheck}
@@ -109,6 +152,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
+        className={SPAN_QUARTER}
         label="Exits"
         value={formatCount(workforce.exited)}
         icon={LogOut}
@@ -121,6 +165,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
+        className={SPAN_QUARTER}
         label="Attrition"
         value={formatRatio(workforce.attritionRate)}
         icon={ArrowLeftRight}
@@ -133,6 +178,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
+        className={SPAN_THIRD}
         label="Attendance"
         value={formatRatio(attendance.attendanceRate)}
         icon={UserCheck}
@@ -145,6 +191,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
+        className={SPAN_THIRD}
         label="Net payroll"
         value={formatMoney(payroll.netPay)}
         icon={IndianRupee}
@@ -168,7 +215,7 @@ export function DashboardKpiStrip({
             {formatCount(helpdesk.unassigned)} unassigned
           </span>
         }
-        className="xl:col-span-1"
+        className={SPAN_LAST}
       />
     </div>
   )

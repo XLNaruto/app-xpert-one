@@ -306,10 +306,26 @@ export function LeaveListPage() {
         id: 'reason',
         header: 'Reason',
         enableSorting: false,
+        /*
+          Every other column on this table is `whitespace-nowrap`, so in an
+          auto-layout table Reason is the only one that can give — and it gives
+          all of it, wrapping to one word per line on a narrow viewport. The
+          floor keeps a sentence readable, and the ceiling keeps a long
+          explanation from pushing the columns before it off the screen.
+        */
+        meta: { className: 'min-w-64' },
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">{row.original.leaveReason || '—'}</span>
-            {row.original.attachment && <AttachmentLink attachment={row.original.attachment} />}
+          <div className="flex max-w-96 items-start gap-2">
+            <span className="text-pretty text-muted-foreground">
+              {row.original.leaveReason || '—'}
+            </span>
+            {row.original.attachment && (
+              /* The clip must not be the thing that wraps — it is one icon and
+                 belongs beside the text, not under it. */
+              <span className="shrink-0">
+                <AttachmentLink attachment={row.original.attachment} />
+              </span>
+            )}
           </div>
         ),
       },

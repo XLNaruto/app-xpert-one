@@ -39,6 +39,17 @@ export const ATTENTION_PAGE_SIZE = 10
 /** Page sizes the worklist's footer offers. Must contain the size above. */
 export const ATTENTION_PAGE_SIZES = [10, 20, 50, 100]
 
+/**
+ * Rows per request once the footer is set to "All".
+ *
+ * "All" is NOT one unbounded request: `/user/dashboard/attention` caps `limit`
+ * at 100, and a worklist over a large workforce can run to thousands of rows.
+ * So "All" becomes a scroll that appends one 100-row batch at a time — the same
+ * 100 the pager's largest page size sends, which is also the largest the
+ * endpoint will answer.
+ */
+export const ATTENTION_ALL_BATCH_SIZE = 100
+
 export const DATE_PRESET_LABELS: Record<DatePreset, string> = {
   today: 'Today',
   this_week: 'This week',

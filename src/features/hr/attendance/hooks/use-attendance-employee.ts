@@ -200,7 +200,12 @@ export function useAttendanceEmployee(token?: string) {
     setMonth,
     stepMonth,
     /** The day the server is in — caps how far forward the month picker goes. */
-    today: query.data?.today ?? '',
+    /**
+     * The day the server is in — the ceiling on the month picker and on Next.
+     * Falls back to the browser's today rather than to `''`, so a future month
+     * stays unreachable while the first response is still in flight.
+     */
+    today: query.data?.today || format(new Date(), 'yyyy-MM-dd'),
     /** The weekly-off pattern in words, as the company configured it. */
     weeklyOff: query.data?.weeklyOff ?? '',
 

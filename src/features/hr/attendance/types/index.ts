@@ -47,7 +47,12 @@ export interface AttendanceTotals {
 
 /** One card: a department (or designation) and how its day counted. */
 export interface AttendanceGroup extends AttendanceTotals {
-  id: number
+  /**
+   * `null` on the "Unassigned" bucket — the employees with no posting at this
+   * level. There is no id to send as `department_id`, so that card counts but
+   * cannot be opened.
+   */
+  id: number | null
   name: string
   /** Department code — designations carry none. */
   code: string

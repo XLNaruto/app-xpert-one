@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { format, parseISO } from 'date-fns'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
@@ -28,6 +29,9 @@ export function useAttendanceList() {
    */
   const [date, setDate] = useState('')
 
+  /** Today per the browser — a stand-in for the server's day, never the truth. */
+  const browserToday = format(new Date(), 'yyyy-MM-dd')
+
   const list = useAttendanceGroups(params, date)
 
   /** A different day is a different result set — start it at its first page. */
@@ -36,7 +40,13 @@ export function useAttendanceList() {
     onPaginationChange({ limit, offset: 0 })
   }
 
-  const openGroup = (group: AttendanceGroup) =>
+  /**
+   * Open a card. The "Unassigned" bucket has no id to send as `department_id`,
+   * so it has no detail screen — the card is rendered as a plain tile and this
+   * refuses rather than navigating to a 400.
+   */
+  const openGroup = (group: AttendanceGroup) => {
+    if (group.id === null) return
     navigate({
       to: '/hr/attendance/detail',
       search: {
@@ -49,6 +59,7 @@ export function useAttendanceList() {
         }),
       },
     })
+  }
 
   const isForbidden = isForbiddenError(list.error)
 
@@ -71,6 +82,21 @@ export function useAttendanceList() {
     setSearch,
     selectedDate: date,
     changeDate,
+
+    /**
+     * What the date field shows: the day picked, else the day the server
+     * answered on, else the browser's today so the field is never blank on the
+     * first paint. The browser's guess only ever fills the gap before the first
+     * response — the request itself still goes up with no `date`, so the server
+     * decides which business day this is.
+     */
+    pickerDate: date || list.data?.date || browserToday,
+    /**
+     * The ceiling on the field — no future day has anything to report. Falls
+     * back to the browser's today rather than to nothing, so tomorrow is barred
+     * while the first response is still in flight.
+     */
+    maxDate: parseISO(list.data?.today || browserToday),
 
     isLoading: list.isLoading,
     isFetching: list.isFetching,

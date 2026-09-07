@@ -298,12 +298,14 @@ export function SalaryViewLongGrid({
                     ACCENT[column.accent ?? 'none'],
                   )}
                 >
-                  {/* Day counts don't sum to anything meaningful across people. */}
+                  {/* Day counts don't sum to anything meaningful across
+                      people, so the total row leaves theirs BLANK. An em dash
+                      is the app's "no value on record", and a footer cell that
+                      deliberately has nothing to say is not the same claim —
+                      on a row of real sums it reads as missing data. */}
                   {column.kind === 'amount' ? (
                     <Cell kind="amount" value={totals[column.key]} />
-                  ) : (
-                    '—'
-                  )}
+                  ) : null}
                 </td>
               ))}
             </tr>

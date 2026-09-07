@@ -53,6 +53,10 @@ export function useEmployeeDetail(data?: string) {
    * asset with the ledger reopened, from `'asset-list'` it returns to the list.
    * Sending a reader who came off the list into a detail screen they never
    * opened is a jump, not a way back.
+   *
+   * `'dashboard'` is the third way in: the "Needs attention" worklist. Back
+   * returns to that card rather than to the employee list — someone working a
+   * worklist is going to open the next row on it.
    */
   const origin = useMemo(() => {
     const raw = data ? decryptParams<{ from?: string; assetId?: number }>(data) : null;
@@ -60,6 +64,7 @@ export function useEmployeeDetail(data?: string) {
     const withAsset =
       Number.isFinite(assetIdRaw) && assetIdRaw > 0 ? assetIdRaw : undefined;
 
+    if (raw?.from === "dashboard") return { kind: "dashboard" as const };
     if (raw?.from === "asset-list")
       return { kind: "asset-list" as const, assetId: withAsset };
     // `'asset'` is the older spelling of the detail screen, still live in any URL
@@ -221,9 +226,17 @@ export function useEmployeeDetail(data?: string) {
      * Opened from an asset's stock history, the asset side is the parent — Back
      * returns to the screen that ledger was opened on (the detail screen with the
      * ledger reopened, or the asset list), not to a list the reader never passed
-     * through. Everything else falls back to the employee list.
+     * through. Opened from the dashboard's "Needs attention" worklist, Back
+     * returns to that card. Everything else falls back to the employee list.
      */
     goToList: () => {
+      if (origin?.kind === "dashboard") {
+        // The hash is the card's own `id` — the router scrolls to it, so the
+        // reader lands on the worklist rather than at the top of a long
+        // dashboard with the list somewhere below the fold.
+        void navigate({ to: "/dashboard", hash: "needs-attention" });
+        return;
+      }
       if (origin?.kind === "asset-detail") {
         void navigate({
           to: "/master/asset/detail",

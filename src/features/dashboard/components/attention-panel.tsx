@@ -7,7 +7,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/common/empty-state'
-import { encryptId } from '@/lib/crypto'
+import { encryptParams } from '@/lib/crypto'
 import { cn } from '@/lib/utils'
 import {
   ATTENTION_PAGE_SIZES,
@@ -39,6 +39,9 @@ import type { AttentionRow, AttentionSignal } from '../types'
  *   catalog order, so a row's chips read the same way on every row.
  * * **An empty list is a SUCCESS state.** "Nothing needs attention" is a genuine
  *   result, not a "no data" one, and is styled as such.
+ * * **"All" scrolls rather than fetching everything.** The endpoint caps `limit`
+ *   at 100, so the footer's "All" hands the body a fixed height and appends one
+ *   100-row batch per scroll to the bottom.
  */
 
 interface AttentionPanelProps {
@@ -60,7 +63,17 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
           <div className="min-w-0">
             <Link
               to="/hr/employee/detail"
-              search={{ data: encryptId(row.original.employeeId) }}
+              /* `from: 'dashboard'` is what makes Back over there come back
+                 HERE — to this card on the dashboard, scrolled to it — rather
+                 than dropping the reader into the employee list they never
+                 passed through. The worklist is the way in, so it is the way
+                 out too. */
+              search={{
+                data: encryptParams({
+                  id: row.original.employeeId,
+                  from: 'dashboard',
+                }),
+              }}
               className="truncate font-medium text-primary hover:underline"
             >
               {row.original.employeeName ?? `Employee #${row.original.employeeId}`}
@@ -213,6 +226,17 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             onPaginationChange={list.onPaginationChange}
             pageSizeOptions={ATTENTION_PAGE_SIZES}
             itemName="records"
+            /*
+              "All" is an appending scroll, not one huge request: the endpoint
+              caps `limit` at 100, so the hook fetches 100 rows per scroll to
+              the bottom. The body only needs to be a scroll container in that
+              mode — capping its height on a 10-row page would put a scrollbar
+              on a table that already fits.
+            */
+            maxHeight={list.isAll ? '32rem' : undefined}
+            onLoadMore={list.loadMore}
+            hasMore={list.hasMore}
+            isFetchingMore={list.isFetchingMore}
             emptyState={
               <EmptyState
                 title="No matching records"

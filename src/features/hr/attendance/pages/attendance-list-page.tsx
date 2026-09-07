@@ -1,5 +1,4 @@
 import { Building2 } from 'lucide-react'
-import { parseISO } from 'date-fns'
 import { Card } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -47,17 +46,14 @@ export function AttendanceListPage() {
             : undefined
         }
         actions={
-          /* The day is capped at the server's own today — the business day is
-             bucketed in its attendance timezone, so tomorrow has nothing to
-             report even where the browser has already turned over.
-
-             `parseISO`, not `new Date(…)`: the bare constructor reads a
-             date-only string as UTC midnight, which is the previous day in any
-             western timezone and would bar today from being picked. */
+          /* Opens on today and can't reach past it — both come from the hook,
+             which prefers the server's own day (the business day is bucketed in
+             its attendance timezone) and falls back to the browser's only while
+             the first response is in flight. */
           <DatePicker
-            value={attendance.selectedDate || attendance.date}
+            value={attendance.pickerDate}
             onChange={attendance.changeDate}
-            maxDate={attendance.today ? parseISO(attendance.today) : undefined}
+            maxDate={attendance.maxDate}
             className="w-44"
           />
         }
@@ -102,9 +98,14 @@ export function AttendanceListPage() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {attendance.groups.map((group) => (
                 <AttendanceGroupCard
-                  key={group.id}
+                  /* The "Unassigned" bucket has no id — key by name there, and
+                     leave it without an `onOpen`, since there is no
+                     `department_id` to open a detail screen with. */
+                  key={group.id ?? group.name}
                   group={group}
-                  onOpen={() => attendance.openGroup(group)}
+                  onOpen={
+                    group.id === null ? undefined : () => attendance.openGroup(group)
+                  }
                 />
               ))}
             </div>

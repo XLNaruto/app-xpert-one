@@ -760,5 +760,12 @@ export const queryKeys = {
     heatmap: (query: QueryParams) => [...queryKeys.dashboard.all, 'heatmap', query] as const,
     attention: (query: QueryParams) =>
       [...queryKeys.dashboard.all, 'attention', query] as const,
+    /**
+     * The same worklist read as an appending scroll ("All"). A separate key from
+     * `attention`: the cached value is a list of batches rather than one page,
+     * and the query carries no `limit`/`offset` — the batches do.
+     */
+    attentionInfinite: (query: QueryParams) =>
+      [...queryKeys.dashboard.all, 'attention', 'infinite', query] as const,
   },
 } as const

@@ -1,5 +1,4 @@
 import { ArrowLeft, Building2, Users } from 'lucide-react'
-import { parseISO } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
@@ -81,13 +80,13 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
           align="end"
         />
 
-        {/* Capped at the server's own today: the business day is bucketed in the
-            attendance timezone, so tomorrow has nothing to report. `parseISO`
-            keeps a date-only string off UTC midnight. */}
+        {/* Opens on the day being reported on and can't reach past the
+            server's own today: the business day is bucketed in the attendance
+            timezone, so tomorrow has nothing to report. */}
         <DatePicker
-          value={detail.selectedDate || detail.date}
+          value={detail.pickerDate}
           onChange={detail.changeDate}
-          maxDate={detail.today ? parseISO(detail.today) : undefined}
+          maxDate={detail.maxDate}
           className="w-44"
         />
 

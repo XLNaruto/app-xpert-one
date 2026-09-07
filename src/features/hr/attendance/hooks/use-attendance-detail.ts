@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { format, parseISO } from 'date-fns'
 import { usePagination } from '@/hooks/use-pagination'
 import { decryptParams, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
@@ -107,6 +108,9 @@ export function useAttendanceDetail(token?: string) {
     onPaginationChange({ limit, offset: 0 })
   }
 
+  /** Today per the browser — a stand-in for the server's day, never the truth. */
+  const browserToday = format(new Date(), 'yyyy-MM-dd')
+
   const goBack = () => navigate({ to: '/hr/attendance' })
 
   /**
@@ -146,13 +150,22 @@ export function useAttendanceDetail(token?: string) {
     /** The day the server is in — the ceiling on the header's date picker. */
     today: detail.data?.today ?? groupList.data?.today ?? '',
 
-    /** The header's group switcher: every group of the day, and the one shown. */
-    groupOptions: groupList.data?.items ?? [],
+    /**
+     * The header's group switcher: every group of the day, and the one shown.
+     * The id-less "Unassigned" bucket is dropped — it has no `department_id`,
+     * so it is not a group this screen can be pointed at.
+     */
+    groupOptions: (groupList.data?.items ?? []).filter((group) => group.id !== null),
     groupsLoading: groupList.isLoading,
     selectedGroupId: filters.groupId,
     changeGroup,
     selectedDate: pickedDate ?? '',
     changeDate,
+
+    /** Never blank: the day picked, else the day answered on, else browser today. */
+    pickerDate: pickedDate || detail.data?.date || date || browserToday,
+    /** No future day has anything to report — capped at the server's own today. */
+    maxDate: parseISO(detail.data?.today || groupList.data?.today || browserToday),
 
     employees: detail.data?.items ?? [],
     /** Rows on the *filtered* side, across every page. */

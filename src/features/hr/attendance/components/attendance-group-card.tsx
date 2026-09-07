@@ -36,26 +36,35 @@ function Mini({
  *
  * The whole card is the button into the group — the chevron is a sign of where
  * it goes, not a separate target, so a tap anywhere on it lands the same place.
+ *
+ * `onOpen` is omitted for a group with no id (the "Unassigned" bucket): the
+ * employee read is addressed by `department_id`, so there is nothing to open it
+ * with. That card still counts its people, it just isn't a button — no
+ * chevron, no pointer, no focus stop, rather than a click that 400s.
  */
 export function AttendanceGroupCard({
   group,
   onOpen,
 }: {
   group: AttendanceGroup
-  onOpen: () => void
+  onOpen?: () => void
 }) {
   return (
     <Card
-      role="button"
-      tabIndex={0}
+      role={onOpen ? 'button' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
       onClick={onOpen}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (onOpen && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault()
           onOpen()
         }
       }}
-      className="cursor-pointer p-4 transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className={cn(
+        'p-4 transition-colors',
+        onOpen &&
+          'cursor-pointer hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+      )}
     >
       <div className="flex items-start gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/12 text-xs font-semibold text-primary">
@@ -75,7 +84,9 @@ export function AttendanceGroupCard({
             {group.code ? ` · ${group.code}` : ''}
           </p>
         </div>
-        <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+        {onOpen && (
+          <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+        )}
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2">

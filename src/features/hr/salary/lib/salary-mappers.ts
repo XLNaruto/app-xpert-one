@@ -81,7 +81,7 @@ function toWageStructure(
   if (!wage) return null
   return {
     id: wage.id,
-    designationId: wage.designation_id,
+    designationId: wage.designation_id ?? null,
     applicableDate: wage.applicable_date ?? null,
     salaryType: wage.salary_type,
     basicPay: wage.basic_pay,

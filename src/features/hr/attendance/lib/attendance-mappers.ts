@@ -33,7 +33,7 @@ function toTotals(raw: AttendanceGroupsResponse['totals']): AttendanceTotals {
 }
 
 function toGroup(raw: AttendanceGroupsResponse['items'][number]): AttendanceGroup {
-  return { ...toTotals(raw), id: raw.id, name: raw.name, code: raw.code ?? '' }
+  return { ...toTotals(raw), id: raw.id ?? null, name: raw.name, code: raw.code ?? '' }
 }
 
 function toEmployee(

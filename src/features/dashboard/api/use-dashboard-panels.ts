@@ -1,5 +1,6 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
+import { ATTENTION_ALL_BATCH_SIZE } from '../constants'
 import {
   fetchDashboardAttention,
   fetchDashboardBreakdown,
@@ -91,11 +92,55 @@ export function useDashboardHeatmap(query: DashboardQuery, enabled = true) {
   })
 }
 
-/** GET /user/dashboard/attention — the paged worklist. */
-export function useDashboardAttention(query: DashboardQuery) {
+/**
+ * GET /user/dashboard/attention — the paged worklist.
+ *
+ * `enabled` is how the "All" footer switches modes: the pager and the appending
+ * scroll are two different reads of the same endpoint, and only one of them may
+ * be in flight, or the panel would pay for both on every filter change.
+ */
+export function useDashboardAttention(query: DashboardQuery, enabled = true) {
   return useQuery({
     queryKey: queryKeys.dashboard.attention(query),
     queryFn: ({ signal }) => fetchDashboardAttention(query, signal),
+    enabled,
+    ...PANEL_QUERY,
+  })
+}
+
+/**
+ * GET /user/dashboard/attention as an appending scroll — the footer's "All".
+ *
+ * The endpoint caps `limit` at 100, so "All" cannot be one request; it is a
+ * batch of 100 per scroll to the bottom. `query` therefore arrives WITHOUT
+ * `limit`/`offset` — the page param supplies the offset and the batch size is
+ * fixed here, so the cache key stays one key for the whole scroll instead of a
+ * new one per batch.
+ *
+ * The next offset is the number of rows already loaded rather than
+ * `pages.length * batch`: they are the same while the server answers full
+ * batches, and where it doesn't the count is the one that can't skip a row.
+ */
+export function useDashboardAttentionInfinite(
+  query: DashboardQuery,
+  enabled = true,
+) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.dashboard.attentionInfinite(query),
+    queryFn: ({ pageParam, signal }) =>
+      fetchDashboardAttention(
+        { ...query, limit: ATTENTION_ALL_BATCH_SIZE, offset: pageParam },
+        signal,
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      // An empty batch is the end of the list, whatever `total` claims — without
+      // this a total that outruns the rows would fetch the same offset forever.
+      if (lastPage.items.length === 0) return undefined
+      const loaded = allPages.reduce((count, page) => count + page.items.length, 0)
+      return loaded < lastPage.total ? loaded : undefined
+    },
+    enabled,
     ...PANEL_QUERY,
   })
 }

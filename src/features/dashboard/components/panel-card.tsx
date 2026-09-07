@@ -76,7 +76,21 @@ export function PanelCard({
         ) : null}
       </CardHeader>
 
-      <CardContent className="flex-1 px-5 pb-5 pt-0">
+      {/*
+        A column flex that CENTRES what it holds, which matters only for the
+        panels that don't fill their row.
+
+        Every row of the dashboard grid is as tall as its tallest panel, and the
+        pairs are uneven by nature: a breakdown carries a chart AND a slice
+        table, while the punch grid is seven rows of cells. Top-aligned, that
+        difference collects as dead white at the bottom of the shorter card and
+        reads as a panel that failed to finish drawing. Centred, the shorter
+        content sits in the middle of its card and the space becomes margin.
+
+        For a panel that IS the tallest in its row there is nothing to
+        distribute, so this changes nothing about how it draws.
+      */}
+      <CardContent className="flex flex-1 flex-col justify-center px-5 pb-5 pt-0">
         {isLoading ? (
           <Skeleton style={{ height: skeletonHeight }} className="w-full" />
         ) : error ? (

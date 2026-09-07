@@ -15,8 +15,15 @@ const totalsSchema = z.object({
   attendance_rate: z.number(),
 })
 
+/**
+ * A card's own row. `id` is NULLABLE: the group read answers with an
+ * "Unassigned" bucket — everybody with no posting at this level — and that
+ * bucket has no department to point at, so the server sends `null`. Requiring a
+ * number here threw the whole response away and the screen showed "Couldn't
+ * load attendance" for a payload that was perfectly good.
+ */
 const groupSchema = totalsSchema.extend({
-  id: z.number(),
+  id: z.number().nullish(),
   name: z.string(),
   code: z.string().nullish(),
 })

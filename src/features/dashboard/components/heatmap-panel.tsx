@@ -113,7 +113,18 @@ export function HeatmapPanel({ panel, ignoredFilters = [] }: HeatmapPanelProps) 
             columnLabels={columnLabels}
             cells={grid.cells}
             formatValue={(value) => formatByUnit(value, data.unit)}
-            cellSize={shape === 'calendar' ? 14 : 18}
+            /*
+              The weekday grid is only seven rows tall, which left it the
+              shortest content on the dashboard — a small stamp in a card sized
+              by the taller panel beside it. 26px cells give the seven weekdays
+              real presence and still fit 24 hours across a half-width card
+              (24 × 26 + spacing ≈ 670px), and the grid scrolls rather than
+              squashes if a narrower one ever has to hold them.
+
+              The calendar shape keeps its small cells: it is 53 weeks across,
+              and anything bigger scrolls on every screen.
+            */
+            cellSize={shape === 'calendar' ? 14 : 26}
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">

@@ -60,7 +60,8 @@ export interface SalaryAttendance {
  */
 export interface SalaryWageStructure {
   id: number
-  designationId: number
+  /** `null` where the structure came off the EMPLOYEE, not off a designation. */
+  designationId: number | null
   /** The month this version took effect, `yyyy-MM-dd`. */
   applicableDate: string | null
   /** `Monthly` or `Daily` — which of the two wage figures is the quoted one. */
