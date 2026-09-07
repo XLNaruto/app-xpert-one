@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { RotateCcw, Search, SlidersHorizontal, X, type LucideIcon } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -28,12 +28,46 @@ interface FilterSearch {
   placeholder?: string
 }
 
+/** A removable pill for a filter the config-driven `facets` can't express. */
+export interface FilterChipSpec {
+  key: string
+  label: string
+  onRemove: () => void
+}
+
 interface FilterBarProps {
   search?: FilterSearch
   facets?: FilterFacet[]
   /** Clears every filter back to its empty state. */
   onReset: () => void
   className?: string
+  /**
+   * A control kept OUTSIDE the panel, where the search box would sit — for the
+   * one filter a screen expects to be changed constantly and shouldn't bury
+   * behind a click (the dashboard's date preset, say). Everything else belongs
+   * in the panel.
+   */
+  leading?: ReactNode
+  /**
+   * Controls rendered at the top of the panel, above the facets — for filters a
+   * `FilterFacet` cannot describe: a date range, a multi-select, anything whose
+   * value isn't one string.
+   */
+  panelExtras?: ReactNode
+  /**
+   * Chips for those same filters. `facets` produce their own; these are for
+   * whatever `panelExtras` owns, so one row of chips still shows everything
+   * that is applied.
+   */
+  extraChips?: FilterChipSpec[]
+  /**
+   * How many of those extra filters are applied. Folded into the trigger's
+   * badge and into whether "Clear all" is offered, so the count on the button
+   * matches what the panel actually holds.
+   */
+  extraActiveCount?: number
+  /** A caption row under the bar — a resolved window, a timezone, a row count. */
+  footer?: ReactNode
 }
 
 /** Panel width in px, clamped to the viewport. */
@@ -68,7 +102,17 @@ function facetPlaceholder(facet: FilterFacet): string {
  * opens an anchored panel with the search box and every faceted dropdown.
  * Config-driven so any list screen can drop it in.
  */
-export function FilterBar({ search, facets = [], onReset, className }: FilterBarProps) {
+export function FilterBar({
+  search,
+  facets = [],
+  onReset,
+  className,
+  leading,
+  panelExtras,
+  extraChips = [],
+  extraActiveCount = 0,
+  footer,
+}: FilterBarProps) {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState<PanelCoords | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -76,11 +120,11 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
 
   const searchActive = Boolean(search?.value.trim())
   const activeFacets = facets.filter((f) => f.value !== (f.clearValue ?? 'all'))
-  // The badge/chips track facet filters; search lives in its own visible box.
-  const facetCount = activeFacets.length
+  // The badge/chips track panel filters; search lives in its own visible box.
+  const facetCount = activeFacets.length + extraActiveCount
   const anyActive = searchActive || facetCount > 0
-  // With no facets there is nothing to put in the panel — hide the trigger.
-  const hasFacets = facets.length > 0
+  // With nothing to put in the panel there is nothing to open — hide the trigger.
+  const hasFacets = facets.length > 0 || panelExtras !== undefined
 
   // Position the panel below the trigger in fixed/viewport coordinates so it is
   // never clipped by an `overflow-hidden` ancestor (e.g. the DataTable card).
@@ -107,8 +151,11 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
     }
   }, [open])
 
-  // Close on outside-click / Escape. Ignore clicks inside a Combobox's own
-  // portalled panel so choosing an option doesn't collapse the filter panel.
+  // Close on outside-click / Escape — but not on a click inside a control's own
+  // portalled panel. A Combobox's option list and a DatePicker's calendar are
+  // both mounted on `document.body`, so by the DOM they are outside this panel
+  // even though by the UI they are inside it: without these two exemptions,
+  // choosing an option or a date collapses the filter panel under the cursor.
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {
@@ -116,7 +163,8 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
       if (
         triggerRef.current?.contains(target) ||
         panelRef.current?.contains(target) ||
-        target.closest('[data-combobox-portal]')
+        target.closest('[data-combobox-portal]') ||
+        target.closest('.sa-datepicker-portal')
       ) {
         return
       }
@@ -136,18 +184,23 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-xl border border-border/50 bg-card p-3 shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px] sm:flex-row sm:items-center',
+        'rounded-xl border border-border/50 bg-card p-3 shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]',
         className,
       )}
     >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       {/* Search — always visible, outside the panel. Debounced so list
           queries/filtering only fire once the user pauses typing. */}
       {search ? <SearchBox search={search} /> : null}
+      {leading}
 
       {/* Facet chips + Filters trigger (right) */}
       <div className="flex flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-2">
-        {facetCount > 0 ? (
+        {activeFacets.length > 0 || extraChips.length > 0 ? (
           <div className="mr-auto flex flex-wrap items-center gap-1.5">
+            {extraChips.map((chip) => (
+              <FilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
+            ))}
             {activeFacets.map((facet) => (
               <FilterChip
                 key={facet.key}
@@ -194,6 +247,12 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
         ) : null}
       </div>
 
+      </div>
+
+      {footer ? (
+        <div className="mt-3 border-t border-border/60 pt-3">{footer}</div>
+      ) : null}
+
       {hasFacets && open && coords
         ? createPortal(
             <div
@@ -221,6 +280,7 @@ export function FilterBar({ search, facets = [], onReset, className }: FilterBar
               </div>
 
               <div className="max-h-[min(70vh,28rem)] space-y-4 overflow-y-auto px-4 py-4">
+                {panelExtras}
                 {facets.map((facet) => (
                   <div key={facet.key} className="space-y-1.5">
                     <label className="text-xs font-medium text-muted-foreground">

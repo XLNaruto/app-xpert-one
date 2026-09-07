@@ -29,6 +29,19 @@ export const endpoints = {
     TWO_FACTOR_DISABLE: '/user/me/two-factor/disable',
     MY_ROLE: '/user/my-role',
   },
+  /**
+   * The tenant dashboard — six read-only panels, all gated on `dashboard:read`
+   * and all taking the SAME population filter, so the numbers on one screen
+   * reconcile against each other.
+   */
+  DASHBOARD: {
+    SUMMARY: '/user/dashboard/summary',
+    SERIES: '/user/dashboard/series',
+    BREAKDOWN: '/user/dashboard/breakdown',
+    RADAR: '/user/dashboard/radar',
+    HEATMAP: '/user/dashboard/heatmap',
+    ATTENTION: '/user/dashboard/attention',
+  },
   ROLES: {
     LIST: '/user/roles',
     POST: '/user/roles',

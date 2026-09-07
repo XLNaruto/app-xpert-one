@@ -415,8 +415,12 @@ export function Combobox(props: ComboboxProps) {
                 </div>
               ) : null}
 
+              {/* `space-y-0.5` is load-bearing on a multi-select: without a gap a
+                  run of ticked rows fuses into one tinted block, and the reader
+                  can no longer see where one selected option ends and the next
+                  begins. */}
               <ul
-                className="max-h-60 overflow-y-auto"
+                className="max-h-60 space-y-0.5 overflow-y-auto"
                 role="listbox"
                 aria-multiselectable={props.multiple ? true : undefined}
                 onScroll={handleScroll}

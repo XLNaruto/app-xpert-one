@@ -55,11 +55,33 @@
   --input: #e2e8f0;
   --ring: #0ea5e9;
 
-  --chart-1: #0ea5e9; /* accent / sky     */
-  --chart-2: #6366f1; /* indigo           */
-  --chart-3: #15803d; /* success          */
-  --chart-4: #b45309; /* warning          */
-  --chart-5: #8b5cf6; /* violet           */
+  /* Categorical series colours, assigned in THIS fixed order and never cycled.
+     A chart's Nth series always takes slot N, so filtering a series out never
+     repaints the survivors — a reader who learned "Operations is sky" stays
+     right. The five are steps whose adjacent pairs clear the colour-vision
+     separation floor (validated against both surfaces), which is why the hues
+     run sky → indigo → green → pink → amber rather than sitting three shades
+     of blue-purple next to each other.
+
+     They are deliberately NOT the status tokens above: `--success` /
+     `--warning` mean good and bad, and a series that merely happens to be
+     third is neither. */
+  --chart-1: #0284c7; /* sky              */
+  --chart-2: #4f46e5; /* indigo           */
+  --chart-3: #15803d; /* green            */
+  --chart-4: #db2777; /* pink             */
+  --chart-5: #b45309; /* amber            */
+
+  /* Sequential ramp for a heatmap — ONE hue, light to dark, five steps. Never a
+     rainbow: a multi-hue ramp for magnitude has no readable order. `--heat-0`
+     is a distinct near-neutral rather than the palest step of the ramp, because
+     "nothing happened" must not look like "a little happened". */
+  --heat-0: #f1f5f9;
+  --heat-1: #38bdf8;
+  --heat-2: #0ea5e9;
+  --heat-3: #0284c7;
+  --heat-4: #0369a1;
+  --heat-5: #0c4a6e;
 
   --sidebar: #ffffff; /* white shell      */
   --sidebar-foreground: #334155; /* slate-700 nav text */
@@ -104,11 +126,21 @@
   --input: #262f38;
   --ring: #38bdf8;
 
-  --chart-1: #38bdf8;
-  --chart-2: #818cf8;
+  /* Same hue families and the same slot order as the light theme — re-stepped
+     against the dark surface rather than flipped, and validated there. */
+  --chart-1: #0284c7;
+  --chart-2: #4f46e5;
   --chart-3: #16a34a;
-  --chart-4: #d97706;
-  --chart-5: #a78bfa;
+  --chart-4: #ec4899;
+  --chart-5: #d97706;
+
+  /* The sequential ramp inverts on dark: magnitude reads dim → bright. */
+  --heat-0: #1c252e;
+  --heat-1: #0ea5e9;
+  --heat-2: #38bdf8;
+  --heat-3: #7dd3fc;
+  --heat-4: #bae6fd;
+  --heat-5: #f0f9ff;
 
   --sidebar: #0f161c; /* flush with page background */
   --sidebar-foreground: #c8d2dc;
@@ -152,6 +184,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+  --color-heat-5: var(--heat-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

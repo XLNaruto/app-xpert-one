@@ -1,6 +1,16 @@
 import type { PageParams } from '@/lib/pagination'
 
 /**
+ * A request's own query object, folded into its key verbatim.
+ *
+ * TanStack hashes keys structurally, so passing the serialised query is both the
+ * identity of the cache entry and the thing the fetcher sends — they cannot drift
+ * apart. Kept structural rather than importing a feature's own query type, so
+ * `lib/` never depends on `features/`.
+ */
+type QueryParams = Readonly<Record<string, unknown>>
+
+/**
  * Centralized query-key factory. Every TanStack Query key in the app is
  * defined here — no feature declares keys inline. Keys are `as const` so
  * they infer as readonly tuples for stable cache identity.
@@ -730,15 +740,25 @@ export const queryKeys = {
     /** One bank — for labelling a selection the loaded pages don't cover. */
     detail: (id: number) => [...queryKeys.bank.all, 'detail', id] as const,
   },
+  /**
+   * The tenant dashboard — `features/dashboard`. Every panel is a read of
+   * `/user/dashboard/*` under ONE shared population filter, so each key carries
+   * the whole serialised query: change a filter and all six panels re-fetch
+   * together, which is the only way the tiles and the charts under them keep
+   * describing the same population.
+   *
+   * `all` is the prefix a company switch invalidates; nothing here is mutated,
+   * so no other invalidation exists.
+   */
   dashboard: {
     all: ['dashboard'] as const,
-    kpis: () => [...queryKeys.dashboard.all, 'kpis'] as const,
-    dailySales: (date?: string) =>
-      [...queryKeys.dashboard.all, 'daily-sales', date ?? 'today'] as const,
-    teamPerformance: () => [...queryKeys.dashboard.all, 'team-performance'] as const,
-    targetVsAchievement: () =>
-      [...queryKeys.dashboard.all, 'target-vs-achievement'] as const,
-    attendanceSummary: () => [...queryKeys.dashboard.all, 'attendance-summary'] as const,
-    aiAnalytics: () => [...queryKeys.dashboard.all, 'ai-analytics'] as const,
+    summary: (query: QueryParams) => [...queryKeys.dashboard.all, 'summary', query] as const,
+    series: (query: QueryParams) => [...queryKeys.dashboard.all, 'series', query] as const,
+    breakdown: (query: QueryParams) =>
+      [...queryKeys.dashboard.all, 'breakdown', query] as const,
+    radar: (query: QueryParams) => [...queryKeys.dashboard.all, 'radar', query] as const,
+    heatmap: (query: QueryParams) => [...queryKeys.dashboard.all, 'heatmap', query] as const,
+    attention: (query: QueryParams) =>
+      [...queryKeys.dashboard.all, 'attention', query] as const,
   },
 } as const
