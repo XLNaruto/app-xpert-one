@@ -180,7 +180,7 @@ function Plot({
           hairlines and the axis drops most of its dates. */}
       <ScrollableChart
         count={rows.length}
-        minPerItem={plot.mark === 'bar' ? 40 : 16}
+        minPerItem={plot.mark === 'bar' ? 28 : 12}
         height={height}
       >
         <ComposedChart data={rows} margin={{ left: -8, right: 8, top: 8, bottom: 4 }}>

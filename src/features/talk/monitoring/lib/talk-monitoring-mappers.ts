@@ -116,9 +116,14 @@ export function toMonitoringMessage(
           id: res.reply_to.id,
           senderTalkUserId: res.reply_to.sender_talk_user_id ?? null,
           senderName: res.reply_to.sender_name?.trim() || null,
+          senderPhoto: res.reply_to.sender_photo || null,
           type: res.reply_to.type,
           body: res.reply_to.body ?? null,
           isDeleted: res.reply_to.is_deleted ?? false,
+          // Not in `reply_to` at all — see the type. Filled by
+          // `resolveQuoteMedia()` once the quoted message itself is on hand.
+          mediaKind: null,
+          mediaThumbnail: null,
         }
       : null,
     forwardedFromMessageId: res.forwarded_from_message_id ?? null,
@@ -149,6 +154,52 @@ function toMessageMedia(res: MonitoringMessageResponse['media'][number]): Messag
     thumbnailUrl: res.thumbnail_url || null,
     position: res.position ?? 0,
   }
+}
+
+/**
+ * Fill each quote's picture in from the thread's own copy of the message it
+ * points at.
+ *
+ * The API's `reply_to` is a SUMMARY — sender, type, body — and carries no media,
+ * so a reply to a photo could only ever say the word "Photo". The thread has
+ * already loaded the quoted message in the common case (a reply usually follows
+ * within the same page), so the thumbnail is right there to be borrowed. A quote
+ * further back than the pages read so far keeps its null and the words alone,
+ * which is what the icon-less quote row is written for.
+ *
+ * Returns the same array when nothing needed filling, so the memo above it — and
+ * every bubble's identity — is left alone on a thread with no replies in it.
+ */
+export function resolveQuoteMedia(messages: MonitoringMessage[]): MonitoringMessage[] {
+  if (!messages.some((message) => message.quote && !message.quote.mediaKind)) {
+    return messages
+  }
+
+  const firstMedia = new Map<number, MessageMedia>()
+  for (const message of messages) {
+    // `media[0]` — the sender's own first attachment, which is also the one a
+    // message's `type` follows, so the quote names the same thing the bubble does.
+    if (message.media.length > 0) firstMedia.set(message.id, message.media[0])
+  }
+
+  return messages.map((message) => {
+    const quote = message.quote
+    if (!quote || quote.mediaKind) return message
+    const media = firstMedia.get(quote.id)
+    if (!media) return message
+    return {
+      ...message,
+      quote: {
+        ...quote,
+        mediaKind: media.kind,
+        // The file itself stands in for a missing poster on a PHOTO only: a
+        // video, a voice note or a PDF handed to an `<img>` is a broken tile,
+        // and the kind's own icon says more than a broken tile does.
+        mediaThumbnail:
+          media.thumbnailUrl ?? (media.kind === 'image' ? media.fileUrl : null),
+      },
+    }
+  })
 }
 
 /* ── Derivations the panes read ────────────────────────────────────────────── */
@@ -205,3 +256,76 @@ export function chatPreviewSender(chat: MonitoringChat): string {
   // Only the first word — the row is narrow and the surname adds nothing here.
   return name.split(/\s+/)[0] ?? ''
 }
+
+/**
+ * What an attachment is called where it has no caption of its own — the tile's
+ * accessible name, the document row's title, the lightbox's caption.
+ */
+export function mediaLabel(media: MessageMedia): string {
+  if (media.fileName?.trim()) return media.fileName.trim()
+  switch (media.kind) {
+    case 'image':
+      return 'Photo'
+    case 'video':
+      return 'Video'
+    case 'audio':
+      return 'Audio'
+    default:
+      return 'Document'
+  }
+}
+
+/**
+ * How many emoji a body is, if that is all it is — otherwise null.
+ *
+ * A message that is nothing but a handful of emoji is drawn large and without a
+ * bubble, the way it was sent: chrome around three glyphs reads as an
+ * afterthought rather than as the point.
+ *
+ * Counted in GRAPHEME CLUSTERS, not code points: 👍🏽 is one emoji made of two
+ * code points and 👨‍👩‍👧‍👦 is one made of seven, so `body.length` would call a single
+ * family a seven-emoji sentence and shrink it back into a bubble.
+ */
+export function countJumboEmoji(body: string | null): number | null {
+  if (!body) return null
+  const text = body.trim()
+  if (!text || !EMOJI_ONLY.test(text) || !HAS_PICTOGRAPH.test(text)) return null
+
+  const withoutSpace = text.replace(/\s+/gu, '')
+  const count = graphemes
+    ? [...graphemes.segment(withoutSpace)].length
+    : [...withoutSpace].length
+
+  return count > 0 && count <= JUMBO_EMOJI_LIMIT ? count : null
+}
+
+/**
+ * How many emoji a message may hold and still be drawn large. Past this it is a
+ * sentence written in emoji, and a sentence belongs in a bubble at reading size.
+ */
+const JUMBO_EMOJI_LIMIT = 3
+
+/**
+ * Everything that may appear in a message that is "only emoji".
+ *
+ * Built from `Extended_Pictographic` rather than `Emoji`: the latter also
+ * matches the ASCII digits, `#` and `*`, which would quietly promote "123" to a
+ * giant three-character message. The rest are the pieces emoji are assembled
+ * FROM — the zero-width joiner in 👨‍👩‍👧, the variation selector that turns a glyph
+ * into its colour form, the skin-tone modifiers, the keycap mark, and the
+ * regional indicators that pair up into a flag.
+ */
+const EMOJI_ONLY =
+  /^(?:\s|\p{Extended_Pictographic}|\p{Regional_Indicator}|\p{Emoji_Modifier}|\u200D|\uFE0F|\u20E3)+$/u
+
+/** At least one actual picture, so whitespace alone never qualifies. */
+const HAS_PICTOGRAPH = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
+
+/**
+ * One segmenter for the whole screen. Constructing one is expensive enough to
+ * show up when every bubble in a scrolling thread builds its own.
+ */
+const graphemes =
+  typeof Intl !== 'undefined' && 'Segmenter' in Intl
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null

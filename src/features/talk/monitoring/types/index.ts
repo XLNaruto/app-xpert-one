@@ -120,9 +120,23 @@ export interface MessageQuote {
   id: number
   senderTalkUserId: number | null
   senderName: string | null
+  /** Storage key. */
+  senderPhoto: string | null
   type: MessageType
   body: string | null
   isDeleted: boolean
+  /**
+   * What the quoted message ATTACHED, so the quote can draw the picture instead
+   * of only naming it.
+   *
+   * NOT from the API's `reply_to`, which is a summary of the message rather than
+   * the message: both of these are filled in from the thread's own loaded copy
+   * by `resolveQuoteMedia()`, and stay null for a quote sitting further back in
+   * history than the pages read so far.
+   */
+  mediaKind: MediaKind | null
+  /** Preview image for that attachment — a storage key. */
+  mediaThumbnail: string | null
 }
 
 /**

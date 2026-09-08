@@ -244,12 +244,16 @@ function barColor(item: BreakdownItem): string {
 /**
  * A category label, wrapped onto up to two lines and centred under its column.
  *
+ * The line length is matched to `minPerItem` below — a label allowed to run
+ * wider than the narrowest column it can sit under is a label that collides
+ * with its neighbour.
+ *
  * The alternative — one angled line — is what clipped long department names
  * against the bottom of the card and ran them into the legend. Wrapping keeps
  * the label horizontal (the only orientation that is actually readable at 12px)
  * and `ScrollableChart` guarantees the column is wide enough to hold it.
  */
-const CATEGORY_TICK_CHARS = 14
+const CATEGORY_TICK_CHARS = 11
 const CATEGORY_TICK_LINES = 2
 const CATEGORY_LINE_HEIGHT = 13
 
@@ -322,31 +326,20 @@ function BarShape({
     previousValue: item.previousValue,
   }))
 
-  /*
-   * A "vs previous" pair is only drawn when there IS a previous figure
-   * somewhere. Otherwise every second column is zero-height, which leaves the
-   * one visible column sitting in the left half of its band — it reads as
-   * misaligned with its own label, because half the group it is centred in is
-   * invisible. With no previous data the grouped shape says nothing anyway.
-   */
-  const hasPrevious = rows.some((row) => (row.previousValue ?? 0) !== 0)
-  const paired = comparative && hasPrevious
-
-  // Two columns per category in the paired shape, so it needs the room.
-  const minPerItem = paired ? 104 : 76
   const axisLines = Math.max(
     1,
     ...rows.map((row) => wrapLabel(row.label).length),
   )
 
   return (
-    <ScrollableChart count={rows.length} minPerItem={minPerItem} height={height}>
+    <ScrollableChart count={rows.length} minPerItem={68} height={height}>
       {/* Columns, not rows: the VALUE runs up the y-axis and the category name
-          sits along the x-axis, wrapped rather than angled. */}
+          sits along the x-axis, wrapped rather than angled. One column per
+          category, centred on its own label. */}
       <BarChart
         data={rows}
         margin={{ left: -4, right: 16, top: 4, bottom: 4 }}
-        barGap={2}
+        barCategoryGap="22%"
       >
         <CartesianGrid stroke="var(--color-border)" vertical={false} />
         <XAxis
@@ -359,6 +352,16 @@ function BarShape({
           tick={(props) => <CategoryTick {...props} />}
           height={14 + axisLines * CATEGORY_LINE_HEIGHT}
         />
+        {/*
+          The previous period rides on its OWN hidden category axis, which is
+          what keeps both columns centred on the same label. Two bars on one
+          axis are a grouped PAIR — recharts centres the pair, so with a
+          previous value of 0 the only visible column sits in the left half of
+          an invisible pair and reads as misaligned with its own name.
+        */}
+        {comparative ? (
+          <XAxis xAxisId="previous" type="category" dataKey="label" hide />
+        ) : null}
         <YAxis
           type="number"
           {...axisProps}
@@ -375,11 +378,26 @@ function BarShape({
         />
         {/* Above the plot, not below it: the x-axis owns the space under the
             columns once the labels wrap. */}
-        {paired ? (
+        {comparative ? (
           <Legend
             verticalAlign="top"
             align="right"
             wrapperStyle={{ fontSize: 12, paddingBottom: 8 }}
+          />
+        ) : null}
+
+        {/* Drawn FIRST so it sits behind — a wider, translucent ghost of the
+            same column, not a second column beside it. */}
+        {comparative ? (
+          <Bar
+            xAxisId="previous"
+            dataKey="previousValue"
+            name="Previous period"
+            fill="var(--color-muted-foreground)"
+            fillOpacity={0.22}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={72}
+            isAnimationActive={false}
           />
         ) : null}
 
@@ -390,6 +408,7 @@ function BarShape({
           // per-bar cells below only differ for the two reserved keys.
           fill={chartColor(0)}
           radius={[4, 4, 0, 0]}
+          maxBarSize={comparative ? 36 : 56}
           isAnimationActive={false}
         >
           {/* One hue for every bar — the axis names the category and the height
@@ -399,16 +418,6 @@ function BarShape({
           ))}
         </Bar>
 
-        {paired ? (
-          <Bar
-            dataKey="previousValue"
-            name="Previous period"
-            fill="var(--color-muted-foreground)"
-            fillOpacity={0.35}
-            radius={[4, 4, 0, 0]}
-            isAnimationActive={false}
-          />
-        ) : null}
       </BarChart>
     </ScrollableChart>
   )

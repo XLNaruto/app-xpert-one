@@ -30,7 +30,13 @@ export function ScrollableChart({
   children: ReactElement
 }) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1 pb-1">
+    /*
+      `overflow-y-hidden` is deliberate: only the x-axis has more content than
+      fits. Left to `auto`, anything the chart draws past its own height — a
+      tooltip near the bottom edge — would raise a second, vertical scrollbar
+      on hover.
+    */
+    <div className="-mx-1 overflow-x-auto overflow-y-hidden px-1 pb-1">
       <div style={{ minWidth: Math.max(0, count) * minPerItem }}>
         <ResponsiveContainer width="100%" height={height}>
           {children}

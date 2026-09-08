@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { useMonitoringPeople } from '../api/use-monitoring-people'
@@ -6,6 +6,18 @@ import { useMonitoringChatCounts, useMonitoringChats } from '../api/use-monitori
 import { useMonitoringMessages } from '../api/use-monitoring-messages'
 import { PEOPLE_SEGMENTS, type ChatTab, type PeopleSegment } from '../constants'
 import type { MonitoringChat, MonitoringPerson } from '../types'
+
+/**
+ * The selection as the URL carries it — ids, not records.
+ *
+ * Only ids can travel: a `?data=` token is for addressing a screen, not for
+ * shipping two API rows through the address bar, and a stale copy of a renamed
+ * group would be worse than a lookup.
+ */
+export interface MonitoringSelection {
+  personId?: number
+  chatId?: number
+}
 
 /**
  * The whole screen's state — three panes that each narrow the next.
@@ -18,8 +30,13 @@ import type { MonitoringChat, MonitoringPerson } from '../types'
  *
  * The page and its components lay out markup against what this returns; none of
  * them holds state of its own.
+ *
+ * `initial` is the selection read back off the URL — the ids alone, decrypted by
+ * the page (a hook never decrypts a token). Restoring from them is not the same
+ * as making the selection: a click hands over the whole RECORD, while a refresh
+ * has two numbers and has to find the records again. See `restore` below.
  */
-export function useTalkMonitoring() {
+export function useTalkMonitoring(initial?: MonitoringSelection) {
   /**
    * Opening a thread is gated a second time on `talk-monitoring:read` — the
    * subscription sells reading conversations separately from listing who has
@@ -33,7 +50,11 @@ export function useTalkMonitoring() {
 
   const [personSearch, setPersonSearch] = useState('')
   const [segment, setSegment] = useState<PeopleSegment>('all')
-  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null)
+  // Seeded from the URL, so the conversations pane starts loading on the first
+  // render of a refresh rather than after the directory has been searched.
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(
+    initial?.personId ?? null,
+  )
 
   // The term reaches the API, so it's debounced — one request per pause, not
   // per keystroke.
@@ -82,6 +103,75 @@ export function useTalkMonitoring() {
     [chatsQuery.data],
   )
 
+  /**
+   * The chat the URL named, until its row has been found.
+   *
+   * A refresh knows the id and nothing else, and the pane's header draws the
+   * conversation's title, picture and member count — so the ROW has to be found
+   * before the thread can open. There is no read-one-chat endpoint, so it is
+   * looked for in the list, a page at a time, the way the reader would have
+   * found it themselves.
+   */
+  const [pendingChatId, setPendingChatId] = useState<number | null>(
+    initial?.chatId ?? null,
+  )
+
+  /* ── Restoring what the URL named ────────────────────────────────────────── */
+
+  /**
+   * Find the person's record behind the id in the URL.
+   *
+   * The directory read is the whole matched set (see `useMonitoringPeople`), so
+   * with no term typed this is the entire account and the person is either in it
+   * or gone — a revoked credential, or one moved out of the account. Gone clears
+   * the whole selection rather than leaving two panes loading against an id
+   * nothing will answer for.
+   */
+  useEffect(() => {
+    if (selectedPersonId == null || selectedPerson) return
+    const found = matched.find((person) => person.talkUserId === selectedPersonId)
+    if (found) {
+      setSelectedPerson(found)
+      return
+    }
+    if (peopleQuery.isSuccess && !peopleQuery.isFetching) {
+      setSelectedPersonId(null)
+      setPendingChatId(null)
+    }
+  }, [
+    matched,
+    peopleQuery.isFetching,
+    peopleQuery.isSuccess,
+    selectedPerson,
+    selectedPersonId,
+  ])
+
+  /**
+   * Find the conversation's row behind the id in the URL, walking the list as
+   * far as it goes.
+   *
+   * Conversations come back newest-first, so a chat somebody was reading is
+   * usually on the first page and this settles at once. It gives up when the
+   * list is exhausted — the chat was cleared, or the person was removed from it
+   * — and leaves the reader on the conversations pane rather than on an empty
+   * thread.
+   */
+  useEffect(() => {
+    if (pendingChatId == null || selectedChat) return
+    const found = chats.find((chat) => chat.id === pendingChatId)
+    if (found) {
+      setSelectedChat(found)
+      setPendingChatId(null)
+      return
+    }
+    if (chatsQuery.isFetching) return
+    if (chatsQuery.hasNextPage) {
+      void chatsQuery.fetchNextPage()
+      return
+    }
+    if (chatsQuery.isSuccess) setPendingChatId(null)
+  }, [chats, chatsQuery, pendingChatId, selectedChat])
+
   /* ── Pane 3 · the thread ─────────────────────────────────────────────────── */
 
   const messagesQuery = useMonitoringMessages(
@@ -106,25 +196,30 @@ export function useTalkMonitoring() {
   const selectPerson = useCallback((person: MonitoringPerson) => {
     setSelectedPersonId(person.talkUserId)
     setSelectedPerson(person)
-    // The open chat belonged to whoever was selected before.
+    // The open chat belonged to whoever was selected before — and so did any
+    // chat the URL was still looking for.
     setSelectedChat(null)
+    setPendingChatId(null)
     setChatTab('all')
     setChatSearch('')
   }, [])
 
   const selectChat = useCallback((chat: MonitoringChat) => {
     setSelectedChat(chat)
+    setPendingChatId(null)
   }, [])
 
   /** The back arrow on a narrow screen, where only one pane is visible at a time. */
   const clearChat = useCallback(() => {
     setSelectedChat(null)
+    setPendingChatId(null)
   }, [])
 
   const clearPerson = useCallback(() => {
     setSelectedPersonId(null)
     setSelectedPerson(null)
     setSelectedChat(null)
+    setPendingChatId(null)
   }, [])
 
   return {
@@ -157,6 +252,14 @@ export function useTalkMonitoring() {
     selectedChat,
     selectChat,
     clearChat,
+    /**
+     * True while a selection named in the URL is still being resolved — the
+     * panes show their loading state rather than "nothing selected", which on a
+     * refresh would flash the intro over a screen that is about to fill.
+     */
+    restoring: Boolean(
+      (selectedPersonId != null && !selectedPerson) || pendingChatId != null,
+    ),
 
     // Pane 3
     messagesQuery,

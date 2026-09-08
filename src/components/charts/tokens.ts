@@ -57,7 +57,18 @@ export const axisProps = {
   axisLine: false,
 } as const
 
+/**
+ * Tooltip chrome — and the two props that keep it INSIDE the plot.
+ *
+ * A chart in a horizontal scroller is the reason `allowEscapeViewBox` is stated
+ * rather than left to the default: a tooltip that hangs past the chart's own
+ * box is absolutely-positioned content inside the scrolling element, so it
+ * grows that element's scroll area and a scrollbar appears (and jumps) purely
+ * from hovering. Clamped to the view box, it flips side instead.
+ */
 export const tooltipStyle = {
+  allowEscapeViewBox: { x: false, y: false },
+  offset: 12,
   contentStyle: {
     background: 'var(--color-popover)',
     border: '1px solid var(--color-border)',

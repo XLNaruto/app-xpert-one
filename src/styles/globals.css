@@ -1465,9 +1465,17 @@ input[type='number'] {
 }
 
 /* Thumbnail strip: one surface with the backdrop, the current file lit by the
-   brand ring rather than by a border of its own. */
+   brand ring rather than by a border of its own.
+
+   It paints the backdrop's own colour rather than sitting `transparent` on it.
+   The strip is laid out BESIDE the slide container, not over it, so it is not
+   covered by the backdrop the rest of the viewer floats on — transparent here
+   meant the app's page showed through, which reads as intended on dark (the
+   page behind is nearly this colour anyway) and as a white band under the
+   photos on light. The blur matches the backdrop's, so the two are one sheet. */
 .xl-lightbox .yarl__thumbnails_container {
-  background: transparent;
+  background: var(--yarl__color_backdrop);
+  backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 10px 16px 14px;
 }

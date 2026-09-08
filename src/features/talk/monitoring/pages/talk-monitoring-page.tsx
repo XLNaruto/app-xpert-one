@@ -1,9 +1,13 @@
+import { useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
+import { decryptParams } from '@/lib/crypto'
 import { cn } from '@/lib/utils'
 import { MonitoringPeoplePane } from '../components/monitoring-people-pane'
 import { MonitoringChatsPane } from '../components/monitoring-chats-pane'
 import { MonitoringThreadPane } from '../components/monitoring-thread-pane'
 import { MonitoringIntro } from '../components/monitoring-intro'
 import { useTalkMonitoring } from '../hooks/use-talk-monitoring'
+import { useMonitoringUrlSync } from '../hooks/use-monitoring-url'
 
 /**
  * Chat Monitoring — the owner's read-only window onto the account's Talk
@@ -29,10 +33,37 @@ import { useTalkMonitoring } from '../hooks/use-talk-monitoring'
  * opens it in its own tab instead. Three panes that each scroll independently
  * can't share the panel shell's single scrollbar, and a thread read for any
  * length of time wants the whole viewport rather than what's left of it.
+ *
+ * The selection lives in the URL, in the one encrypted `?data=` token — so a
+ * refresh, a restored tab and a shared link all come back to the person and the
+ * conversation that were open. Decrypted HERE and handed to the hook as plain
+ * ids: reading the token is the page's job, since it is the page the route
+ * addressed.
  */
-export function TalkMonitoringPage() {
-  const monitoring = useTalkMonitoring()
-  const { selectedPerson, selectedChat } = monitoring
+export function TalkMonitoringPage({ data }: { data?: string }) {
+  /*
+    Read once per token. `p` and `c` are the person's Talk id and the chat's —
+    short keys because the token is a URL, and a malformed one (an old link, a
+    hand-edited address) simply reads as no selection.
+  */
+  const initial = useMemo(() => {
+    const params = data ? decryptParams<{ p?: number; c?: number }>(data) : null
+    return {
+      personId: Number.isFinite(params?.p) ? Number(params?.p) : undefined,
+      chatId: Number.isFinite(params?.c) ? Number(params?.c) : undefined,
+    }
+  }, [data])
+
+  const monitoring = useTalkMonitoring(initial)
+  const { selectedPerson, selectedChat, restoring } = monitoring
+
+  // Write the selection back out as it changes — see the hook for why this
+  // can't loop.
+  useMonitoringUrlSync({
+    token: data,
+    personId: selectedPerson?.talkUserId,
+    chatId: selectedChat?.id,
+  })
 
   /*
     Below `xl` the screen is ONE pane at a time, and this is which one: the
@@ -79,6 +110,13 @@ export function TalkMonitoringPage() {
 
         {selectedChat ? (
           <MonitoringThreadPane monitoring={monitoring} />
+        ) : restoring ? (
+          // A refresh knows which thread was open but not yet which ROW it is,
+          // so the intro would flash "pick a conversation" across a screen
+          // that is about to fill with one.
+          <div className="hidden min-w-0 flex-1 items-center justify-center bg-muted/30 xl:flex">
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          </div>
         ) : (
           // The intro explains a three-pane flow, so it only belongs where all
           // three are on screen. Narrower, the pane it would fill isn't there.
