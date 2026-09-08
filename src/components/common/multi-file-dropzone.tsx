@@ -1,6 +1,7 @@
 import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Plus, UploadCloud, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import { toasterrormsg } from '@/lib/toast'
 import { checkFileContent } from '@/lib/file-signature'
 import { useMediaResolver } from '@/hooks/use-media-url'
@@ -178,32 +179,35 @@ export function MultiFileDropzone({
               )}
             >
               {image ? (
-                <button
-                  type="button"
-                  onClick={() => preview.open(i)}
-                  aria-label={`Preview ${file.name}`}
-                  title={file.name}
-                  className="size-full cursor-zoom-in"
-                >
-                  <ImageWithFallback
-                    src={resolveMedia(file.url)}
-                    alt={file.name}
-                    wrapperClassName="size-full"
-                    className="object-cover"
-                  />
-                </button>
+                <Hint text={file.name}>
+                  <button
+                    type="button"
+                    onClick={() => preview.open(i)}
+                    aria-label={`Preview ${file.name}`}
+                    className="size-full cursor-zoom-in"
+                  >
+                    <ImageWithFallback
+                      src={resolveMedia(file.url)}
+                      alt={file.name}
+                      wrapperClassName="size-full"
+                      className="object-cover"
+                    />
+                  </button>
+                </Hint>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => preview.open(i)}
-                  title={file.name}
-                  className="flex size-full cursor-pointer items-center gap-3 p-3 text-left text-primary"
-                >
-                  <FileText className="size-6 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate pr-6 text-xs font-medium text-foreground">
-                    {file.name}
-                  </span>
-                </button>
+                <Hint text={file.name}>
+                  <button
+                    type="button"
+                    onClick={() => preview.open(i)}
+                    aria-label={`Preview ${file.name}`}
+                    className="flex size-full cursor-pointer items-center gap-3 p-3 text-left text-primary"
+                  >
+                    <FileText className="size-6 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate pr-6 text-xs font-medium text-foreground">
+                      {file.name}
+                    </span>
+                  </button>
+                </Hint>
               )}
               <button
                 type="button"

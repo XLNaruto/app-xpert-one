@@ -25,7 +25,23 @@ export interface EsicRate extends AuditFields {
    */
   contributionEndPeriod1: string
   contributionEndPeriod2: string
+  /**
+   * How both ESIC contributions are rounded.
+   *
+   * A **filing convention**, not arithmetic: it changes by notification, which is
+   * why it rides on the effective-dated rate row rather than living in the pay
+   * engine. `CEIL` was the engine's unconditional behaviour and stays the default
+   * — it turns ₹104.2275 into ₹105, where a government-approved agency sheet
+   * states ₹104.23, which is what `PAISE` gives.
+   *
+   * Whatever is set here is what the salary register applies, on both the
+   * employee's and the employer's share.
+   */
+  roundingMode: EsicRoundingMode
 }
+
+/** `CEIL` rounds up, `ROUND` to the nearest rupee, `PAISE` to two decimals. */
+export type EsicRoundingMode = 'CEIL' | 'ROUND' | 'PAISE'
 
 /** The numeric keys of a slab — everything except identity, date and periods. */
 export type EsicRateValueKey = Exclude<
@@ -34,6 +50,7 @@ export type EsicRateValueKey = Exclude<
   | 'wef'
   | 'contributionEndPeriod1'
   | 'contributionEndPeriod2'
+  | 'roundingMode'
   | keyof AuditFields
 >
 

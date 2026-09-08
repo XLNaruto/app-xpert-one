@@ -28,7 +28,11 @@ import { FormSection } from '@/components/common/form-section'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatAmount, formatDecimal } from '@/lib/currency'
-import { WageStructureGrid, formatMonth } from '@/features/master/designation'
+import {
+  ComponentScheduleSummary,
+  WageStructureGrid,
+  formatMonth,
+} from '@/features/master/designation'
 import { useAllowanceDeductions } from '@/features/master/allowance-deduction'
 import { useEmployeeWageForm } from '../hooks/use-employee-wage-form'
 import type { EmployeeWage, EmployeeWageVersion } from '../types'
@@ -225,8 +229,12 @@ export function WageStructureTab({
         <FormSection
           icon={Wallet}
           title="Allowances & Deductions"
-          description="From the designation — an employee's own wage carries no heads of its own, which is why the grid above has no head columns."
+          description="The heads in force for this employee — their own where a version carries them, the designation's catalog otherwise."
         />
+
+        <div className="mt-4">
+          <ComponentSourceBanner wage={wage} />
+        </div>
 
         <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ComponentTable
@@ -269,6 +277,58 @@ export function WageStructureTab({
         onConfirm={form.confirmRemoval}
       />
     </div>
+  )
+}
+
+/**
+ * Which tier priced the HEADS.
+ *
+ * A separate question from the wage's own tier, and deliberately answered
+ * separately: `component_source` and `source` are independent, so an employee can
+ * be on their own basic pay and the designation's allowances at once. Deriving one
+ * from the other would state a fact the API never made.
+ */
+function ComponentSourceBanner({ wage }: { wage: EmployeeWage }) {
+  const isOwn = wage.componentSource === 'EMPLOYEE'
+  const designationCount = wage.designationSalaryComponents.length
+
+  if (wage.componentSource === null) {
+    return (
+      <p className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+        <Info className="mt-0.5 size-4 shrink-0" />
+        <span>
+          No allowance or deduction heads are configured at either tier yet. Set them
+          on the designation, or on a row of the grid above to price this employee
+          alone.
+        </span>
+      </p>
+    )
+  }
+
+  return (
+    <p className="flex items-start gap-2 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+      <Info className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span>
+        {isOwn ? (
+          <>
+            These are <strong>this employee's own heads</strong>. The designation's
+            catalog{' '}
+            {designationCount > 0
+              ? `(${designationCount} head${designationCount === 1 ? '' : 's'})`
+              : ''}{' '}
+            no longer applies to them at all — the override is the whole list, not a
+            head-by-head change. Set a version's Heads column back to Designation to
+            hand them the catalog again.
+          </>
+        ) : (
+          <>
+            These are <strong>the designation's heads</strong>. Turn a version's Heads
+            column to Own on the grid above to price this employee on a list of their
+            own instead.
+          </>
+        )}
+      </span>
+    </p>
   )
 }
 
@@ -540,6 +600,7 @@ function ComponentTable({
                 <TableHead>Head</TableHead>
                 <TableHead className="whitespace-nowrap">Value</TableHead>
                 <TableHead className="whitespace-nowrap">Counts toward</TableHead>
+                <TableHead className="whitespace-nowrap">Payout</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -563,6 +624,21 @@ function ComponentTable({
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {acts.length ? acts.join(', ') : '—'}
+                    </TableCell>
+                    {/*
+                      Blank on a plain monthly head — which is what almost every
+                      head is, and saying "Monthly" on each of them would bury
+                      the one row that is a quarterly accrual.
+                    */}
+                    <TableCell className="whitespace-nowrap">
+                      <ComponentScheduleSummary
+                        schedule={component}
+                        side={
+                          component.componentType.toLowerCase() === 'allowance'
+                            ? 'allowance'
+                            : 'deduction'
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 )

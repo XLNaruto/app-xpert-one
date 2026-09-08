@@ -165,6 +165,27 @@ const storedComponentSchema = z.object({
   pf_applicable: z.boolean(),
   esic_applicable: z.boolean(),
   pt_applicable: z.boolean(),
+
+  /*
+   * How the line was priced — a snapshot, read-only, and nullable throughout.
+   *
+   * `is_payout_month` is the one worth having: a `0` on a quarterly head with
+   * `is_payout_month: false` is "not a payout month", which is a different
+   * statement from "an amount of zero". `accrued_months` above 1 likewise
+   * explains an unusually large line — an accrued payout releasing that many
+   * months at once.
+   *
+   * All null means the row was saved through the register's bulk save, which
+   * stores the lines the screen computed and records no schedule. There is then
+   * nothing to explain and the amount stands on its own.
+   */
+  payout_frequency: z.string().nullish(),
+  start_month: z.number().nullish(),
+  amount_mode: z.string().nullish(),
+  payroll_calculation: z.string().nullish(),
+  calculation_base: z.string().nullish(),
+  is_payout_month: z.boolean().nullish(),
+  accrued_months: z.number().nullish(),
 })
 
 const attendanceSchema = z.object({
@@ -221,6 +242,12 @@ const wageStructureSchema = z
     lwf_act_type: z.string().nullable().optional(),
     lwf_amount: z.number().nullable().optional(),
     tds_percentage: z.number().nullable().optional(),
+    /**
+     * What the TDS rate is charged on — one of five amounts, never `NET_PAY`.
+     * `null` (or absent, on a read taken before the column existed) deducts
+     * nothing at all: a percentage with no base cannot say what it applies to.
+     */
+    tds_calculation_base: z.string().nullable().optional(),
   })
   .nullable()
 
@@ -252,6 +279,14 @@ const ratesSchema = z.object({
       wage_ceiling_limit: z.number().nullable(),
       employee_esic_contribution: z.number().nullable(),
       employer_esic_contribution: z.number().nullable(),
+      /**
+       * How both ESIC shares are rounded — `CEIL`, `ROUND` or `PAISE`.
+       *
+       * A filing convention that changes by notification, so it rides on the
+       * effective-dated rate row rather than being a constant in the engine.
+       * Absent reads as `CEIL`, the behaviour every month before it existed.
+       */
+      rounding_mode: z.string().nullish(),
     })
     .nullable(),
   pt: z
@@ -313,6 +348,18 @@ const salaryComponentSchema = z.object({
   pf_applicable: z.boolean().nullable(),
   esic_applicable: z.boolean().nullable(),
   pt_applicable: z.boolean().nullable(),
+
+  /*
+   * The payout schedule, and the whole reason this screen's arithmetic changed:
+   * whether the head pays out in THIS month, what its figure means across the
+   * cycle, whether it enters the base other heads calculate on, and — on a
+   * deduction — what it is priced on. See `salary-calculations`.
+   */
+  payout_frequency: z.string().nullish(),
+  start_month: z.number().nullish(),
+  amount_mode: z.string().nullish(),
+  payroll_calculation: z.string().nullish(),
+  calculation_base: z.string().nullish(),
 })
 
 /**
@@ -338,6 +385,24 @@ const storedSalarySchema = z
     total_deduction: z.number().nullable(),
     gross_pay: z.number().nullable(),
     net_pay: z.number().nullable(),
+
+    /*
+     * The invoice side of a processed month — populated only when the month was
+     * priced by the SERVER engine (a sheet import, an employee payslip). A row
+     * saved through this screen's bulk save derives no bases, so all four come
+     * back null. Null is "not derived", never zero.
+     */
+    total_statutory_cost: z.number().nullish(),
+    /* The two COMPUTED bill columns — the percentages were always stored, the
+       amounts they come to were not, and an agency bill has a column for each. */
+    agency_charge_amount: z.number().nullish(),
+    gst_amount: z.number().nullish(),
+    total_invoice_amount: z.number().nullish(),
+    agency_charge_percentage: z.number().nullish(),
+    gst_percentage: z.number().nullish(),
+    /** What the stored month's TDS was charged on. `null` deducted nothing. */
+    tds_calculation_base: z.string().nullish(),
+
     is_pf_act_applicable: z.boolean().nullable().optional(),
     pf_deduction_type: z.string().nullable().optional(),
     pf_deduction_amount: z.number().nullable().optional(),
@@ -396,6 +461,25 @@ export const salaryRegisterResponseSchema = z.object({
     salary_pending: z.number(),
   }),
   rates: ratesSchema,
+  /**
+   * The company's agency charge and GST **in force for the period**.
+   *
+   * Added for this screen: without it the client cannot price the invoice chain
+   * — nor a TDS quoted on it — for a PENDING row. A processed row carries the two
+   * percentages of its own, but a row that has never been processed had no source
+   * for them at all.
+   *
+   * `null` is a company that has configured none. It then invoices at statutory
+   * cost, which is 0% / 0% for the arithmetic — **never 18%**.
+   */
+  billing_charge: z
+    .object({
+      id: z.number(),
+      effective_date: z.string().nullable(),
+      agency_charge_percentage: z.number().nullable(),
+      gst_percentage: z.number().nullable(),
+    })
+    .nullish(),
   items: z.array(
     z.object({
       employee_id: z.number(),
@@ -416,6 +500,13 @@ export const salaryRegisterResponseSchema = z.object({
       /* Defaulted rather than required: a posting with no structure in force has
          no components either, and that row still has to parse. */
       salary_components: z.array(salaryComponentSchema).optional().default([]),
+      /**
+       * Which tier the heads in `salary_components` came from. Separate from
+       * `wage_source`, which answers the same question about the WAGE: an
+       * employee can be on their own basic pay and the designation's allowances
+       * at once, so neither may be derived from the other.
+       */
+      salary_component_source: z.enum(['EMPLOYEE', 'DESIGNATION']).nullish(),
       salary: storedSalarySchema,
       components: z.array(storedComponentSchema).optional(),
     }),
@@ -517,13 +608,15 @@ export interface SalaryComponentPayload {
  * trusted — the posting must be on this register, every `pay_component_id` must
  * be in the company's catalog, a paid month is refused, and **the row must add
  * up**: `total_allowance`, `total_deduction`, `gross_pay` and `net_pay` are
- * verified against the parts sent with them (±2 for rounding), so a half-updated
+ * verified against the parts sent with them (**±0.05**, down from ±2 now that every
+ * figure is computed to the paise on both sides), so a half-updated
  * screen cannot store a net pay its own breakdown contradicts.
  *
- * PF / ESIC / PT / LWF travel as `employee_component.deduction` lines, as the
- * register reports them. The server routes them by catalog short code onto the
- * salary row's own columns rather than storing them as breakdown rows, so they
- * are counted in `total_deduction` exactly once.
+ * PF / ESIC / PT / LWF and TDS travel as **columns on the row**, never as
+ * `employee_component.deduction` lines. `bulk-save` verifies `total_deduction`
+ * against the lines plus those columns, so a statutory figure sent as both would
+ * be counted twice — and at the tightened ±0.05 tolerance that is a refused row
+ * rather than a rounding difference.
  */
 export interface SalarySaveRow {
   employee_id: number
@@ -550,6 +643,16 @@ export interface SalarySaveRow {
   pf_act_applicable?: boolean | null
   pf_deduction_type?: 'Percentage' | 'Fixed' | null
   pf_deduction_amount?: number | null
+  /**
+   * The employee's own statutory shares, as **columns on the row**.
+   *
+   * They are not breakdown lines and must not also appear in
+   * `employee_component.deduction`: `bulk-save` verifies `total_deduction`
+   * against the lines *plus* these columns, so a figure sent as both is counted
+   * twice and the row is refused — which at the tightened ±0.05 tolerance is a
+   * certainty rather than a risk.
+   */
+  employee_pf?: number | null
   employee_pf_contribution_on_wage_limit?: boolean | null
   employer_pf_contribution_on_wage_limit?: boolean | null
   employer_pf?: number | null
@@ -560,13 +663,18 @@ export interface SalarySaveRow {
   esic_deduction_basis?: 'Wage Ceiling' | 'Gross Salary' | 'As Per Act' | null
   employee_esic_deduction_percentage?: number | null
   employer_esic_deduction_percentage?: number | null
+  employee_esic?: number | null
   employer_esic?: number | null
   pt_act_applicable?: boolean | null
   pt_act_type?: 'AUTO' | 'FIXED' | null
+  employee_pt?: number | null
   lwf_act_applicable?: boolean | null
   lwf_deduct_from_wages?: boolean | null
+  employee_lwf?: number | null
   tds_act_applicable?: boolean | null
   tds_percentage?: number | null
+  /** The amount the rate was charged on — echoed so the month reads back as priced. */
+  tds_calculation_base?: string | null
   employee_tds?: number | null
 
   /* Overtime and extra days. */

@@ -1,6 +1,7 @@
 import type {
   ActAmountType,
   AllowanceValueType,
+  PfDeductionType,
   WageEsicDeductionBasis,
   WageSalaryType,
   WorkingDayCalculationType,
@@ -70,10 +71,29 @@ export function fromApiActAmountType(value: string | null): ActAmountType | null
 /* ── The choices that travel unchanged ──────────────────────────────────── */
 
 /**
- * `Percentage` / `Fixed` is spelled the same on both sides, on the PF amount and
- * on every head. Anything else reads as a percentage, the form's own default.
+ * A head's `amount_type` — spelled the same on both sides, and now four answers
+ * rather than two: `Per Day` is a rupee rate per payable day and `Days` is a
+ * count of days at the day's wage. Anything unrecognised reads as a percentage,
+ * the form's own default.
  */
 export function toValueType(value: string): AllowanceValueType {
+  return ALLOWANCE_VALUE_TYPES.find((type) => type === value) ?? 'Percentage'
+}
+
+/** The four `amount_type` answers, in the order the unit toggle cycles them. */
+export const ALLOWANCE_VALUE_TYPES: readonly AllowanceValueType[] = [
+  'Percentage',
+  'Fixed',
+  'Per Day',
+  'Days',
+] as const
+
+/**
+ * The PF share's own unit, which stayed a pair — a flat rupee deduction or a
+ * percentage of the EPF wages. The day-based types are a head's rule, not an
+ * act's, so anything else here reads as a percentage.
+ */
+export function toPfDeductionType(value: string): PfDeductionType {
   return value === 'Fixed' ? 'Fixed' : 'Percentage'
 }
 

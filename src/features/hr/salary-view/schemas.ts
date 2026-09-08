@@ -27,6 +27,25 @@ const reportComponentSchema = z.object({
   pf_applicable: z.boolean(),
   esic_applicable: z.boolean(),
   pt_applicable: z.boolean(),
+
+  /*
+   * How the line was priced — a snapshot, nullable throughout.
+   *
+   * `is_payout_month` is what makes a zero readable: a `0` on a quarterly head
+   * with `false` here is "not a payout month", which is a different statement
+   * from "an amount of zero". `accrued_months` above 1 likewise explains an
+   * unusually large line — an accrued payout releasing that many months at once.
+   *
+   * All null means the month was saved through the register's bulk save, which
+   * records no schedule; the amount then stands on its own.
+   */
+  payout_frequency: z.string().nullish(),
+  start_month: z.number().nullish(),
+  amount_mode: z.string().nullish(),
+  payroll_calculation: z.string().nullish(),
+  calculation_base: z.string().nullish(),
+  is_payout_month: z.boolean().nullish(),
+  accrued_months: z.number().nullish(),
 })
 
 /**
@@ -76,6 +95,24 @@ const reportSalarySchema = z.object({
   total_deduction: z.number().nullable(),
   gross_pay: z.number().nullable(),
   net_pay: z.number().nullable(),
+
+  /*
+   * The invoice side. Populated only where the SERVER engine priced the month —
+   * a sheet import, an employee payslip — and null on a month saved through the
+   * register's bulk save, which stores the lines the screen computed and derives
+   * no bases. Null is "not derived", never zero: it renders as a dash.
+   */
+  total_statutory_cost: z.number().nullish(),
+  /* The two COMPUTED bill columns. The percentages were always stored; the
+     amounts they come to were not, and an agency bill has a column for each. */
+  agency_charge_amount: z.number().nullish(),
+  gst_amount: z.number().nullish(),
+  total_invoice_amount: z.number().nullish(),
+  agency_charge_percentage: z.number().nullish(),
+  gst_percentage: z.number().nullish(),
+  /** What the month's TDS was charged on. `null` deducted nothing at all. */
+  tds_calculation_base: z.string().nullish(),
+
   is_paid: z.boolean(),
   payment_date: z.string().nullable(),
   is_import_from_sheet: z.boolean(),
@@ -142,6 +179,19 @@ export const salaryReportResponseSchema = z.object({
     employee_tds: z.number(),
     employer_pf: z.number(),
     employer_esic: z.number(),
+
+    /*
+     * The bill, summed down the page. No percentage totals: a rate cannot be
+     * summed, and two companies in one report may be on different ones.
+     *
+     * Nullish because they are newer than the rest of the footer — a response
+     * taken before they shipped simply has no keys here, and the screen shows a
+     * dash rather than a false zero.
+     */
+    total_statutory_cost: z.number().nullish(),
+    agency_charge_amount: z.number().nullish(),
+    gst_amount: z.number().nullish(),
+    total_invoice_amount: z.number().nullish(),
   }),
 })
 

@@ -65,6 +65,12 @@ export function useEmployeeDetail(data?: string) {
       Number.isFinite(assetIdRaw) && assetIdRaw > 0 ? assetIdRaw : undefined;
 
     if (raw?.from === "dashboard") return { kind: "dashboard" as const };
+    // The contract-expiry worklist, and the dashboard card that mirrors it.
+    // Someone working a worklist opens the next row on it, so Back returns to
+    // the list rather than to the employee register.
+    if (raw?.from === "contract-expiry") return { kind: "contract-expiry" as const };
+    if (raw?.from === "dashboard-contracts")
+      return { kind: "dashboard-contracts" as const };
     if (raw?.from === "asset-list")
       return { kind: "asset-list" as const, assetId: withAsset };
     // `'asset'` is the older spelling of the detail screen, still live in any URL
@@ -235,6 +241,16 @@ export function useEmployeeDetail(data?: string) {
         // reader lands on the worklist rather than at the top of a long
         // dashboard with the list somewhere below the fold.
         void navigate({ to: "/dashboard", hash: "needs-attention" });
+        return;
+      }
+      if (origin?.kind === "contract-expiry") {
+        void navigate({ to: "/hr/contract-expiry" });
+        return;
+      }
+      if (origin?.kind === "dashboard-contracts") {
+        // The hash is the card's own `id`, so the reader lands on the contract
+        // card rather than at the top of a long dashboard.
+        void navigate({ to: "/dashboard", hash: "contract-expiry" });
         return;
       }
       if (origin?.kind === "asset-detail") {

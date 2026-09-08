@@ -5,6 +5,7 @@ import {
   useWatch,
   type Control,
   type UseFormRegister,
+  type UseFormSetValue,
 } from 'react-hook-form'
 import { Briefcase, CalendarClock, PencilLine } from 'lucide-react'
 import { amountLabel, gridAmount } from '@/lib/currency'
@@ -22,9 +23,12 @@ import {
   NO_VALUE,
 } from '@/components/common/wage-grid-fields'
 import {
+  ComponentScheduleCell,
   deriveOvertimeRate,
   deriveWages,
   formatMonth,
+  TDS_CALCULATION_BASE_HINT,
+  TDS_CALCULATION_BASE_OPTIONS,
   WAGE_ACT_TYPE_OPTIONS,
   WAGE_ESIC_DEDUCTION_BASIS_OPTIONS,
   WAGE_SALARY_TYPE_OPTIONS,
@@ -37,6 +41,7 @@ import type { BulkWageDesignation } from '../types'
 
 type Ctl = Control<BulkWageFormValues>
 type Reg = UseFormRegister<BulkWageFormValues>
+type Setter = UseFormSetValue<BulkWageFormValues>
 
 /**
  * The pinned column: which designation the row is. It stays put while the forty
@@ -220,7 +225,9 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       key: `deduction:${head.id}`,
       label: head.code,
       group: 'deductions' as const,
-      width: 106,
+      /* Wider than a plain amount: the payout chip sits under the input, and it
+         has to spell a frequency and its anchor month. */
+      width: 132,
       hint: head.name,
       head: { kind: 'deduction' as const, at },
     })),
@@ -274,7 +281,14 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'Rate %',
       group: 'tds',
       width: 94,
-      hint: 'The rate deducted from gross pay — asked only while the act is on.',
+      hint: 'The rate deducted — asked only while the act is on.',
+    },
+    {
+      key: 'tdsBase',
+      label: 'On',
+      group: 'tds',
+      width: 158,
+      hint: TDS_CALCULATION_BASE_HINT,
     },
 
     { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
@@ -349,6 +363,8 @@ interface BulkWageGridProps {
   heads: WageHeads
   control: Ctl
   register: Reg
+  /** Each head's payout schedule is written through this — five leaves a head. */
+  setValue: Setter
   dirtyRows: Set<number>
   changeSalaryType: (index: number, value: 'Daily' | 'Monthly') => void
   changeWorkingDayCalculationType: (index: number, value: string) => void
@@ -381,6 +397,7 @@ export function BulkWageGrid({
   heads,
   control,
   register,
+  setValue,
   dirtyRows,
   changeSalaryType,
   changeWorkingDayCalculationType,
@@ -409,6 +426,7 @@ export function BulkWageGrid({
               columns={layout.columns}
               control={control}
               register={register}
+              setValue={setValue}
               isDirty={dirtyRows.has(index)}
               changeSalaryType={changeSalaryType}
               changeWorkingDayCalculationType={changeWorkingDayCalculationType}
@@ -510,6 +528,7 @@ interface WageRowProps {
   columns: WageColumn[]
   control: Ctl
   register: Reg
+  setValue: Setter
   isDirty: boolean
   changeSalaryType: (index: number, value: 'Daily' | 'Monthly') => void
   changeWorkingDayCalculationType: (index: number, value: string) => void
@@ -543,14 +562,31 @@ const WageRow = memo(function WageRow(props: WageRowProps) {
 
 /** One cell of a row. */
 function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
-  const { index, control, register } = props
+  const { index, control, register, setValue } = props
 
   if (column.head) {
     const { kind, at } = column.head
+    /* The head's full name — the column's hint — titles its payout panel; the
+       code alone ("LOC") wouldn't say which head is being configured. */
+    const label = column.hint ?? column.label
     return kind === 'allowance' ? (
-      <AllowanceCell index={index} at={at} control={control} register={register} />
+      <AllowanceCell
+        index={index}
+        at={at}
+        control={control}
+        register={register}
+        setValue={setValue}
+        label={label}
+      />
     ) : (
-      <DeductionCell index={index} at={at} control={control} register={register} />
+      <DeductionCell
+        index={index}
+        at={at}
+        control={control}
+        register={register}
+        setValue={setValue}
+        label={label}
+      />
     )
   }
 
@@ -757,6 +793,8 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
       )
     case 'tdsPct':
       return <TdsPercentCell index={index} control={control} register={register} />
+    case 'tdsBase':
+      return <TdsBaseCell index={index} control={control} />
 
     case 'lwf':
       return (
@@ -1098,8 +1136,45 @@ function TdsPercentCell({ index, control, register }: CellProps) {
   )
 }
 
-/** One allowance head — its value, then the acts it counts towards. */
-function AllowanceCell({ index, at, control, register }: CellProps & { at: number }) {
+/**
+ * What the TDS rate is charged on.
+ *
+ * A percentage on its own cannot say what it applies to — contractor TDS under
+ * section 194C is 2% of the TOTAL BILL, not of any wage figure — so the row names
+ * the amount beside the rate, and **an empty base deducts nothing**. `NET_PAY` is
+ * not offered: it already has TDS out of it, and the API refuses it with a 400.
+ */
+function TdsBaseCell({ index, control }: Pick<CellProps, 'index' | 'control'>) {
+  const applicable = useWatch({ control, name: `rows.${index}.tdsActApplicable` })
+  return (
+    <Controller
+      control={control}
+      name={`rows.${index}.tdsCalculationBase`}
+      render={({ field }) => (
+        <GridSelect
+          value={field.value}
+          onChange={field.onChange}
+          options={TDS_CALCULATION_BASE_OPTIONS}
+          placeholder="Deducts nothing"
+          disabled={!applicable}
+        />
+      )}
+    />
+  )
+}
+
+/**
+ * One allowance head — its value, the acts it counts towards, and the payout
+ * schedule behind it.
+ */
+function AllowanceCell({
+  index,
+  at,
+  control,
+  register,
+  setValue,
+  label,
+}: CellProps & { at: number; setValue: Setter; label: string }) {
   return (
     <div className="space-y-1">
       <Controller
@@ -1135,6 +1210,14 @@ function AllowanceCell({ index, at, control, register }: CellProps & { at: numbe
           tone="bg-violet-500/15 text-violet-700 dark:text-violet-400"
         />
       </div>
+
+      <ComponentScheduleCell
+        control={control}
+        setValue={setValue}
+        path={`rows.${index}.allowances.${at}`}
+        side="allowance"
+        label={label}
+      />
     </div>
   )
 }
@@ -1174,21 +1257,41 @@ function AllowanceMarker({
   )
 }
 
-/** One deduction head — a value and the unit it's in. */
-function DeductionCell({ index, at, control, register }: CellProps & { at: number }) {
+/**
+ * One deduction head — a value, the unit it's in, and the payout schedule, which
+ * on this side also carries what the head is calculated on.
+ */
+function DeductionCell({
+  index,
+  at,
+  control,
+  register,
+  setValue,
+  label,
+}: CellProps & { at: number; setValue: Setter; label: string }) {
   return (
-    <Controller
-      control={control}
-      name={`rows.${index}.deductions.${at}.valueType`}
-      render={({ field }) => (
-        <UnitAmountField valueType={field.value} onValueTypeChange={field.onChange}>
-          <GridInput
-            placeholder="0.00"
-            {...register(`rows.${index}.deductions.${at}.amount`)}
-          />
-        </UnitAmountField>
-      )}
-    />
+    <div className="space-y-1">
+      <Controller
+        control={control}
+        name={`rows.${index}.deductions.${at}.valueType`}
+        render={({ field }) => (
+          <UnitAmountField valueType={field.value} onValueTypeChange={field.onChange}>
+            <GridInput
+              placeholder="0.00"
+              {...register(`rows.${index}.deductions.${at}.amount`)}
+            />
+          </UnitAmountField>
+        )}
+      />
+
+      <ComponentScheduleCell
+        control={control}
+        setValue={setValue}
+        path={`rows.${index}.deductions.${at}`}
+        side="deduction"
+        label={label}
+      />
+    </div>
   )
 }
 

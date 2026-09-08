@@ -49,7 +49,7 @@ export function useCompanyForm(id?: number) {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, dirtyFields },
   } = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: EMPTY_COMPANY_FORM,
@@ -174,8 +174,24 @@ export function useCompanyForm(id?: number) {
       }
     }
 
+    /*
+     * Whether the billing block was actually edited.
+     *
+     * This decides whether the three billing keys are sent at all, and it has to:
+     * sending either percentage opens or patches a charges VERSION dated today,
+     * so a save that merely corrected an address would silently re-bill the
+     * company from today onward. `dirtyFields` is the honest answer — the form
+     * seeds from the stored rates, so a field the user never touched isn't dirty
+     * even though it holds a value.
+     */
+    const billingTouched = Boolean(
+      dirtyFields.agencyChargePercentage ||
+        dirtyFields.gstPercentage ||
+        dirtyFields.billingEffectiveFrom,
+    )
+
     if (isEdit) {
-      updateCompany.mutate(payload, {
+      updateCompany.mutate({ values: payload, billingTouched }, {
         onSuccess: () => {
           toast.success('Company updated')
           goToList()
@@ -189,7 +205,7 @@ export function useCompanyForm(id?: number) {
     // The response carries the new company's id, so the screen turns into that
     // company's edit screen and moves straight on to its shifts — which now
     // have a company to hang off.
-    createCompany.mutate(payload, {
+    createCompany.mutate({ values: payload, billingTouched }, {
       onSuccess: (company) => {
         toast.success('Company created — now add its shifts')
         setTab('shift')

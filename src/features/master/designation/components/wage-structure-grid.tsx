@@ -6,6 +6,7 @@ import {
   type Control,
   type FieldPath,
   type UseFormRegister,
+  type UseFormSetValue,
 } from 'react-hook-form'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { CalendarDays, Pencil, Trash2, UserPen, X } from 'lucide-react'
@@ -13,6 +14,9 @@ import { MonthPicker } from '@/components/ui/month-picker'
 import { amountLabel } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import {
+  TDS_CALCULATION_BASE_HINT,
+  TDS_CALCULATION_BASE_OPTIONS,
+  tdsBaseLabel,
   WAGE_ACT_TYPE_OPTIONS,
   WAGE_ESIC_DEDUCTION_BASIS_OPTIONS,
   WAGE_SALARY_TYPE_OPTIONS,
@@ -29,6 +33,10 @@ import type { WageHeads } from '../lib/wage-structure-mappers'
 import type { WageStructureFormValues } from '../schemas'
 import type { DesignationWageStructure, WageAllowance, WageDeduction } from '../types'
 import type { useDesignationWageForm } from '../hooks/use-designation-wage-form'
+import {
+  ComponentScheduleCell,
+  ComponentScheduleSummary,
+} from './component-schedule-field'
 import {
   ActMarkerButton,
   CellTooltip,
@@ -62,9 +70,19 @@ type WageForm = ReturnType<typeof useDesignationWageForm> & {
    * on their designation's terms, which is the only way to undo an override.
    */
   deleteRow?: (row: DesignationWageStructure) => void
+  /**
+   * Whether the row's head list is an OVERRIDE that can be turned off — true on
+   * an employee's own wage, where a version with no heads of its own falls back
+   * to the designation's catalog, and absent on the designation's own history,
+   * which IS that catalog. When set, the grid opens the allowance / deduction
+   * banner with a "Heads" column carrying the choice, and greys both sides'
+   * cells while the row is inheriting.
+   */
+  headOverride?: boolean
 }
 type Ctl = Control<WageStructureFormValues>
 type Reg = UseFormRegister<WageStructureFormValues>
+type Setter = UseFormSetValue<WageStructureFormValues>
 
 /**
  * Height of a saved row. Fixed and set on the row, so the virtualiser's estimate
@@ -72,6 +90,16 @@ type Reg = UseFormRegister<WageStructureFormValues>
  * one exception — an editable row is taller, so those get measured.
  */
 const SAVED_ROW_HEIGHT = 52
+
+/**
+ * Whose heads price the row — the two answers the employee wage screen's "Heads"
+ * column flips between. Abbreviated to fit: at 116px "Designation" is as long as
+ * the cell allows.
+ */
+const HEAD_SOURCE_OPTIONS = [
+  { label: 'Own', value: 'own' },
+  { label: 'Designation', value: 'designation' },
+]
 
 /**
  * Height of the banner (group) header row, and where the column header row pins
@@ -195,7 +223,7 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
  * header rows instead, so its label is free to wrap over two lines — which is
  * why these are the narrower ones despite some having the longest names.
  */
-function buildColumns(heads: WageHeads): WageColumn[] {
+function buildColumns(heads: WageHeads, headOverride: boolean): WageColumn[] {
   return [
     /*
      * What can be done to the row — remove it while it's a draft, pull it back
@@ -262,10 +290,29 @@ function buildColumns(heads: WageHeads): WageColumn[] {
      * the column has to be wide enough for the longest label ("ESI") plus its
      * border to sit in a third of it without wrapping.
      */
+    /*
+     * Whose heads price this row — the employee wage screen's question alone. It
+     * opens the allowance banner because that is what it governs: turn it to the
+     * designation and every head cell on the row goes inert.
+     */
+    ...(headOverride
+      ? [
+          {
+            key: 'headSource',
+            label: 'Heads',
+            group: 'allowances' as const,
+            width: 116,
+            hint: 'Whose allowance / deduction heads price this version — this employee’s own, or the designation’s catalog.',
+          },
+        ]
+      : []),
+
     ...heads.allowances.map((head, at) => ({
       key: `allowance:${head.id}`,
       label: head.code,
       group: 'allowances' as const,
+      /* The amount, the three act markers and the payout chip stack in here —
+         wide enough for "ESI" plus its border in a third of the cell. */
       width: 148,
       hint: head.name,
       head: { kind: 'allowance' as const, at, id: head.id },
@@ -290,7 +337,9 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       key: `deduction:${head.id}`,
       label: head.code,
       group: 'deductions' as const,
-      width: 106,
+      /* Wider than a plain amount: the payout chip sits under the input, and it
+         has to spell a frequency and its anchor month. */
+      width: 132,
       hint: head.name,
       head: { kind: 'deduction' as const, at, id: head.id },
     })),
@@ -344,7 +393,14 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'Rate %',
       group: 'tds',
       width: 94,
-      hint: 'The rate deducted from gross pay — asked only while the act is on.',
+      hint: 'The rate deducted — asked only while the act is on.',
+    },
+    {
+      key: 'tdsBase',
+      label: 'On',
+      group: 'tds',
+      width: 158,
+      hint: TDS_CALCULATION_BASE_HINT,
     },
 
     { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
@@ -381,8 +437,8 @@ interface GridLayout {
   totalWidth: number
 }
 
-function buildLayout(heads: WageHeads): GridLayout {
-  const columns = buildColumns(heads)
+function buildLayout(heads: WageHeads, headOverride: boolean): GridLayout {
+  const columns = buildColumns(heads, headOverride)
 
   const headerCells = columns.reduce<HeaderCell[]>((cells, column) => {
     if (!column.group) {
@@ -452,7 +508,10 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
    * reads its columns from here, so one memo keeps the whole grid off the
    * critical path of a scroll frame.
    */
-  const layout = useMemo(() => buildLayout(form.heads), [form.heads])
+  const layout = useMemo(
+    () => buildLayout(form.heads, form.headOverride ?? false),
+    [form.heads, form.headOverride],
+  )
 
   /*
    * Which saved versions are open for correction, and at what index in the field
@@ -527,6 +586,8 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
                 isCorrection={false}
                 control={form.control}
                 register={form.register}
+                setValue={form.setValue}
+                headOverride={form.headOverride}
                 monthBounds={form.monthBounds}
                 takenMonths={form.takenMonths}
                 onRemove={form.removeRow}
@@ -581,6 +642,8 @@ export function WageStructureGrid({ form }: { form: WageForm }) {
                 isCorrection
                 control={form.control}
                 register={form.register}
+                setValue={form.setValue}
+                headOverride={form.headOverride}
                 monthBounds={form.monthBounds}
                 takenMonths={form.takenMonths}
                 onRemove={form.removeRow}
@@ -732,6 +795,7 @@ interface DraftRowProps {
   columns: WageColumn[]
   control: Ctl
   register: Reg
+  setValue: Setter
   /**
    * Whether this row was opened from the history rather than drafted — a PATCH of
    * that stored version, not a new one on top of it.
@@ -742,6 +806,8 @@ interface DraftRowProps {
   onRemove: (index: number) => void
   changeSalaryType: (index: number, value: 'Daily' | 'Monthly') => void
   changeWorkingDayCalculationType: (index: number, value: string) => void
+  /** Mirrors the form's own flag — see `WageForm['headOverride']`. */
+  headOverride?: boolean
 }
 
 /**
@@ -751,6 +817,17 @@ interface DraftRowProps {
  * scrolling the saved history below never re-renders the editable rows.
  */
 const DraftRow = memo(function DraftRow(props: DraftRowProps) {
+  /*
+   * One field-level subscription per row, and only where the head list can be
+   * turned off at all. When it is off, every head cell on the row is inert —
+   * typing into one would be discarded by the save — so the row has to know.
+   */
+  const ownHeads = useWatch({
+    control: props.control,
+    name: `rows.${props.index}.ownHeads`,
+  })
+  const headsInert = props.headOverride === true && ownHeads === false
+
   return (
     <tr
       ref={props.measureRef}
@@ -768,7 +845,7 @@ const DraftRow = memo(function DraftRow(props: DraftRowProps) {
           style={pinStyle(column)}
           className={cn(CELL, column.pin !== undefined && STICKY)}
         >
-          <DraftCell column={column} {...props} />
+          <DraftCell column={column} headsInert={headsInert} {...props} />
         </td>
       ))}
     </tr>
@@ -776,15 +853,66 @@ const DraftRow = memo(function DraftRow(props: DraftRowProps) {
 })
 
 /** One cell of a draft row. */
-function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn }) {
-  const { index, control, register } = props
+function DraftCell({
+  column,
+  headsInert,
+  ...props
+}: DraftRowProps & { column: WageColumn; headsInert: boolean }) {
+  const { index, control, register, setValue } = props
+
+  if (column.key === 'headSource') {
+    return (
+      <Controller
+        control={control}
+        name={`rows.${index}.ownHeads`}
+        render={({ field }) => (
+          <TogglePill
+            value={field.value ? 'own' : 'designation'}
+            options={HEAD_SOURCE_OPTIONS}
+            onChange={(value) => field.onChange(value === 'own')}
+            tone={
+              field.value
+                ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
+                : 'border-input bg-muted/40 text-muted-foreground hover:border-primary/40'
+            }
+          />
+        )}
+      />
+    )
+  }
+
+  /*
+   * A row inheriting the designation's catalog has no heads of its own, so its
+   * cells are shown but dead — the save sends an empty list for it, and an amount
+   * typed here would simply be dropped.
+   */
+  if (column.head && headsInert) {
+    return <ReadText value={null} />
+  }
 
   if (column.head) {
     const { kind, at } = column.head
+    /* The head's full name — the column's hint — titles its payout panel; the
+       code alone ("LOC") wouldn't say which head is being configured. */
+    const label = column.hint ?? column.label
     return kind === 'allowance' ? (
-      <AllowanceCell index={index} at={at} control={control} register={register} />
+      <AllowanceCell
+        index={index}
+        at={at}
+        control={control}
+        register={register}
+        setValue={setValue}
+        label={label}
+      />
     ) : (
-      <DeductionCell index={index} at={at} control={control} register={register} />
+      <DeductionCell
+        index={index}
+        at={at}
+        control={control}
+        register={register}
+        setValue={setValue}
+        label={label}
+      />
     )
   }
 
@@ -984,6 +1112,8 @@ function DraftCell({ column, ...props }: DraftRowProps & { column: WageColumn })
       )
     case 'tdsPct':
       return <TdsPercentCell index={index} control={control} register={register} />
+    case 'tdsBase':
+      return <TdsBaseCell index={index} control={control} />
 
     case 'lwf':
       return (
@@ -1363,9 +1493,56 @@ function TdsPercentCell({ index, control, register }: CellProps) {
   )
 }
 
-/** One allowance head in a draft row — its value, then the acts it counts to. */
-function AllowanceCell({ index, at, control, register }: CellProps & { at: number }) {
+/**
+ * What the TDS rate is charged on.
+ *
+ * The rate alone says nothing: contractor TDS under section 194C is 2% of the
+ * TOTAL BILL, which is not a wage figure at all. So the row names the amount
+ * beside the percentage, and **an empty base deducts nothing** — which is the
+ * default, and the behaviour every structure had before TDS computed.
+ *
+ * `NET_PAY` is not offered. The net already has TDS taken out of it, so quoting
+ * TDS on it would make it an input to itself, and the API refuses it with a 400.
+ * It remains a legitimate base for an ordinary deduction head, which is why the
+ * options here are `CALCULATION_BASE_OPTIONS` less that one rather than a list
+ * of their own.
+ */
+function TdsBaseCell({ index, control }: Pick<CellProps, 'index' | 'control'>) {
+  const applicable = useWatch({ control, name: `rows.${index}.tdsActApplicable` })
+  return (
+    <Controller
+      control={control}
+      name={`rows.${index}.tdsCalculationBase`}
+      render={({ field }) => (
+        <GridSelect
+          value={field.value}
+          onChange={field.onChange}
+          options={TDS_CALCULATION_BASE_OPTIONS}
+          placeholder="Deducts nothing"
+          disabled={!applicable}
+        />
+      )}
+    />
+  )
+}
+
+/**
+ * One allowance head in a draft row — its value, the acts it counts towards, and
+ * the payout schedule behind it.
+ */
+function AllowanceCell({
+  index,
+  at,
+  control,
+  register,
+  setValue,
+  label,
+}: CellProps & { at: number; setValue: Setter; label: string }) {
   const error = useFieldError(control, `rows.${index}.allowances.${at}.amount`)
+  const scheduleError = useFieldError(
+    control,
+    `rows.${index}.allowances.${at}.startMonth`,
+  )
   return (
     <div className="space-y-1">
       <Controller
@@ -1407,6 +1584,15 @@ function AllowanceCell({ index, at, control, register }: CellProps & { at: numbe
           tone="bg-violet-500/15 text-violet-700 dark:text-violet-400"
         />
       </div>
+
+      <ComponentScheduleCell
+        control={control}
+        setValue={setValue}
+        path={`rows.${index}.allowances.${at}`}
+        side="allowance"
+        label={label}
+        error={scheduleError}
+      />
     </div>
   )
 }
@@ -1446,28 +1632,53 @@ function AllowanceMarker({
   )
 }
 
-/** One deduction head in a draft row — a value and the unit it's in. */
-function DeductionCell({ index, at, control, register }: CellProps & { at: number }) {
+/**
+ * One deduction head in a draft row — a value, the unit it's in, and the payout
+ * schedule, which on this side also carries what the head is calculated on.
+ */
+function DeductionCell({
+  index,
+  at,
+  control,
+  register,
+  setValue,
+  label,
+}: CellProps & { at: number; setValue: Setter; label: string }) {
   const error = useFieldError(control, `rows.${index}.deductions.${at}.amount`)
+  const scheduleError = useFieldError(
+    control,
+    `rows.${index}.deductions.${at}.startMonth`,
+  )
   return (
-    <Controller
-      control={control}
-      name={`rows.${index}.deductions.${at}.valueType`}
-      render={({ field }) => (
-        <UnitAmountField
-          valueType={field.value}
-          onValueTypeChange={field.onChange}
-          invalid={!!error}
-        >
-          <GridInput
-            placeholder="0.00"
-            aria-invalid={!!error}
-            title={error}
-            {...register(`rows.${index}.deductions.${at}.amount`)}
-          />
-        </UnitAmountField>
-      )}
-    />
+    <div className="space-y-1">
+      <Controller
+        control={control}
+        name={`rows.${index}.deductions.${at}.valueType`}
+        render={({ field }) => (
+          <UnitAmountField
+            valueType={field.value}
+            onValueTypeChange={field.onChange}
+            invalid={!!error}
+          >
+            <GridInput
+              placeholder="0.00"
+              aria-invalid={!!error}
+              title={error}
+              {...register(`rows.${index}.deductions.${at}.amount`)}
+            />
+          </UnitAmountField>
+        )}
+      />
+
+      <ComponentScheduleCell
+        control={control}
+        setValue={setValue}
+        path={`rows.${index}.deductions.${at}`}
+        side="deduction"
+        label={label}
+        error={scheduleError}
+      />
+    </div>
   )
 }
 
@@ -1550,25 +1761,46 @@ function SavedCell({
   onEdit: (row: DesignationWageStructure) => void
   onDelete?: (row: DesignationWageStructure) => void
 }) {
+  if (column.key === 'headSource') {
+    /*
+     * Only an employee's version answers this, and only the ones that carry a
+     * head list of their own read as "Own" — a version with none was priced by
+     * the designation's catalog, which is a fact about that month worth stating.
+     */
+    return row.ownHeads ? (
+      <ReadChoice value="Own" tone="bg-primary/15 text-primary" />
+    ) : (
+      <ReadChoice value="Designation" tone="bg-muted text-muted-foreground" />
+    )
+  }
+
   if (column.head) {
     const value = savedHeadValue(row, column.head)
     if (!value) return <ReadText value={null} />
 
     const amount = <ReadAmount amount={value.amount} valueType={value.valueType} />
-    /*
-     * An allowance also shows the acts it counts towards, the same three markers
-     * the draft row carries. Nothing to show for a head this version didn't value,
-     * and a deduction has no markers at all.
-     */
-    if (value.amount === null || !('pfApplicable' in value)) return amount
+    /* Nothing else to show for a head this version didn't value. */
+    if (value.amount === null) return amount
 
+    /*
+     * A valued head also shows what it was scheduled as, and — on an allowance —
+     * the acts it counted towards. Both lines only appear when there is something
+     * to say: a plain monthly head renders no schedule chips at all, which is
+     * what almost every head is.
+     */
     return (
       <div className="space-y-0.5">
         {amount}
-        <ReadActMarkers
-          pfApplicable={value.pfApplicable}
-          esicApplicable={value.esicApplicable}
-          ptApplicable={value.ptApplicable}
+        {'pfApplicable' in value && (
+          <ReadActMarkers
+            pfApplicable={value.pfApplicable}
+            esicApplicable={value.esicApplicable}
+            ptApplicable={value.ptApplicable}
+          />
+        )}
+        <ComponentScheduleSummary
+          schedule={value}
+          side={column.head.kind}
         />
       </div>
     )
@@ -1680,6 +1912,8 @@ function SavedCell({
       )
     case 'tdsPct':
       return <ReadAmount amount={row.tdsPercentage} valueType="Percentage" />
+    case 'tdsBase':
+      return <ReadText value={tdsBaseLabel(row.tdsCalculationBase)} />
 
     case 'lwf':
       return (

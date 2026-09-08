@@ -8,11 +8,23 @@ import {
   uploadCompanyLogo,
 } from './company-api'
 
-/** POST /user/companies — create a company, then refresh the list. */
+/**
+ * POST /user/companies — create a company, then refresh the list.
+ *
+ * `billingTouched` rides on the variables rather than being inferred here: only
+ * the form knows whether the agency charge / GST block was edited, and sending it
+ * untouched would open a charges version nobody asked for.
+ */
 export function useCreateCompany() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (values: CompanyFormValues) => createCompany(values),
+    mutationFn: ({
+      values,
+      billingTouched,
+    }: {
+      values: CompanyFormValues
+      billingTouched: boolean
+    }) => createCompany(values, { billingTouched }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.company.all })
     },
@@ -23,7 +35,13 @@ export function useCreateCompany() {
 export function useUpdateCompany(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (values: CompanyFormValues) => updateCompany(id, values),
+    mutationFn: ({
+      values,
+      billingTouched,
+    }: {
+      values: CompanyFormValues
+      billingTouched: boolean
+    }) => updateCompany(id, values, { billingTouched }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.company.all })
       // The tenant list carries the name and logo the shell brands itself with,

@@ -152,6 +152,7 @@ function CreateView() {
               <AllowanceDeductionSection
                 register={form.register}
                 control={form.control}
+                setValue={form.setValue}
                 errors={form.errors}
                 allowanceHeads={form.allowanceHeads}
                 deductionHeads={form.deductionHeads}

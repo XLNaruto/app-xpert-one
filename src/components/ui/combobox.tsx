@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, ChevronDown, Loader2, Search, X, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 
 /** Rough panel height used to decide whether to open upward. */
 const PANEL_MAX = 300
@@ -376,15 +377,16 @@ export function Combobox(props: ComboboxProps) {
       )}
 
       {showClear ? (
-        <button
-          type="button"
-          aria-label="Clear selection"
-          title="Clear"
-          onClick={clear}
-          className="absolute right-7 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <X className="size-3.5" />
-        </button>
+        <Hint text="Clear">
+          <button
+            type="button"
+            aria-label="Clear selection"
+            onClick={clear}
+            className="absolute right-7 top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </Hint>
       ) : null}
 
       {open && !disabled && coords

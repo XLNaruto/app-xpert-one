@@ -18,6 +18,7 @@ import {
   // CalendarDays,
   // CalendarHeart,
   FileBarChart,
+  FileClock,
   FileSpreadsheet,
   FileText,
   FileType2,
@@ -109,6 +110,17 @@ export const navGroups: NavGroup[] = [
         label: "Employee Management",
         to: "/hr/employee",
         icon: UserRoundCog,
+        permission: PERMISSIONS.employees,
+      },
+      {
+        /*
+          Contract Expiry — the contractual postings whose term is running out.
+          It sits next to Employee Management because it writes the same
+          resource: both actions on it (renew, complete) are `employees:update`.
+        */
+        label: "Contract Expiry",
+        to: "/hr/contract-expiry",
+        icon: FileClock,
         permission: PERMISSIONS.employees,
       },
       {

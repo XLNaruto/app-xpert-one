@@ -12,7 +12,9 @@ import {
   ReadText,
 } from '@/components/common/wage-grid-fields'
 import {
+  ComponentScheduleSummary,
   formatMonth,
+  tdsBaseLabel,
   type DesignationWageStructure,
   type WageAllowance,
   type WageDeduction,
@@ -227,6 +229,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
     /* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */
     { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS act applicable.' },
     { key: 'tdsPct', label: 'Rate %', group: 'tds', width: 94 },
+    { key: 'tdsBase', label: 'On', group: 'tds', width: 158 },
 
     { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
     { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
@@ -533,20 +536,26 @@ function VersionCell({
     if (!value) return <ReadText value={null} />
 
     const amount = <ReadAmount amount={value.amount} valueType={value.valueType} />
-    /*
-     * An allowance also shows the acts it counted towards. Nothing to show for a
-     * head this version didn't value, and a deduction carries no markers at all.
-     */
-    if (value.amount === null || !('pfApplicable' in value)) return amount
+    /* Nothing else to show for a head this version didn't value. */
+    if (value.amount === null) return amount
 
+    /*
+     * A valued head also shows how it was scheduled and — on an allowance — the
+     * acts it counted towards. Both lines only appear when there is something to
+     * say: a plain monthly head renders no schedule chips, which is what almost
+     * every head is.
+     */
     return (
       <div className="space-y-0.5">
         {amount}
-        <ReadActMarkers
-          pfApplicable={value.pfApplicable}
-          esicApplicable={value.esicApplicable}
-          ptApplicable={value.ptApplicable}
-        />
+        {'pfApplicable' in value && (
+          <ReadActMarkers
+            pfApplicable={value.pfApplicable}
+            esicApplicable={value.esicApplicable}
+            ptApplicable={value.ptApplicable}
+          />
+        )}
+        <ComponentScheduleSummary schedule={value} side={column.head.kind} />
       </div>
     )
   }
@@ -667,6 +676,10 @@ function VersionCell({
       )
     case 'tdsPct':
       return <ReadAmount amount={version.tdsPercentage} valueType="Percentage" />
+    case 'tdsBase':
+      /* What the rate was charged on. Nothing recorded means nothing was
+         deducted, however high the rate — so a dash, not a guessed base. */
+      return <ReadText value={tdsBaseLabel(version.tdsCalculationBase)} />
 
     case 'lwf':
       return (

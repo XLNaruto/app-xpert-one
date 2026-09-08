@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react'
-import { IndianRupee, Info, Percent } from 'lucide-react'
+import { Info } from 'lucide-react'
+import type { AllowanceValueType } from '@/features/master/designation'
+import { UNIT_META, nextUnit } from './amount-unit'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatAmount, formatDecimal, gridAmount } from '@/lib/currency'
+import { amountInputProps, rateInputProps } from '@/lib/numeric-input'
 import { cn } from '@/lib/utils'
 
 /**
@@ -25,12 +28,23 @@ import { cn } from '@/lib/utils'
 export function CellTooltip({
   label,
   children,
+  suppressed = false,
 }: {
   label: string
   children: ReactNode
+  /**
+   * Hold the tooltip closed without unmounting it.
+   *
+   * For a trigger that also opens something of its own — the payout-schedule
+   * chip opens a panel — where the tooltip would otherwise stay up over the row
+   * while the panel is open, saying what the panel's own header already says.
+   * Forced closed rather than conditionally wrapped: dropping the wrapper
+   * remounts the trigger, and a trigger that carries a ref would lose it.
+   */
+  suppressed?: boolean
 }) {
   return (
-    <Tooltip>
+    <Tooltip open={suppressed ? false : undefined}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent className="max-w-56 text-pretty text-xs font-normal normal-case tracking-normal">
         {label}
@@ -68,8 +82,8 @@ export function UnitAmountField({
   invalid = false,
   children,
 }: {
-  valueType: 'Percentage' | 'Fixed'
-  onValueTypeChange: (value: 'Percentage' | 'Fixed') => void
+  valueType: AllowanceValueType
+  onValueTypeChange: (value: AllowanceValueType) => void
   disabled?: boolean
   /**
    * Whether the amount inside is in error. Carried here rather than left to the
@@ -80,9 +94,13 @@ export function UnitAmountField({
   /** The `<Input>` for the amount — registered by the caller. */
   children: ReactNode
 }) {
-  const isPercentage = valueType === 'Percentage'
-  const Icon = isPercentage ? Percent : IndianRupee
-  const action = isPercentage ? 'Switch to a fixed amount' : 'Switch to a percentage'
+  const meta = UNIT_META[valueType] ?? UNIT_META.Percentage
+  const next = nextUnit(valueType)
+  const Icon = meta.icon
+  /* The tooltip names BOTH: what the cell currently holds, and what one press
+     lands on. With four units in one button, "switch to…" alone leaves the
+     reader guessing which of the four the figure is already in. */
+  const action = `Entered as ${meta.label} — switch to ${UNIT_META[next].label}`
 
   return (
     <div
@@ -96,13 +114,11 @@ export function UnitAmountField({
         <button
           type="button"
           disabled={disabled}
-          onClick={() => onValueTypeChange(isPercentage ? 'Fixed' : 'Percentage')}
+          onClick={() => onValueTypeChange(next)}
           aria-label={action}
           className={cn(
             'flex w-6 shrink-0 cursor-pointer items-center justify-center border-r transition-colors disabled:cursor-not-allowed',
-            isPercentage
-              ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400'
-              : 'border-amber-500/20 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400',
+            meta.tone,
           )}
         >
           <Icon className="size-3" />
@@ -120,7 +136,10 @@ export function GridInput({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <Input
-      inputMode="decimal"
+      /* A head's figure can be a per-day rate quoted to four places — a real
+         minimum-wage notification states 146.8846 — so the guard allows four
+         here rather than the two a money column takes. Letters never land. */
+      {...rateInputProps}
       className={cn(
         'h-full rounded-none border-0 px-1.5 text-right text-xs shadow-none focus-visible:ring-0',
         className,
@@ -137,7 +156,7 @@ export function GridAmountInput({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <Input
-      inputMode="decimal"
+      {...amountInputProps}
       className={cn('h-7 px-2 text-right text-xs', className)}
       {...props}
     />
@@ -354,20 +373,29 @@ export function ReadAmount({
   valueType,
 }: {
   amount: number | null
-  valueType: 'Percentage' | 'Fixed'
+  valueType: AllowanceValueType
 }) {
   if (amount === null) return <ReadText value={null} />
 
-  const isPercentage = valueType === 'Percentage'
-  const Icon = isPercentage ? Percent : IndianRupee
+  const meta = UNIT_META[valueType] ?? UNIT_META.Percentage
+  const Icon = meta.icon
   const sign = <Icon className="size-2.5 shrink-0" />
+  /* Where the unit is written before the figure (₹10) and where after (10%).
+     A day rate is money, so its rupee sign leads and "/day" trails; a day count
+     is neither, so it reads as a plain figure with its own trailing mark. */
+  const leading = valueType === 'Fixed' || valueType === 'Per Day'
 
   return (
-    <span className="flex items-center justify-center gap-px text-foreground">
-      {!isPercentage && sign}
-      <span className="tabular-nums">{formatDecimal(amount)}</span>
-      {isPercentage && sign}
-    </span>
+    <CellTooltip label={`Entered as ${meta.label}`}>
+      <span className="flex items-center justify-center gap-px text-foreground">
+        {leading && sign}
+        <span className="tabular-nums">{formatDecimal(amount)}</span>
+        {!leading && sign}
+        {valueType === 'Per Day' && (
+          <span className="text-[10px] text-muted-foreground">/day</span>
+        )}
+      </span>
+    </CellTooltip>
   )
 }
 

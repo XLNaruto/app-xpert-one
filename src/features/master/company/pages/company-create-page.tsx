@@ -1,5 +1,13 @@
 import { Controller } from 'react-hook-form'
-import { ArrowLeft, Building2, Clock, Lock, MapPin, Phone } from 'lucide-react'
+import {
+  ArrowLeft,
+  Building2,
+  Clock,
+  Lock,
+  MapPin,
+  Phone,
+  ReceiptText,
+} from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
@@ -7,6 +15,7 @@ import { Field } from '@/components/common/form-field'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -289,6 +298,58 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 </Field>
                 <Field label="Email" required error={errors.email?.message}>
                   <Input type="email" placeholder="example@email.com" {...register('email')} />
+                </Field>
+
+                {/*
+                  Billing Charges. These two rates back the "Total Invoice Amount"
+                  calculation base a deduction head can be priced on, and they are
+                  a VERSIONED row of their own — so a month already processed keeps
+                  the rates it was billed at.
+
+                  Leaving both blank is a real answer, not an omission: the company
+                  invoices at statutory cost. And nothing here is sent unless it is
+                  edited, because sending either rate opens a charges version dated
+                  the effective day.
+                */}
+                <FormSection
+                  icon={ReceiptText}
+                  title="Billing Charges"
+                  description="What the company invoices on top of statutory cost. Leave blank to invoice at cost — these are only saved when you change them."
+                />
+                <Field
+                  label="Agency Charge %"
+                  error={errors.agencyChargePercentage?.message}
+                  hint="A share of the total statutory cost."
+                >
+                  <Input
+                    inputMode="decimal"
+                    placeholder="e.g. 8.5"
+                    {...register('agencyChargePercentage')}
+                  />
+                </Field>
+                <Field
+                  label="GST %"
+                  error={errors.gstPercentage?.message}
+                  hint="Charged on the statutory cost plus the agency charge. Read from here — never assumed to be 18%."
+                >
+                  <Input
+                    inputMode="decimal"
+                    placeholder="e.g. 18"
+                    {...register('gstPercentage')}
+                  />
+                </Field>
+                <Field
+                  label="Rates Effective From"
+                  error={errors.billingEffectiveFrom?.message}
+                  hint="Left blank, the rates take effect today. A different day keeps the earlier rates as history."
+                >
+                  <Controller
+                    control={control}
+                    name="billingEffectiveFrom"
+                    render={({ field }) => (
+                      <DatePicker value={field.value} onChange={field.onChange} />
+                    )}
+                  />
                 </Field>
 
                 {/* Actions */}

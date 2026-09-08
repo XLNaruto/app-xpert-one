@@ -12,6 +12,21 @@ import {
 } from '@/lib/validation'
 
 /**
+ * A rate on the billing block: two decimals, 0–100, and blank for "not
+ * configured" — which the API stores as no rate at all, not as zero.
+ */
+function optionalPercentField(label: string) {
+  return z
+    .string()
+    .trim()
+    .refine(
+      (value) =>
+        value === '' || (/^\d{1,3}(\.\d{1,2})?$/.test(value) && Number(value) <= 100),
+      `Enter ${label} as a percentage between 0 and 100`,
+    )
+}
+
+/**
  * Create/edit form for a company master record. The state and district are held
  * as id strings (that's what the combobox gives us) and parsed to numbers by the
  * mappers. `company_code` isn't on the form — the server generates it.
@@ -48,6 +63,22 @@ export const companySchema = z.object({
   mobile1: mobileField({ required: true }),
   mobile2: mobileField(),
   email: emailField({ required: true }),
+
+  /*
+   * Billing charges. These two rates back the TOTAL_INVOICE_AMOUNT calculation
+   * base that a deduction head can be priced on, and they are a VERSIONED row of
+   * their own rather than columns on the company — so a processed month keeps the
+   * rates it was billed at.
+   *
+   * Blank is meaningful and is not zero: a company that has never configured
+   * charges invoices at statutory cost. `company-mappers` only sends these when
+   * the user actually touched them, because sending either one opens a charges
+   * version dated `billingEffectiveFrom`.
+   */
+  agencyChargePercentage: optionalPercentField('the agency charge'),
+  gstPercentage: optionalPercentField('GST'),
+  /** `yyyy-MM-dd` — the day the rates take effect. Blank means today. */
+  billingEffectiveFrom: z.string().trim(),
 })
 
 export type CompanyFormValues = z.infer<typeof companySchema>
@@ -94,6 +125,24 @@ export const companyResponseSchema = z.object({
    * nullable — older records answered before the column existed omit it.
    */
   shift_hours: z.number().nullish(),
+  /**
+   * The billing charges in force — the versioned row behind the agency charge
+   * and GST that the TOTAL_INVOICE_AMOUNT calculation base is priced on.
+   *
+   * `null` means the company has **never** configured charges, which is a real
+   * state: it invoices at statutory cost. Read it as "not configured" rather
+   * than as zero — the engine computes it as zero, but the screen should not
+   * claim a rate was set.
+   *
+   * Present on every read of a company, list rows included.
+   */
+  billing: z
+    .object({
+      effective_from: z.string().nullish(),
+      agency_charge_percentage: z.number().nullish(),
+      gst_percentage: z.number().nullish(),
+    })
+    .nullish(),
   created_at: z.string(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -136,4 +185,22 @@ export interface CompanyPayload {
   mobile_number1: string | null
   mobile_number2: string | null
   email: string | null
+
+  /*
+   * The billing charges — OPTIONAL, and the one part of this body that must not
+   * be sent unless the user touched it.
+   *
+   * Sending EITHER percentage opens (or patches) a charges version dated
+   * `billing_effective_from`, today if that is omitted. So a form that spread
+   * every field into a PATCH would open a pointless new version dated today on
+   * every address edit. `companyToPayload` takes a flag for exactly this.
+   *
+   * When one IS sent, the rate left out is carried over from the version in
+   * force on an insert and left as stored on a patch; an explicit `null` clears
+   * it, which means "invoice at cost for that component".
+   */
+  agency_charge_percentage?: number | null
+  gst_percentage?: number | null
+  /** `YYYY-MM-DD`. Omitted means today. */
+  billing_effective_from?: string
 }

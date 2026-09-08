@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { usePagination } from '@/hooks/use-pagination'
 import { useDesignations, useWageHeads } from '@/features/master/designation'
+import { useCompany } from '@/features/master/company'
 import { useSalaryRegister } from '../api/use-salary-register'
 import {
   useDeleteSalaries,
@@ -16,8 +17,6 @@ import {
 import {
   liveRow,
   rowFigures,
-  STATUTORY_ALIASES,
-  type StatutoryComponentIds,
 } from '../lib/salary-calculations'
 import {
   salaryHeadColumnsFromRegister,
@@ -37,7 +36,12 @@ import {
   type SalaryRegisterFilters,
   type SalaryStatus,
 } from '../schemas'
-import type { SalaryImportResult, SalaryRates, SalaryRegisterRow } from '../types'
+import type {
+  SalaryBilling,
+  SalaryImportResult,
+  SalaryRates,
+  SalaryRegisterRow,
+} from '../types'
 
 /** The wire format the month picker speaks. */
 const ISO_MONTH = 'yyyy-MM'
@@ -247,16 +251,35 @@ export function useSalaryForm() {
     [register.data],
   )
 
-  const statutoryIds = useMemo<StatutoryComponentIds>(() => {
-    const ids: StatutoryComponentIds = new Map()
-    Object.entries(STATUTORY_ALIASES).forEach(([code, aliases]) => {
-      const match = catalog.deductions.find((head) =>
-        aliases.includes(head.code.trim().toUpperCase()),
-      )
-      if (match) ids.set(code, match.id)
-    })
-    return ids
-  }, [catalog])
+  /*
+   * The agency charge and GST behind the invoice chain — the two bases a
+   * deduction head can be priced on, and the amount a TDS rate is most often
+   * quoted on.
+   *
+   * **The register's own `billing_charge` block wins**, because the charges are
+   * effective-dated and that block is the pair in force *for the period being
+   * priced*: a back-dated month is billed at the rates that applied to it, not at
+   * today's. The company record is only the fallback for the moment before the
+   * register has answered, so the grid isn't briefly pricing at cost and then
+   * jumping.
+   *
+   * `null` either way is a company that has configured no charges: it invoices at
+   * statutory cost, which the arithmetic reads as 0% / 0%. **Nothing here assumes
+   * 18% GST** — the rate is the company's own.
+   */
+  const company = useCompany(companyId ?? Number.NaN)
+  const billing = useMemo<SalaryBilling | null>(() => {
+    const forPeriod = register.data?.billingCharge
+    if (forPeriod) return forPeriod
+    if (register.data) return null
+
+    const configured = company.data?.billing
+    if (!configured) return null
+    return {
+      agencyChargePercentage: configured.agencyChargePercentage ?? 0,
+      gstPercentage: configured.gstPercentage ?? 0,
+    }
+  }, [register.data, company.data])
 
   /* The pickers only stage — nothing is read until Calculate Salary is pressed. */
   const changeMonth = useCallback((value: string) => setDraftMonth(value), [])
@@ -512,10 +535,10 @@ export function useSalaryForm() {
           rows[index],
           values.rows[index],
           headConfigs,
-          statutoryIds,
           liveRow(rows[index], dirtyRowsRef.current.has(index)),
           rates,
           filters.month,
+          billing,
         ),
       ),
     )
@@ -565,11 +588,11 @@ export function useSalaryForm() {
     rows,
     computeSaveTargets,
     headConfigs,
-    statutoryIds,
     rates,
     trigger,
     getValues,
     save,
+    billing,
     filters.month,
     filters.year,
   ])
@@ -760,9 +783,13 @@ export function useSalaryForm() {
     heads,
     /** How the designation configures each head — percentage, or a flat amount. */
     headConfigs,
-    statutoryIds,
     /** The rate masters PF / ESIC / PT / LWF are priced from for this period. */
     rates,
+    /**
+     * The company's agency charge and GST — what the invoice calculation bases
+     * are priced on. `null` means no charges are configured: invoice at cost.
+     */
+    billing,
     /** 1–12 — which month's PT and LWF collection rules apply. */
     periodMonth: filters.month,
     period: register.data?.period ?? null,

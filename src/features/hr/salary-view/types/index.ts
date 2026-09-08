@@ -34,6 +34,25 @@ export interface SalaryViewHead {
   pfApplicable: boolean
   esicApplicable: boolean
   ptApplicable: boolean
+
+  /*
+   * The payout schedule the line was priced under, as stored. `null` throughout
+   * on a month saved through the register's bulk save, which records none — the
+   * amount then stands on its own and nothing is claimed about it.
+   */
+  payoutFrequency: string | null
+  startMonth: number | null
+  amountMode: string | null
+  payrollCalculation: string | null
+  calculationBase: string | null
+  /**
+   * Whether this was a payout month for the head. `false` is what turns a `0`
+   * into "nothing due this month" — a different statement from an amount of
+   * zero, and the only thing that explains it.
+   */
+  isPayoutMonth: boolean | null
+  /** Months released at once — above 1 on an accrued payout, explaining its size. */
+  accruedMonths: number | null
 }
 
 /** The statutory configuration the stored month was priced on. */
@@ -90,6 +109,27 @@ export interface SalaryViewRow {
   totalDeduction: number
   grossPay: number
   netPay: number
+  /**
+   * The invoice side, as stored: gross plus the employer's PF and ESIC, then the
+   * agency charge and GST on top.
+   *
+   * `null` where the month was saved through the salary register, which computes
+   * its own lines and derives no bases — so a dash, never a zero.
+   */
+  totalStatutoryCost: number | null
+  /** The agency's service charge on that cost — a column on the bill in its own right. */
+  agencyChargeAmount: number | null
+  /** GST on the cost plus that charge. */
+  gstAmount: number | null
+  totalInvoiceAmount: number | null
+  agencyChargePercentage: number | null
+  gstPercentage: number | null
+  /**
+   * What the month's TDS was charged on — one of five amounts, never the net.
+   * `null` means the structure named none, and nothing was deducted however high
+   * the rate.
+   */
+  tdsCalculationBase: string | null
   employeePf: number
   employerPf: number
   employeeEsic: number
@@ -149,6 +189,19 @@ export interface SalaryViewTotals {
   employeeTds: number
   employerPf: number
   employerEsic: number
+
+  /*
+   * The bill, summed down the page — cost, the agency's charge, GST, and what it
+   * all invoices at.
+   *
+   * No percentage totals: a rate cannot be summed, and two companies in one
+   * report can be on different ones. `null` is a response that predates these,
+   * and shows as a dash rather than a zero somebody might read as a figure.
+   */
+  totalStatutoryCost: number | null
+  agencyChargeAmount: number | null
+  gstAmount: number | null
+  totalInvoiceAmount: number | null
 }
 
 /**

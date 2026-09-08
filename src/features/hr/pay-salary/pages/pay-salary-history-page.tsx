@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
 import { Forbidden } from '@/features/error'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { payMonthName } from '../constants'
 import { usePaymentHistoryList } from '../hooks/use-payment-history-list'
 import { PaymentBatchCard } from '../components/payment-batch-card'
@@ -110,8 +110,8 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
                 },
                 {
                   label: 'Total Amount Paid',
-                  value: formatAmount(view.totals.totalAmountPaid),
-                  // No rupee icon here — formatAmount already prints the ₹.
+                  value: formatMoney(view.totals.totalAmountPaid),
+                  // No rupee icon here — formatMoney already prints the ₹.
                   icon: Wallet,
                   tone: 'success',
                 },

@@ -348,6 +348,8 @@ export function useBulkWageForm() {
   return {
     register,
     control,
+    /** Each head's payout schedule is written through this — five leaves a head. */
+    setValue,
 
     companyId,
     monthBounds,

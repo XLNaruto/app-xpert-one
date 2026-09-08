@@ -15,7 +15,12 @@ import {
   NO_VALUE,
 } from '@/components/common/wage-grid-fields'
 import { useMediaUrl } from '@/hooks/use-media-url'
-import { formatAmount, formatDecimal, gridAmount } from '@/lib/currency'
+import {
+  currencySymbol,
+  formatDecimal,
+  formatMoney,
+  gridAmount,
+} from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import {
   liveRow,
@@ -25,12 +30,17 @@ import {
   salaryColumnTotals,
   type SalaryColumnTotals,
   type SalaryRowFigures,
-  type StatutoryComponentIds,
 } from '../lib/salary-calculations'
+import {
+  monthName,
+  shortMonthName,
+  type AllowanceValueType,
+} from '@/features/master/designation'
 import { SalaryAttendanceDialog } from './salary-attendance-dialog'
 import type { SalaryHeadColumn } from '../lib/salary-mappers'
 import type { SalaryFormValues, SalaryStatutoryKey } from '../schemas'
 import type {
+  SalaryHead,
   SalaryHeadConfig,
   SalaryHeadConfigs,
   SalaryRates,
@@ -217,6 +227,13 @@ const GROUP_META: Record<SalaryGroup, { label: string; tone: string; hint: strin
   },
 }
 
+/*
+ * A note on the money columns' widths: every figure is now printed to the
+ * PAISE, not to the whole rupee, so each is about three characters wider than it
+ * was — `₹13,897` became `₹13,897.00`. The widths below carry that; left as they
+ * were, a column of net pay wrapped or clipped exactly where it matters most.
+ */
+
 /**
  * Every column of the grid, in order. The allowance and deduction columns are the
  * company's own heads, from the allowance / deduction master — the same columns
@@ -270,14 +287,14 @@ function buildColumns(heads: {
       key: 'basic',
       label: 'Basic',
       kind: 'basic',
-      width: 128,
+      width: 152,
       hint: 'The wage structure’s basic pay, with the daily wage it works out to.',
     },
     {
       key: 'earned',
       label: 'Earned',
       kind: 'earned',
-      width: 112,
+      width: 136,
       hint: 'Basic pay for the days actually paid.',
     },
 
@@ -286,7 +303,7 @@ function buildColumns(heads: {
       label: head.code,
       kind: 'allowanceHead' as const,
       group: 'allowance' as const,
-      width: 140,
+      width: 156,
       hint: head.name,
       head,
       headIndex,
@@ -296,18 +313,18 @@ function buildColumns(heads: {
       label: 'Total',
       kind: 'allowanceTotal',
       group: 'allowance',
-      width: 112,
+      width: 136,
     },
 
     { key: 'otHours', label: 'Hrs', kind: 'otHours', group: 'overtime', width: 82 },
-    { key: 'otRate', label: 'Rate', kind: 'otRate', group: 'overtime', width: 90 },
-    { key: 'otWage', label: 'Wage', kind: 'otWage', group: 'overtime', width: 104 },
+    { key: 'otRate', label: 'Rate', kind: 'otRate', group: 'overtime', width: 110 },
+    { key: 'otWage', label: 'Wage', kind: 'otWage', group: 'overtime', width: 124 },
 
     {
       key: 'gross',
       label: 'Gross Pay',
       kind: 'gross',
-      width: 122,
+      width: 146,
       hint: 'Earned basic, allowances and overtime — before any deduction.',
     },
 
@@ -316,30 +333,30 @@ function buildColumns(heads: {
       label: head.code,
       kind: 'deductionHead' as const,
       group: 'deduction' as const,
-      width: 140,
+      width: 156,
       hint: head.name,
       head,
       headIndex,
     })),
     /* PF · ESIC · PT · TDS · LWF — the order payroll reads them in. */
-    { key: 'pf', label: 'PF', kind: 'pf', group: 'deduction', width: 100 },
-    { key: 'esic', label: 'ESIC', kind: 'esic', group: 'deduction', width: 100 },
-    { key: 'pt', label: 'PT', kind: 'pt', group: 'deduction', width: 100 },
-    { key: 'tds', label: 'TDS', kind: 'tds', group: 'deduction', width: 100 },
-    { key: 'lwf', label: 'LWF', kind: 'lwf', group: 'deduction', width: 100 },
+    { key: 'pf', label: 'PF', kind: 'pf', group: 'deduction', width: 120 },
+    { key: 'esic', label: 'ESIC', kind: 'esic', group: 'deduction', width: 120 },
+    { key: 'pt', label: 'PT', kind: 'pt', group: 'deduction', width: 120 },
+    { key: 'tds', label: 'TDS', kind: 'tds', group: 'deduction', width: 120 },
+    { key: 'lwf', label: 'LWF', kind: 'lwf', group: 'deduction', width: 120 },
     {
       key: 'deductionTotal',
       label: 'Total',
       kind: 'deductionTotal',
       group: 'deduction',
-      width: 112,
+      width: 136,
     },
 
     {
       key: 'net',
       label: 'Net Pay',
       kind: 'net',
-      width: 130,
+      width: 154,
       hint: 'Gross pay less every deduction — what is payable for the month.',
     },
     {
@@ -412,7 +429,6 @@ interface SalaryRegisterGridProps {
   setValue: Setter
   /** How the designation configures each head — percentage, or a flat amount. */
   headConfigs: SalaryHeadConfigs
-  statutoryIds: StatutoryComponentIds
   /** The rate masters PF / ESIC / PT / LWF are priced from for this period. */
   rates: SalaryRates
   /** 1–12 — which month's PT and LWF collection rules apply. */
@@ -433,7 +449,6 @@ export function SalaryRegisterGrid({
   register,
   setValue,
   headConfigs,
-  statutoryIds,
   rates,
   periodMonth,
   dirtyRows,
@@ -483,7 +498,6 @@ export function SalaryRegisterGrid({
               register={register}
               setValue={setValue}
               headConfigs={headConfigs}
-              statutoryIds={statutoryIds}
               rates={rates}
               periodMonth={periodMonth}
               isStale={dirtyRows.has(index)}
@@ -499,7 +513,6 @@ export function SalaryRegisterGrid({
           rows={rows}
           control={control}
           headConfigs={headConfigs}
-          statutoryIds={statutoryIds}
           rates={rates}
           periodMonth={periodMonth}
           dirtyRows={dirtyRows}
@@ -617,7 +630,6 @@ interface SalaryGridRowProps {
   register: Reg
   setValue: Setter
   headConfigs: SalaryHeadConfigs
-  statutoryIds: StatutoryComponentIds
   rates: SalaryRates
   periodMonth: number
   /** The row has been typed into, so its money is recomputed from its cells. */
@@ -638,7 +650,7 @@ interface SalaryGridRowProps {
  * live rather than dimmed and left to the save to settle.
  */
 const SalaryGridRow = memo(function SalaryGridRow(props: SalaryGridRowProps) {
-  const { columns, index, row, control, headConfigs, statutoryIds, rates, periodMonth, isStale } =
+  const { columns, index, row, control, headConfigs, rates, periodMonth, isStale } =
     props
 
   const values = useWatch({ control, name: `rows.${index}` })
@@ -648,12 +660,11 @@ const SalaryGridRow = memo(function SalaryGridRow(props: SalaryGridRowProps) {
         row,
         values,
         headConfigs,
-        statutoryIds,
-        liveRow(row, isStale),
+              liveRow(row, isStale),
         rates,
         periodMonth,
       ),
-    [row, values, headConfigs, statutoryIds, rates, periodMonth, isStale],
+    [row, values, headConfigs, rates, periodMonth, isStale],
   )
 
   return (
@@ -812,7 +823,7 @@ function RowCell({
         <div className="leading-tight">
           <Money value={figures.basicPay} stale={false} className="font-medium" />
           <span className="block text-[10px] text-muted-foreground">
-            {formatAmount(figures.wagesPerDay)} / day
+            {formatMoney(figures.wagesPerDay)} / day
           </span>
         </div>
       )
@@ -826,12 +837,15 @@ function RowCell({
     case 'deductionHead': {
       const side = column.kind === 'allowanceHead' ? 'allowances' : 'deductions'
       const cellIndex = column.headIndex ?? 0
+      const lines = side === 'allowances' ? figures.allowances : figures.deductions
       return (
         <HeadCell
           path={`rows.${index}.${side}.${cellIndex}`}
-          amount={headAmount(
-            side === 'allowances' ? figures.allowances : figures.deductions,
-            column.head?.payComponentId,
+          amount={headAmount(lines, column.head?.payComponentId)}
+          /* The priced line, so the cell can say WHY its figure is what it is —
+             a zero off a payout month reads very differently from a zero. */
+          line={lines.find(
+            (head) => head.payComponentId === column.head?.payComponentId,
           )}
           config={headConfigs.get(column.head?.payComponentId ?? -1)}
           overridden={values?.[side]?.[cellIndex]?.overridden ?? false}
@@ -962,8 +976,26 @@ function EmployeeCell({ row }: { row: SalaryRegisterRow }) {
         <span className="block truncate font-medium text-foreground">
           {label || NO_VALUE}
         </span>
-        <span className="block truncate text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1 truncate text-[10px] text-muted-foreground">
           {row.employeeCode || 'No code'}
+          {/*
+            Flagged only when the heads on this row are the EMPLOYEE'S OWN, which
+            is the exception: their designation's catalog no longer prices them at
+            all, so the allowance columns across this row are answering a
+            different configuration from the rows around it. The designation case
+            is the norm and says nothing.
+
+            Deliberately read from `salary_component_source` rather than inferred
+            from `wage_source`: own basic pay with the designation's allowances is
+            a legitimate state, so neither answers the other.
+          */}
+          {row.salaryComponentSource === 'EMPLOYEE' && (
+            <CellTooltip label="This employee is on their own allowance / deduction heads — their designation's catalog does not price them.">
+              <span className="shrink-0 rounded bg-primary/15 px-1 py-px text-[9px] font-bold uppercase leading-tight text-primary">
+                Own heads
+              </span>
+            </CellTooltip>
+          )}
         </span>
       </div>
     </div>
@@ -1020,6 +1052,7 @@ function ActOff({ label }: { label: string }) {
 function HeadCell({
   path,
   amount,
+  line,
   config,
   overridden,
   fallbackBasis,
@@ -1031,6 +1064,13 @@ function HeadCell({
   /** The cell's field group — `.amount` and `.overridden` hang off it. */
   path: CellPath
   amount: number
+  /**
+   * The priced line behind the figure, where there is one. It carries how the
+   * payout schedule landed on this month, which is what turns a bare `0` into
+   * "not a payout month — next in September". Absent on the statutory cells,
+   * which fall due by their act's own calendar rather than a schedule.
+   */
+  line?: SalaryHead
   config: SalaryHeadConfig | undefined
   overridden: boolean
   /** Chip for a cell with no designation configuration behind it. */
@@ -1107,17 +1147,44 @@ function HeadCell({
     )
   }
 
+  /*
+   * Whether the schedule is the reason this cell reads zero. Only asked of a head
+   * that is genuinely off its payout month and hasn't been typed over — an
+   * override is an explicit instruction and outranks the schedule.
+   */
+  const dormant = !overridden && line?.isPayoutMonth === false
+  /* An accrued payout releases N months at once, which is why the figure is N
+     times the configured one. Worth stating on the cell rather than leaving the
+     reader to wonder at the size of it. */
+  const accrued = !overridden && (line?.accruedMonths ?? 1) > 1
+
   const basis = overridden
     ? { label: 'Fixed', tone: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' }
-    : config?.valueType === 'Percentage'
+    : dormant
       ? {
-          label: `${gridAmount(config.value)}%`,
-          tone: 'bg-teal-500/15 text-teal-700 dark:text-teal-400',
-        }
-      : {
-          label: fallbackBasis ?? `₹${gridAmount(config?.value ?? amount)}`,
+          label: line?.nextPayoutMonth
+            ? `→ ${shortMonthName(line.nextPayoutMonth)}`
+            : 'Not due',
           tone: 'bg-muted text-muted-foreground',
         }
+      : accrued
+        ? {
+            label: `×${line?.accruedMonths} accrued`,
+            tone: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
+          }
+        : config
+          ? {
+              /* The rule behind the figure, in its own unit — a percentage, a
+                 monthly amount, a rate per day or a count of days. `Per Day` and
+                 `Days` price differently, so a shared "₹" chip would hide the
+                 one thing worth reading off the cell. */
+              label: basisLabel(config.valueType, config.value),
+              tone: BASIS_TONE[config.valueType],
+            }
+          : {
+              label: fallbackBasis ?? `${currencySymbol()}${gridAmount(amount)}`,
+              tone: 'bg-muted text-muted-foreground',
+            }
 
   return (
     <CellTooltip
@@ -1126,10 +1193,18 @@ function HeadCell({
           ? 'This month is paid — its figures are frozen'
           : overridden
             ? 'Typed by hand, so it no longer follows what was deciding it. Double-click to change it, or clear it to hand it back.'
-            : config?.valueType === 'Percentage'
-              ? `${gridAmount(config.value)}% of the earned basic — follows the present days. Double-click to set a fixed amount.`
-              : (hint ??
-                'A fixed amount from the designation. Double-click to change it for this row.')
+            : dormant
+              ? `Not a payout month for this head${
+                  line?.nextPayoutMonth
+                    ? ` — next payout ${monthName(line.nextPayoutMonth)}`
+                    : ''
+                }. Nothing is due, which is not the same as an amount of nothing. Double-click to pay something this month anyway.`
+              : accrued
+                ? `An accrued payout — ${line?.accruedMonths} months of the configured figure released at once, which is why it is this large.`
+                : config
+                  ? `${basisHint(config.valueType, config.value)} Double-click to set a fixed amount for this row.`
+                  : (hint ??
+                    'A fixed amount from the designation. Double-click to change it for this row.')
       }
     >
       <button
@@ -1164,10 +1239,14 @@ function HeadCell({
         <span
           className={cn(
             'block tabular-nums',
-            overridden ? 'font-semibold text-amber-700 dark:text-amber-400' : 'text-foreground',
+            overridden
+              ? 'font-semibold text-amber-700 dark:text-amber-400'
+              : dormant
+                ? 'text-muted-foreground/60'
+                : 'text-foreground',
           )}
         >
-          {formatAmount(amount)}
+          {formatMoney(amount)}
         </span>
         <span
           className={cn(
@@ -1246,7 +1325,7 @@ function Money({
         className,
       )}
     >
-      {formatAmount(value)}
+      {formatMoney(value)}
     </span>
   )
 
@@ -1278,7 +1357,6 @@ const GridFoot = memo(function GridFoot({
   rows,
   control,
   headConfigs,
-  statutoryIds,
   rates,
   periodMonth,
   dirtyRows,
@@ -1287,7 +1365,6 @@ const GridFoot = memo(function GridFoot({
   rows: SalaryRegisterRow[]
   control: Ctl
   headConfigs: SalaryHeadConfigs
-  statutoryIds: StatutoryComponentIds
   rates: SalaryRates
   periodMonth: number
   dirtyRows: Set<number>
@@ -1302,14 +1379,13 @@ const GridFoot = memo(function GridFoot({
             row,
             values?.[index],
             headConfigs,
-            statutoryIds,
-            liveRow(row, dirtyRows.has(index)),
+                      liveRow(row, dirtyRows.has(index)),
             rates,
             periodMonth,
           ),
         ),
       ),
-    [rows, values, headConfigs, statutoryIds, rates, periodMonth, dirtyRows],
+    [rows, values, headConfigs, rates, periodMonth, dirtyRows],
   )
 
   if (rows.length === 0) return null
@@ -1410,6 +1486,53 @@ function TotalCell({
 
 function TotalAmount({ value, className }: { value: number; className?: string }) {
   return (
-    <span className={cn('block tabular-nums', className)}>{formatAmount(value)}</span>
+    <span className={cn('block tabular-nums', className)}>{formatMoney(value)}</span>
   )
 }
+
+/**
+ * The chip under a head cell: the rule the figure came from, written in that
+ * rule's own unit.
+ *
+ * Four rules, and the two day-based ones are not the same — a `Per Day` rate is
+ * paid on the payable days as they stand, while a `Days` count is a whole-month
+ * entitlement prorated by attendance. One "₹" chip for both would print the same
+ * label over two figures that can differ by hundreds.
+ */
+function basisLabel(valueType: AllowanceValueType, value: number): string {
+  switch (valueType) {
+    case 'Percentage':
+      return `${gridAmount(value)}%`
+    case 'Per Day':
+      return `${currencySymbol()}${gridAmount(value)}/day`
+    case 'Days':
+      return `${gridAmount(value)} days`
+    case 'Fixed':
+    default:
+      return `${currencySymbol()}${gridAmount(value)}`
+  }
+}
+
+/** The chip's tint — one per rule, so the four read apart down a column. */
+const BASIS_TONE: Record<AllowanceValueType, string> = {
+  Percentage: 'bg-teal-500/15 text-teal-700 dark:text-teal-400',
+  Fixed: 'bg-muted text-muted-foreground',
+  'Per Day': 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
+  Days: 'bg-violet-500/15 text-violet-700 dark:text-violet-400',
+}
+
+/** What the rule actually does to this row, for the cell's tooltip. */
+function basisHint(valueType: AllowanceValueType, value: number): string {
+  switch (valueType) {
+    case 'Percentage':
+      return `${gridAmount(value)}% of the earned basic — follows the present days.`
+    case 'Per Day':
+      return `${currencySymbol()}${gridAmount(value)} for each payable day — not prorated again, so extra days are paid in full.`
+    case 'Days':
+      return `${gridAmount(value)} days at the day's wage — an entitlement for a full month, so a short month accrues its share.`
+    case 'Fixed':
+    default:
+      return `${currencySymbol()}${gridAmount(value)} a month, prorated by the days paid.`
+  }
+}
+

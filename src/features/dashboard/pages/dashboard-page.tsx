@@ -1,6 +1,7 @@
 import { DatabaseZap } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { Forbidden } from '@/features/error'
+import { ContractExpiryPanel } from '@/features/hr/contract-expiry'
 import {
   ATTENDANCE_METRICS,
   MOVEMENT_METRICS,
@@ -220,6 +221,18 @@ export function DashboardPage() {
           panel={cost}
           showComparisons={screen.showComparisons}
         />
+      </div>
+
+      {/*
+        Contracts running out — the one ACTIONABLE list on this screen, and the
+        one read live. The `contract_expiring` chip on the worklist below is the
+        cube-backed signal for the same fact and carries no actions; both are
+        kept, because a nightly count of who is expiring is a different job from
+        working through them. Company is the only filter that reaches it: a
+        contract running out is the same problem whichever period is selected.
+      */}
+      <div className="mt-4">
+        <ContractExpiryPanel companyIds={appliedFilters.companyIds} />
       </div>
 
       <div className="mt-4">

@@ -6,12 +6,14 @@ import {
   Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
+  ResponsiveContainer as RechartsResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { Combobox } from '@/components/ui/combobox'
+import { Hint } from '@/components/common/hint'
+import { ScrollableChart } from '@/components/charts/scrollable-chart'
 import {
   NEUTRAL_ALT_COLOR,
   NEUTRAL_SERIES_COLOR,
@@ -239,6 +241,69 @@ function barColor(item: BreakdownItem): string {
   return chartColor(0)
 }
 
+/**
+ * A category label, wrapped onto up to two lines and centred under its column.
+ *
+ * The alternative — one angled line — is what clipped long department names
+ * against the bottom of the card and ran them into the legend. Wrapping keeps
+ * the label horizontal (the only orientation that is actually readable at 12px)
+ * and `ScrollableChart` guarantees the column is wide enough to hold it.
+ */
+const CATEGORY_TICK_CHARS = 14
+const CATEGORY_TICK_LINES = 2
+const CATEGORY_LINE_HEIGHT = 13
+
+function wrapLabel(label: string): string[] {
+  const words = label.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+
+  for (const word of words) {
+    const last = lines[lines.length - 1]
+    if (last && `${last} ${word}`.length <= CATEGORY_TICK_CHARS) {
+      lines[lines.length - 1] = `${last} ${word}`
+    } else {
+      lines.push(word)
+    }
+  }
+
+  // Anything past the second line is folded back into it with an ellipsis — the
+  // full name is still on the tooltip and in the table twin below.
+  if (lines.length > CATEGORY_TICK_LINES) {
+    const kept = lines.slice(0, CATEGORY_TICK_LINES - 1)
+    kept.push(`${lines[CATEGORY_TICK_LINES - 1].slice(0, CATEGORY_TICK_CHARS - 1)}…`)
+    return kept
+  }
+
+  return lines.length > 0 ? lines : [label]
+}
+
+function CategoryTick({
+  x,
+  y,
+  payload,
+}: {
+  x?: string | number
+  y?: string | number
+  payload?: { value?: string | number }
+}) {
+  return (
+    <g transform={`translate(${x ?? 0},${y ?? 0})`}>
+      {wrapLabel(String(payload?.value ?? '')).map((line, index) => (
+        <text
+          key={line + index}
+          x={0}
+          y={12 + index * CATEGORY_LINE_HEIGHT}
+          textAnchor="middle"
+          fill="var(--color-muted-foreground)"
+          fontSize={12}
+        >
+          {line}
+        </text>
+      ))}
+    </g>
+  )
+}
+
 function BarShape({
   items,
   unit,
@@ -257,56 +322,95 @@ function BarShape({
     previousValue: item.previousValue,
   }))
 
+  /*
+   * A "vs previous" pair is only drawn when there IS a previous figure
+   * somewhere. Otherwise every second column is zero-height, which leaves the
+   * one visible column sitting in the left half of its band — it reads as
+   * misaligned with its own label, because half the group it is centred in is
+   * invisible. With no previous data the grouped shape says nothing anyway.
+   */
+  const hasPrevious = rows.some((row) => (row.previousValue ?? 0) !== 0)
+  const paired = comparative && hasPrevious
+
+  // Two columns per category in the paired shape, so it needs the room.
+  const minPerItem = paired ? 104 : 76
+  const axisLines = Math.max(
+    1,
+    ...rows.map((row) => wrapLabel(row.label).length),
+  )
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ScrollableChart count={rows.length} minPerItem={minPerItem} height={height}>
+      {/* Columns, not rows: the VALUE runs up the y-axis and the category name
+          sits along the x-axis, wrapped rather than angled. */}
       <BarChart
         data={rows}
-        layout="vertical"
-        margin={{ left: 4, right: 16, top: 4, bottom: 4 }}
+        margin={{ left: -4, right: 16, top: 4, bottom: 4 }}
         barGap={2}
       >
-        <CartesianGrid stroke="var(--color-border)" horizontal={false} />
+        <CartesianGrid stroke="var(--color-border)" vertical={false} />
         <XAxis
+          type="category"
+          dataKey="label"
+          {...axisProps}
+          // Every category is labelled — the scroller, not the axis, is what
+          // makes room for them.
+          interval={0}
+          tick={(props) => <CategoryTick {...props} />}
+          height={14 + axisLines * CATEGORY_LINE_HEIGHT}
+        />
+        <YAxis
           type="number"
           {...axisProps}
           tickFormatter={(value: number) => formatTickByUnit(value, unit)}
         />
-        <YAxis
-          type="category"
-          dataKey="label"
-          {...axisProps}
-          width={128}
-          interval={0}
-        />
         <Tooltip
           {...tooltipStyle}
+          // `name` is already the series' own label — reading the dataKey here
+          // instead is what had both rows saying "This period".
           formatter={(value, name) => [
             formatByUnit(typeof value === 'number' ? value : null, unit),
-            name === 'previousValue' ? 'Previous period' : 'This period',
+            String(name),
           ]}
         />
-        {comparative ? <Legend wrapperStyle={{ fontSize: 12 }} /> : null}
+        {/* Above the plot, not below it: the x-axis owns the space under the
+            columns once the labels wrap. */}
+        {paired ? (
+          <Legend
+            verticalAlign="top"
+            align="right"
+            wrapperStyle={{ fontSize: 12, paddingBottom: 8 }}
+          />
+        ) : null}
 
-        <Bar dataKey="value" name="This period" radius={[0, 4, 4, 0]} isAnimationActive={false}>
-          {/* One hue for every bar — the axis names the category and the length
+        <Bar
+          dataKey="value"
+          name="This period"
+          // The series colour, so the legend swatch matches the columns; the
+          // per-bar cells below only differ for the two reserved keys.
+          fill={chartColor(0)}
+          radius={[4, 4, 0, 0]}
+          isAnimationActive={false}
+        >
+          {/* One hue for every bar — the axis names the category and the height
               carries the value, so a hue per bar would encode neither. */}
           {rows.map((row, index) => (
             <Cell key={row.key} fill={barColor(items[index])} />
           ))}
         </Bar>
 
-        {comparative ? (
+        {paired ? (
           <Bar
             dataKey="previousValue"
             name="Previous period"
             fill="var(--color-muted-foreground)"
             fillOpacity={0.35}
-            radius={[0, 4, 4, 0]}
+            radius={[4, 4, 0, 0]}
             isAnimationActive={false}
           />
         ) : null}
       </BarChart>
-    </ResponsiveContainer>
+    </ScrollableChart>
   )
 }
 
@@ -323,7 +427,7 @@ function DonutShape({
 }) {
   return (
     <div className="relative">
-      <ResponsiveContainer width="100%" height={height}>
+      <RechartsResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
             data={items}
@@ -350,7 +454,7 @@ function DonutShape({
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
         </PieChart>
-      </ResponsiveContainer>
+      </RechartsResponsiveContainer>
 
       {/* `total` in the centre — and the wedges add up to it, because
           `__other__` is kept. */}
@@ -401,21 +505,16 @@ function BreakdownTable({
                     style={{ background: colorOf(item, index) }}
                     className="size-2 shrink-0 rounded-sm"
                   />
-                  <span
-                    className={cn(
-                      'truncate',
-                      isReservedKey(item.key) && 'text-muted-foreground',
-                    )}
-                    title={
-                      isOther(item.key)
-                        ? 'The remainder beyond the named slices — kept so the slices still sum to the total'
-                        : isUnassigned(item.key)
-                          ? 'No branch, department or designation set — which is legitimate here'
-                          : undefined
-                    }
-                  >
-                    {item.label}
-                  </span>
+                  <Hint text={sliceHint(item)}>
+                    <span
+                      className={cn(
+                        'truncate',
+                        isReservedKey(item.key) && 'text-muted-foreground',
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </Hint>
                 </span>
               </td>
               <td className="py-1.5 pr-2 text-right tabular-nums">
@@ -435,4 +534,15 @@ function BreakdownTable({
       </table>
     </div>
   )
+}
+
+/** Why a reserved slice is in the list at all — shown on hover of its label. */
+function sliceHint(item: BreakdownItem): string | undefined {
+  if (isOther(item.key)) {
+    return 'The remainder beyond the named slices — kept so the slices still sum to the total'
+  }
+  if (isUnassigned(item.key)) {
+    return 'No branch, department or designation set — which is legitimate here'
+  }
+  return undefined
 }

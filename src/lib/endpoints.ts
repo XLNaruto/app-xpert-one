@@ -338,6 +338,22 @@ export const endpoints = {
     ROSTER_ENTRY: (id: number, entryId: number) =>
       `/user/employees/${id}/roster/${entryId}`,
   },
+  /**
+   * Contract expiry — the CONTRACTUAL postings whose term is running out, and
+   * the two actions on one of them.
+   *
+   * The list is its own resource (`employee-contracts`) and is read LIVE, unlike
+   * `/user/dashboard/*`, which serves a nightly cube. The two actions are
+   * addressed by EMPLOYEE id — the API finds the current posting itself, so no
+   * `service_id` is passed.
+   */
+  EMPLOYEE_CONTRACTS: {
+    EXPIRING: '/user/employee-contracts/expiring',
+    /** POST — replace the term on the current posting. Not a transfer. */
+    RENEW: (employeeId: number) => `/user/employees/${employeeId}/contract/renew`,
+    /** POST — close the posting: leave service, reached from the panel. */
+    COMPLETE: (employeeId: number) => `/user/employees/${employeeId}/contract/complete`,
+  },
   EMPLOYEE_LEAVES: {
     LIST: '/user/employee-leaves',
     POST: '/user/employee-leaves',

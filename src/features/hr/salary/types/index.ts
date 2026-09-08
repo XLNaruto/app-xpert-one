@@ -1,3 +1,9 @@
+import type {
+  AllowanceValueType,
+  ComponentSchedule,
+  TdsCalculationBase,
+} from '@/features/master/designation'
+
 /**
  * The salary register as the screen reads it — one designation's people against
  * one payroll month.
@@ -91,7 +97,27 @@ export interface SalaryWageStructure {
   lwfActType: string | null
   lwfAmount: number | null
   tdsPercentage: number | null
+  /**
+   * What the TDS rate is charged on — one of five amounts, never the net.
+   *
+   * `null` deducts **nothing**, however high the percentage: a rate on its own
+   * cannot say what it applies to, and contractor TDS under section 194C is 2% of
+   * the total bill rather than of any wage figure. This is the default, and it
+   * preserves the behaviour every structure had before TDS computed at all.
+   */
+  tdsCalculationBase: TdsCalculationBase | null
 }
+
+/**
+ * How an ESIC contribution is rounded — a filing convention that changes by
+ * notification, so it rides on the effective-dated rate row.
+ *
+ * `CEIL` is the old unconditional behaviour and remains the default. `PAISE` is
+ * what a government-approved agency sheet states (₹104.23, not ₹105). The screen
+ * must apply whichever the rate names: hard-coding one puts its ESIC away from
+ * the server's and fails the save.
+ */
+export type EsicRoundingMode = 'CEIL' | 'ROUND' | 'PAISE'
 
 /**
  * The statutory rate masters in force for the period, as the register hands them
@@ -119,6 +145,8 @@ export interface SalaryRates {
     wageCeilingLimit: number | null
     employeeContribution: number | null
     employerContribution: number | null
+    /** How both shares are rounded — `CEIL` unless the rate says otherwise. */
+    roundingMode: EsicRoundingMode
   } | null
   pt: {
     id: number
@@ -159,7 +187,7 @@ export interface SalaryPtSlab {
  * figure has to be re-read through: a `Percentage` head earns its share of the
  * earned basic and moves with the days, a `Fixed` one stays where it is.
  */
-export interface SalaryComponent {
+export interface SalaryComponent extends ComponentSchedule {
   payComponentId: number
   /** Short code, falling back to the name — the same label the columns use. */
   code: string
@@ -168,8 +196,9 @@ export interface SalaryComponent {
   componentType: 'ALLOWANCE' | 'DEDUCTION' | ''
   /** The master's own ordering, kept so a head lands where it belongs. */
   sortOrder: number
-  valueType: 'Percentage' | 'Fixed'
-  /** The percent, or the flat rupee amount, per `valueType`. */
+  /** `Percentage`, `Fixed`, `Per Day` or `Days` — see `headCellAmount`. */
+  valueType: AllowanceValueType
+  /** The percent, the monthly figure, the day rate or the day count. */
   value: number
   pfApplicable: boolean
   esicApplicable: boolean
@@ -188,6 +217,22 @@ export interface SalaryHead {
   pfApplicable: boolean
   esicApplicable: boolean
   ptApplicable: boolean
+
+  /*
+   * How the schedule landed on THIS month — what makes a zero readable.
+   *
+   * A quarterly head off its payout month is `0` with `isPayoutMonth: false`,
+   * which is "nothing due this month", not "an amount of nothing". An accrued
+   * payout releasing six months at once is `accruedMonths: 6`, which is why the
+   * figure is six times the configured one. `null` on a head read back from a
+   * stored month that recorded no schedule.
+   */
+  isPayoutMonth: boolean | null
+  accruedMonths: number | null
+  /** 1–12 — when this head next pays out. `null` when nothing is scheduled. */
+  nextPayoutMonth: number | null
+  /** `EXCLUDE` keeps the head out of every base the others calculate on. */
+  payrollCalculation: 'INCLUDE' | 'EXCLUDE'
 }
 
 /**
@@ -198,10 +243,14 @@ export interface SalaryHead {
  * `salary_components` off the rows themselves, collapsed to one map for the page.
  * Nothing extra is fetched to find out what a head is.
  */
-export interface SalaryHeadConfig {
-  /** `Percentage` earns a share of the earned basic; `Fixed` is a flat amount. */
-  valueType: 'Percentage' | 'Fixed'
-  /** The percent, or the rupee amount, as configured. */
+export interface SalaryHeadConfig extends ComponentSchedule {
+  /**
+   * Which of the four rules prices the head — a share of a base, a prorated
+   * monthly figure, a rate per payable day, or a count of days at the day's wage.
+   * `Per Day` and `Days` are **not** the same rule; see `headCellAmount`.
+   */
+  valueType: AllowanceValueType
+  /** The percent, the monthly figure, the day rate or the day count. */
   value: number
   pfApplicable: boolean
   esicApplicable: boolean
@@ -245,6 +294,53 @@ export interface SalaryFigures {
   /** Hourly overtime rate from the wage structure — `0` when OT doesn't apply. */
   otRate: number
   otAmount: number
+
+  /*
+   * The invoice side, as a processed month recorded it. Populated only where the
+   * SERVER engine priced the month — a sheet import, an employee payslip — and
+   * `null` on a row saved through this screen's bulk save, which stores the lines
+   * the screen computed and derives no bases.
+   *
+   * `null` is "not derived", not zero: render it as a dash.
+   */
+  totalStatutoryCost: number | null
+  /** The agency's service charge on the statutory cost — a column on the bill. */
+  agencyChargeAmount: number | null
+  /** GST on the statutory cost plus that charge. */
+  gstAmount: number | null
+  totalInvoiceAmount: number | null
+  agencyChargePercentage: number | null
+  gstPercentage: number | null
+  /** What the month's TDS was charged on, as stored. `null` deducted nothing. */
+  tdsCalculationBase: string | null
+}
+
+/**
+ * The company's billing rates — what the `TOTAL_INVOICE_AMOUNT` calculation base
+ * is priced on.
+ *
+ * A company that has never configured charges invoices at statutory cost, which
+ * is `null` here rather than a pair of zeros. **Nothing may assume 18% GST**: the
+ * rate is the company's own, read off its `billing` block.
+ */
+export interface SalaryBilling {
+  agencyChargePercentage: number
+  gstPercentage: number
+}
+
+/**
+ * The company's billing charges in force **for the period**, as the register's
+ * own `billing_charge` block answers them.
+ *
+ * Read off the register rather than off the company record, because the charges
+ * are effective-dated and a back-dated month is billed at the rates that were in
+ * force for it — not at today's. `null` is a company that has configured none: it
+ * invoices at statutory cost, which the arithmetic treats as 0% / 0%. **Nothing
+ * may default GST to 18%.**
+ */
+export interface SalaryBillingCharge extends SalaryBilling {
+  id: number
+  effectiveDate: string | null
 }
 
 /**
@@ -295,6 +391,13 @@ export interface SalaryRegisterRow {
    * is the same case that leaves `wageStructure` null.
    */
   salaryComponents: SalaryComponent[]
+  /**
+   * Which tier the heads in `salaryComponents` came from. A separate question
+   * from the wage's own tier — own basic pay with the designation's allowances is
+   * a legitimate state — so it is read, never derived. `null` when nothing has
+   * priced the row's heads.
+   */
+  salaryComponentSource: 'EMPLOYEE' | 'DESIGNATION' | null
   /** Stored figures when the month is processed, the preview otherwise. */
   figures: SalaryFigures
   /**
@@ -333,6 +436,13 @@ export interface SalaryRegister {
   totals: SalaryTotals
   /** The PF / ESIC / PT / LWF masters the statutory deductions are priced from. */
   rates: SalaryRates
+  /**
+   * The agency charge and GST in force for the period — what the invoice chain,
+   * and any TDS quoted on it, are priced from. `null` where the company has
+   * configured none. Without this a PENDING row had no source for the two
+   * percentages at all.
+   */
+  billingCharge: SalaryBillingCharge | null
   items: SalaryRegisterRow[]
   /** Rows on the side being shown (`pending` or `complete`), across all pages. */
   total: number

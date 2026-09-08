@@ -1,12 +1,26 @@
 import { EMPTY_WAGE_STRUCTURE_ROW } from '../constants'
 import type {
   SalaryComponentPayload,
+  SalaryComponentResponse,
   WageStructureResponse,
   WageStructureRow,
   WageStructureRowPayload,
 } from '../schemas'
 import type { DesignationWageStructure } from '../types'
 import { toOptionalAmount } from './designation-calculations'
+import {
+  DEFAULT_COMPONENT_SCHEDULE,
+  needsStartMonth,
+  resolveSchedule,
+  toAmountMode,
+  toCalculationBase,
+  toPayoutFrequency,
+  toPayrollCalculation,
+  toStartMonthNumber,
+  toStartMonthValue,
+  toTdsCalculationBase,
+} from './component-schedule'
+import type { ComponentSchedule } from './component-schedule'
 import { deriveOvertimeRate, deriveWages } from './wage-structure-calculations'
 import {
   fromApiActAmountType,
@@ -18,6 +32,7 @@ import {
   toApiWageSalaryType,
   toApiWeeklyOff,
   toApiWorkingDayCalculationType,
+  toPfDeductionType,
   toValueType,
 } from './api-enums'
 
@@ -65,11 +80,15 @@ export function blankWageStructureRow(heads: WageHeads): WageStructureRow {
       pfApplicable: false,
       esicApplicable: false,
       ptApplicable: false,
+      /* Monthly, per payout, in the calculation — the behaviour every head had
+         before the schedule existed, and what the API defaults to. */
+      ...DEFAULT_COMPONENT_SCHEDULE,
     })),
     deductions: heads.deductions.map((head) => ({
       componentId: head.id,
       valueType: 'Fixed' as const,
       amount: '',
+      ...DEFAULT_COMPONENT_SCHEDULE,
     })),
   }
 }
@@ -96,6 +115,7 @@ export function zeroedWageStructureRow(heads: WageHeads): WageStructureRow {
     overtimeRatePerHour: '0',
     ptAmount: '0',
     tdsPercentage: '0',
+    tdsCalculationBase: '',
     lwfAmount: '0',
     allowances: row.allowances.map((allowance) => ({ ...allowance, amount: '0' })),
     deductions: row.deductions.map((deduction) => ({ ...deduction, amount: '0' })),
@@ -182,6 +202,11 @@ export function wageRowToPayload(
 
     is_tds_act_applicable: row.tdsActApplicable,
     tds_percentage: row.tdsActApplicable ? toOptionalAmount(row.tdsPercentage) : null,
+    /* A rate with no base deducts nothing — a legitimate state, and the API's own
+       default — so an unpicked dropdown is sent as `null` rather than guessed. */
+    tds_calculation_base: row.tdsActApplicable
+      ? toTdsCalculationBase(row.tdsCalculationBase)
+      : null,
 
     is_lwf_act_applicable: row.lwfActApplicable,
     lwf_act_type: row.lwfActApplicable ? toApiActAmountType(row.lwfActType) : null,
@@ -218,6 +243,7 @@ function headsToPayload(row: WageStructureRow) {
       pf_applicable: allowance.pfApplicable,
       esic_applicable: allowance.esicApplicable,
       pt_applicable: allowance.ptApplicable,
+      ...schedulePayload(allowance, 'allowance'),
     })
   }
 
@@ -237,10 +263,46 @@ function headsToPayload(row: WageStructureRow) {
       pf_applicable: false,
       esic_applicable: false,
       pt_applicable: false,
+      ...schedulePayload(deduction, 'deduction'),
     })
   }
 
   return components
+}
+
+/**
+ * One head's payout schedule as the request carries it — the same four (five, on
+ * a deduction) keys on every screen that configures a head.
+ *
+ * Two rules the API refuses a body over, applied here so no caller has to
+ * remember them:
+ *
+ * - **`start_month` is omitted on a MONTHLY head** and sent on every other
+ *   frequency. Sending one with Monthly is a 400, and so is leaving it out
+ *   otherwise. The schedule is repaired first, so a non-monthly head that somehow
+ *   has no anchor gets the default rather than being refused.
+ * - **`calculation_base` is deduction-only.** An allowance sending one names the
+ *   head in the error, so it's dropped by side here rather than per screen.
+ */
+export function schedulePayload(
+  schedule: ComponentSchedule,
+  side: 'allowance' | 'deduction',
+): Pick<
+  SalaryComponentPayload,
+  'payout_frequency' | 'start_month' | 'amount_mode' | 'payroll_calculation' | 'calculation_base'
+> {
+  const resolved = resolveSchedule(schedule)
+  const anchor = toStartMonthNumber(resolved.startMonth)
+
+  return {
+    payout_frequency: resolved.payoutFrequency,
+    ...(needsStartMonth(resolved.payoutFrequency) && anchor !== null
+      ? { start_month: anchor }
+      : {}),
+    amount_mode: resolved.amountMode,
+    payroll_calculation: resolved.payrollCalculation,
+    ...(side === 'deduction' ? { calculation_base: resolved.calculationBase } : {}),
+  }
 }
 
 /**
@@ -263,7 +325,7 @@ export function toWageStructure(
     ]),
   )
   const pfType = response.pf_deduction_type
-    ? toValueType(response.pf_deduction_type)
+    ? toPfDeductionType(response.pf_deduction_type)
     : 'Percentage'
 
   return {
@@ -290,6 +352,7 @@ export function toWageStructure(
         pfApplicable: component?.pf_applicable ?? false,
         esicApplicable: component?.esic_applicable ?? false,
         ptApplicable: component?.pt_applicable ?? false,
+        ...scheduleOf(component),
       }
     }),
     deductions: heads.deductions.map((head) => {
@@ -298,6 +361,7 @@ export function toWageStructure(
         componentId: head.id,
         valueType: component ? toValueType(component.amount_type) : 'Fixed',
         amount: component?.amount ?? null,
+        ...scheduleOf(component),
       }
     }),
 
@@ -321,6 +385,7 @@ export function toWageStructure(
 
     tdsActApplicable: response.is_tds_act_applicable ?? false,
     tdsPercentage: response.tds_percentage ?? null,
+    tdsCalculationBase: toTdsCalculationBase(response.tds_calculation_base),
 
     lwfActApplicable: response.is_lwf_act_applicable ?? false,
     lwfActType: fromApiActAmountType(response.lwf_act_type),
@@ -347,6 +412,8 @@ export function wageStructureToRow(
   return {
     wageStructureId: structure.id,
     effectiveFrom: structure.effectiveFrom,
+    /* Absent on a designation's version, which is always its own catalog. */
+    ownHeads: structure.ownHeads ?? true,
 
     workingDayCalculationType: chosen(structure.workingDayCalculationType),
     // A stored "no weekly off" is the grid's explicit "None".
@@ -364,11 +431,13 @@ export function wageStructureToRow(
       pfApplicable: allowance.pfApplicable,
       esicApplicable: allowance.esicApplicable,
       ptApplicable: allowance.ptApplicable,
+      ...scheduleFieldsOf(allowance),
     })),
     deductions: structure.deductions.map((deduction) => ({
       componentId: deduction.componentId,
       valueType: deduction.valueType,
       amount: optional(deduction.amount),
+      ...scheduleFieldsOf(deduction),
     })),
 
     overtimeApplicable: structure.overtimeApplicable,
@@ -393,9 +462,40 @@ export function wageStructureToRow(
 
     tdsActApplicable: structure.tdsActApplicable,
     tdsPercentage: optional(structure.tdsPercentage),
+    tdsCalculationBase: structure.tdsCalculationBase ?? '',
 
     lwfActApplicable: structure.lwfActApplicable,
     lwfActType: chosen(structure.lwfActType),
     lwfAmount: optional(structure.lwfAmount),
   }
+}
+
+
+/* ── The payout schedule, across the boundary ───────────────────────────── */
+
+/**
+ * One head's schedule as read off the wire. A head this version never carried,
+ * or one written before the schedule existed, reads back as the default — which
+ * is exactly the behaviour it was priced under.
+ */
+function scheduleOf(component: SalaryComponentResponse | undefined): ComponentSchedule {
+  if (!component) return { ...DEFAULT_COMPONENT_SCHEDULE }
+  return {
+    payoutFrequency: toPayoutFrequency(component.payout_frequency),
+    startMonth: toStartMonthValue(component.start_month),
+    amountMode: toAmountMode(component.amount_mode),
+    payrollCalculation: toPayrollCalculation(component.payroll_calculation),
+    calculationBase: toCalculationBase(component.calculation_base),
+  }
+}
+
+/** The schedule half of a stored head, as an editable row holds it. */
+function scheduleFieldsOf(head: ComponentSchedule): ComponentSchedule {
+  return resolveSchedule({
+    payoutFrequency: head.payoutFrequency,
+    startMonth: head.startMonth,
+    amountMode: head.amountMode,
+    payrollCalculation: head.payrollCalculation,
+    calculationBase: head.calculationBase,
+  })
 }

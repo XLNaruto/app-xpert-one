@@ -12,6 +12,7 @@ import {
   ESIC_RATE_SORT,
   ESIC_RATE_VALUE_FIELDS,
   ESIC_RATE_VALUE_SORT_FIELDS,
+  esicRoundingLabel,
 } from '../constants'
 import {
   formatEffectiveDate,
@@ -111,6 +112,16 @@ export function EsicRateListPage() {
         header: 'Contribution Period 2',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatMonth(row.original.contributionEndPeriod2),
+      },
+      {
+        /* The filing convention this rate is applied under — the difference
+           between billing ₹105 and ₹104.23 on the same contribution. Not
+           sortable: the endpoint doesn't order by it. */
+        accessorKey: 'roundingMode',
+        enableSorting: false,
+        header: 'Rounding',
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) => esicRoundingLabel(row.original.roundingMode),
       },
       // The API tracks no `updated_at`, and only `created_at` is sortable.
       ...auditColumns<EsicRate>({ createdAt: ESIC_RATE_SORT.createdAt }),

@@ -14,6 +14,15 @@ import {
   toOptionalAmount,
 } from './designation-calculations'
 import {
+  toAmountMode,
+  toCalculationBase,
+  toPayoutFrequency,
+  toPayrollCalculation,
+  toStartMonthValue,
+  toTdsCalculationBase,
+} from './component-schedule'
+import { schedulePayload } from './wage-structure-mappers'
+import {
   fromApiActAmountType,
   fromApiEsicBasis,
   fromApiSalaryType,
@@ -23,6 +32,7 @@ import {
   toApiSalaryType,
   toApiWeeklyOff,
   toApiWorkingDayCalculationType,
+  toPfDeductionType,
   toValueType,
 } from './api-enums'
 
@@ -67,6 +77,7 @@ const NO_WAGE_STRUCTURE = {
 
   tdsActApplicable: false,
   tdsPercentage: null,
+  tdsCalculationBase: null,
 
   lwfActApplicable: false,
   lwfActType: null,
@@ -128,7 +139,9 @@ export function toDesignationDetail(response: DesignationDetailResponse): Design
  * them.
  */
 function wageFieldsOf(wage: WageStructureResponse) {
-  const pfType = wage.pf_deduction_type ? toValueType(wage.pf_deduction_type) : null
+  const pfType = wage.pf_deduction_type
+    ? toPfDeductionType(wage.pf_deduction_type)
+    : null
 
   return {
     salaryType: fromApiSalaryType(wage.salary_type),
@@ -163,6 +176,7 @@ function wageFieldsOf(wage: WageStructureResponse) {
 
     tdsActApplicable: wage.is_tds_act_applicable ?? false,
     tdsPercentage: wage.tds_percentage ?? null,
+    tdsCalculationBase: toTdsCalculationBase(wage.tds_calculation_base),
 
     lwfActApplicable: wage.is_lwf_act_applicable ?? false,
     lwfActType: fromApiActAmountType(wage.lwf_act_type),
@@ -196,6 +210,13 @@ function splitHeads(components: DesignationDetailResponse['salary_components']):
       pfApplicable: component.pf_applicable ?? false,
       esicApplicable: component.esic_applicable ?? false,
       ptApplicable: component.pt_applicable ?? false,
+      /* A head written before the schedule existed reads back as the default,
+         which is the behaviour it was actually priced under. */
+      payoutFrequency: toPayoutFrequency(component.payout_frequency),
+      startMonth: toStartMonthValue(component.start_month),
+      amountMode: toAmountMode(component.amount_mode),
+      payrollCalculation: toPayrollCalculation(component.payroll_calculation),
+      calculationBase: toCalculationBase(component.calculation_base),
     }
     if (component.component_type?.toUpperCase() === 'DEDUCTION') deductions.push(mapped)
     else allowances.push(mapped)
@@ -242,6 +263,7 @@ export function designationToFormValues(
 
     tdsActApplicable: designation.tdsActApplicable,
     tdsPercentage: optional(designation.tdsPercentage),
+    tdsCalculationBase: designation.tdsCalculationBase ?? '',
 
     lwfActApplicable: designation.lwfActApplicable,
     lwfActType: chosen(designation.lwfActType),
@@ -264,6 +286,11 @@ function toComponentRow(component: DesignationSalaryComponent) {
     pfApplicable: component.pfApplicable,
     esicApplicable: component.esicApplicable,
     ptApplicable: component.ptApplicable,
+    payoutFrequency: component.payoutFrequency,
+    startMonth: component.startMonth,
+    amountMode: component.amountMode,
+    payrollCalculation: component.payrollCalculation,
+    calculationBase: component.calculationBase,
   }
 }
 
@@ -296,7 +323,7 @@ export function designationToPayload(
 
     is_pf_act_applicable: values.pfActApplicable,
     pf_deduction_type: values.pfActApplicable
-      ? toValueType(values.pfDeductionType)
+      ? toPfDeductionType(values.pfDeductionType)
       : null,
     pf_deduction_amount: values.pfActApplicable
       ? toOptionalAmount(values.pfDeductionValue)
@@ -321,6 +348,11 @@ export function designationToPayload(
     is_tds_act_applicable: values.tdsActApplicable,
     tds_percentage: values.tdsActApplicable
       ? toOptionalAmount(values.tdsPercentage)
+      : null,
+    /* A rate with no base deducts nothing, which is a legitimate state and the
+       one the API defaults to — so an unpicked dropdown is sent as `null`. */
+    tds_calculation_base: values.tdsActApplicable
+      ? toTdsCalculationBase(values.tdsCalculationBase)
       : null,
 
     is_lwf_act_applicable: values.lwfActApplicable,
@@ -353,21 +385,26 @@ export function designationToPayload(
  * is covered by.
  */
 function headsToPayload(values: DesignationFormValues): SalaryComponentPayload[] {
-  const toPayload = (row: DesignationComponentRow): SalaryComponentPayload => ({
-    pay_component_id: Number(row.componentId),
-    amount_type: row.valueType,
-    amount: toOptionalAmount(row.amount) ?? 0,
-    pf_applicable: values.pfActApplicable && row.pfApplicable,
-    esic_applicable: values.esicActApplicable && row.esicApplicable,
-    pt_applicable: values.ptActApplicable && row.ptApplicable,
-  })
+  const toPayload =
+    (side: 'allowance' | 'deduction') =>
+    (row: DesignationComponentRow): SalaryComponentPayload => ({
+      pay_component_id: Number(row.componentId),
+      amount_type: row.valueType,
+      amount: toOptionalAmount(row.amount) ?? 0,
+      pf_applicable: values.pfActApplicable && row.pfApplicable,
+      esic_applicable: values.esicActApplicable && row.esicApplicable,
+      pt_applicable: values.ptActApplicable && row.ptApplicable,
+      /* The four schedule fields, plus `calculation_base` on the deduction side
+         only — the API refuses one on an allowance. */
+      ...schedulePayload(row, side),
+    })
 
   const applies = (row: DesignationComponentRow) =>
     row.componentId !== '' && row.amount !== ''
 
   return [
-    ...values.allowances.filter(applies).map(toPayload),
-    ...values.deductions.filter(applies).map(toPayload),
+    ...values.allowances.filter(applies).map(toPayload('allowance')),
+    ...values.deductions.filter(applies).map(toPayload('deduction')),
   ]
 }
 

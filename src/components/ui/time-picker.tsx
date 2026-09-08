@@ -192,7 +192,6 @@ export function TimePicker({
         <button
           type="button"
           aria-label="Clear time"
-          title="Clear"
           onClick={() => {
             onChange('')
             setOpen(false)

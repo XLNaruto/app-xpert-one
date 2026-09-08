@@ -344,7 +344,6 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
       register={form.register}
       setValue={form.setValue}
       headConfigs={form.headConfigs}
-      statutoryIds={form.statutoryIds}
       rates={form.rates}
       periodMonth={form.periodMonth}
       dirtyRows={form.dirtyRows}

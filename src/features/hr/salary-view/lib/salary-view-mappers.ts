@@ -61,6 +61,15 @@ function toHead(component: SalaryReportComponentResponse): SalaryViewHead {
     pfApplicable: component.pf_applicable,
     esicApplicable: component.esic_applicable,
     ptApplicable: component.pt_applicable,
+    /* The schedule snapshot, carried through as stored. All null on a month
+       saved through the register's bulk save, which records none. */
+    payoutFrequency: component.payout_frequency ?? null,
+    startMonth: component.start_month ?? null,
+    amountMode: component.amount_mode ?? null,
+    payrollCalculation: component.payroll_calculation ?? null,
+    calculationBase: component.calculation_base ?? null,
+    isPayoutMonth: component.is_payout_month ?? null,
+    accruedMonths: component.accrued_months ?? null,
   }
 }
 
@@ -110,6 +119,16 @@ export function toSalaryViewRow(item: SalaryReportItemResponse): SalaryViewRow {
     totalDeduction: amount(salary.total_deduction),
     grossPay: amount(salary.gross_pay),
     netPay: amount(salary.net_pay),
+    /* Kept nullable rather than defaulted: the API fills these only where its
+       OWN engine priced the month, so `null` is "not derived" and shows as a
+       dash. Reading it as zero would state a figure nobody computed. */
+    totalStatutoryCost: salary.total_statutory_cost ?? null,
+    agencyChargeAmount: salary.agency_charge_amount ?? null,
+    gstAmount: salary.gst_amount ?? null,
+    totalInvoiceAmount: salary.total_invoice_amount ?? null,
+    agencyChargePercentage: salary.agency_charge_percentage ?? null,
+    gstPercentage: salary.gst_percentage ?? null,
+    tdsCalculationBase: salary.tds_calculation_base ?? null,
     employeePf: amount(salary.employee_pf),
     employerPf: amount(salary.employer_pf),
     employeeEsic: amount(salary.employee_esic),
@@ -179,6 +198,12 @@ function toTotals(totals: SalaryReportResponse['totals']): SalaryViewTotals {
     employeeTds: totals.employee_tds,
     employerPf: totals.employer_pf,
     employerEsic: totals.employer_esic,
+    /* Kept nullable: a response from before these shipped carries no key, and a
+       dash says "not reported" where a zero would claim a figure. */
+    totalStatutoryCost: totals.total_statutory_cost ?? null,
+    agencyChargeAmount: totals.agency_charge_amount ?? null,
+    gstAmount: totals.gst_amount ?? null,
+    totalInvoiceAmount: totals.total_invoice_amount ?? null,
   }
 }
 

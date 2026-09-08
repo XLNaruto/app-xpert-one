@@ -57,9 +57,21 @@ export function todayIso(): string {
 }
 
 /**
- * A renewal date derived from the contract's start and length —
- * `joiningDate + period(type) − 1 day`, so a one-year contract starting on the
- * 1st of April renews on the 31st of March, not the 1st.
+ * The renewal date derived from the contract's start and length — the day the
+ * desk is WARNED, not the day the term ends.
+ *
+ * This is the same rule the API applies, and the reason it matters is that
+ * `renewal_date` is what `GET /user/employee-contracts/expiring` compares
+ * against: a posting appears on the contract-expiry worklist the day this date
+ * arrives, and the API reads the real end of the term back off
+ * `renewal_date + lead`. Storing the END here instead would warn the desk on the
+ * last day of the contract, a month late, and push the end the panel reports a
+ * month past the truth.
+ *
+ * The lead, by unit of the term — one month before the end for a YEAR or MONTH
+ * contract, thirty days for a DAY one:
+ *
+ *     joiningDate + period(type) - lead(type)
  *
  * Answers `''` when either input is missing, which leaves the field for the user.
  */
@@ -74,10 +86,15 @@ export function deriveRenewalDate(
   const date = new Date(`${joiningDate}T00:00:00Z`)
   if (Number.isNaN(date.getTime())) return ''
 
+  // The end of the term first…
   if (periodType === 'YEAR') date.setUTCFullYear(date.getUTCFullYear() + count)
   else if (periodType === 'MONTH') date.setUTCMonth(date.getUTCMonth() + count)
   else date.setUTCDate(date.getUTCDate() + count)
 
-  date.setUTCDate(date.getUTCDate() - 1)
+  // …then back off the warning lead. A DAY term is warned about 30 days out;
+  // anything measured in months or years, one month out.
+  if (periodType === 'DAY') date.setUTCDate(date.getUTCDate() - 30)
+  else date.setUTCMonth(date.getUTCMonth() - 1)
+
   return date.toISOString().slice(0, DATE_LENGTH)
 }

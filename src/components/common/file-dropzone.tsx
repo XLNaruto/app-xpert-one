@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { FileUploader } from 'react-drag-drop-files'
 import { FileText, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import { toasterrormsg } from '@/lib/toast'
 import { checkFileContent } from '@/lib/file-signature'
 import { useMediaUrl } from '@/hooks/use-media-url'
@@ -116,19 +117,20 @@ export function FileDropzone({
             </span>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => preview.open(0)}
-            title={value.name}
-            className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 px-4 py-6 text-center"
-          >
-            <span className="flex size-11 items-center justify-center rounded-lg border border-border bg-background text-primary">
-              <FileText className="size-6" />
-            </span>
-            <span className="max-w-full truncate text-sm font-medium text-foreground">
-              {value.name}
-            </span>
-          </button>
+          <Hint text={value.name}>
+            <button
+              type="button"
+              onClick={() => preview.open(0)}
+              className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 px-4 py-6 text-center"
+            >
+              <span className="flex size-11 items-center justify-center rounded-lg border border-border bg-background text-primary">
+                <FileText className="size-6" />
+              </span>
+              <span className="max-w-full truncate text-sm font-medium text-foreground">
+                {value.name}
+              </span>
+            </button>
+          </Hint>
         )}
         <button
           type="button"

@@ -20,6 +20,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { Hint } from '@/components/common/hint'
 import { cn } from '@/lib/utils'
 import {
   CHART_COLORS,
@@ -299,15 +300,16 @@ export function HeatmapGrid({
                 </th>
                 {(cells[rowIndex] ?? []).map((cell) => (
                   <td key={cell.key} className="p-0">
-                    <div
-                      title={`${cell.title} · ${formatValue(cell.value)}`}
-                      style={{
-                        width: cellSize,
-                        height: cellSize,
-                        background: heatColor(cell.value, cell.intensity),
-                      }}
-                      className="rounded-[3px]"
-                    />
+                    <Hint text={`${cell.title} · ${formatValue(cell.value)}`}>
+                      <div
+                        style={{
+                          width: cellSize,
+                          height: cellSize,
+                          background: heatColor(cell.value, cell.intensity),
+                        }}
+                        className="rounded-[3px]"
+                      />
+                    </Hint>
                   </td>
                 ))}
               </tr>

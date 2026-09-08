@@ -145,7 +145,7 @@ export function PlaceSearchInput({
             inputRef.current?.focus()
             onClear?.()
           }}
-          title="Clear search"
+          aria-label="Clear search"
           className="absolute right-2 top-1/2 z-10 grid size-6 -translate-y-1/2 cursor-pointer place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <X className="size-4" />

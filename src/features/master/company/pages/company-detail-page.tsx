@@ -8,6 +8,7 @@ import {
   MapPin,
   Pencil,
   Phone,
+  ReceiptText,
   Smartphone,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
@@ -141,6 +142,41 @@ export function CompanyDetailPage({ data }: { data?: string }) {
               value={company.mobile2}
             />
             <DetailItem icon={Mail} label="Email" value={company.email} />
+
+            {/*
+              Billing Charges — the versioned rates the "Total Invoice Amount"
+              calculation base is priced on. No block at all means none has ever
+              been configured, which is a real state (invoice at statutory cost)
+              rather than a rate of zero, so it says so in words.
+            */}
+            <FormSection icon={ReceiptText} title="Billing Charges" />
+            {company.billing === null ? (
+              <DetailItem
+                icon={ReceiptText}
+                label="Charges"
+                value="Not configured — invoices at statutory cost"
+                className="sm:col-span-2"
+              />
+            ) : (
+              <>
+                <DetailItem
+                  icon={ReceiptText}
+                  label="Agency Charge"
+                  value={percent(company.billing.agencyChargePercentage)}
+                />
+                <DetailItem
+                  icon={ReceiptText}
+                  label="GST"
+                  value={percent(company.billing.gstPercentage)}
+                />
+                <DetailItem
+                  icon={CalendarDays}
+                  label="Rates Effective From"
+                  value={formatDate(company.billing.effectiveFrom)}
+                />
+              </>
+            )}
+
             <DetailItem
               icon={CalendarDays}
               label="Created On"
@@ -151,4 +187,13 @@ export function CompanyDetailPage({ data }: { data?: string }) {
       )}
     </div>
   )
+}
+
+/**
+ * One billing rate. An unset rate reads as "at cost" rather than "0%": the
+ * component is simply not charged, which is not the same statement as charging
+ * nothing at a configured rate.
+ */
+function percent(value: number | null): string {
+  return value === null ? 'At cost' : `${value}%`
 }

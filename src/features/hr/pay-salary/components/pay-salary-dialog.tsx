@@ -6,7 +6,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Field } from '@/components/common/form-field'
 import { MultiFileDropzone } from '@/components/common/multi-file-dropzone'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import {
   MAX_PAYMENT_DOCUMENTS,
   MAX_PAYMENTS_PER_BATCH,
@@ -119,7 +119,7 @@ export function PaySalaryDialog({
                     )}
                   </span>
                   <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
-                    {formatAmount(row.netPay)}
+                    {formatMoney(row.netPay)}
                   </span>
                 </div>
               ))}
@@ -131,7 +131,7 @@ export function PaySalaryDialog({
                 Total Payable
               </span>
               <span className="font-heading text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                {formatAmount(total)}
+                {formatMoney(total)}
               </span>
             </div>
 

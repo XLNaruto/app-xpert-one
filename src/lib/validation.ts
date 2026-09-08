@@ -45,6 +45,15 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export const DIGITS_RE = /^\d+$/
 /** An amount with up to two decimals. */
 export const AMOUNT_RE = /^\d+(\.\d{1,2})?$/
+/**
+ * A configured RATE, with up to four decimals.
+ *
+ * Two places is right for a sum of money, but a minimum-wage notification states
+ * a per-day allowance as `146.8846` and the pay it produces is checked against
+ * the agency's own bill to the paise. Rounding the *input* to two decimals loses
+ * that before the arithmetic starts — only the computed output is a 2dp figure.
+ */
+export const RATE_RE = /^\d+(\.\d{1,4})?$/
 
 /**
  * A person's name — letters, spaces and the punctuation that turns up in real

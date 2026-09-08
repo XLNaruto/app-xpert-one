@@ -1,3 +1,12 @@
+import {
+  toAmountMode,
+  toCalculationBase,
+  toPayoutFrequency,
+  toPayrollCalculation,
+  toStartMonthValue,
+  toTdsCalculationBase,
+  toValueType,
+} from '@/features/master/designation'
 import type {
   SalaryComponentPayload,
   SalaryRegisterItemResponse,
@@ -7,7 +16,9 @@ import type {
 } from '../schemas'
 import type {
   SalaryAttendance,
+  SalaryBillingCharge,
   SalaryComponent,
+  EsicRoundingMode,
   SalaryFigures,
   SalaryHead,
   SalaryHeadConfigs,
@@ -105,6 +116,10 @@ function toWageStructure(
     lwfActType: wage.lwf_act_type ?? null,
     lwfAmount: wage.lwf_amount ?? null,
     tdsPercentage: wage.tds_percentage ?? null,
+    /* `null` here deducts nothing at all — see `SalaryWageStructure`. An
+       unrecognised value reads as `null` too, which is the reading that deducts
+       nothing rather than the one that invents a base. */
+    tdsCalculationBase: toTdsCalculationBase(wage.tds_calculation_base),
   }
 }
 
@@ -133,6 +148,9 @@ function toRates(rates: SalaryRegisterResponse['rates']): SalaryRates {
       wageCeilingLimit: rates.esic.wage_ceiling_limit,
       employeeContribution: rates.esic.employee_esic_contribution,
       employerContribution: rates.esic.employer_esic_contribution,
+      /* `CEIL` where the rate says nothing — the unconditional behaviour every
+         month had before the mode existed, so no stored month moves. */
+      roundingMode: toEsicRoundingMode(rates.esic.rounding_mode),
     },
     pt: rates.pt && {
       id: rates.pt.id,
@@ -164,6 +182,36 @@ function toRates(rates: SalaryRegisterResponse['rates']): SalaryRates {
   }
 }
 
+/**
+ * The ESIC rounding convention a rate names. Anything absent or unrecognised
+ * reads as `CEIL`, which is what the engine did unconditionally before the mode
+ * existed — so an old rate row keeps behaving exactly as it did.
+ */
+export function toEsicRoundingMode(value: string | null | undefined): EsicRoundingMode {
+  const upper = (value ?? '').trim().toUpperCase()
+  return upper === 'ROUND' || upper === 'PAISE' ? upper : 'CEIL'
+}
+
+/**
+ * The company's agency charge and GST in force for the period.
+ *
+ * `null` is a company that has configured none, and it stays `null` rather than
+ * becoming a pair of zeros — the arithmetic reads it as 0% / 0% and bills at
+ * statutory cost, but "no charges configured" and "charges of zero" are different
+ * statements and only the block itself can say which. **Never defaulted to 18%.**
+ */
+function toBillingCharge(
+  charge: SalaryRegisterResponse['billing_charge'],
+): SalaryBillingCharge | null {
+  if (!charge) return null
+  return {
+    id: charge.id,
+    effectiveDate: charge.effective_date,
+    agencyChargePercentage: charge.agency_charge_percentage ?? 0,
+    gstPercentage: charge.gst_percentage ?? 0,
+  }
+}
+
 /** A slab's minimum age, `null` where the band sets no age bar. */
 function minAge(value: string | null): number | null {
   const parsed = Number((value ?? '').trim())
@@ -186,13 +234,24 @@ function toSalaryComponent(
       headLabel(component.pay_component_short_code, null),
     componentType: type === 'ALLOWANCE' || type === 'DEDUCTION' ? type : '',
     sortOrder: component.sort_order ?? 0,
-    /* Spelled the same on both sides; anything unrecognised reads as a flat
-       amount, which is the reading that leaves a figure where it is. */
-    valueType: component.amount_type === 'Percentage' ? 'Percentage' : 'Fixed',
+    /* Four rules now, spelled the same on both sides — a share of a base, a
+       prorated monthly figure, a rate per payable day, or a count of days at the
+       day's wage. See `headCellAmount`. */
+    valueType: toValueType(component.amount_type),
     value: component.amount,
     pfApplicable: component.pf_applicable ?? false,
     esicApplicable: component.esic_applicable ?? false,
     ptApplicable: component.pt_applicable ?? false,
+    /*
+     * The payout schedule this head is priced under. Absent values read back as
+     * the default — monthly, per payout, in the calculation — which is exactly
+     * how heads were priced before the schedule existed.
+     */
+    payoutFrequency: toPayoutFrequency(component.payout_frequency),
+    startMonth: toStartMonthValue(component.start_month),
+    amountMode: toAmountMode(component.amount_mode),
+    payrollCalculation: toPayrollCalculation(component.payroll_calculation),
+    calculationBase: toCalculationBase(component.calculation_base),
   }
 }
 
@@ -209,6 +268,9 @@ function toHead(head: {
   pf_applicable?: boolean
   esic_applicable?: boolean
   pt_applicable?: boolean
+  payroll_calculation?: string | null
+  is_payout_month?: boolean | null
+  accrued_months?: number | null
 }): SalaryHead {
   return {
     payComponentId: head.pay_component_id,
@@ -220,6 +282,21 @@ function toHead(head: {
     pfApplicable: head.pf_applicable ?? false,
     esicApplicable: head.esic_applicable ?? false,
     ptApplicable: head.pt_applicable ?? false,
+    /*
+     * The schedule snapshot a processed line was priced under. All null on a row
+     * saved through the register's bulk save, which stores the lines the screen
+     * computed and records no schedule — there is then nothing to explain about
+     * the amount, and it stands on its own.
+     */
+    isPayoutMonth: head.is_payout_month ?? null,
+    accruedMonths: head.accrued_months ?? null,
+    /* Nothing stored says when the head NEXT pays out — only the live
+       arithmetic knows that, from the configuration. */
+    nextPayoutMonth: null,
+    payrollCalculation:
+      (head.payroll_calculation ?? '').toUpperCase() === 'EXCLUDE'
+        ? 'EXCLUDE'
+        : 'INCLUDE',
   }
 }
 
@@ -272,6 +349,19 @@ function toFigures(item: SalaryRegisterItemResponse): SalaryFigures {
        one it was paid at, which is the one worth showing on a processed row. */
     otRate: amount(stored?.overtime_rate_per_hour ?? wage?.overtime_rate_per_hour),
     otAmount: amount(stored?.ot_amount),
+    /*
+     * The invoice side, as stored. Kept nullable rather than defaulted: the API
+     * only fills these where its OWN engine priced the month, and a row saved
+     * through this screen's bulk save derives no bases — so `null` means "not
+     * derived" and must render as a dash, never as zero.
+     */
+    totalStatutoryCost: stored?.total_statutory_cost ?? null,
+    agencyChargeAmount: stored?.agency_charge_amount ?? null,
+    gstAmount: stored?.gst_amount ?? null,
+    totalInvoiceAmount: stored?.total_invoice_amount ?? null,
+    agencyChargePercentage: stored?.agency_charge_percentage ?? null,
+    gstPercentage: stored?.gst_percentage ?? null,
+    tdsCalculationBase: stored?.tds_calculation_base ?? null,
   }
 }
 
@@ -316,6 +406,8 @@ export function toSalaryRegisterRow(item: SalaryRegisterItemResponse): SalaryReg
     attendance: toAttendance(item.attendance),
     wageStructure: toWageStructure(item.wage_structure),
     salaryComponents: (item.salary_components ?? []).map(toSalaryComponent),
+    /* Which tier priced the HEADS — read, never derived from `wage_source`. */
+    salaryComponentSource: item.salary_component_source ?? null,
     figures: toFigures(item),
     storedPresentDays: item.salary?.present_days ?? null,
     storedWorkingDays: item.salary?.working_days ?? null,
@@ -335,6 +427,7 @@ export function toSalaryRegister(response: SalaryRegisterResponse): SalaryRegist
     period: toPeriod(response.period),
     totals: toTotals(response.totals),
     rates: toRates(response.rates),
+    billingCharge: toBillingCharge(response.billing_charge),
     items: response.items.map(toSalaryRegisterRow),
     total: response.total,
   }
@@ -493,9 +586,11 @@ function toComponentPayload(head: SalaryHead): SalaryComponentPayload {
  * double-clicked allowance amount mean anything: it is written as typed, and
  * nothing on the server re-derives it from the designation afterwards.
  *
- * PF / ESIC / PT / LWF go out as deduction lines only where a head doesn't
- * already stand for them, matching how `rowFigures` totalled them — so whichever
- * way the company's catalog names them, `total_deduction` counts each one once.
+ * **PF, ESIC, PT, LWF and TDS go out as columns on the row, never as breakdown
+ * lines.** `bulk-save` verifies `total_deduction` against the lines *plus* those
+ * columns, so a statutory figure sent both ways is counted twice and the row is
+ * refused — and with the tolerance now 5 paise rather than 2 rupees, that is a
+ * certainty rather than something rounding could absorb.
  *
  * **What is deliberately not sent.** `bulk-save` accepts eight more act settings
  * than `GET /salary/register` reports: `employee_pf_contribution_on_wage_limit`
@@ -536,6 +631,9 @@ export function salaryRowToPayload(
     pf_act_applicable: wage?.isPfActApplicable ?? null,
     pf_deduction_type: oneOf(wage?.pfDeductionType, ['Percentage', 'Fixed'] as const),
     pf_deduction_amount: wage?.pfDeductionAmount ?? null,
+    /* The employee's statutory shares ride as COLUMNS, never as breakdown
+       lines — see the note below on counting each one exactly once. */
+    employee_pf: figures.employeePf,
     employer_pf: figures.employerPf,
     esic_act_applicable: wage?.isEsicActApplicable ?? null,
     esic_deduction_basis: oneOf(wage?.esicDeductionBasis, [
@@ -547,12 +645,18 @@ export function salaryRowToPayload(
        so a rate revised later can't be mistaken for the one this month paid. */
     employee_esic_deduction_percentage: figures.employeeEsicRate || null,
     employer_esic_deduction_percentage: figures.employerEsicRate || null,
+    employee_esic: figures.employeeEsic,
     employer_esic: figures.employerEsic,
     pt_act_applicable: wage?.isPtActApplicable ?? null,
     pt_act_type: actType(wage?.ptActType),
+    employee_pt: figures.employeePt,
     lwf_act_applicable: wage?.isLwfActApplicable ?? null,
+    employee_lwf: figures.employeeLwf,
     tds_act_applicable: wage?.isTdsActApplicable ?? null,
     tds_percentage: wage?.tdsPercentage ?? null,
+    /* The amount the rate was charged on, echoed so the stored month reads back
+       as it was priced rather than through whatever the structure says later. */
+    tds_calculation_base: wage?.tdsCalculationBase ?? null,
     employee_tds: figures.employeeTds,
 
     overtime_applicable: wage?.isOvertimeApplicable ?? null,
@@ -569,9 +673,10 @@ export function salaryRowToPayload(
 
     employee_component: {
       allowance: figures.allowances.map(toComponentPayload),
-      deduction: [...figures.deductions, ...figures.statutoryLines].map(
-        toComponentPayload,
-      ),
+      /* The non-statutory heads and nothing else. PF, ESIC, PT, LWF and TDS are
+         columns on the row above; sending them here as well would have
+         `total_deduction` count each of them twice. */
+      deduction: figures.deductions.map(toComponentPayload),
     },
   }
 }
@@ -607,6 +712,13 @@ export function salaryHeadConfigsFromRegister(
         pfApplicable: component.pfApplicable,
         esicApplicable: component.esicApplicable,
         ptApplicable: component.ptApplicable,
+        /* The schedule is part of the rule, not decoration: it decides whether
+           the head is worth anything this month at all. */
+        payoutFrequency: component.payoutFrequency,
+        startMonth: component.startMonth,
+        amountMode: component.amountMode,
+        payrollCalculation: component.payrollCalculation,
+        calculationBase: component.calculationBase,
       })
     })
   })

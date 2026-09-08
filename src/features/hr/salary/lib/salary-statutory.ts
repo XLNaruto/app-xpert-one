@@ -1,4 +1,6 @@
+import { round2 } from '@/lib/currency'
 import type {
+  EsicRoundingMode,
   SalaryHead,
   SalaryPtSlab,
   SalaryRates,
@@ -31,10 +33,14 @@ import type {
  * Pure functions only — no React, no hooks, per the feature layout.
  */
 
-/** Money rounded the way a rupee figure is stored — two places, no more. */
-function round(value: number): number {
-  return Math.round(value * 100) / 100
-}
+/**
+ * Money rounded to the paise, exactly the way the server's `round2()` does it.
+ *
+ * Not a local `Math.round(x * 100) / 100`: `bulk-save` now checks each row's
+ * arithmetic to within 5 paise, and a half-way case rounded the other way is a
+ * 400 rather than a cosmetic difference. See `lib/currency`.
+ */
+const round = round2
 
 /** A configured string, compared the way the masters spell it. */
 function is(value: string | null | undefined, expected: string): boolean {
@@ -59,8 +65,20 @@ export function actWage(
   allowances: SalaryHead[],
   act: 'pf' | 'esic' | 'pt',
 ): number {
+  /*
+   * `payroll_calculation: EXCLUDE` is a stricter gate than the chips: an excluded
+   * head is out of EVERY base whatever its chips say — it is still paid and still
+   * lands in gross pay, it simply doesn't enter anything the acts or the other
+   * heads calculate on. An INCLUDE head still needs its own chip to reach a given
+   * base, so the two are read together and neither overrides the other.
+   */
   const applies = (head: SalaryHead) =>
-    act === 'pf' ? head.pfApplicable : act === 'esic' ? head.esicApplicable : head.ptApplicable
+    head.payrollCalculation !== 'EXCLUDE' &&
+    (act === 'pf'
+      ? head.pfApplicable
+      : act === 'esic'
+        ? head.esicApplicable
+        : head.ptApplicable)
 
   return round(
     earnedBasic +
@@ -141,6 +159,25 @@ export interface EsicResult {
 }
 
 /**
+ * How an ESIC contribution is rounded — a **filing convention**, and one that
+ * changes by notification, so it rides on the effective-dated rate row rather
+ * than being a constant here.
+ *
+ * It used to be `Math.ceil` unconditionally, which turns ₹104.2275 into ₹105; a
+ * government-approved agency sheet states ₹104.23. `CEIL` remains the default, so
+ * nothing moves until someone edits the rate.
+ *
+ * The server applies whichever mode the rate names, to BOTH shares. Hard-coding
+ * one here would put the screen's ESIC a rupee away from the server's and fail
+ * the save's 5-paise check.
+ */
+function applyEsicRounding(value: number, mode: EsicRoundingMode): number {
+  if (mode === 'ROUND') return Math.round(value)
+  if (mode === 'PAISE') return round(value)
+  return Math.ceil(value)
+}
+
+/**
  * ESIC, on the wage its `esic_deduction_basis` names.
  *
  * The three bases are three different questions. **Wage Ceiling** charges the
@@ -173,9 +210,10 @@ export function esicFor(
   }
   /* 'Gross Salary', and anything unrecognised, charges the wage as it stands. */
 
+  const mode = master.roundingMode
   return {
-    employee: round((charged * employeeRate) / 100),
-    employer: round((charged * employerRate) / 100),
+    employee: applyEsicRounding((charged * employeeRate) / 100, mode),
+    employer: applyEsicRounding((charged * employerRate) / 100, mode),
     base: charged,
     employeeRate,
     employerRate,
@@ -265,15 +303,22 @@ export function lwfFor(
 /* ── TDS ────────────────────────────────────────────────────────────────── */
 
 /**
- * TDS — the designation's percentage of the gross, where one is configured.
+ * TDS — the structure's percentage of the amount the structure **names**.
  *
- * The wage structure is the only thing that says anything about TDS: there is no
- * rate master behind it and no slab to read, so a designation with no percentage
- * set deducts nothing and the cell is where a figure gets typed for the month.
+ * A rate on its own cannot say what it applies to. Contractor TDS under section
+ * 194C is 2% of the total bill, which is not a wage figure at all, so the wage
+ * structure carries `tdsCalculationBase` beside the percentage and a structure
+ * that names none deducts nothing however high the rate — which is also exactly
+ * the behaviour every structure had before TDS computed at all.
+ *
+ * Called with the base already resolved, and deliberately **after** the invoice
+ * chain, because `TOTAL_INVOICE_AMOUNT` is one of the five it can name. The cell
+ * remains the override for a month where payroll deducted something else.
  */
-export function tdsFor(grossPay: number, wage: SalaryWageStructure | null): number {
+export function tdsFor(base: number, wage: SalaryWageStructure | null): number {
   if (!wage?.isTdsActApplicable) return 0
-  return round((grossPay * (wage.tdsPercentage ?? 0)) / 100)
+  if (!wage.tdsCalculationBase) return 0
+  return round((base * (wage.tdsPercentage ?? 0)) / 100)
 }
 
 /** Every statutory figure a row comes to, and the bases behind them. */
@@ -287,22 +332,26 @@ export interface StatutoryResult {
   employeePt: number
   employeeLwf: number
   employerLwf: number
-  employeeTds: number
 }
 
 /**
- * The five acts against one row, in the order they depend on each other: PF and
- * ESIC and PT off their own wage bases, LWF off the calendar, TDS off the gross.
+ * The four acts that can be settled before the invoice: PF, ESIC and PT off
+ * their own wage bases, LWF off the calendar.
+ *
+ * **TDS is not among them, and that is the point.** It is now charged on an
+ * amount the structure names, and one of the five it can name is the total
+ * invoice — which is not known until the employer's PF and ESIC, the agency
+ * charge and the GST are. So `tdsFor` is called separately, after the invoice
+ * chain, exactly as the server's own engine orders it.
  */
 export function statutoryFor(input: {
   earnedBasic: number
   allowances: SalaryHead[]
-  grossPay: number
   wage: SalaryWageStructure | null
   rates: SalaryRates
   periodMonth: number
 }): StatutoryResult {
-  const { earnedBasic, allowances, grossPay, wage, rates, periodMonth } = input
+  const { earnedBasic, allowances, wage, rates, periodMonth } = input
 
   const pf = pfFor(actWage(earnedBasic, allowances, 'pf'), wage, rates)
   const esic = esicFor(actWage(earnedBasic, allowances, 'esic'), wage, rates)
@@ -319,6 +368,5 @@ export function statutoryFor(input: {
     employeePt: pt,
     employeeLwf: lwf.employee,
     employerLwf: lwf.employer,
-    employeeTds: tdsFor(grossPay, wage),
   }
 }

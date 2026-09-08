@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { usePaySalary } from '../api/use-pay-salary-mutations'
 import { payBatchFormSchema, type PayBatchFormValues } from '../schemas'
 import type { PaySalaryRow } from '../types'
@@ -95,7 +95,7 @@ export function usePaySalaryForm({
           const count = result.paid.length
           if (count > 0) {
             toast.success(
-              `${count} ${count === 1 ? 'salary' : 'salaries'} paid — ${formatAmount(
+              `${count} ${count === 1 ? 'salary' : 'salaries'} paid — ${formatMoney(
                 result.batch.totalAmount,
               )} recorded by ${result.batch.paymentMode}.`,
             )

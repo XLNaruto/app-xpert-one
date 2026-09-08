@@ -8,7 +8,12 @@ import type {
   EsicRateResponse,
   EsicRateUpdatePayload,
 } from '../schemas'
-import type { EsicRate, EsicRateValueField, EsicRateValueKey } from '../types'
+import type {
+  EsicRate,
+  EsicRateValueField,
+  EsicRateValueKey,
+  EsicRoundingMode,
+} from '../types'
 
 const VALUE_KEYS: EsicRateValueKey[] = ESIC_RATE_VALUE_FIELDS.map((f) => f.key)
 
@@ -44,6 +49,7 @@ export function toEsicRate(response: EsicRateResponse): EsicRate {
     ...numbers,
     contributionEndPeriod1: monthToOption(response.contribution_end_period1),
     contributionEndPeriod2: monthToOption(response.contribution_end_period2),
+    roundingMode: toRoundingMode(response.rounding_mode),
     createdBy: '',
     createdAt: response.created_at,
     updatedBy: null,
@@ -87,7 +93,18 @@ export function esicRateToUpdatePayload(
     ...numbers,
     contribution_end_period1: Number(stored.contributionEndPeriod1),
     contribution_end_period2: Number(stored.contributionEndPeriod2),
+    rounding_mode: stored.roundingMode,
   }
+}
+
+/**
+ * A stored rounding convention. Absent or unrecognised reads as `CEIL`, which is
+ * what the engine did unconditionally before the column existed — so a rate saved
+ * before this shipped keeps rounding exactly as it always did.
+ */
+function toRoundingMode(value: string | null | undefined): EsicRoundingMode {
+  const upper = (value ?? '').trim().toUpperCase()
+  return upper === 'ROUND' || upper === 'PAISE' ? upper : 'CEIL'
 }
 
 /** `9` → `'09'`; a missing month stays blank so the dropdown reads unselected. */
@@ -107,6 +124,7 @@ export function esicRateFromFormValues(
     wef: values.wef,
     contributionEndPeriod1: values.contributionEndPeriod1,
     contributionEndPeriod2: values.contributionEndPeriod2,
+    roundingMode: values.roundingMode,
     ...numbers,
   }
 }
@@ -122,6 +140,7 @@ export function esicRateToFormValues(rate: EsicRate): EsicRateFormValues {
     // Stored periods may arrive unpadded (`9`); the dropdown options are `09`.
     contributionEndPeriod1: padMonth(rate.contributionEndPeriod1),
     contributionEndPeriod2: padMonth(rate.contributionEndPeriod2),
+    roundingMode: rate.roundingMode,
     ...strings,
   }
 }

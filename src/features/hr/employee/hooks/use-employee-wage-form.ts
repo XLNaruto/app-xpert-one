@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import {
-  NO_WAGE_HEADS,
   carryForwardWageRow,
   effectiveMonthBounds,
   revealFirstError,
+  useWageHeads,
   wageStructureFormSchema,
   wageStructureToRow,
   zeroedWageStructureRow,
@@ -36,9 +36,13 @@ import type { EmployeeWageVersion } from '../types'
  *
  * Two things differ, and only two:
  *
- * - **No heads.** The allowance / deduction catalog is always the designation's,
- *   so `heads` is empty and the grid draws no head columns. Nothing to configure
- *   here means nothing to show.
+ * - **The heads are an OVERRIDE.** They used to be the designation's outright;
+ *   `POST/PATCH /user/employees/:id/wage` now accept `salary_components`, so a
+ *   version can carry a head list of its own — and it replaces the designation's
+ *   catalog **wholesale**, never head by head, because "this person no longer
+ *   gets HRA" would be inexpressible otherwise. That is what the grid's extra
+ *   "Heads" column says (`headOverride`), and a version turned to Designation
+ *   saves an empty list, which is the only way to un-override.
  * - **One call per row.** The designation saves its whole grid through a single
  *   bulk endpoint; the employee's wage is written a version at a time, so the
  *   submit walks the rows — POST for a draft, PATCH for a correction — and
@@ -50,6 +54,12 @@ import type { EmployeeWageVersion } from '../types'
  */
 export function useEmployeeWageForm(employeeId: number) {
   const wage = useEmployeeWage(employeeId)
+  /*
+   * The company's allowance / deduction master — the same source the designation
+   * grid takes its head columns from, so a head sits under the same column on
+   * both screens and an override reads directly against what it overrides.
+   */
+  const { heads, isLoading: headsLoading } = useWageHeads()
   const createWage = useCreateEmployeeWage(employeeId)
   const updateWage = useUpdateEmployeeWage(employeeId)
   const deleteWage = useDeleteEmployeeWage(employeeId)
@@ -76,8 +86,8 @@ export function useEmployeeWageForm(employeeId: number) {
    * Where it stands is said above the grid instead.
    */
   const existing = useMemo(
-    () => (wage.data?.versions ?? []).map(toWageStructureView),
-    [wage.data],
+    () => (wage.data?.versions ?? []).map((version) => toWageStructureView(version, heads)),
+    [wage.data, heads],
   )
 
   /**
@@ -113,10 +123,21 @@ export function useEmployeeWageForm(employeeId: number) {
     const last = getValues('rows').at(-1)
     if (last) return append(carryForwardWageRow(last))
     if (seed) {
-      return append(carryForwardWageRow(wageStructureToRow(toWageStructureView(seed))))
+      const row = wageStructureToRow(toWageStructureView(seed, heads))
+      /*
+       * A row seeded from the DESIGNATION opens on its catalog rather than
+       * claiming it: the figures are there to work from, but the row stays on
+       * "Designation" until someone deliberately makes them this employee's own.
+       * A row seeded from their own previous version keeps whatever that version
+       * answered.
+       */
+      const inherited = wage.data?.ownWage == null
+      return append(
+        carryForwardWageRow({ ...row, ownHeads: inherited ? false : row.ownHeads }),
+      )
     }
-    append(zeroedWageStructureRow(NO_WAGE_HEADS))
-  }, [append, getValues, seed])
+    append(zeroedWageStructureRow(heads))
+  }, [append, getValues, heads, seed, wage.data])
 
   /**
    * Open a stored version for correction. The row carries the version's id, which
@@ -222,6 +243,8 @@ export function useEmployeeWageForm(employeeId: number) {
   return {
     register,
     control,
+    /** Each head's payout schedule is written through this — five leaves a head. */
+    setValue,
 
     /** Rows on the grid, as field-array entries — the editable half. */
     fields,
@@ -231,9 +254,15 @@ export function useEmployeeWageForm(employeeId: number) {
     changeSalaryType,
     changeWorkingDayCalculationType,
 
-    /** No head columns — the catalog is the designation's, not this employee's. */
-    heads: NO_WAGE_HEADS,
-    headsLoading: false,
+    /**
+     * The company's head catalog — the grid's allowance / deduction columns. The
+     * cells hold what THIS employee is on, which is either their own list or,
+     * with the row's "Heads" set to Designation, nothing at all.
+     */
+    heads,
+    headsLoading,
+    /** Turns the grid's "Heads" column on — the head list here is an override. */
+    headOverride: true,
 
     /** The employee's own versions, rendered read-only. */
     existing,

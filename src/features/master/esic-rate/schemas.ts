@@ -53,6 +53,10 @@ export const esicRateSchema = z
       .refine((v) => Number(v) >= 0, 'Duration must be positive'),
 
     disabilityWageLimit: amount('disability wage limit'),
+
+    /* Never blank: the rate always states a convention, and `CEIL` is the one
+       every rate behaved under before the column existed. */
+    roundingMode: z.enum(['CEIL', 'ROUND', 'PAISE']),
   })
   // The two ESIC contribution periods split the year (typically ending in
   // September and March) — the same closing month twice would leave half the
@@ -81,6 +85,12 @@ export const esicRateResponseSchema = z.object({
   disability_wage_limit: z.number().nullable(),
   contribution_end_period1: z.number().nullable(),
   contribution_end_period2: z.number().nullable(),
+  /**
+   * How both contributions are rounded. Nullish as well as nullable: the column
+   * is newer than the rest of the slab, so a read taken before it existed simply
+   * has no key here — and that reads as `CEIL`, the old behaviour.
+   */
+  rounding_mode: z.string().nullish(),
   created_at: z.string(),
 })
 
@@ -102,6 +112,8 @@ type EsicRateBasePayload = {
   disability_wage_limit: number
   contribution_end_period1: number
   contribution_end_period2: number
+  /** Optional on both writes; omitted, the API keeps `CEIL`. */
+  rounding_mode: 'CEIL' | 'ROUND' | 'PAISE'
 }
 
 /**

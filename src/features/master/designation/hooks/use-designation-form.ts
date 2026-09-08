@@ -13,6 +13,7 @@ import {
 import { EMPTY_DESIGNATION_FORM } from '../constants'
 import { useCreateDesignation } from '../api/use-designation-mutations'
 import { calculateWagePerDay } from '../lib/designation-calculations'
+import { DEFAULT_COMPONENT_SCHEDULE } from '../lib/component-schedule'
 
 /** One allowance / deduction head as listed on the form. */
 export interface HeadRow {
@@ -140,6 +141,8 @@ export function useDesignationForm() {
   return {
     register,
     control,
+    /** The head rows' payout schedule is written through this — five leaves each. */
+    setValue,
     errors,
 
     allowanceHeads,
@@ -179,6 +182,9 @@ function blankComponentRow(head: HeadRow): DesignationComponentRow {
     pfApplicable: false,
     esicApplicable: false,
     ptApplicable: false,
+    /* Monthly, per payout, in the calculation — the behaviour a head had before
+       the payout schedule existed, and what the API itself defaults to. */
+    ...DEFAULT_COMPONENT_SCHEDULE,
   }
 }
 

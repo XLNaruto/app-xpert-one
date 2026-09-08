@@ -258,6 +258,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
       heads={form.heads}
       control={form.control}
       register={form.register}
+      setValue={form.setValue}
       dirtyRows={form.dirtyRows}
       changeSalaryType={form.changeSalaryType}
       changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}

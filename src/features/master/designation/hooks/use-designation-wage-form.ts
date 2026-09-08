@@ -208,6 +208,8 @@ export function useDesignationWageForm(designationId: number) {
   return {
     register,
     control,
+    /** Each head's payout schedule is written through this — five leaves a head. */
+    setValue,
 
     /** Rows on the grid, as field-array entries — the editable half. */
     fields,

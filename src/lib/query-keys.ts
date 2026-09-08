@@ -750,6 +750,16 @@ export const queryKeys = {
    * `all` is the prefix a company switch invalidates; nothing here is mutated,
    * so no other invalidation exists.
    */
+  /**
+   * Contract expiry — `features/hr/contract-expiry`. One key per read of
+   * `GET /user/employee-contracts/expiring`, carrying the whole query (filters,
+   * paging) so each combination caches separately; `all` is the prefix a renew
+   * or a complete invalidates, which is every panel and page showing the list.
+   */
+  contractExpiry: {
+    all: ['contract-expiry'] as const,
+    list: (query: QueryParams) => [...queryKeys.contractExpiry.all, 'list', query] as const,
+  },
   dashboard: {
     all: ['dashboard'] as const,
     summary: (query: QueryParams) => [...queryKeys.dashboard.all, 'summary', query] as const,

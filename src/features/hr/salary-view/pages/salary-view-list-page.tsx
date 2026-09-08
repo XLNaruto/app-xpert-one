@@ -1,6 +1,13 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarRange, Eye, IndianRupee, Trash2, Wallet } from 'lucide-react'
+import {
+  CalendarRange,
+  Eye,
+  IndianRupee,
+  ReceiptText,
+  Trash2,
+  Wallet,
+} from 'lucide-react'
 import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -10,7 +17,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { RowActionsMenu } from '@/components/common/row-actions-menu'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useCan } from '@/features/permissions'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { cn, formatDate } from '@/lib/utils'
 import {
   SALARY_VIEW_PAGE_SIZE,
@@ -23,7 +30,7 @@ import { SalaryViewLongGrid } from '../components/salary-view-long-grid'
 import { SalaryViewModeTabs } from '../components/salary-view-mode-tabs'
 import { SalaryViewPager } from '../components/salary-view-pager'
 import { SalaryViewToolbar } from '../components/salary-view-toolbar'
-import type { SalaryViewRow } from '../types'
+import type { SalaryViewRow, SalaryViewTotals } from '../types'
 
 /**
  * View Salary — the month already processed.
@@ -176,14 +183,14 @@ export function SalaryViewListPage() {
         header: 'Basic Pay',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
-        cell: ({ row }) => formatAmount(row.original.basicPay),
+        cell: ({ row }) => formatMoney(row.original.basicPay),
       },
       {
         id: 'grossPay',
         header: 'Gross Pay',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
-        cell: ({ row }) => formatAmount(row.original.grossPay),
+        cell: ({ row }) => formatMoney(row.original.grossPay),
       },
       {
         id: 'totalDeduction',
@@ -192,7 +199,7 @@ export function SalaryViewListPage() {
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
         cell: ({ row }) => (
           <span className="text-destructive">
-            {formatAmount(row.original.totalDeduction)}
+            {formatMoney(row.original.totalDeduction)}
           </span>
         ),
       },
@@ -203,7 +210,7 @@ export function SalaryViewListPage() {
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
         cell: ({ row }) => (
           <span className="font-semibold text-success">
-            {formatAmount(row.original.netPay)}
+            {formatMoney(row.original.netPay)}
           </span>
         ),
       },
@@ -279,12 +286,23 @@ export function SalaryViewListPage() {
               <IndianRupee className="size-3.5" />
               Net on this page{' '}
               <span className="font-semibold text-success">
-                {formatAmount(view.totals.netPay)}
+                {formatMoney(view.totals.netPay)}
               </span>
             </>
           )}
         </p>
       )}
+
+      {/* ── The page's agency bill ──
+          The four amounts the report now totals: what the month cost, the
+          agency's charge on it, the GST, and what it all bills at. No percentage
+          totals — a rate cannot be summed, and two companies in one report may
+          be on different ones.
+
+          Shown only where the endpoint reported them: a month processed through
+          the salary register derives no bases, and a strip of zeros would read
+          as a bill of nothing rather than as a bill nobody computed. */}
+      <BillTotals totals={view.totals} />
 
       {view.companyId === null ? (
         <EmptyState
@@ -372,6 +390,47 @@ export function SalaryViewListPage() {
         keepOpenOnConfirm
         onConfirm={view.confirmDiscard}
       />
+    </div>
+  )
+}
+
+/**
+ * The four bill amounts summed across the page, as a strip under the cycle line.
+ *
+ * Sat outside the table on purpose: they are one figure per page rather than per
+ * row, and the short view's columns are the person's pay. The long view carries
+ * the same four as columns of its own, where a per-employee breakdown is what the
+ * matrix is for.
+ */
+function BillTotals({ totals }: { totals: SalaryViewTotals | null }) {
+  if (!totals || totals.totalInvoiceAmount === null) return null
+
+  const lines: { label: string; value: number | null; strong?: boolean }[] = [
+    { label: 'Statutory Cost', value: totals.totalStatutoryCost },
+    { label: 'Agency Charge', value: totals.agencyChargeAmount },
+    { label: 'GST', value: totals.gstAmount },
+    { label: 'Total Bill', value: totals.totalInvoiceAmount, strong: true },
+  ]
+
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <ReceiptText className="size-3.5" />
+        Agency Liability &amp; Bill
+      </span>
+      {lines.map((line) => (
+        <span key={line.label} className="text-xs text-muted-foreground">
+          {line.label}{' '}
+          <span
+            className={cn(
+              'ml-0.5 tabular-nums font-semibold',
+              line.strong ? 'text-primary' : 'text-foreground',
+            )}
+          >
+            {line.value === null ? '—' : formatMoney(line.value)}
+          </span>
+        </span>
+      ))}
     </div>
   )
 }

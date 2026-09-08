@@ -10,5 +10,5 @@ export {
   useUploadCompanyLogo,
 } from './api/use-company-mutations'
 export { CompanyLogo } from './components/company-logo'
-export type { Company } from './types'
+export type { Company, CompanyBilling } from './types'
 export type { CompanyFormValues } from './schemas'

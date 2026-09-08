@@ -1,18 +1,16 @@
 import type { ReactNode } from 'react'
 import { Controller } from 'react-hook-form'
-import {
-  CircleMinus,
-  CirclePlus,
-  IndianRupee,
-  Percent,
-  type LucideIcon,
-} from 'lucide-react'
+import { CircleMinus, CirclePlus, type LucideIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { UNIT_META, nextUnit } from '@/components/common/amount-unit'
 import { CellTooltip } from '@/components/common/wage-grid-fields'
+import { rateInputProps } from '@/lib/numeric-input'
 import { cn } from '@/lib/utils'
 import type { useDesignationForm } from '../hooks/use-designation-form'
+import type { AllowanceValueType } from '../types'
+import { ComponentScheduleCell } from './component-schedule-field'
 
 type DesignationForm = ReturnType<typeof useDesignationForm>
 
@@ -20,6 +18,7 @@ type AllowanceDeductionSectionProps = Pick<
   DesignationForm,
   | 'register'
   | 'control'
+  | 'setValue'
   | 'errors'
   | 'allowanceHeads'
   | 'deductionHeads'
@@ -46,6 +45,7 @@ type AllowanceDeductionSectionProps = Pick<
 export function AllowanceDeductionSection({
   register,
   control,
+  setValue,
   errors,
   allowanceHeads,
   deductionHeads,
@@ -74,9 +74,14 @@ export function AllowanceDeductionSection({
             label={head.label}
             tone="border-emerald-500/20 bg-emerald-500/5"
             indexTone="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-            error={errors.allowances?.[index]?.amount?.message}
+            error={
+              errors.allowances?.[index]?.amount?.message ??
+              errors.allowances?.[index]?.startMonth?.message
+            }
+            scheduleError={errors.allowances?.[index]?.startMonth?.message}
             register={register}
             control={control}
+            setValue={setValue}
             acts={{
               pf: pfActApplicable,
               esic: esicActApplicable,
@@ -105,9 +110,14 @@ export function AllowanceDeductionSection({
             label={head.label}
             tone="border-rose-500/20 bg-rose-500/5"
             indexTone="bg-rose-500/15 text-rose-700 dark:text-rose-400"
-            error={errors.deductions?.[index]?.amount?.message}
+            error={
+              errors.deductions?.[index]?.amount?.message ??
+              errors.deductions?.[index]?.startMonth?.message
+            }
+            scheduleError={errors.deductions?.[index]?.startMonth?.message}
             register={register}
             control={control}
+            setValue={setValue}
           />
         ))}
       </HeadColumn>
@@ -143,6 +153,8 @@ interface HeadRowShellProps {
   indexTone: string
   /** Trailing controls, e.g. an allowance's value and act markers. */
   children?: ReactNode
+  /** The payout schedule, laid out on a second line under the head. */
+  schedule?: ReactNode
   error?: string
 }
 
@@ -169,8 +181,10 @@ function ComponentRow({
   tone,
   indexTone,
   error,
+  scheduleError,
   register,
   control,
+  setValue,
   acts,
 }: {
   side: 'allowances' | 'deductions'
@@ -179,8 +193,10 @@ function ComponentRow({
   tone: string
   indexTone: string
   error?: string
+  /** Only the schedule's own complaint — what tints the payout chip. */
+  scheduleError?: string
   acts?: { pf: boolean; esic: boolean; pt: boolean }
-} & Pick<AllowanceDeductionSectionProps, 'register' | 'control'>) {
+} & Pick<AllowanceDeductionSectionProps, 'register' | 'control' | 'setValue'>) {
   const markers = acts
     ? ([
         { name: 'pfApplicable', label: 'PF', enabled: acts.pf, activeTone: 'text-primary' },
@@ -200,7 +216,31 @@ function ComponentRow({
     : []
 
   return (
-    <HeadRowShell index={index} label={label} tone={tone} indexTone={indexTone} error={error}>
+    <HeadRowShell
+      index={index}
+      label={label}
+      tone={tone}
+      indexTone={indexTone}
+      error={error}
+      /*
+        The payout schedule, on its own line under the head: how often it's paid,
+        what the figure means across the cycle, whether it enters the base the
+        other heads calculate on, and — on a deduction — what it's priced on.
+        Spelled out rather than hidden behind a chip, because the row has the
+        width for it and these decide what the amount above actually means.
+      */
+      schedule={
+        <ComponentScheduleCell
+          control={control}
+          setValue={setValue}
+          path={`${side}.${index}`}
+          side={side === 'allowances' ? 'allowance' : 'deduction'}
+          label={label}
+          error={scheduleError}
+          variant="inline"
+        />
+      }
+    >
       {/* Value — the unit button flips the row between percentage and flat amount. */}
       <Controller
         control={control}
@@ -209,7 +249,10 @@ function ComponentRow({
           <div className="flex h-9 shrink-0 items-stretch overflow-hidden rounded-md border border-input bg-background">
             <ValueTypeButton value={field.value} onChange={field.onChange} />
             <Input
-              inputMode="decimal"
+              /* Four decimals, not two: a per-day head is quoted off a
+                 minimum-wage notification, which states figures like 146.8846.
+                 Only the computed output is rounded to the paise. */
+              {...rateInputProps}
               placeholder="0"
               className="h-full w-20 rounded-none border-0 focus-visible:ring-0"
               {...register(`${side}.${index}.amount`)}
@@ -249,6 +292,7 @@ function HeadRowShell({
   tone,
   indexTone,
   children,
+  schedule,
   error,
 }: HeadRowShellProps) {
   return (
@@ -269,6 +313,7 @@ function HeadRowShell({
         </CellTooltip>
         {children}
       </div>
+      {schedule}
       {error && <p className="mt-1 pl-8 text-xs text-destructive">{error}</p>}
     </li>
   )
@@ -335,24 +380,27 @@ function ValueTypeButton({
   value,
   onChange,
 }: {
-  value: 'Percentage' | 'Fixed'
-  onChange: (value: 'Percentage' | 'Fixed') => void
+  value: AllowanceValueType
+  onChange: (value: AllowanceValueType) => void
 }) {
-  const isPercentage = value === 'Percentage'
-  const Icon = isPercentage ? Percent : IndianRupee
-  const action = isPercentage ? 'Switch to Fixed Amount' : 'Switch to Percentage'
+  /* Four units through one button, so it cycles rather than flipping: the row has
+     room for one prefix, and a percentage, a monthly figure, a day rate and a day
+     count are four different rules for the same cell. `UNIT_META` is the grid's
+     own table, shared so the two screens can't tint or name a unit differently. */
+  const meta = UNIT_META[value] ?? UNIT_META.Percentage
+  const next = nextUnit(value)
+  const Icon = meta.icon
+  const action = `Entered as ${meta.label} — switch to ${UNIT_META[next].label}`
 
   return (
     <CellTooltip label={action}>
       <button
         type="button"
-        onClick={() => onChange(isPercentage ? 'Fixed' : 'Percentage')}
+        onClick={() => onChange(next)}
         aria-label={action}
         className={cn(
           'flex w-9 shrink-0 cursor-pointer items-center justify-center border-r transition-colors',
-          isPercentage
-            ? 'border-primary/20 bg-primary/10 text-primary hover:bg-primary/20'
-            : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400',
+          meta.tone,
         )}
       >
         <Icon className="size-3.5" />

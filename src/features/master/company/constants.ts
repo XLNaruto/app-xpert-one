@@ -50,4 +50,9 @@ export const EMPTY_COMPANY_FORM: CompanyFormValues = {
   mobile1: '',
   mobile2: '',
   email: '',
+  /* Blank, not `0` — a company with no charges configured invoices at statutory
+     cost, and an untouched billing block sends nothing at all. */
+  agencyChargePercentage: '',
+  gstPercentage: '',
+  billingEffectiveFrom: '',
 }

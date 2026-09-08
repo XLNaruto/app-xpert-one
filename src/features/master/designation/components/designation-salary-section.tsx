@@ -17,11 +17,14 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { amountLabel } from '@/lib/currency'
 import { formatCurrency } from '@/lib/utils'
+import { amountInputProps } from '@/lib/numeric-input'
 import {
   ACT_AMOUNT_TYPE_OPTIONS,
   ESIC_DEDUCTION_BASIS_OPTIONS,
   PF_DEDUCTION_TYPE_OPTIONS,
   SALARY_TYPE_OPTIONS,
+  TDS_CALCULATION_BASE_HINT,
+  TDS_CALCULATION_BASE_OPTIONS,
   WAGE_DAYS_PER_MONTH,
   WEEKLY_OFF_OPTIONS,
   WORKING_DAY_CALCULATION_OPTIONS,
@@ -121,7 +124,7 @@ export function DesignationSalarySection({
         hint="The monthly basic on which PF, ESIC and every percentage allowance are calculated."
         error={errors.basicPay?.message}
       >
-        <Input inputMode="decimal" placeholder={amountLabel('Basic Pay')} {...register('basicPay')} />
+        <Input {...amountInputProps} placeholder={amountLabel('Basic Pay')} {...register('basicPay')} />
       </Field>
       <Field
         label="Working Day Calculation"
@@ -190,7 +193,7 @@ export function DesignationSalarySection({
         error={errors.extraDayAmountPerDay?.message}
       >
         <Input
-          inputMode="decimal"
+          {...amountInputProps}
           placeholder={amountLabel('Extra Day Amount Per Day')}
           {...register('extraDayAmountPerDay')}
         />
@@ -331,7 +334,7 @@ export function DesignationSalarySection({
                 error={errors.pfDeductionValue?.message}
               >
                 <Input
-                  inputMode="decimal"
+                  {...amountInputProps}
                   placeholder={pfValueLabel(pfDeductionType)}
                   {...register('pfDeductionValue')}
                 />
@@ -425,7 +428,7 @@ export function DesignationSalarySection({
             {ptActType === 'Manual' && (
               <Field label={amountLabel('PT Amount')} error={errors.ptAmount?.message}>
                 <Input
-                  inputMode="decimal"
+                  {...amountInputProps}
                   placeholder={amountLabel('PT Amount')}
                   {...register('ptAmount')}
                 />
@@ -445,13 +448,44 @@ export function DesignationSalarySection({
                 designation's own, so there is no "As Per Act" to choose. */}
             <Field
               label="TDS Percentage (%)"
-              hint="Deducted from the gross pay each month, at this rate."
+              hint="The rate deducted each month. On its own it deducts nothing — pick what it is charged on below."
               error={errors.tdsPercentage?.message}
             >
               <Input
-                inputMode="decimal"
+                {...amountInputProps}
                 placeholder="TDS Percentage (%)"
                 {...register('tdsPercentage')}
+              />
+            </Field>
+
+            {/*
+              A percentage cannot say what it applies to. Contractor TDS under
+              section 194C is 2% of the TOTAL BILL, which is not a wage figure at
+              all — so the amount is named here beside the rate, and leaving it
+              empty deducts nothing rather than guessing at a base.
+
+              "Net Pay" is deliberately not offered: the net already has TDS out
+              of it, so quoting TDS on it would make it an input to itself, and
+              the API refuses it.
+            */}
+            <Field
+              label="TDS Calculation Base"
+              hint={TDS_CALCULATION_BASE_HINT}
+              error={errors.tdsCalculationBase?.message}
+            >
+              <Controller
+                control={control}
+                name="tdsCalculationBase"
+                render={({ field }) => (
+                  <Combobox
+                    className="w-full"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={TDS_CALCULATION_BASE_OPTIONS}
+                    placeholder="Nothing is deducted"
+                    searchable={false}
+                  />
+                )}
               />
             </Field>
           </ActSectionCard>
@@ -489,7 +523,7 @@ export function DesignationSalarySection({
             {lwfActType === 'Manual' && (
               <Field label={amountLabel('LWF Amount')} error={errors.lwfAmount?.message}>
                 <Input
-                  inputMode="decimal"
+                  {...amountInputProps}
                   placeholder={amountLabel('LWF Amount')}
                   {...register('lwfAmount')}
                 />
@@ -512,7 +546,7 @@ export function DesignationSalarySection({
               error={errors.overtimeRatePerHour?.message}
             >
               <Input
-                inputMode="decimal"
+                {...amountInputProps}
                 placeholder={amountLabel('OT Rate Per Hour')}
                 {...register('overtimeRatePerHour')}
               />

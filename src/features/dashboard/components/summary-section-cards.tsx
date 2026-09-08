@@ -3,6 +3,7 @@ import { AlertCircle, ArrowUpRight } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import { DeltaBadge } from './delta-badge'
 import {
   EM_DASH,
@@ -367,16 +368,17 @@ function Stat({
   return (
     <div className="min-w-0">
       <p className="truncate text-xs text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          'font-heading text-sm font-semibold',
-          unmeasured && 'text-muted-foreground',
-          valueClassName,
-        )}
-        title={unmeasured ? 'Not measured in this period' : undefined}
-      >
-        {value}
-      </p>
+      <Hint text={unmeasured ? 'Not measured in this period' : undefined}>
+        <p
+          className={cn(
+            'font-heading text-sm font-semibold',
+            unmeasured && 'text-muted-foreground',
+            valueClassName,
+          )}
+        >
+          {value}
+        </p>
+      </Hint>
       {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   )

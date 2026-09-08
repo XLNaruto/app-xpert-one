@@ -14,6 +14,36 @@ export const EMPTY_ESIC_RATE_FORM: EsicRateFormValues = {
   employerEsiContribution: '',
   disabilityDuration: '',
   disabilityWageLimit: '',
+  /* The engine's own default, and what every rate behaved as before the
+     convention was recordable — so a new slab changes nothing until it's set. */
+  roundingMode: 'CEIL',
+}
+
+/**
+ * How an ESIC contribution is rounded — a filing convention that changes by
+ * notification, which is why it is captured per effective-dated rate rather than
+ * fixed in the pay engine.
+ *
+ * The hints are the point of the control: on ₹104.2275, `CEIL` bills ₹105 while
+ * `PAISE` bills ₹104.23, and the second is what a government-approved agency
+ * sheet states. Whatever is chosen here is what the salary register applies, to
+ * both the employee's and the employer's share.
+ */
+export const ESIC_ROUNDING_MODE_OPTIONS: ComboboxOption[] = [
+  {
+    label: 'Round Up (default)',
+    value: 'CEIL',
+    hint: '₹104.2275 → ₹105',
+  },
+  { label: 'Nearest Rupee', value: 'ROUND', hint: '₹104.2275 → ₹104' },
+  { label: 'To The Paise', value: 'PAISE', hint: '₹104.2275 → ₹104.23' },
+]
+
+/** A stored rounding mode as a list column prints it. */
+export function esicRoundingLabel(mode: string): string {
+  return (
+    ESIC_ROUNDING_MODE_OPTIONS.find((option) => option.value === mode)?.label ?? mode
+  )
 }
 
 /**

@@ -1,6 +1,9 @@
 import type { AuditFields } from '@/types/audit'
 import type { Shift } from '@/features/master/shift'
-import type { DesignationWageStructure } from '@/features/master/designation'
+import type {
+  ComponentSchedule,
+  DesignationWageStructure,
+} from '@/features/master/designation'
 
 /**
  * UI-facing records for the employee module.
@@ -206,7 +209,7 @@ export interface EmployeeKyc {
 /* ── Step 3 — the inherited wage structure ───────────────────────────────── */
 
 /** One allowance or deduction head on the inherited wage structure. */
-export interface EmployeeWageComponent {
+export interface EmployeeWageComponent extends ComponentSchedule {
   payComponentId: number
   componentType: string
   sortOrder: number
@@ -280,9 +283,10 @@ export type EmployeeWageSource = 'EMPLOYEE' | 'DESIGNATION'
  *
  * Modelled off the designation's wage structure because it *is* one, a tier up:
  * the same figures, the same acts, priced the same way. What it drops are the
- * allowance / deduction cells — the head catalog is always the designation's, and
- * an override never changes it — and what it adds are the four settings the
- * designation's grid has no column for.
+ * grid's split allowance / deduction cells — putting a head under its column
+ * needs the master, which this read doesn't have, so the version carries its
+ * heads unsplit in `salaryComponents` and the screen splits them. What it adds
+ * are the four settings the designation's grid has no column for.
  */
 export interface EmployeeWageVersion
   extends Omit<DesignationWageStructure, 'designationId' | 'allowances' | 'deductions'> {
@@ -292,6 +296,15 @@ export interface EmployeeWageVersion
   pfApplicableOnOvertime: boolean
   esicApplicableOnOvertime: boolean
   ptApplicableOnOvertime: boolean
+  /**
+   * The heads **this version was saved with**, as the wire carries them —
+   * unsplit, because splitting them into the grid's two sides needs the
+   * allowance / deduction master, which the read doesn't have.
+   *
+   * Empty means that version carried no heads of its own and the designation's
+   * catalog priced it. The screen renders the history strip off exactly this.
+   */
+  salaryComponents: EmployeeWageComponent[]
 }
 
 /**
@@ -309,8 +322,22 @@ export interface EmployeeWage {
   effectiveWage: EmployeeWageVersion | null
   ownWage: EmployeeWageVersion | null
   designationWage: EmployeeWageVersion | null
-  /** Always the designation's heads — an override carries none of its own. */
+  /**
+   * The heads **in force** — the employee's own list where they have one, the
+   * designation's catalog otherwise. The API resolves which; the screen doesn't.
+   */
   salaryComponents: EmployeeWageComponent[]
+  /**
+   * Which tier priced the HEADS. A separate question from `source`, which says
+   * which tier priced the WAGE — an employee can be on their own basic pay and
+   * the designation's allowances at the same time, so neither is derivable from
+   * the other. `null` when nothing has priced them yet.
+   */
+  componentSource: EmployeeWageSource | null
+  /** The employee's OWN heads — empty when they inherit the catalog. */
+  ownSalaryComponents: EmployeeWageComponent[]
+  /** The designation's catalog, so an override can be read against it. */
+  designationSalaryComponents: EmployeeWageComponent[]
   /** The override's own history, newest effective month first. */
   versions: EmployeeWageVersion[]
 }

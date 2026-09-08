@@ -33,4 +33,25 @@ export interface Company extends AuditFields {
   mobile1: string
   mobile2: string
   email: string
+  /**
+   * The billing charges in force, or `null` when the company has **never**
+   * configured any — in which case it invoices at statutory cost. Null is "not
+   * configured", not zero: the engine computes it as zero, but nobody set a rate.
+   */
+  billing: CompanyBilling | null
+}
+
+/**
+ * One version of a company's billing charges — the two rates the
+ * TOTAL_INVOICE_AMOUNT calculation base is priced on.
+ *
+ * A versioned row rather than columns on the company, so a month that has been
+ * processed keeps the rates it was actually billed at. Either rate can be `null`
+ * on its own, meaning that component invoices at cost.
+ */
+export interface CompanyBilling {
+  /** `yyyy-MM-dd` — the day these rates took effect. */
+  effectiveFrom: string
+  agencyChargePercentage: number | null
+  gstPercentage: number | null
 }

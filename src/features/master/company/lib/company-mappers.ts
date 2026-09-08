@@ -1,5 +1,5 @@
 import type { CompanyFormValues, CompanyPayload, CompanyResponse } from '../schemas'
-import type { Company } from '../types'
+import type { Company, CompanyBilling } from '../types'
 
 /** Trimmed value, or `null` when blank — how the API stores "not recorded". */
 function orNull(value: string): string | null {
@@ -39,6 +39,7 @@ export function toCompany(response: CompanyResponse): Company {
     mobile1: response.mobile_number1 ?? '',
     mobile2: response.mobile_number2 ?? '',
     email: response.email ?? '',
+    billing: toBilling(response.billing),
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at,
     updatedBy: response.updated_by_name ?? null,
@@ -46,8 +47,34 @@ export function toCompany(response: CompanyResponse): Company {
   }
 }
 
-/** Validated form values → the create/update request body. */
-export function companyToPayload(values: CompanyFormValues): CompanyPayload {
+/**
+ * The billing block off a response — `null` where the company has never
+ * configured charges, which is "not configured" rather than zero.
+ */
+function toBilling(response: CompanyResponse['billing']): CompanyBilling | null {
+  if (!response) return null
+  return {
+    effectiveFrom: response.effective_from ?? '',
+    agencyChargePercentage: response.agency_charge_percentage ?? null,
+    gstPercentage: response.gst_percentage ?? null,
+  }
+}
+
+/**
+ * Validated form values → the create/update request body.
+ *
+ * `billingTouched` is load-bearing. Sending either percentage opens or patches a
+ * charges VERSION dated `billing_effective_from` (today if omitted), so a body
+ * that carried them unconditionally would open a pointless new version dated
+ * today every time somebody corrected an address. The three keys are therefore
+ * left out entirely unless the user actually edited the billing block — and a
+ * rate they cleared goes as an explicit `null`, which is how "invoice at cost"
+ * is recorded.
+ */
+export function companyToPayload(
+  values: CompanyFormValues,
+  { billingTouched = false }: { billingTouched?: boolean } = {},
+): CompanyPayload {
   return {
     company_name: values.companyName.trim(),
     logo: orNull(values.logo),
@@ -66,7 +93,24 @@ export function companyToPayload(values: CompanyFormValues): CompanyPayload {
     mobile_number1: orNull(values.mobile1),
     mobile_number2: orNull(values.mobile2),
     email: orNull(values.email),
+    ...(billingTouched
+      ? {
+          agency_charge_percentage: orNullNumber(values.agencyChargePercentage),
+          gst_percentage: orNullNumber(values.gstPercentage),
+          /* Omitted rather than sent blank — the API reads a missing date as
+             today, which is what a rate entered with no date means. */
+          ...(values.billingEffectiveFrom.trim()
+            ? { billing_effective_from: values.billingEffectiveFrom.trim() }
+            : {}),
+        }
+      : {}),
   }
+}
+
+/** A rate as the body carries it; blank clears it (`null` = invoice at cost). */
+function orNullNumber(value: string): number | null {
+  const trimmed = value.trim()
+  return trimmed === '' ? null : Number(trimmed)
 }
 
 /** Hydrate the edit form from a stored company. */
@@ -89,5 +133,15 @@ export function companyToFormValues(company: Company): CompanyFormValues {
     mobile1: company.mobile1,
     mobile2: company.mobile2,
     email: company.email,
+    /* Blank where no charges were ever configured, so an untouched form sends
+       nothing and the company keeps invoicing at cost. */
+    agencyChargePercentage: rate(company.billing?.agencyChargePercentage),
+    gstPercentage: rate(company.billing?.gstPercentage),
+    billingEffectiveFrom: company.billing?.effectiveFrom ?? '',
   }
+}
+
+/** A stored rate as the form holds it; unset reads blank, never `0`. */
+function rate(value: number | null | undefined): string {
+  return value == null ? '' : String(value)
 }

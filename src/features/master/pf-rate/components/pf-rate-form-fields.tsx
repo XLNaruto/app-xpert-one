@@ -4,6 +4,7 @@ import { DateField } from '@/components/common/date-field'
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { Input } from '@/components/ui/input'
+import { amountInputProps } from '@/lib/numeric-input'
 import { PF_RATE_VALUE_FIELDS, WEF_HINT } from '../constants'
 import type { PfRateFormValues } from '../schemas'
 
@@ -48,7 +49,7 @@ export function PfRateFormFields({ register, control, errors }: PfRateFormFields
           {/* Locked fields stay registered (so their value still saves) but
               read as disabled — the value isn't the user's to key in. */}
           <Input
-            inputMode="decimal"
+            {...amountInputProps}
             placeholder={field.label}
             disabled={field.locked}
             {...register(field.key)}

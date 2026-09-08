@@ -103,12 +103,21 @@ export async function fetchCompany(id: number): Promise<Company> {
   }
 }
 
-/** POST /user/companies — add a company; the server assigns its code. */
-export async function createCompany(values: CompanyFormValues): Promise<Company> {
+/**
+ * POST /user/companies — add a company; the server assigns its code.
+ *
+ * `billingTouched` says whether the agency charge / GST block was filled in. On a
+ * create it is simply whether either rate was typed: sending neither writes no
+ * charges row at all, which is the real state "invoices at statutory cost".
+ */
+export async function createCompany(
+  values: CompanyFormValues,
+  options?: { billingTouched?: boolean },
+): Promise<Company> {
   try {
     const raw = await http.post<unknown, CompanyPayload>(
       endpoints.COMPANIES.POST,
-      companyToPayload(values),
+      companyToPayload(values, options),
     )
     return toCompany(companyResponseSchema.parse(raw))
   } catch (error) {
@@ -119,15 +128,22 @@ export async function createCompany(values: CompanyFormValues): Promise<Company>
 /**
  * PATCH /user/companies/:id — the endpoint accepts a partial body, but the form
  * always submits every field, so we send the full record.
+ *
+ * The billing block is the one exception, and it matters: sending either
+ * percentage opens or patches a charges VERSION dated `billing_effective_from`
+ * (today if omitted). Sending them on every save would therefore stamp a new
+ * charges version dated today whenever someone corrected an address, so the
+ * three keys only travel when `billingTouched` says the user edited them.
  */
 export async function updateCompany(
   id: number,
   values: CompanyFormValues,
+  options?: { billingTouched?: boolean },
 ): Promise<Company> {
   try {
     const raw = await http.patch<unknown, CompanyPayload>(
       endpoints.COMPANIES.PATCH(id),
-      companyToPayload(values),
+      companyToPayload(values, options),
     )
     return toCompany(companyResponseSchema.parse(raw))
   } catch (error) {

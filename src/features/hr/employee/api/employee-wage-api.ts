@@ -27,7 +27,15 @@ export async function fetchEmployeeWage(employeeId: number): Promise<EmployeeWag
 
 /**
  * POST /user/employees/:id/wage — put the employee on their own terms from a
- * month onward. A version already effective from that exact month IS that
+ * month onward.
+ *
+ * `keepHeads` picks the third of the endpoint's three `salary_components` states:
+ * with it, the key is omitted entirely and a new version is SEEDED with whatever
+ * priced the person before it (their own previous heads, else the designation's
+ * catalog). Without it — the grid's own case — the row's Heads choice decides,
+ * sending either its list or `[]` to hand them back to the designation. A form
+ * that only edits basic pay must pass it, or it would strip their allowances.
+ * A version already effective from that exact month IS that
  * month's row, so the API updates it rather than stacking a second one on the
  * date; any other month inserts and keeps the earlier versions as history.
  *
@@ -37,11 +45,12 @@ export async function fetchEmployeeWage(employeeId: number): Promise<EmployeeWag
 export async function createEmployeeWage(
   employeeId: number,
   row: WageStructureRow,
+  options?: { keepHeads?: boolean },
 ): Promise<EmployeeWage> {
   try {
     const raw = await http.post<unknown>(
       endpoints.EMPLOYEES.WAGE(employeeId),
-      employeeWageToPayload(row),
+      employeeWageToPayload(row, options),
     )
     return toEmployeeWage(employeeWageResponseSchema.parse(raw))
   } catch (error) {
@@ -61,11 +70,12 @@ export async function updateEmployeeWage(
   employeeId: number,
   wageId: number,
   row: WageStructureRow,
+  options?: { keepHeads?: boolean },
 ): Promise<EmployeeWage> {
   try {
     const raw = await http.patch<unknown>(
       endpoints.EMPLOYEES.WAGE_VERSION(employeeId, wageId),
-      employeeWageToPayload(row),
+      employeeWageToPayload(row, options),
     )
     return toEmployeeWage(employeeWageResponseSchema.parse(raw))
   } catch (error) {

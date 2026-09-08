@@ -528,6 +528,13 @@ export const employeeWageComponentResponseSchema = z.object({
   pf_applicable: z.boolean().nullish(),
   esic_applicable: z.boolean().nullish(),
   pt_applicable: z.boolean().nullish(),
+
+  /* The payout schedule — the same five fields every configured head carries. */
+  payout_frequency: z.string().nullish(),
+  start_month: z.number().nullish(),
+  amount_mode: z.string().nullish(),
+  payroll_calculation: z.string().nullish(),
+  calculation_base: z.string().nullish(),
 })
 
 export type EmployeeWageComponentResponse = z.infer<
@@ -592,8 +599,14 @@ export type EmployeeWageStructureResponse = z.infer<
  * The same forty-odd fields a designation's wage structure carries — the override
  * is priced the same way, it just sits a tier above — so the designation kit's own
  * response schema parses it, extended with the posting the version was saved
- * against. There is no `salary_components` on it: the allowance / deduction
- * catalog is always the designation's, and an override never changes it.
+ * against.
+ *
+ * `salary_components` rides on it (inherited from the designation's schema, where
+ * it is optional) and is **the heads that version was saved with**: an employee's
+ * wage version can now carry a head list of its own, and an empty one means that
+ * version fell back to the designation's catalog. Unlike the designation's rows
+ * these heads carry no row id of their own, which is why that field is optional
+ * on the shared schema.
  */
 export const employeeWageVersionResponseSchema = wageStructureResponseSchema.extend({
   employee_service_id: z.number(),
@@ -620,8 +633,24 @@ export const employeeWageResponseSchema = z.object({
   effective_wage: wageStructureResponseSchema.nullish(),
   own_wage: employeeWageVersionResponseSchema.nullish(),
   designation_wage_structure: wageStructureResponseSchema.nullish(),
-  /** Always the designation's heads — the override carries none of its own. */
+  /**
+   * The heads **in force** — the employee's own list where they have one, the
+   * designation's catalog otherwise. The API has already resolved which.
+   */
   salary_components: z.array(employeeWageComponentResponseSchema).nullish(),
+  /**
+   * Which tier priced the HEADS — a separate question from `source`, which says
+   * which tier priced the WAGE. An employee can legitimately be
+   * `source: EMPLOYEE` with `component_source: DESIGNATION`: their own basic pay,
+   * the designation's allowances. Neither is derivable from the other.
+   */
+  component_source: z.enum(['EMPLOYEE', 'DESIGNATION']).nullish(),
+  /** The employee's OWN head list — empty when they inherit the catalog. */
+  own_salary_components: z.array(employeeWageComponentResponseSchema).nullish(),
+  /** The designation's catalog, so an override can be shown against it. */
+  designation_salary_components: z
+    .array(employeeWageComponentResponseSchema)
+    .nullish(),
   versions: z.array(employeeWageVersionResponseSchema).nullish(),
 })
 
@@ -646,13 +675,26 @@ export type EmployeeWageResponse = z.infer<typeof employeeWageResponseSchema>
  * stays as stored — either way, leaving one out would silently keep a value the
  * user just cleared.
  *
- * Two things are deliberately absent. `salary_components`, because the heads are
- * always the designation's. And the four settings the grid has no column for
- * (PF/ESIC/PT on overtime, recovering LWF from wages) — not sending them is what
+ * The four settings the grid has no column for (PF/ESIC/PT on overtime,
+ * recovering LWF from wages) are deliberately absent — not sending them is what
  * carries them forward, by the same seed-and-keep rule.
+ *
+ * `salary_components` is the one field with THREE meaningful states on the POST,
+ * and they do three different things:
+ *
+ * - **omitted** — "the heads are not what I am editing". A new version is SEEDED
+ *   with whatever priced the person before it (their own previous version's heads
+ *   if any, else the designation's catalog); an existing version's heads are left
+ *   untouched. This is what a form that only edits basic pay must send.
+ * - **a list** — this employee is on THEIR OWN heads. It replaces the version's
+ *   list, and the designation's catalog stops applying to them entirely. The
+ *   override is wholesale, never merged head by head: "no HRA for this person"
+ *   would be inexpressible otherwise.
+ * - **`[]`** — put them back on the designation's heads.
+ *
+ * On the PATCH there is no seeding: sent replaces, omitted leaves untouched.
  */
-export interface EmployeeWagePayload
-  extends Omit<WageStructurePayload, 'salary_components'> {
+export interface EmployeeWagePayload extends WageStructurePayload {
   effective_from?: string
 }
 

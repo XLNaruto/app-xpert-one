@@ -9,6 +9,7 @@ import { DataTable } from '@/components/data-table'
 import { EmptyState } from '@/components/common/empty-state'
 import { encryptParams } from '@/lib/crypto'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import {
   ATTENTION_PAGE_SIZES,
   SIGNAL_OPTIONS,
@@ -267,20 +268,21 @@ function SignalChip({ signal, row }: { signal: AttentionSignal; row: AttentionRo
           : undefined
 
   return (
-    <Link
-      to={spec.to}
-      title={spec.description}
-      className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors',
-        // `no_posting` is the reconciliation signal — those employees are
-        // excluded from every headcount on this screen, so it reads louder.
-        signal === 'no_posting'
-          ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
-          : 'bg-warning/10 text-warning hover:bg-warning/20',
-      )}
-    >
-      {spec.label}
-      {count ? <span className="tabular-nums">{count}</span> : null}
-    </Link>
+    <Hint text={spec.description}>
+      <Link
+        to={spec.to}
+        className={cn(
+          'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors',
+          // `no_posting` is the reconciliation signal — those employees are
+          // excluded from every headcount on this screen, so it reads louder.
+          signal === 'no_posting'
+            ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+            : 'bg-warning/10 text-warning hover:bg-warning/20',
+        )}
+      >
+        {spec.label}
+        {count ? <span className="tabular-nums">{count}</span> : null}
+      </Link>
+    </Hint>
   )
 }

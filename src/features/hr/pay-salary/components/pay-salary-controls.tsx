@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { PAY_SALARY_TABS, type PaySalaryStatus } from '../constants'
 
@@ -106,7 +106,7 @@ export function PaySalaryControls({
             serves up to 500 rows at a time — so the count is worth printing. */}
         {unpaid && selectedCount > 0 && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pl-3 pr-1.5 text-xs font-medium text-primary">
-            {selectedCount} selected · {formatAmount(selectedTotal)}
+            {selectedCount} selected · {formatMoney(selectedTotal)}
             <button
               type="button"
               onClick={onClearSelection}

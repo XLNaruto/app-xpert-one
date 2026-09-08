@@ -4,6 +4,7 @@ export { useDesignations } from './api/use-designations'
 export { useDesignation } from './api/use-designation'
 export { useDesignationWageStructures } from './api/use-designation-wage-structures'
 export type {
+  AllowanceValueType,
   Designation,
   DesignationSalaryComponent,
   DesignationWageStructure,
@@ -22,6 +23,7 @@ export type { DesignationFormValues, WageStructureRow } from './schemas'
  * and the mappers are shared from here rather than restated over there.
  */
 
+export { ALLOWANCE_VALUE_TYPES, toValueType } from './lib/api-enums'
 export { useWageHeads } from './api/use-wage-heads'
 export type { WageHead, WageHeads } from './lib/wage-structure-mappers'
 /**
@@ -32,6 +34,67 @@ export type { WageHead, WageHeads } from './lib/wage-structure-mappers'
  */
 export { WageStructureGrid } from './components/wage-structure-grid'
 export { revealFirstError } from './lib/wage-grid-errors'
+
+/* ── The payout schedule ────────────────────────────────────────────────────
+ *
+ * Every allowance / deduction head carries four settings on top of its amount
+ * and its act chips — a payout frequency (with a start-month anchor), an amount
+ * mode, a payroll-calculation gate — plus, on a deduction, the base it is priced
+ * on. Four screens configure them and the salary register does the arithmetic,
+ * so the enums, the coupling rules and the month maths are shared from here.
+ */
+export {
+  ComponentScheduleCell,
+  ComponentScheduleField,
+  ComponentScheduleInline,
+  ComponentScheduleSummary,
+} from './components/component-schedule-field'
+export {
+  AMOUNT_MODES,
+  CALCULATION_BASES,
+  DEFAULT_CALCULATION_BASE,
+  TDS_CALCULATION_BASES,
+  DEFAULT_COMPONENT_SCHEDULE,
+  DEFAULT_START_MONTH,
+  MONTHS_PER_PAYOUT,
+  PAYOUT_FREQUENCIES,
+  PAYROLL_CALCULATIONS,
+  isDefaultSchedule,
+  monthName,
+  needsStartMonth,
+  payoutTiming,
+  resolveSchedule,
+  shortMonthName,
+  supportsAccrual,
+  toAmountMode,
+  toCalculationBase,
+  toPayoutFrequency,
+  toPayrollCalculation,
+  toStartMonthNumber,
+  toStartMonthValue,
+  toTdsCalculationBase,
+} from './lib/component-schedule'
+export type {
+  AmountMode,
+  CalculationBase,
+  ComponentSchedule,
+  PayoutFrequency,
+  PayoutTiming,
+  PayrollCalculation,
+  TdsCalculationBase,
+} from './lib/component-schedule'
+export {
+  AMOUNT_MODE_OPTIONS,
+  AMOUNT_TYPE_OPTIONS,
+  CALCULATION_BASE_OPTIONS,
+  TDS_CALCULATION_BASE_HINT,
+  TDS_CALCULATION_BASE_OPTIONS,
+  tdsBaseLabel,
+  PAYOUT_FREQUENCY_OPTIONS,
+  PAYROLL_CALCULATION_OPTIONS,
+  START_MONTH_OPTIONS,
+} from './constants'
+export { schedulePayload } from './lib/wage-structure-mappers'
 export { NO_WAGE_HEADS } from './lib/wage-structure-mappers'
 export {
   blankWageStructureRow,
@@ -52,6 +115,7 @@ export {
 } from './schemas'
 export type {
   SalaryComponentPayload,
+  SalaryComponentResponse,
   WageStructureFormValues,
   WageStructurePayload,
   WageStructureResponse,

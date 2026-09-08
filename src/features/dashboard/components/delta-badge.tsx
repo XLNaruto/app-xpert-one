@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Minus, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import { formatChange } from '../lib/dashboard-format'
 
 /**
@@ -47,17 +48,18 @@ export function DeltaBadge({
   // "the number did not move".
   if (value == null) {
     return (
-      <span
-        className={cn(
-          'inline-flex items-center gap-1 text-xs font-medium text-muted-foreground',
-          className,
-        )}
-        title="No comparable period before this one"
-      >
-        <Sparkles className="size-3" />
-        New
-        {hint ? <span className="font-normal">{hint}</span> : null}
-      </span>
+      <Hint text="No comparable period before this one">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 text-xs font-medium text-muted-foreground',
+            className,
+          )}
+        >
+          <Sparkles className="size-3" />
+          New
+          {hint ? <span className="font-normal">{hint}</span> : null}
+        </span>
+      </Hint>
     )
   }
 

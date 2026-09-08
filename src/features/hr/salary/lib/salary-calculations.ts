@@ -1,11 +1,17 @@
+import { payoutTiming } from '@/features/master/designation'
+import type { CalculationBase } from '@/features/master/designation'
+import { round2 } from '@/lib/currency'
 import type {
+  SalaryBilling,
   SalaryHead,
+  SalaryHeadConfig,
   SalaryHeadConfigs,
   SalaryRates,
   SalaryRegisterRow,
+  SalaryWageStructure,
 } from '../types'
 import type { SalaryRow } from '../schemas'
-import { statutoryFor } from './salary-statutory'
+import { statutoryFor, tdsFor } from './salary-statutory'
 
 /**
  * The register's arithmetic — what a row comes to for the days and the amounts
@@ -33,12 +39,38 @@ import { statutoryFor } from './salary-statutory'
  *   That is what `overridden` records, and it applies to a statutory cell exactly
  *   as it does to a head — a month where an act was deducted differently is the
  *   case "every figure is stored as sent" exists for.
+ *
+ * Three things the **payout schedule** adds on top of all that, each of which the
+ * server's own engine does the same way:
+ *
+ * - **A head is only worth anything in its payout months.** A quarterly head
+ *   anchored on March pays in March, June, September and December and is `0` in
+ *   between — and that zero is "nothing due", not "an amount of nothing", which
+ *   is why every line carries `isPayoutMonth`. An `ACCRUED` head goes further:
+ *   its figure is a *monthly accrual*, so the payout month releases N months of
+ *   it at once (`accruedMonths`).
+ * - **An `EXCLUDE` head is paid but calculates on nothing.** It lands in gross
+ *   pay like any other head and is kept out of every base — the statutory ones
+ *   included, whatever its PF / ESI / PT chips say. That is why there are two
+ *   grosses below: `grossPay`, the money on the payslip, and `grossBase`, what
+ *   the other heads calculate on.
+ * - **A deduction head names its own base.** Six of them, from the earned basic
+ *   to the total invoice amount, resolved ONCE in a fixed order (see
+ *   `derivedBases`) and then frozen — the deduction heads are priced on the
+ *   result, never fed back into it, or the arithmetic would be circular.
  */
 
-/** Money rounded the way a rupee figure is stored — two places, no more. */
-function round(value: number): number {
-  return Math.round(value * 100) / 100
-}
+/**
+ * Money rounded to the **paise**, the way the server's own `round2()` does it —
+ * `Number.EPSILON` term and all.
+ *
+ * Every figure the engine produces is a 2dp figure now, not a whole rupee, and
+ * `bulk-save` checks each row's arithmetic to within **5 paise**. So each line is
+ * rounded here, once, before it is summed: the server rounds per step, and
+ * summing unrounded floats and rounding at the end drifts off it. See
+ * `lib/currency`.
+ */
+const round = round2
 
 /** A grid cell's string as a number; blank, absent or malformed reads as 0. */
 export function cellNumber(value: string | null | undefined): number {
@@ -140,33 +172,285 @@ export function otAmountFor(ratePerHour: number, hours: number): number {
 }
 
 /**
+ * How one head's schedule lands on the month being priced, and the multiplier it
+ * comes to. `null` for a head the row has no configuration for — there is no
+ * schedule to read, so nothing to explain about its figure.
+ */
+export function headTiming(
+  config: SalaryHeadConfig | undefined,
+  periodMonth: number,
+) {
+  if (!config) return null
+  return payoutTiming(config, periodMonth)
+}
+
+/**
  * One head's amount, by the rule its configuration puts it under.
  *
- * Three answers, in the order they win:
+ * Four answers, in the order they win:
  *
  * - **Typed over.** `overridden` is what a double-click and a figure leave
- *   behind, and it beats the configuration outright — that is the whole point of
- *   being allowed to type it.
- * - **Fixed.** The configuration's own `value` *is* the money — the register
- *   documents `salary_components.amount` as read through `amount_type`, so a
- *   `Fixed` head carries rupees there and a `Percentage` head carries a percent.
- *   It is a flat monthly figure and the present days do not touch it: a head
- *   configured at ₹2,600 is ₹2,600 whether the month ran 26 days or 12.
- * - **Percentage.** A share of the earned basic, so it moves with the days.
+ *   behind, and it beats everything below outright — that is the whole point of
+ *   being allowed to type it. A schedule cannot override an explicit instruction.
+ * - **Unconfigured.** A head the structure doesn't carry has no rule, so the cell
+ *   is the only thing that knows the amount.
+ * - **Off its payout month.** The schedule's factor is `0`, so the head is worth
+ *   nothing this month whatever its configured figure. Read `isPayoutMonth` on
+ *   the line to say *why* rather than printing a bare zero.
+ * - **Priced, then scaled.** The monthly figure is worked out per `amount_type`
+ *   and multiplied by the factor — `1` on an ordinary payout, `N` when an
+ *   `ACCRUED` head releases a whole period at once.
  *
- * The cell is only consulted for an override, or for a head the designation
- * doesn't configure at all — which since the register stopped previewing the pay
- * is the one case where the cell is the only thing that knows the amount.
+ * `base` is what a percentage head earns on: the earned basic for an allowance,
+ * and for a deduction whichever of the six bases its `calculation_base` names —
+ * resolved by the caller, because those bases depend on the allowances being
+ * priced first.
+ *
+ * **The four `amount_type` rules**, and the two new ones are not the same rule:
+ *
+ * - `Percentage` — `base * amount / 100`.
+ * - `Fixed` — a MONTHLY rupee figure, prorated: `amount * paidDays / workingDays`.
+ *   A flat ₹2,600 head on a 13-of-26-day month is worth ₹1,300.
+ * - `Per Day` — a rupee RATE per day: `amount * presentDays`, and **not** prorated
+ *   again, because the day count already carries the attendance. It therefore
+ *   pays on extra days: 29 payable against a 26-day month pays all 29.
+ * - `Days` — a COUNT of days at the day's wage:
+ *   `amount * wagesPerDay * paidDays / workingDays`. It **is** prorated: it is an
+ *   entitlement for a whole month (four days of leave encashment, say), so a
+ *   25-of-26-day month accrues 25/26 of it, and `paidDays` caps at the month.
+ *
+ * On real figures — ₹534.50 a day over 26 working days — `Per Day 146.8846` pays
+ * ₹3,819.00 / ₹3,672.12 for 26 / 25 payable days, while `Days 4` pays ₹2,138.00 /
+ * ₹2,055.77. Neither column can be got from the other rule.
  */
 export function headCellAmount(
   cell: { amount: string; overridden: boolean },
-  config: { valueType: string; value: number } | undefined,
-  earnedBasic: number,
+  config: SalaryHeadConfig | undefined,
+  base: number,
+  days: HeadDays,
+  periodMonth: number,
 ): number {
   if (cell.overridden) return cellNumber(cell.amount)
   if (!config) return cellNumber(cell.amount)
-  if (config.valueType === 'Percentage') return round((earnedBasic * config.value) / 100)
-  return round(config.value)
+
+  const timing = payoutTiming(config, periodMonth)
+  if (!timing.isPayoutMonth) return 0
+
+  const monthly = monthlyHeadAmount(config, base, days)
+
+  /* Rounded AFTER the factor, which is the order the server rounds in — the
+     bulk save's total consistency check is against figures rounded this way. */
+  return round(timing.factor * monthly)
+}
+
+/**
+ * The day counts and the daily wage a head is priced against — everything the
+ * four `amount_type` rules read beyond the head's own figure.
+ *
+ * `presentDays` and `paidDays` differ only once the month is over-worked:
+ * `extraDays = max(0, presentDays - workingDays)` are days the month doesn't
+ * contain, and `paidDays = presentDays - extraDays` is therefore capped at the
+ * month. A `Per Day` rate pays the former; everything prorated uses the latter,
+ * so a proration can never exceed 1.
+ */
+export interface HeadDays {
+  presentDays: number
+  paidDays: number
+  workingDays: number
+  wagesPerDay: number
+}
+
+/** The day counts for a row, with the over-worked month split off. */
+export function headDaysFor(
+  presentDays: number,
+  workingDays: number,
+  wagesPerDay: number,
+): HeadDays {
+  const extraDays = workingDays > 0 ? Math.max(0, presentDays - workingDays) : 0
+  return {
+    presentDays,
+    paidDays: presentDays - extraDays,
+    workingDays,
+    wagesPerDay,
+  }
+}
+
+/**
+ * The head's monthly figure before the payout factor — one branch per
+ * `amount_type`. A row with no working days on it can't be prorated, so it pays
+ * the figure in full rather than nothing.
+ */
+function monthlyHeadAmount(
+  config: SalaryHeadConfig,
+  base: number,
+  days: HeadDays,
+): number {
+  const ratio = days.workingDays > 0 ? days.paidDays / days.workingDays : 1
+
+  switch (config.valueType) {
+    case 'Percentage':
+      return (base * config.value) / 100
+    case 'Per Day':
+      return config.value * days.presentDays
+    case 'Days':
+      return config.value * days.wagesPerDay * ratio
+    case 'Fixed':
+    default:
+      return config.value * ratio
+  }
+}
+
+/**
+ * What a **deduction** head is priced on, out of the six bases its
+ * `calculation_base` can name.
+ *
+ * Resolved once, from figures already frozen — see `derivedBases`, which computes
+ * them in the fixed order the API documents. Never re-entered: the non-statutory
+ * deductions are what is being priced *on* these, so feeding them back in would
+ * be circular.
+ */
+function baseFor(bases: DerivedBases, base: CalculationBase): number {
+  switch (base) {
+    case 'BASIC_PAY':
+      return bases.basicPay
+    case 'GROSS_PAY':
+      return bases.grossBase
+    case 'NET_PAY':
+      return bases.netBase
+    case 'TOTAL_STATUTORY_COST':
+      return bases.totalStatutoryCost
+    case 'TOTAL_INVOICE_AMOUNT':
+      return bases.totalInvoiceAmount
+    case 'BASIC_EARNED_FOR_PRESENT_DAYS':
+    default:
+      return bases.basicEarned
+  }
+}
+
+/**
+ * The five bases a deduction head can be priced on beyond the earned basic,
+ * computed in the fixed order the API documents and then frozen.
+ *
+ * The order is the point: the basic, then the allowance lines, then the two
+ * grosses, then PF / ESIC / PT / LWF, then the **agency bill**, then TDS off
+ * whichever of those it is quoted on, and only then the deduction heads.
+ * Anything that tried to iterate would never settle — and TDS in particular has
+ * to come after the bill, because `TOTAL_INVOICE_AMOUNT` is one of the amounts it
+ * can be charged on.
+ */
+interface DerivedBases {
+  basicEarned: number
+  basicPay: number
+  /** What heads calculate on — gross less every `EXCLUDE` head. */
+  grossBase: number
+  /**
+   * `grossBase` less the STATUTORY five only.
+   *
+   * **Not the payslip's net.** It deliberately leaves out the non-statutory
+   * deduction heads, because those are the very things being priced on it. The
+   * `netPay` printed at the foot of the payslip is the real net and will differ;
+   * the dropdown is labelled "Net Pay" all the same, because that is the base's
+   * name.
+   */
+  netBase: number
+  totalStatutoryCost: number
+  /** The agency's service charge on the statutory cost — a column on the bill. */
+  agencyChargeAmount: number
+  /** GST on the cost plus that charge — the other column on the bill. */
+  gstAmount: number
+  totalInvoiceAmount: number
+}
+
+/**
+ * The amount a **TDS** rate is charged on — whichever of the five the wage
+ * structure names.
+ *
+ * `null` is the answer that matters and is never defaulted away: a structure that
+ * names no base deducts nothing, which is the behaviour every structure had
+ * before TDS computed at all. Returning `0` here is what makes `tdsFor` produce
+ * nothing, and `tdsFor` refuses on the same condition, so neither can drift.
+ *
+ * `NET_PAY` is not among the five and the API refuses it — the net already has
+ * TDS out of it, so it would be an input to itself.
+ */
+function tdsBase(bases: DerivedBases, wage: SalaryWageStructure | null): number {
+  switch (wage?.tdsCalculationBase) {
+    case 'BASIC_PAY':
+      return bases.basicPay
+    case 'GROSS_PAY':
+      return bases.grossBase
+    case 'TOTAL_STATUTORY_COST':
+      return bases.totalStatutoryCost
+    case 'TOTAL_INVOICE_AMOUNT':
+      return bases.totalInvoiceAmount
+    case 'BASIC_EARNED_FOR_PRESENT_DAYS':
+      return bases.basicEarned
+    default:
+      return 0
+  }
+}
+
+/**
+ * The bill, and the bases that come off it.
+ *
+ * The chain is four figures, each rounded to the paise as the server rounds it:
+ *
+ * ```
+ * total_statutory_cost = gross_base + employer_pf + employer_esic
+ * agency_charge_amount = total_statutory_cost * agency_charge_percentage / 100
+ * gst_amount           = (total_statutory_cost + agency_charge_amount) * gst_percentage / 100
+ * total_invoice_amount = total_statutory_cost + agency_charge_amount + gst_amount
+ * ```
+ *
+ * Rounding **per step** matters: the invoice is the sum of three 2dp figures, not
+ * one compounded multiplication rounded at the end, and the two answers differ by
+ * a paisa often enough to fail the save's 5-paise check.
+ *
+ * `employeeTds` is taken as an input rather than derived here, because TDS is
+ * charged on one of these very figures — see `rowFigures`, which calls this
+ * first with no TDS to price the bill, then again once TDS is known so that
+ * `netBase` accounts for it.
+ */
+function derivedBases(input: {
+  basicEarned: number
+  basicPay: number
+  grossBase: number
+  employeePf: number
+  employeeEsic: number
+  employeePt: number
+  employeeLwf: number
+  employeeTds: number
+  employerPf: number
+  employerEsic: number
+  billing: SalaryBilling | null
+}): DerivedBases {
+  const statutoryCost = round(
+    input.grossBase + input.employerPf + input.employerEsic,
+  )
+  /* A company with no billing row invoices at cost — 0% agency charge, 0% GST.
+     Nothing here may assume 18%: the rate is the company's own. */
+  const agencyPct = input.billing?.agencyChargePercentage ?? 0
+  const gstPct = input.billing?.gstPercentage ?? 0
+  const agencyCharge = round((statutoryCost * agencyPct) / 100)
+  const gst = round(((statutoryCost + agencyCharge) * gstPct) / 100)
+
+  return {
+    basicEarned: input.basicEarned,
+    basicPay: input.basicPay,
+    grossBase: input.grossBase,
+    netBase: round(
+      input.grossBase -
+        (input.employeePf +
+          input.employeeEsic +
+          input.employeePt +
+          input.employeeLwf +
+          input.employeeTds),
+    ),
+    totalStatutoryCost: statutoryCost,
+    agencyChargeAmount: agencyCharge,
+    gstAmount: gst,
+    totalInvoiceAmount: round(statutoryCost + agencyCharge + gst),
+  }
 }
 
 /** Every figure a row comes to — what the grid prints and the save sends. */
@@ -184,7 +468,16 @@ export interface SalaryRowFigures {
   otAmount: number
   extraDays: number
   extraDaysAmount: number
+  /** The money on the payslip — every head, `EXCLUDE` ones included. */
   grossPay: number
+  /**
+   * What the other heads and the acts calculate on — the gross less every
+   * `EXCLUDE` head. Equal to `grossPay` when nothing is excluded, which is the
+   * usual case, and never printed as the gross.
+   */
+  grossBase: number
+  /** Total allowance that reached `grossBase` — the `INCLUDE` ones. */
+  includedAllowance: number
   employeePf: number
   employerPf: number
   employeeEsic: number
@@ -199,31 +492,21 @@ export interface SalaryRowFigures {
   totalDeduction: number
   netPay: number
   /**
-   * Statutory deductions that no head on the row stands for, as their own
-   * breakdown lines — see the note below. Empty when the register already
-   * reports them as heads, or when the pay-component master has no head to
-   * name them by.
+   * The invoice side — `grossBase` plus the employer's PF and ESIC, then the
+   * agency charge and GST on top of that.
+   *
+   * Computed here because a deduction head can be priced on either of them, and
+   * shown so the figure behind such a head is visible. `bulk-save` records
+   * neither: a row saved from this screen comes back with both `null`, since the
+   * API only stores what its own engine derived.
    */
-  statutoryLines: SalaryHead[]
+  totalStatutoryCost: number
+  /** The agency's service charge on the statutory cost — a column on the bill. */
+  agencyChargeAmount: number
+  /** GST on the statutory cost plus that charge — the bill's other column. */
+  gstAmount: number
+  totalInvoiceAmount: number
 }
-
-/**
- * The statutory deductions, and the short codes the API routes them by.
- *
- * `bulk-save` verifies `total_deduction` against the breakdown lines sent with
- * it, so a statutory figure in the total and not in the lines fails the row —
- * counting each one exactly once is the thing to get right.
- *
- * Hence `statutoryLines`: a statutory figure becomes its own deduction line
- * unless a head already stands for it, and the total is then simply the sum of
- * the lines. Whichever way the company's catalog names them, the row adds up.
- */
-const STATUTORY: { code: string; of: (row: SalaryRowFigures) => number }[] = [
-  { code: 'PF', of: (row) => row.employeePf },
-  { code: 'ESIC', of: (row) => row.employeeEsic },
-  { code: 'PT', of: (row) => row.employeePt },
-  { code: 'LWF', of: (row) => row.employeeLwf },
-]
 
 /**
  * A statutory cell as it stands: the figure typed into it, or the one the act
@@ -242,17 +525,6 @@ function statutoryAmount(
   return computed
 }
 
-/** The catalog ids the statutory codes resolve to, so a line can name its head. */
-export type StatutoryComponentIds = Map<string, number>
-
-/** Every short code a statutory deduction is known by in the pay-component master. */
-export const STATUTORY_ALIASES: Record<string, string[]> = {
-  PF: ['PF', 'EPF', 'PROVIDENT FUND'],
-  ESIC: ['ESIC', 'ESI'],
-  PT: ['PT', 'PTAX', 'PROFESSIONAL TAX'],
-  LWF: ['LWF', 'LABOUR WELFARE FUND'],
-}
-
 /**
  * The row as it currently stands.
  *
@@ -266,10 +538,16 @@ export function rowFigures(
   row: SalaryRegisterRow,
   values: SalaryRow | undefined,
   configs: SalaryHeadConfigs,
-  statutoryIds: StatutoryComponentIds,
   live: boolean,
   rates: SalaryRates,
   periodMonth: number,
+  /**
+   * The company's agency-charge and GST rates, for the two invoice bases a
+   * deduction head can be priced on. `null` is a company that has never
+   * configured charges — it invoices at statutory cost, which the arithmetic
+   * treats as 0% / 0%. **Never assume 18%.**
+   */
+  billing: SalaryBilling | null = null,
 ): SalaryRowFigures {
   const { figures, wageStructure, attendance } = row
 
@@ -288,6 +566,9 @@ export function rowFigures(
     extraDays: figures.extraDays,
     extraDaysAmount: figures.extraDaysAmount,
     grossPay: figures.grossPay,
+    /* A stored row records no base of its own, so the gross stands for both. */
+    grossBase: figures.grossPay,
+    includedAllowance: figures.totalAllowance,
     employeePf: figures.employeePf,
     employerPf: figures.employerPf,
     employeeEsic: figures.employeeEsic,
@@ -300,24 +581,48 @@ export function rowFigures(
     employerLwf: 0,
     totalDeduction: figures.totalDeduction,
     netPay: figures.netPay,
-    statutoryLines: [],
+    /* Whatever the server derived, where it derived any — `null` reads as 0 for
+       the arithmetic, and the screen shows the stored `null` as a dash. */
+    totalStatutoryCost: figures.totalStatutoryCost ?? 0,
+    agencyChargeAmount: figures.agencyChargeAmount ?? 0,
+    gstAmount: figures.gstAmount ?? 0,
+    totalInvoiceAmount: figures.totalInvoiceAmount ?? 0,
   }
 
   if (!live || !values) return asRegistered
 
   const presentDays = cellNumber(values.presentDays)
+  const workingDays = cellNumber(values.workingDays) || asRegistered.workingDays
   const earnedBasic = earnedBasicFor(figures.wagesPerDay, presentDays)
+  /*
+   * The day counts every head is priced against — the payable days, the days
+   * inside the month, the month itself and the daily wage. Which of them a head
+   * reads is its `amount_type`'s business: see `headCellAmount`.
+   */
+  const days = headDaysFor(presentDays, workingDays, figures.wagesPerDay)
+  const otAmount = otAmountFor(figures.otRate, cellNumber(values.otHours))
 
-  /* The heads, each by its own rule. The cells are aligned with the grid's head
-     columns, so a head keeps its identity from `payComponentId` rather than from
-     where it happens to sit. */
+  /**
+   * One head cell → its line. The cells are aligned with the grid's head
+   * columns, so a head keeps its identity from `payComponentId` rather than from
+   * where it happens to sit.
+   *
+   * `baseOf` is what a percentage head earns on, and it is the only thing that
+   * differs between the two sides: an allowance earns on the earned basic, while
+   * a deduction earns on whichever of the six bases its own `calculation_base`
+   * names — which is why the deductions can't be priced until the allowances,
+   * the grosses and the statutory five are all settled.
+   */
   const applyHeads = (
     cells: SalaryRow['allowances'],
     registered: SalaryHead[],
+    baseOf: (config: SalaryHeadConfig | undefined) => number,
   ): SalaryHead[] =>
     cells.map((cell) => {
       const head = registered.find((one) => one.payComponentId === cell.payComponentId)
       const config = configs.get(cell.payComponentId)
+      const timing = headTiming(config, periodMonth)
+
       return {
         payComponentId: cell.payComponentId,
         code: head?.code ?? '',
@@ -325,35 +630,56 @@ export function rowFigures(
         pfApplicable: config?.pfApplicable ?? head?.pfApplicable ?? false,
         esicApplicable: config?.esicApplicable ?? head?.esicApplicable ?? false,
         ptApplicable: config?.ptApplicable ?? head?.ptApplicable ?? false,
-        amount: headCellAmount(cell, config, earnedBasic),
+        amount: headCellAmount(cell, config, baseOf(config), days, periodMonth),
+        /* What makes a zero readable — see `SalaryHead`. Null on a head the row
+           carries no configuration for: there is no schedule to report. */
+        isPayoutMonth: timing?.isPayoutMonth ?? null,
+        accruedMonths: timing?.accruedMonths ?? null,
+        nextPayoutMonth: timing?.nextPayoutMonth ?? null,
+        payrollCalculation: config?.payrollCalculation ?? 'INCLUDE',
       }
     })
 
-  const allowances = applyHeads(values.allowances, figures.allowances)
-  const deductions = applyHeads(values.deductions, figures.deductions)
+  /* ── 1–2. The basic, then the allowance lines ──────────────────────────── */
 
-  const totalAllowance = round(
-    allowances.reduce((sum, head) => sum + head.amount, 0),
+  const allowances = applyHeads(values.allowances, figures.allowances, () => earnedBasic)
+
+  /* ── 3. The two grosses ────────────────────────────────────────────────── */
+
+  const totalAllowance = round(allowances.reduce((sum, head) => sum + head.amount, 0))
+  /*
+   * An `EXCLUDE` head is paid, and lands in `grossPay` like any other — it is
+   * only kept out of the base the other heads and the acts calculate on. Hence
+   * two figures where there used to be one.
+   */
+  const includedAllowance = round(
+    allowances.reduce(
+      (sum, head) => (head.payrollCalculation === 'EXCLUDE' ? sum : sum + head.amount),
+      0,
+    ),
   )
-  const otAmount = otAmountFor(figures.otRate, cellNumber(values.otHours))
   const grossPay = round(
     earnedBasic + totalAllowance + otAmount + figures.extraDaysAmount,
   )
+  const grossBase = round(
+    earnedBasic + includedAllowance + otAmount + figures.extraDaysAmount,
+  )
 
-  /* The acts, off this row's wage structure and the period's rate masters. Each
-     is charged on the heads that opt into it, so the present days reach PF and
-     ESIC the same way they reach a percentage allowance. A cell typed over keeps
-     its figure — that override is the whole reason the cells are editable. */
+  /* ── 4. The statutory five ─────────────────────────────────────────────── */
+
+  /* Off this row's wage structure and the period's rate masters. Each is charged
+     on the heads that opt into it — and never on an `EXCLUDE` head, whatever its
+     chips say, which `actWage` enforces. A cell typed over keeps its figure;
+     that override is the whole reason the cells are editable. */
   const acts = statutoryFor({
     earnedBasic,
     allowances,
-    grossPay,
     wage: wageStructure,
     rates,
     periodMonth,
   })
 
-  const statutory = {
+  const withoutTds = {
     ...asRegistered,
     employeePf: statutoryAmount(values.statutory?.pf, acts.employeePf),
     employerPf: acts.employerPf,
@@ -361,51 +687,115 @@ export function rowFigures(
     employerEsic: acts.employerEsic,
     employeePt: statutoryAmount(values.statutory?.pt, acts.employeePt),
     employeeLwf: statutoryAmount(values.statutory?.lwf, acts.employeeLwf),
-    employeeTds: statutoryAmount(values.statutory?.tds, acts.employeeTds),
     employeeEsicRate: acts.employeeEsicRate,
     employerEsicRate: acts.employerEsicRate,
     employerLwf: acts.employerLwf,
   }
 
-  const statutoryLines: SalaryHead[] = []
-  STATUTORY.forEach(({ code, of }) => {
-    const amount = of(statutory)
-    if (!amount) return
-    if (deductions.some((head) => head.code.trim().toUpperCase() === code)) return
-    const payComponentId = statutoryIds.get(code)
-    if (payComponentId === undefined) return
-    statutoryLines.push({
-      payComponentId,
-      code,
-      name: code,
-      amount,
-      pfApplicable: false,
-      esicApplicable: false,
-      ptApplicable: false,
-    })
+  /* ── 5. The agency bill, then TDS off it ───────────────────────────────── */
+
+  /*
+   * The bill is priced BEFORE TDS, and TDS is then charged on whichever amount
+   * the wage structure names — `TOTAL_INVOICE_AMOUNT` among them, which is the
+   * whole reason for the order. Contractor TDS under section 194C is 2% of the
+   * total bill, not of any wage figure, so nothing about it can be settled until
+   * the employer's shares, the agency charge and the GST are.
+   *
+   * The bases are computed twice: once with no TDS, to price the bill and give
+   * `tdsFor` something to quote on, and once more below with the TDS that came
+   * out of it, so `netBase` — the "Net Pay" a deduction head can be priced on —
+   * accounts for it. The second pass changes nothing on the bill itself: TDS is
+   * the employee's deduction and enters none of the four bill figures.
+   */
+  const billed = derivedBases({
+    basicEarned: earnedBasic,
+    basicPay: figures.basicPay,
+    grossBase,
+    employeePf: withoutTds.employeePf,
+    employeeEsic: withoutTds.employeeEsic,
+    employeePt: withoutTds.employeePt,
+    employeeLwf: withoutTds.employeeLwf,
+    employeeTds: 0,
+    employerPf: withoutTds.employerPf,
+    employerEsic: withoutTds.employerEsic,
+    billing,
   })
 
-  /* The total is the lines and nothing else, which is what `bulk-save` checks it
-     against. TDS is the exception the API models as a column of its own. */
+  const statutory = {
+    ...withoutTds,
+    employeeTds: statutoryAmount(
+      values.statutory?.tds,
+      tdsFor(tdsBase(billed, wageStructure), wageStructure),
+    ),
+  }
+
+  /* ── 6. The derived bases, frozen ──────────────────────────────────────── */
+
+  const bases = derivedBases({
+    basicEarned: earnedBasic,
+    basicPay: figures.basicPay,
+    grossBase,
+    employeePf: statutory.employeePf,
+    employeeEsic: statutory.employeeEsic,
+    employeePt: statutory.employeePt,
+    employeeLwf: statutory.employeeLwf,
+    employeeTds: statutory.employeeTds,
+    employerPf: statutory.employerPf,
+    employerEsic: statutory.employerEsic,
+    billing,
+  })
+
+  /* ── 7. The deduction heads, on those frozen bases ─────────────────────── */
+
+  const deductions = applyHeads(values.deductions, figures.deductions, (config) =>
+    baseFor(bases, config?.calculationBase ?? 'BASIC_EARNED_FOR_PRESENT_DAYS'),
+  )
+
+  /*
+   * The total is the non-statutory lines plus the five statutory columns, which
+   * is exactly the sum `bulk-save` checks it against:
+   *
+   *   total_deduction == sum(deductions[]) + employee_pf + employee_esic
+   *                        + employee_pt + employee_lwf + employee_tds
+   *                        + the two late penalties
+   *
+   * The five are **columns on the row, not breakdown lines** — see
+   * `salaryRowToPayload`. Counting a statutory figure in both places was the one
+   * mistake the old ±2 tolerance could hide and the current ±0.05 cannot.
+   *
+   * Each line is already rounded to the paise, and the sum is rounded again, in
+   * the same order the server rounds — summing unrounded floats drifts off it.
+   */
   const totalDeduction = round(
     deductions.reduce((sum, head) => sum + head.amount, 0) +
-      statutoryLines.reduce((sum, head) => sum + head.amount, 0) +
+      statutory.employeePf +
+      statutory.employeeEsic +
+      statutory.employeePt +
+      statutory.employeeLwf +
       statutory.employeeTds,
   )
 
   return {
     ...statutory,
     presentDays,
-    workingDays: cellNumber(values.workingDays) || asRegistered.workingDays,
+    workingDays,
     earnedBasic,
     allowances,
     deductions,
     totalAllowance,
+    includedAllowance,
     otHours: cellNumber(values.otHours),
     otAmount,
     grossPay,
-    statutoryLines,
+    grossBase,
+    totalStatutoryCost: bases.totalStatutoryCost,
+    agencyChargeAmount: bases.agencyChargeAmount,
+    gstAmount: bases.gstAmount,
+    totalInvoiceAmount: bases.totalInvoiceAmount,
     totalDeduction,
+    /* The real net — gross less EVERY deduction, the non-statutory heads
+       included. Not `bases.netBase`, which is a base and stops at the statutory
+       five precisely so the heads priced on it aren't priced on themselves. */
     netPay: round(grossPay - totalDeduction),
   }
 }

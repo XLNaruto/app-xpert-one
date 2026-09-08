@@ -17,7 +17,7 @@ import { RowActionsMenu } from '@/components/common/row-actions-menu'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { formatDate } from '@/lib/utils'
 import {
   PAY_SALARY_PAGE_SIZE,
@@ -155,7 +155,7 @@ export function PaySalaryPage() {
         header: 'Gross Pay',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
-        cell: ({ row }) => formatAmount(row.original.grossPay),
+        cell: ({ row }) => formatMoney(row.original.grossPay),
       },
       {
         id: 'netPay',
@@ -164,7 +164,7 @@ export function PaySalaryPage() {
         meta: { className: 'whitespace-nowrap text-right tabular-nums' },
         cell: ({ row }) => (
           <span className="font-semibold text-primary">
-            {formatAmount(row.original.netPay)}
+            {formatMoney(row.original.netPay)}
           </span>
         ),
       },
@@ -271,8 +271,8 @@ export function PaySalaryPage() {
                 },
                 {
                   label: unpaid ? 'Total Outstanding' : 'Total Net Paid',
-                  value: formatAmount(view.totals.totalNetPay),
-                  // No rupee icon here — formatAmount already prints the ₹.
+                  value: formatMoney(view.totals.totalNetPay),
+                  // No rupee icon here — formatMoney already prints the ₹.
                   icon: unpaid ? CircleAlert : Wallet,
                   tone: unpaid ? 'warning' : 'success',
                 },

@@ -6,6 +6,7 @@ import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
+import { amountInputProps } from '@/lib/numeric-input'
 import { LWF_LABELS, MONTH_OPTIONS } from '../constants'
 import type { LwfRateFormValues } from '../schemas'
 
@@ -94,7 +95,7 @@ export function LwfRateFormFields({
         error={errors.employeeContribution?.message}
       >
         <Input
-          inputMode="decimal"
+          {...amountInputProps}
           placeholder={LWF_LABELS.employeeContribution}
           {...register('employeeContribution')}
         />
@@ -106,7 +107,7 @@ export function LwfRateFormFields({
         error={errors.employerContribution?.message}
       >
         <Input
-          inputMode="decimal"
+          {...amountInputProps}
           placeholder={LWF_LABELS.employerContribution}
           {...register('employerContribution')}
         />

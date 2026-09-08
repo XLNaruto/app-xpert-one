@@ -42,6 +42,13 @@ import type {
 } from '../types'
 import { PERMANENT_EMPLOYMENT_TYPE } from '../constants'
 import { toApiDate, toFormDate, toFormMonth, toRequiredApiDate } from './employee-dates'
+import {
+  toAmountMode,
+  toCalculationBase,
+  toPayoutFrequency,
+  toPayrollCalculation,
+  toStartMonthValue,
+} from '@/features/master/designation'
 
 /**
  * Mappers for steps 2 through 9 — one pair per resource: the API record into the
@@ -254,6 +261,13 @@ export function toEmployeeWageComponent(
     pfApplicable: component.pf_applicable ?? false,
     esicApplicable: component.esic_applicable ?? false,
     ptApplicable: component.pt_applicable ?? false,
+    /* A head written before the payout schedule existed reads back as the
+       default, which is exactly the behaviour it was priced under. */
+    payoutFrequency: toPayoutFrequency(component.payout_frequency),
+    startMonth: toStartMonthValue(component.start_month),
+    amountMode: toAmountMode(component.amount_mode),
+    payrollCalculation: toPayrollCalculation(component.payroll_calculation),
+    calculationBase: toCalculationBase(component.calculation_base),
   }
 }
 

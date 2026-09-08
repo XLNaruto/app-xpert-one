@@ -6,13 +6,13 @@ import {
   ComposedChart,
   Legend,
   Line,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import { Combobox } from '@/components/ui/combobox'
 import { axisProps, chartColor, tooltipStyle } from '@/components/charts/tokens'
+import { ScrollableChart } from '@/components/charts/scrollable-chart'
 import {
   GRANULARITY_OPTIONS,
   SERIES_METRIC_LABELS,
@@ -175,7 +175,14 @@ function Plot({
         {UNIT_LABELS[plot.unit]}
         {plot.isStock ? ' · standing total' : ''}
       </p>
-      <ResponsiveContainer width="100%" height={height}>
+      {/* A long window scrolls rather than compresses — at a daily grain a
+          quarter is ~90 buckets, and squeezed into half a card the bars become
+          hairlines and the axis drops most of its dates. */}
+      <ScrollableChart
+        count={rows.length}
+        minPerItem={plot.mark === 'bar' ? 40 : 16}
+        height={height}
+      >
         <ComposedChart data={rows} margin={{ left: -8, right: 8, top: 8, bottom: 4 }}>
           <defs>
             {plot.series.map((entry) => (
@@ -275,7 +282,7 @@ function Plot({
             )
           })}
         </ComposedChart>
-      </ResponsiveContainer>
+      </ScrollableChart>
     </div>
   )
 }

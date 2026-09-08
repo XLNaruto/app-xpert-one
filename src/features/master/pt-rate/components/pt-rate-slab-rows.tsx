@@ -5,6 +5,7 @@ import { Field } from '@/components/common/form-field'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
+import { amountInputProps } from '@/lib/numeric-input'
 import { GENDER_OPTIONS, MONTH_OPTIONS, SLAB_LABELS } from '../constants'
 import type { PtRateFormValues } from '../schemas'
 
@@ -94,7 +95,7 @@ export function PtRateSlabRows({
                   error={slabErrors?.minSalary?.message}
                 >
                   <Input
-                    inputMode="decimal"
+                    {...amountInputProps}
                     placeholder={SLAB_LABELS.minSalary}
                     {...register(`slabs.${index}.minSalary`)}
                   />
@@ -105,7 +106,7 @@ export function PtRateSlabRows({
                   error={slabErrors?.maxSalary?.message}
                 >
                   <Input
-                    inputMode="decimal"
+                    {...amountInputProps}
                     placeholder="Blank = Above"
                     {...register(`slabs.${index}.maxSalary`)}
                   />
@@ -117,7 +118,7 @@ export function PtRateSlabRows({
                   error={slabErrors?.amount?.message}
                 >
                   <Input
-                    inputMode="decimal"
+                    {...amountInputProps}
                     placeholder={SLAB_LABELS.amount}
                     {...register(`slabs.${index}.amount`)}
                   />

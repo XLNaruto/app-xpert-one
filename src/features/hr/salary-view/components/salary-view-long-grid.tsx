@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react'
 import { CellTooltip } from '@/components/common/wage-grid-fields'
-import { formatAmount, formatDecimal } from '@/lib/currency'
+import { formatDecimal, formatMoney } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import { SalaryViewEmployeeCell } from './salary-view-employee-cell'
 import type { SalaryViewRow } from '../types'
@@ -26,6 +26,12 @@ import type { SalaryViewRow } from '../types'
  * scrolling beneath it every frame.
  */
 
+/*
+ * Every money column below is sized for a figure printed to the PAISE. Pay is
+ * computed to two decimals on both sides of the wire now, so `₹13,897` reads
+ * `₹13,897.00` — about three characters wider than the columns were built for.
+ */
+
 /** The pinned employee column's width — also its offset for everything after. */
 const EMPLOYEE_WIDTH = 232
 
@@ -45,6 +51,7 @@ type Section =
   | 'gross'
   | 'deduction'
   | 'net'
+  | 'bill'
 
 interface LongColumn {
   key: string
@@ -85,20 +92,30 @@ export function SalaryViewLongGrid({
     [rows],
   )
 
+  /* The bill columns earn their place only where the server engine priced the
+     month. A register-saved month derives no bases and leaves them all null. */
+  const hasBill = useMemo(
+    () =>
+      rows.some(
+        (row) => row.totalStatutoryCost !== null || row.totalInvoiceAmount !== null,
+      ),
+    [rows],
+  )
+
   const columns = useMemo<LongColumn[]>(() => {
     const attendance: LongColumn[] = [
       { key: 'workingDays', label: 'W. Days', width: 84, section: 'attendance', align: 'center', kind: 'count', value: (r) => r.workingDays },
       { key: 'presentDays', label: 'Present', width: 84, section: 'attendance', align: 'center', kind: 'count', value: (r) => r.presentDays },
       { key: 'lwp', label: 'LWP', width: 72, section: 'attendance', align: 'center', kind: 'count', value: (r) => r.lwpDays },
-      { key: 'basic', label: 'Basic', width: 116, section: 'attendance', align: 'right', kind: 'amount', value: (r) => r.basicPay },
-      { key: 'earned', label: 'Earned', width: 124, section: 'attendance', align: 'right', kind: 'amount', value: (r) => r.earnedBasic },
+      { key: 'basic', label: 'Basic', width: 136, section: 'attendance', align: 'right', kind: 'amount', value: (r) => r.basicPay },
+      { key: 'earned', label: 'Earned', width: 144, section: 'attendance', align: 'right', kind: 'amount', value: (r) => r.earnedBasic },
     ]
 
     const allowances: LongColumn[] = [
       ...allowanceHeads.map<LongColumn>((head) => ({
         key: `allowance:${head}`,
         label: head,
-        width: 116,
+        width: 136,
         section: 'allowance',
         align: 'right',
         kind: 'amount',
@@ -107,7 +124,7 @@ export function SalaryViewLongGrid({
       {
         key: 'allowanceTotal',
         label: 'Total',
-        width: 124,
+        width: 144,
         section: 'allowance',
         align: 'right',
         kind: 'amount',
@@ -119,34 +136,34 @@ export function SalaryViewLongGrid({
     const overtime: LongColumn[] = hasOvertime
       ? [
           { key: 'otHours', label: 'OT Hrs', width: 84, section: 'overtime', align: 'center', kind: 'count', value: (r) => r.otHours },
-          { key: 'otAmount', label: 'OT Wage', width: 116, section: 'overtime', align: 'right', kind: 'amount', value: (r) => r.otAmount },
+          { key: 'otAmount', label: 'OT Wage', width: 136, section: 'overtime', align: 'right', kind: 'amount', value: (r) => r.otAmount },
         ]
       : []
 
     const gross: LongColumn[] = [
-      { key: 'gross', label: 'Gross Pay', width: 132, section: 'gross', align: 'right', kind: 'amount', accent: 'gross', value: (r) => r.grossPay },
+      { key: 'gross', label: 'Gross Pay', width: 152, section: 'gross', align: 'right', kind: 'amount', accent: 'gross', value: (r) => r.grossPay },
     ]
 
     const deductions: LongColumn[] = [
       ...deductionHeads.map<LongColumn>((head) => ({
         key: `deduction:${head}`,
         label: head,
-        width: 116,
+        width: 136,
         section: 'deduction',
         align: 'right',
         kind: 'amount',
         value: (row) => row.deductionByHead[head] ?? 0,
       })),
       /* Stored on the salary rather than as pay components — see the note above. */
-      { key: 'pf', label: 'PF', width: 104, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeePf },
-      { key: 'esic', label: 'ESIC', width: 104, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeEsic },
-      { key: 'pt', label: 'PT', width: 96, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeePt },
-      { key: 'lwf', label: 'LWF', width: 96, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeLwf },
-      { key: 'tds', label: 'TDS', width: 104, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeTds },
+      { key: 'pf', label: 'PF', width: 124, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeePf },
+      { key: 'esic', label: 'ESIC', width: 124, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeEsic },
+      { key: 'pt', label: 'PT', width: 118, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeePt },
+      { key: 'lwf', label: 'LWF', width: 118, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeLwf },
+      { key: 'tds', label: 'TDS', width: 124, section: 'deduction', align: 'right', kind: 'amount', value: (r) => r.employeeTds },
       {
         key: 'deductionTotal',
         label: 'Total',
-        width: 124,
+        width: 144,
         section: 'deduction',
         align: 'right',
         kind: 'amount',
@@ -156,11 +173,37 @@ export function SalaryViewLongGrid({
     ]
 
     const net: LongColumn[] = [
-      { key: 'net', label: 'Net Pay', width: 132, section: 'net', align: 'right', kind: 'amount', accent: 'net', value: (r) => r.netPay },
+      { key: 'net', label: 'Net Pay', width: 152, section: 'net', align: 'right', kind: 'amount', accent: 'net', value: (r) => r.netPay },
     ]
 
-    return [...attendance, ...allowances, ...overtime, ...gross, ...deductions, ...net]
-  }, [allowanceHeads, deductionHeads, hasOvertime])
+    /*
+     * The bill, in the order it is built — cost, the agency's charge on it, GST
+     * on both, and the total. Shown only where the month was priced by the
+     * server engine, which is the only thing that derives them: a month saved
+     * through the salary register stores the lines that screen computed and
+     * leaves all four null, and four columns of dashes across a matrix this wide
+     * cost more than they say. `null` reads as 0 in the sum for the same reason
+     * — a row that derived nothing contributes nothing to the page's bill.
+     */
+    const bill: LongColumn[] = hasBill
+      ? [
+          { key: 'statutoryCost', label: 'Statutory Cost', width: 132, section: 'bill', align: 'right', kind: 'amount', value: (r) => r.totalStatutoryCost ?? 0 },
+          { key: 'agencyCharge', label: 'Agency Charge', width: 132, section: 'bill', align: 'right', kind: 'amount', value: (r) => r.agencyChargeAmount ?? 0 },
+          { key: 'gstAmount', label: 'GST', width: 124, section: 'bill', align: 'right', kind: 'amount', value: (r) => r.gstAmount ?? 0 },
+          { key: 'totalBill', label: 'Total Bill', width: 140, section: 'bill', align: 'right', kind: 'amount', accent: 'gross', value: (r) => r.totalInvoiceAmount ?? 0 },
+        ]
+      : []
+
+    return [
+      ...attendance,
+      ...allowances,
+      ...overtime,
+      ...gross,
+      ...deductions,
+      ...net,
+      ...bill,
+    ]
+  }, [allowanceHeads, deductionHeads, hasOvertime, hasBill])
 
   /**
    * The header's first row: one cell per section. Sections without a heading —
@@ -320,6 +363,7 @@ const GROUP_LABEL: Partial<Record<Section, string>> = {
   allowance: 'Allowances',
   deduction: 'Deductions',
   overtime: 'Overtime',
+  bill: 'Agency Liability & Bill',
 }
 
 /**
@@ -370,5 +414,5 @@ const ACCENT: Record<string, string> = {
 
 /** One figure — money with its symbol, a day count as a plain number. */
 function Cell({ kind, value }: { kind: 'amount' | 'count'; value: number }): ReactNode {
-  return kind === 'amount' ? formatAmount(value) : formatDecimal(value)
+  return kind === 'amount' ? formatMoney(value) : formatDecimal(value)
 }

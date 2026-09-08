@@ -1,5 +1,21 @@
 import { z } from 'zod'
-import { AMOUNT_RE, DIGITS_RE, recordNameField } from '@/lib/validation'
+import { AMOUNT_RE, DIGITS_RE, RATE_RE, recordNameField } from '@/lib/validation'
+import {
+  AMOUNT_MODES,
+  CALCULATION_BASES,
+  TDS_CALCULATION_BASES,
+  PAYOUT_FREQUENCIES,
+  PAYROLL_CALCULATIONS,
+  needsStartMonth,
+  supportsAccrual,
+  toStartMonthNumber,
+} from './lib/component-schedule'
+import type {
+  AmountMode,
+  PayoutFrequency,
+  TdsCalculationBase,
+} from './lib/component-schedule'
+import type { AllowanceValueType } from './types'
 
 /** Every optional dropdown / free-text field on the designation form. */
 const text = z.string().trim()
@@ -23,6 +39,12 @@ const optionalPercent = z
     'Enter a percentage between 0 and 100',
   )
 
+/**
+ * The four units a head's figure can be entered in. `Per Day` and `Days` are the
+ * new pair and they price differently — see `AllowanceValueType`.
+ */
+const AMOUNT_TYPES = ['Percentage', 'Fixed', 'Per Day', 'Days'] as const
+
 /** What a value read as a percentage is told when it runs over the cap. */
 export const PERCENT_CAP_MESSAGE = 'A percentage cannot exceed 100'
 
@@ -37,16 +59,88 @@ export const PERCENT_CAP_MESSAGE = 'A percentage cannot exceed 100'
  * left to the field's own rule rather than answered twice.
  */
 function capPercentAmount(
-  row: { valueType: 'Percentage' | 'Fixed'; amount: string },
+  row: { valueType: AllowanceValueType; amount: string },
   ctx: z.RefinementCtx,
   /* Which field the complaint lands on — the head rows call it as a refinement
      of their own object, where it's `amount`; the PF share names itself. */
   path = 'amount',
 ) {
   const amount = row.amount.trim()
+  /* The cap is the PERCENTAGE's alone. A `Per Day` rate and a `Days` count are
+     rupees and days, unbounded above — 146.8846 a day is an ordinary minimum
+     wage, and capping it at 100 would refuse a legitimate figure. */
   if (row.valueType !== 'Percentage') return
-  if (amount === '' || !AMOUNT_RE.test(amount) || Number(amount) <= 100) return
+  if (amount === '' || !RATE_RE.test(amount) || Number(amount) <= 100) return
   ctx.addIssue({ code: 'custom', path: [path], message: PERCENT_CAP_MESSAGE })
+}
+
+/**
+ * The payout schedule every head carries, as the form holds it. One block,
+ * spread into all three head-row schemas — the designation form's, and the wage
+ * grid's two — because the API takes the same five fields from every screen.
+ *
+ * `startMonth` is a string like every other picker value; `''` is "not anchored",
+ * which is the *only* legal state on a monthly head. `calculationBase` rides on
+ * both sides because both sides share one row shape, exactly as the act chips do
+ * — it's the mapper that drops it from an allowance, where the API refuses it.
+ *
+ * See `lib/component-schedule.ts` for the enums and the coupling rules; they're
+ * enforced by the API, so a violation is a 400 rather than a cosmetic slip.
+ */
+const scheduleFields = {
+  payoutFrequency: z.enum(PAYOUT_FREQUENCIES),
+  startMonth: z.string().trim(),
+  amountMode: z.enum(AMOUNT_MODES),
+  payrollCalculation: z.enum(PAYROLL_CALCULATIONS),
+  calculationBase: z.enum(CALCULATION_BASES),
+}
+
+/** What a head with a non-monthly payout and no anchor is told. */
+export const START_MONTH_REQUIRED_MESSAGE = 'Pick the month the payout cycle starts on'
+
+/**
+ * The schedule's own cross-field rules, raised against the control that caused
+ * them. The API refuses each of these with a 400, so they are caught here rather
+ * than after the round-trip:
+ *
+ * - a non-monthly payout **must** carry a start month,
+ * - a monthly payout must **not**, and can only be `PER_PAYOUT`.
+ *
+ * The second pair can't normally happen — the popover repairs the schedule
+ * whenever the frequency changes — but a row read back from a save written
+ * before the coupling existed can hold it, and it must not be sent on.
+ */
+function checkSchedule(
+  row: {
+    payoutFrequency: PayoutFrequency
+    startMonth: string
+    amountMode: AmountMode
+  },
+  ctx: z.RefinementCtx,
+) {
+  const anchor = toStartMonthNumber(row.startMonth)
+
+  if (needsStartMonth(row.payoutFrequency) && anchor === null) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['startMonth'],
+      message: START_MONTH_REQUIRED_MESSAGE,
+    })
+  }
+  if (!needsStartMonth(row.payoutFrequency) && anchor !== null) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['startMonth'],
+      message: 'A monthly payout has no start month',
+    })
+  }
+  if (!supportsAccrual(row.payoutFrequency) && row.amountMode === 'ACCRUED') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['amountMode'],
+      message: 'A monthly payout is always Per Payout',
+    })
+  }
 }
 
 /**
@@ -62,13 +156,19 @@ function capPercentAmount(
 const componentRowSchema = z
   .object({
     componentId: z.string().trim(),
-    valueType: z.enum(['Percentage', 'Fixed']),
-    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    valueType: z.enum(AMOUNT_TYPES),
+    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
     pfApplicable: z.boolean(),
     esicApplicable: z.boolean(),
     ptApplicable: z.boolean(),
+    ...scheduleFields,
   })
-  .superRefine(capPercentAmount)
+  .superRefine((row, ctx) => {
+    capPercentAmount(row, ctx)
+    /* A head with no value doesn't apply at all, so its schedule is never sent
+       and never has to be complete. */
+    if (row.amount.trim() !== '') checkSchedule(row, ctx)
+  })
 
 /**
  * Create/edit form for a designation master record. Covers the whole screen:
@@ -115,6 +215,8 @@ export const designationSchema = z
      */
     tdsActApplicable: z.boolean(),
     tdsPercentage: optionalPercent,
+    /** What the rate is charged on. Blank deducts nothing — see the wage row. */
+    tdsCalculationBase: z.enum(['', ...TDS_CALCULATION_BASES]),
 
     // Labour welfare fund act
     lwfActApplicable: z.boolean(),
@@ -165,22 +267,30 @@ export type DesignationBasicInfoValues = z.infer<typeof designationBasicInfoSche
 const wageAllowanceRowSchema = z
   .object({
     componentId: z.number(),
-    valueType: z.enum(['Percentage', 'Fixed']),
-    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    valueType: z.enum(AMOUNT_TYPES),
+    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
     pfApplicable: z.boolean(),
     esicApplicable: z.boolean(),
     ptApplicable: z.boolean(),
+    ...scheduleFields,
   })
-  .superRefine(capPercentAmount)
+  .superRefine((row, ctx) => {
+    capPercentAmount(row, ctx)
+    if (row.amount.trim() !== '') checkSchedule(row, ctx)
+  })
 
 /** One deduction head as valued in a draft wage structure row. */
 const wageDeductionRowSchema = z
   .object({
     componentId: z.number(),
-    valueType: z.enum(['Percentage', 'Fixed']),
-    amount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    valueType: z.enum(AMOUNT_TYPES),
+    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
+    ...scheduleFields,
   })
-  .superRefine(capPercentAmount)
+  .superRefine((row, ctx) => {
+    capPercentAmount(row, ctx)
+    if (row.amount.trim() !== '') checkSchedule(row, ctx)
+  })
 
 /**
  * Every field a wage structure row carries, before the cross-field rule below.
@@ -203,6 +313,17 @@ export const wageStructureRowBaseSchema = z.object({
    */
   wageStructureId: z.number().optional(),
   effectiveFrom: z.string().trim().min(1, 'Pick an effective month'),
+
+  /**
+   * Whether the row's head list is its **own**, or inherited.
+   *
+   * Only meaningful on an EMPLOYEE's wage, where the head list is an override:
+   * off, the save sends `salary_components: []` and payroll falls back to the
+   * designation's catalog; on, the row's own cells are what prices the person.
+   * A designation's row IS the catalog, so it is always `true` there and no
+   * column is rendered for it.
+   */
+  ownHeads: z.boolean(),
 
   workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
   weeklyOff: text,
@@ -236,9 +357,15 @@ export const wageStructureRowBaseSchema = z.object({
   ptActType: z.enum(['', 'As Per Act', 'Manual']),
   ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
 
-  /* No slab behind it — TDS carries the row's own rate, so one cell, no type. */
+  /*
+   * No slab behind it — TDS carries the row's own rate, and the amount that rate
+   * is charged on. The base is what makes the rate mean anything: a contractor's
+   * 2% under section 194C is 2% of the TOTAL BILL, not of any wage figure, so a
+   * percentage alone cannot say what it applies to. Blank deducts nothing.
+   */
   tdsActApplicable: z.boolean(),
   tdsPercentage: optionalPercent,
+  tdsCalculationBase: z.enum(['', ...TDS_CALCULATION_BASES]),
 
   lwfActApplicable: z.boolean(),
   lwfActType: z.enum(['', 'As Per Act', 'Manual']),
@@ -313,7 +440,11 @@ export type WageStructureRow = WageStructureFormValues['rows'][number]
  * `component_type` echoes it back on a read, and the request never says which.
  */
 export const salaryComponentResponseSchema = z.object({
-  id: z.number(),
+  /**
+   * The configured row's own id. Wrapped on by the DESIGNATION reads only — an
+   * employee's own heads carry no row id — so it's optional rather than required.
+   */
+  id: z.number().optional(),
   pay_component_id: z.number(),
   component_type: z.string().nullable(),
   sort_order: z.number(),
@@ -322,7 +453,23 @@ export const salaryComponentResponseSchema = z.object({
   pf_applicable: z.boolean().nullable(),
   esic_applicable: z.boolean().nullable(),
   pt_applicable: z.boolean().nullable(),
+
+  /*
+   * The payout schedule. Documented as always present on a read, but parsed as
+   * nullish so a response taken from an endpoint that hasn't caught up — or a
+   * head saved through a path that records no schedule — still parses. Every
+   * absent value reads back as the pre-schedule behaviour, which is exactly what
+   * the migration's own defaults are.
+   */
+  payout_frequency: z.string().nullish(),
+  start_month: z.number().nullish(),
+  amount_mode: z.string().nullish(),
+  payroll_calculation: z.string().nullish(),
+  /** `null` on an allowance, and on a deduction with no base recorded. */
+  calculation_base: z.string().nullish(),
 })
+
+export type SalaryComponentResponse = z.infer<typeof salaryComponentResponseSchema>
 
 /**
  * One version of a designation's wage structure. The same object comes back
@@ -372,6 +519,12 @@ export const wageStructureResponseSchema = z.object({
    * API carried it simply has no key here rather than a `null`.
    */
   tds_percentage: z.number().nullable().optional(),
+  /**
+   * Which amount the TDS rate is charged on — one of five bases, never
+   * `NET_PAY`. `null` (or absent, on a read taken before the column existed) is
+   * the default and deducts nothing at all.
+   */
+  tds_calculation_base: z.string().nullable().optional(),
 
   /** Absent on the version nested in the designation detail. */
   salary_components: z.array(salaryComponentResponseSchema).optional(),
@@ -426,11 +579,32 @@ export const wageStructuresResponseSchema = z.object({
 /** One head as a request body carries it — `amount` is optional. */
 export interface SalaryComponentPayload {
   pay_component_id: number
-  amount_type?: 'Percentage' | 'Fixed'
+  amount_type?: 'Percentage' | 'Fixed' | 'Per Day' | 'Days'
   amount?: number
   pf_applicable?: boolean
   esic_applicable?: boolean
   pt_applicable?: boolean
+
+  /*
+   * The payout schedule. `start_month` must be OMITTED on a monthly payout and
+   * PRESENT on every other frequency — the API refuses either mistake with a 400
+   * — so it is optional here rather than nullable, and the mapper decides.
+   */
+  payout_frequency?: 'MONTHLY' | 'BI_MONTHLY' | 'QUARTERLY' | 'HALF_YEARLY' | 'ANNUAL'
+  start_month?: number
+  amount_mode?: 'PER_PAYOUT' | 'ACCRUED'
+  payroll_calculation?: 'INCLUDE' | 'EXCLUDE'
+  /**
+   * DEDUCTION rows only — sending one on an allowance is a 400. Which side a row
+   * is on never travels; it comes from the head's own `type` in the catalog.
+   */
+  calculation_base?:
+    | 'BASIC_EARNED_FOR_PRESENT_DAYS'
+    | 'BASIC_PAY'
+    | 'GROSS_PAY'
+    | 'NET_PAY'
+    | 'TOTAL_STATUTORY_COST'
+    | 'TOTAL_INVOICE_AMOUNT'
 }
 
 /**
@@ -475,6 +649,13 @@ export interface WageStructurePayload {
    */
   is_tds_act_applicable?: boolean
   tds_percentage?: number | null
+  /**
+   * The amount the TDS rate is charged on. Nullable and optional: `null` is the
+   * default and deducts nothing, which is the behaviour every structure had
+   * before TDS computed at all. `NET_PAY` is refused with a 400 — it already has
+   * TDS out of it, so it would be an input to itself.
+   */
+  tds_calculation_base?: TdsCalculationBase | null
 
   is_lwf_act_applicable?: boolean
   lwf_act_type?: 'AUTO' | 'FIXED' | null

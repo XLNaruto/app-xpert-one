@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { usePagination } from '@/hooks/use-pagination'
 import { useMediaResolver } from '@/hooks/use-media-url'
-import { formatAmount } from '@/lib/currency'
+import { formatMoney } from '@/lib/currency'
 import { cn, formatDate } from '@/lib/utils'
 import { usePaymentBatch } from '../api/use-payment-history'
 import { BATCH_EMPLOYEE_PAGE_SIZE } from '../constants'
@@ -91,7 +91,7 @@ export function PaymentBatchCard({ card, open, onToggle }: PaymentBatchCardProps
               Total Paid
             </span>
             <span className="block font-heading text-lg font-semibold leading-tight tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatAmount(card.totalAmount)}
+              {formatMoney(card.totalAmount)}
             </span>
           </span>
           <span
@@ -246,10 +246,10 @@ function BatchBody({ id }: { id: number }) {
               </span>
             </span>
             <span className="w-28 shrink-0 text-right text-sm tabular-nums text-foreground">
-              {formatAmount(employee.grossPay)}
+              {formatMoney(employee.grossPay)}
             </span>
             <span className="w-28 shrink-0 text-right text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
-              {formatAmount(employee.netPay)}
+              {formatMoney(employee.netPay)}
             </span>
           </li>
         ))}

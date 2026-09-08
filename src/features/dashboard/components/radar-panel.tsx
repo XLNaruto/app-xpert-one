@@ -2,6 +2,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { RadarWebChart, type RadarSeries } from '@/components/charts'
 import { chartColor } from '@/components/charts/tokens'
 import { cn } from '@/lib/utils'
+import { Hint } from '@/components/common/hint'
 import {
   RADAR_AXIS_LABELS,
   RADAR_GROUP_BY_LABELS,
@@ -97,32 +98,35 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
           {allGroups.map((group) => {
             const isHidden = hidden.has(group.key)
             return (
-              <button
+              <Hint
                 key={group.key}
-                type="button"
-                onClick={() => panel.toggleGroup(group.key)}
-                aria-pressed={!isHidden}
-                className={cn(
-                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
-                  isHidden
-                    ? 'border-border text-muted-foreground'
-                    : 'border-border/60 bg-muted/50 text-foreground',
-                )}
-                title={`${group.label} · ${formatCount(group.headcount)} people`}
+                text={`${group.label} · ${formatCount(group.headcount)} people`}
               >
-                <span
-                  style={{
-                    background: isHidden
-                      ? 'var(--color-muted-foreground)'
-                      : chartColor(colorIndexOf(group.key)),
-                  }}
-                  className="size-2 shrink-0 rounded-sm"
-                />
-                <span className="max-w-32 truncate">{group.label}</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {formatCount(group.headcount)}
-                </span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => panel.toggleGroup(group.key)}
+                  aria-pressed={!isHidden}
+                  className={cn(
+                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors',
+                    isHidden
+                      ? 'border-border text-muted-foreground'
+                      : 'border-border/60 bg-muted/50 text-foreground',
+                  )}
+                >
+                  <span
+                    style={{
+                      background: isHidden
+                        ? 'var(--color-muted-foreground)'
+                        : chartColor(colorIndexOf(group.key)),
+                    }}
+                    className="size-2 shrink-0 rounded-sm"
+                  />
+                  <span className="max-w-32 truncate">{group.label}</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {formatCount(group.headcount)}
+                  </span>
+                </button>
+              </Hint>
             )
           })}
         </div>
@@ -133,12 +137,17 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="py-1.5 pr-2 font-medium">
+                <th className="whitespace-nowrap py-1.5 pr-2 font-medium">
                   {RADAR_GROUP_BY_LABELS[groupBy]}
                 </th>
-                <th className="py-1.5 pr-2 text-right font-medium">People</th>
+                <th className="whitespace-nowrap py-1.5 pr-2 text-right font-medium">
+                  People
+                </th>
                 {axes.map((axis) => (
-                  <th key={axis} className="py-1.5 pr-2 text-right font-medium">
+                  <th
+                    key={axis}
+                    className="whitespace-nowrap py-1.5 pr-4 text-right font-medium"
+                  >
                     {RADAR_AXIS_LABELS[axis]}
                   </th>
                 ))}
@@ -157,12 +166,13 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
                       <td
                         key={axis}
                         className={cn(
-                          'py-1.5 pr-2 text-right tabular-nums',
+                          'whitespace-nowrap py-1.5 pr-4 text-right tabular-nums',
                           score == null && 'text-muted-foreground',
                         )}
-                        title={score == null ? 'No data — not measured' : undefined}
                       >
-                        {score == null ? EM_DASH : formatRatio(score)}
+                        <Hint text={score == null ? 'No data — not measured' : undefined}>
+                          <span>{score == null ? EM_DASH : formatRatio(score)}</span>
+                        </Hint>
                       </td>
                     )
                   })}

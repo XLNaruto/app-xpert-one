@@ -307,7 +307,7 @@ export function PostingSection({
               label="Renewal Date"
               required
               error={errors.renewalDate?.message}
-              hint="Filled in from the joining date and the contract period — override it if the contract says otherwise."
+              hint="The day this contract comes up for review — a month before the term ends (30 days for a contract measured in days), filled in from the joining date and the period. It is what puts the employee on the Contract Expiry worklist, so override it only if the contract says the review happens on some other day."
               minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
             />
           )}
