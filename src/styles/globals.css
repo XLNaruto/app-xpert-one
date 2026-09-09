@@ -1495,11 +1495,18 @@ input[type='number'] {
   box-shadow: inset 0 0 0 2px var(--primary);
 }
 
-/* Recharts' accessibility layer makes the chart wrapper focusable, and the UA
-   then paints a hard box around the whole plot on click. Keep the tab stop
-   (keyboard users still get the crosshair) but drop the outline. */
+/* Recharts' accessibility layer makes the chart wrapper — and, on click, the
+   focused bar/series group inside it — focusable, and the UA then paints a hard
+   black box around the plot or around the active bars. Keep the tab stop
+   (keyboard users still get the crosshair) but drop the outline everywhere
+   inside a chart. */
+.recharts-wrapper,
 .recharts-wrapper:focus,
 .recharts-wrapper:focus-visible,
+.recharts-wrapper *,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-surface,
 .recharts-surface:focus,
 .recharts-surface:focus-visible {
   outline: none;
