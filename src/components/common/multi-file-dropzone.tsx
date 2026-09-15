@@ -70,8 +70,11 @@ export function MultiFileDropzone({
   // in one carousel — rather than throwing the file at a new tab.
   const preview = useFilePreview(value)
 
-  const take = async (fileList: File[]) => {
-    const incoming = fileList
+  const take = async (picked: FileList | File[] | File) => {
+    // The library hands a `multiple` pick straight through as the input's
+    // FileList — array-like, but NOT an Array — so it has to be spread rather
+    // than `Array.isArray`-tested, or the whole list ends up treated as one file.
+    const incoming = picked instanceof File ? [picked] : Array.from(picked)
     if (!incoming.length) return
     const room = maxFiles ? maxFiles - value.length : Infinity
     if (room <= 0) {
@@ -113,8 +116,11 @@ export function MultiFileDropzone({
   const onlyDocs = value.length > 0 && value.every((f) => !isImageFile(f))
 
   const uploaderProps = {
-    handleChange: (files: File | File[]) =>
-      void take(Array.isArray(files) ? files : [files]),
+    handleChange: (files: File | File[] | FileList) => {
+      // Reading the files is async; without this a failure would be an unhandled
+      // rejection and the picked file would just never appear.
+      take(files).catch(() => toasterrormsg("Couldn't read that file. Try again."))
+    },
     name: 'file',
     types,
     multiple: true,
