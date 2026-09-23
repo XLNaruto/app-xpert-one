@@ -35,7 +35,7 @@ export function DepartmentShiftTab({
   const {
     shiftId,
     setShiftId,
-    options,
+    shiftSelect,
     isLoadingShifts,
     hasNoShifts,
     save,
@@ -69,7 +69,7 @@ export function DepartmentShiftTab({
           className="w-full"
           value={shiftId}
           onChange={setShiftId}
-          options={options}
+          {...shiftSelect}
           clearable
           panelMinWidth={320}
           placeholder={

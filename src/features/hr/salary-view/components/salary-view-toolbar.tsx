@@ -1,6 +1,7 @@
 import { Building2, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -13,8 +14,8 @@ interface SalaryViewToolbarProps {
   monthBounds: { minDate: Date; maxDate: Date }
   onMonthChange: (value: string) => void
   departmentId: number | null
-  departmentOptions: ComboboxOption[]
-  departmentsLoading: boolean
+  /** The lazy department dropdown — `useDepartmentSelect`, spread onto the field. */
+  departments: PagedSelect
   onDepartmentChange: (value: number | null) => void
   /** How many rows the discard would send — hidden when nothing is selected. */
   selectedCount: number
@@ -45,8 +46,7 @@ export function SalaryViewToolbar({
   monthBounds,
   onMonthChange,
   departmentId,
-  departmentOptions,
-  departmentsLoading,
+  departments,
   onDepartmentChange,
   selectedCount,
   onDiscard,
@@ -81,9 +81,9 @@ export function SalaryViewToolbar({
         <Combobox
           value={departmentId === null ? '' : String(departmentId)}
           onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
-          options={departmentOptions}
+          {...departments}
           icon={Building2}
-          placeholder={departmentsLoading ? 'Loading…' : 'All departments'}
+          placeholder="All departments"
           searchPlaceholder="Search departments…"
           clearable
         />

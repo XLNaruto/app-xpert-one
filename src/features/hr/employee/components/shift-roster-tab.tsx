@@ -530,8 +530,8 @@ export function ShiftRosterTab({
                   panelMinWidth={320}
                   value={field.value}
                   onChange={field.onChange}
-                  options={tab.shiftSelectOptions}
-                  placeholder={tab.isShiftsLoading ? 'Loading…' : 'Select shift'}
+                  {...tab.assignShiftSelect}
+                  placeholder="Select shift"
                   searchPlaceholder="Search shift"
                 />
               )}
@@ -583,8 +583,8 @@ export function ShiftRosterTab({
                 panelMinWidth={320}
                 value={field.value}
                 onChange={field.onChange}
-                options={tab.shiftSelectOptions}
-                placeholder={tab.isShiftsLoading ? 'Loading…' : 'Select shift'}
+                {...tab.rosterShiftSelect}
+                placeholder="Select shift"
                 searchPlaceholder="Search shift"
               />
             )}

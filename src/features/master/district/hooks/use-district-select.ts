@@ -29,7 +29,7 @@ interface UseDistrictSelectOptions {
 }
 
 /** Reads the one district behind a selection the loaded pages don't cover. */
-const DISTRICT_SOURCE: LazyOptionSource = {
+export const DISTRICT_SOURCE: LazyOptionSource = {
   key: (value) => queryKeys.district.detail(Number(value)),
   fetch: async (value) => {
     const district = await fetchDistrict(Number(value))

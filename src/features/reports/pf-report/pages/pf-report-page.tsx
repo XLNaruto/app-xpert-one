@@ -78,12 +78,10 @@ export function PfReportPage() {
         isRangeInvalid={view.isRangeInvalid}
         departmentId={view.departmentId}
         onDepartmentChange={view.setDepartmentId}
-        departmentOptions={view.departmentChoices}
-        departmentsLoading={view.departmentsLoading}
+        departments={view.departments}
         employeeIds={view.employeeIds}
         onEmployeesChange={view.setEmployeeIds}
-        employeeOptions={view.employeeChoices}
-        employeesLoading={view.employeesLoading}
+        employees={view.employees}
         onApply={view.apply}
         canApply={view.canApply}
         isFetching={view.isFetching}

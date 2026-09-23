@@ -7,8 +7,7 @@ import { useBanks } from "@/features/master/bank";
 import { useStates } from "@/features/master/state";
 import { useDistricts } from "@/features/master/district";
 import { groupLeaves, useLeaveBalance, useLeaves } from "@/features/hr/leave";
-import { EMPLOYEE_SORT } from "../constants";
-import { useEmployee, useEmployees } from "../api/use-employees";
+import { useEmployee, useEmployeesInfinite } from "../api/use-employees";
 import {
   useEmployeeAssets,
   useEmployeeDocuments,
@@ -23,9 +22,6 @@ import {
 /** How many leave rows the detail screen previews — the register holds the rest. */
 const LEAVE_PREVIEW_LIMIT = 5;
 
-/** How many names the header's employee picker holds at a time — the rest are
-    reached by typing, since the search is the endpoint's own. */
-const SWITCHER_LIMIT = 25;
 
 /**
  * Everything the read-only employee screen reads and derives.
@@ -128,13 +124,13 @@ export function useEmployeeDetail(data?: string) {
    */
   const [employeeSearch, setEmployeeSearch] = useState("");
   const debouncedSearch = useDebouncedValue(employeeSearch, 300);
-  const employeeOptions = useEmployees({
-    limit: SWITCHER_LIMIT,
-    offset: 0,
-    sort: EMPLOYEE_SORT.name,
-    sortBy: "asc",
-    ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-  });
+  const employeeOptions = useEmployeesInfinite(
+    debouncedSearch.trim() || undefined,
+  );
+  const employeeRoster = useMemo(
+    () => (employeeOptions.data?.pages ?? []).flatMap((page) => page.items),
+    [employeeOptions.data],
+  );
 
   const banks = useBanks();
   const states = useStates({ enabled: employee !== undefined });
@@ -208,8 +204,13 @@ export function useEmployeeDetail(data?: string) {
     districtName,
 
     /** The header's employee switcher: who is on show, and the roster behind it. */
-    employeeOptions: employeeOptions.data?.items ?? [],
+    employeeOptions: employeeRoster,
     employeesLoading: employeeOptions.isFetching,
+    /** Load the next page of names once the switcher is scrolled to its end. */
+    loadMoreEmployees: () => {
+      if (employeeOptions.hasNextPage && !employeeOptions.isFetchingNextPage)
+        void employeeOptions.fetchNextPage();
+    },
     employeeSearch,
     setEmployeeSearch,
     /**

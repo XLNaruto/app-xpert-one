@@ -52,13 +52,12 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
     district,
     hasState,
     changeState,
-    actStateOptions,
     pt,
-    pfOfficeOptions,
-    esicOfficeOptions,
-    factoryOfficeOptions,
-    lwfOfficeOptions,
-    exOfficeOptions,
+    pfOffice,
+    esicOffice,
+    factoryOffice,
+    lwfOffice,
+    exOffice,
     onSubmit,
     isEdit,
     isPending,
@@ -150,13 +149,12 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
                     register={register}
                     control={control}
                     errors={errors}
-                    stateOptions={actStateOptions}
                     pt={pt}
-                    pfOfficeOptions={pfOfficeOptions}
-                    esicOfficeOptions={esicOfficeOptions}
-                    factoryOfficeOptions={factoryOfficeOptions}
-                    lwfOfficeOptions={lwfOfficeOptions}
-                    exOfficeOptions={exOfficeOptions}
+                    pfOffice={pfOffice}
+                    esicOffice={esicOffice}
+                    factoryOffice={factoryOffice}
+                    lwfOffice={lwfOffice}
+                    exOffice={exOffice}
                   />
                 </TabsContent>
               </Tabs>

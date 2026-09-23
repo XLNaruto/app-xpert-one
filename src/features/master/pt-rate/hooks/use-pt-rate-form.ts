@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { useStates } from '@/features/master/state'
+import { useStateSelect } from '@/features/master/state'
 import { ptRateSchema, type PtRateFormValues } from '../schemas'
 import { EMPTY_PT_RATE_FORM, EMPTY_PT_SLAB } from '../constants'
 import { usePtRate } from '../api/use-pt-rate'
@@ -21,7 +21,6 @@ export function usePtRateForm(id?: number) {
   const navigate = useNavigate()
 
   const detail = usePtRate(id ?? Number.NaN)
-  const { data: states, isLoading: isStatesLoading } = useStates()
   const createPtRate = useCreatePtRate()
   const updatePtRate = useUpdatePtRate(id ?? Number.NaN)
 
@@ -43,11 +42,22 @@ export function usePtRateForm(id?: number) {
     if (detail.data) reset(ptRateToFormValues(detail.data))
   }, [detail.data, reset])
 
-  // The State dropdown is fed by the state master, not a hard-coded list.
-  const stateOptions = useMemo(
-    () => (states ?? []).map((s) => ({ label: s.stateName, value: String(s.id) })),
-    [states],
-  )
+  // The State dropdown pages through the state master as it's scrolled. The
+  // saved rate already names its state, so that label is used while the field
+  // still holds it — no by-id read.
+  const stateId = useWatch({ control, name: 'stateId' })
+  const saved = detail.data
+  const stateSelect = useStateSelect({
+    selected: stateId
+      ? {
+          value: stateId,
+          label:
+            saved && stateId === String(saved.stateId)
+              ? saved.stateName || undefined
+              : undefined,
+        }
+      : undefined,
+  })
 
   const goToList = () => navigate({ to: '/master/pt-rate' })
 
@@ -78,8 +88,7 @@ export function usePtRateForm(id?: number) {
     isError: isEdit && (detail.isError || (!detail.isLoading && !detail.data)),
     loadError: detail.error,
     goToList,
-    stateOptions,
-    isStatesLoading,
+    stateSelect,
     /** Repeatable slab rows — at least one always stays on the form. */
     slabFields: slabs.fields,
     addSlab: () => slabs.append(EMPTY_PT_SLAB),

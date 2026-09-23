@@ -20,3 +20,4 @@ export { ADMIN_USER_SORT, ADMIN_USER_DEFAULT_SORT } from './constants'
 
 export type { AdminUser, AssignableRole } from './types'
 export type { AdminUserStatus } from './schemas'
+export { useAdminUserSelect } from './hooks/use-admin-user-select'

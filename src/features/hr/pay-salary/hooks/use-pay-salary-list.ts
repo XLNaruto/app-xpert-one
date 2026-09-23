@@ -5,8 +5,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { ALL_ROWS } from '@/lib/pagination'
-import { departmentOptions, useDepartments } from '@/features/master/department'
+import { useDepartmentSelect } from '@/features/master/department'
 import {
   fromIsoMonth,
   PAY_SALARY_MAX_LIMIT,
@@ -98,11 +97,14 @@ export function usePaySalaryList() {
 
   const list = useSalaryPayments(filters, params, { enabled: companyId !== null })
 
-  const departments = useDepartments(ALL_ROWS)
-  const departmentChoices = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
+  /* Both the draft AND the applied department are kept among the options, so the
+     heading and the transfer dialog can still name what was loaded after the
+     picker has moved on. */
+  const departments = useDepartmentSelect({
+    selected: [draft.departmentId, scope.departmentId]
+      .filter((id): id is number => id !== null)
+      .map(String),
+  })
   const monthBounds = useMemo(() => paySalaryMonthBounds(today), [today])
 
   /* Memoised on the query's own array so the page's columns don't re-derive on
@@ -284,11 +286,13 @@ export function usePaySalaryList() {
     changePeriod,
     changeDepartment,
     monthBounds,
-    departmentChoices,
-    departmentsLoading: departments.isLoading,
+    /** The Department field — paged and server-searched, spread onto the toolbar. */
+    departments,
     departmentName:
-      departmentChoices.find((option) => option.value === String(scope.departmentId))
-        ?.label ?? null,
+      scope.departmentId === null
+        ? null
+        : (departments.options.find((option) => option.value === String(scope.departmentId))
+            ?.label ?? null),
     hasPendingScope,
     loadList,
 

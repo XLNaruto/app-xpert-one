@@ -10,6 +10,7 @@ import type {
   EmployeeServiceEditFormValues,
   EmployeeTransferFormValues,
 } from './schemas'
+import type { LetterLang } from './lib/appointment-letter-fields'
 
 /* ── The wizard ──────────────────────────────────────────────────────────── */
 
@@ -383,3 +384,37 @@ export const EMPTY_EMPLOYEE_SERVICE_EDIT_FORM: EmployeeServiceEditFormValues = {
   renewalDate: '',
 }
 
+
+/* ── Appointment letter ──────────────────────────────────────────────────── */
+
+/** The languages HR issues the letter in; `native` is what the toggle shows. */
+export const LETTER_LANGUAGES: { value: LetterLang; label: string; native: string }[] = [
+  { value: 'en', label: 'English', native: 'English' },
+  { value: 'hi', label: 'Hindi', native: 'हिंदी' },
+  { value: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
+]
+
+/**
+ * `appointment` is the order issued at joining, filled from the employee record.
+ * `renewal` re-issues the same clauses for a contract renewal: the heading and
+ * subject say re-appointment, and every date prints as a ruled blank so HR can
+ * write the new dates on the sheet by hand.
+ */
+export type AppointmentVariant = 'appointment' | 'renewal'
+
+export const APPOINTMENT_VARIANTS: {
+  value: AppointmentVariant
+  label: string
+  hint: string
+}[] = [
+  {
+    value: 'appointment',
+    label: 'Appointment',
+    hint: 'Standard appointment order with the dates from the employee record',
+  },
+  {
+    value: 'renewal',
+    label: 'Re-appointment',
+    hint: 'Renewal order with blank dates to be filled in by hand',
+  },
+]

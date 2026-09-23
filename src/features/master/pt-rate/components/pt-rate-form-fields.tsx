@@ -4,7 +4,8 @@ import { MapPin } from 'lucide-react'
 import { DateField } from '@/components/common/date-field'
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { StateSelect } from '@/features/master/state'
 import { Input } from '@/components/ui/input'
 import type { PtRateFormValues } from '../schemas'
 
@@ -12,8 +13,8 @@ interface PtRateFormFieldsProps {
   register: UseFormRegister<PtRateFormValues>
   control: Control<PtRateFormValues>
   errors: FieldErrors<PtRateFormValues>
-  stateOptions: ComboboxOption[]
-  isStatesLoading?: boolean
+  /** The State dropdown — scroll-lazy and searched server-side. */
+  stateSelect: StateSelect
 }
 
 /**
@@ -24,8 +25,7 @@ export function PtRateFormFields({
   register,
   control,
   errors,
-  stateOptions,
-  isStatesLoading,
+  stateSelect,
 }: PtRateFormFieldsProps) {
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
@@ -53,8 +53,7 @@ export function PtRateFormFields({
               className="w-full"
               value={field.value}
               onChange={field.onChange}
-              options={stateOptions}
-              loading={isStatesLoading}
+              {...stateSelect}
               placeholder="Select State"
               searchPlaceholder="Search state"
             />

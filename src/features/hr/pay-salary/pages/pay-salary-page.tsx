@@ -237,8 +237,7 @@ export function PaySalaryPage() {
         monthBounds={view.monthBounds}
         onMonthChange={view.changePeriod}
         departmentId={view.departmentId}
-        departmentOptions={view.departmentChoices}
-        departmentsLoading={view.departmentsLoading}
+        departments={view.departments}
         onDepartmentChange={view.changeDepartment}
         onLoad={view.loadList}
         hasPendingScope={view.hasPendingScope}

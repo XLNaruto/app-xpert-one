@@ -48,6 +48,7 @@ export function EmployeeListPage() {
     goToCreate,
     goToEdit,
     goToDetail,
+    goToAppointmentLetter,
     bankNames,
   } = useEmployeeList()
 
@@ -94,6 +95,10 @@ export function EmployeeListPage() {
             onViewFaces={canView ? () => openFaces(row.original) : undefined}
             // Clearing faces edits the employee record rather than removing it.
             onDeleteFaces={canUpdate ? () => askClearFaces(row.original) : undefined}
+            // Reads the record only, so viewing the employee is enough to issue it.
+            onAppointmentLetter={
+              canView ? () => goToAppointmentLetter(row.original.id) : undefined
+            }
           />
         ),
       },

@@ -89,6 +89,7 @@ export function useEmployeeBasicForm({
   const permanentStateId = useWatch({ control, name: 'permanentStateId' })
   const permanentDistrictId = useWatch({ control, name: 'permanentDistrictId' })
   const branchId = useWatch({ control, name: 'branchId' })
+  const designationId = useWatch({ control, name: 'designationId' })
 
   /**
    * Both geography dropdowns page in as they're scrolled and search server-side,
@@ -111,7 +112,9 @@ export function useEmployeeBasicForm({
     selected: permanentDistrictId ? { value: permanentDistrictId } : undefined,
   })
 
-  const postingOptions = usePostingOptions(branchId)
+  // The employee response carries only the posting's ids, so a saved branch or
+  // designation off the first page is labelled by a background read of that row.
+  const postingOptions = usePostingOptions({ branchId, designationId })
 
   /** Pick a state and clear its district — it won't exist under the new state. */
   const changeCurrentState = (value: string, onChange: (value: string) => void) => {

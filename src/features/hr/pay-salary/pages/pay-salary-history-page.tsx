@@ -74,9 +74,9 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
             <Combobox
               value={view.departmentId === null ? '' : String(view.departmentId)}
               onChange={(value) => view.changeDepartment(value ? Number(value) : null)}
-              options={view.departmentChoices}
+              {...view.departments}
               icon={Building2}
-              placeholder={view.departmentsLoading ? 'Loading…' : 'Every department'}
+              placeholder="Every department"
               searchPlaceholder="Search departments…"
               clearable
             />

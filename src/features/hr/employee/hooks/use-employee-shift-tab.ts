@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
-import { shiftOptions, useShifts } from '@/features/master/shift'
+import type { PageParams } from '@/lib/pagination'
+import { useShiftSelect, useShifts } from '@/features/master/shift'
 import {
   employeeRosterSchema,
   employeeShiftAssignmentSchema,
@@ -53,6 +54,9 @@ function shiftMonth(from: string, months: number): { from: string; to: string } 
   )
 }
 
+/** A one-row page — only its `total` is read, to tell whether any shift exists. */
+const SHIFT_PROBE: PageParams = { limit: 1, offset: 0 }
+
 /**
  * Step 9 — the employee's shift.
  *
@@ -86,8 +90,9 @@ export function useEmployeeShiftTab(employeeId: number) {
   const timeline = useEmployeeShiftAssignments(employeeId)
   const roster = useEmployeeRoster(employeeId, window.from, window.to)
 
-  // Whole masters, not pages — these are dropdowns.
-  const shifts = useShifts(undefined, companyId)
+  // One row is enough to know whether the company has any shifts at all — the
+  // dropdowns themselves page in lazily below.
+  const shiftProbe = useShifts(SHIFT_PROBE, companyId)
 
   const createAssignment = useCreateEmployeeShiftAssignment(employeeId)
   const deleteAssignment = useDeleteEmployeeShiftAssignment(employeeId)
@@ -114,10 +119,22 @@ export function useEmployeeShiftTab(employeeId: number) {
     defaultValues: { workDate: todayIso(), shiftId: '' },
   })
 
-  const shiftSelectOptions = useMemo(
-    () => shiftOptions(shifts.data?.items ?? []),
-    [shifts.data],
-  )
+  /*
+   * One scroll-lazy, server-searched dropdown per dialog, each fed the value its
+   * own form holds, and read only while that dialog is open.
+   */
+  const assignShiftId = useWatch({ control: assignForm.control, name: 'shiftId' })
+  const rosterShiftId = useWatch({ control: rosterForm.control, name: 'shiftId' })
+  const assignShiftSelect = useShiftSelect({
+    companyId,
+    selected: assignShiftId || undefined,
+    enabled: dialog === 'assign' && companyId !== undefined,
+  })
+  const rosterShiftSelect = useShiftSelect({
+    companyId,
+    selected: rosterShiftId || undefined,
+    enabled: dialog === 'roster' && companyId !== undefined,
+  })
 
   const openAssign = () => {
     assignForm.reset({
@@ -229,10 +246,10 @@ export function useEmployeeShiftTab(employeeId: number) {
     isRosterError: roster.isError && !isForbidden,
     rosterError: roster.error,
 
-    shiftSelectOptions,
-    isShiftsLoading: shifts.isLoading,
+    assignShiftSelect,
+    rosterShiftSelect,
     /** Nothing to assign yet — the company has no shifts. */
-    hasNoShifts: !shifts.isLoading && shiftSelectOptions.length === 0,
+    hasNoShifts: shiftProbe.data?.total === 0,
 
     dialog,
     openAssign,

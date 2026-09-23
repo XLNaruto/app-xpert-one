@@ -5,7 +5,7 @@ import { format, parse } from 'date-fns'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { usePagination } from '@/hooks/use-pagination'
-import { useDesignations, useWageHeads } from '@/features/master/designation'
+import { useDesignationSelect, useWageHeads } from '@/features/master/designation'
 import { useCompany } from '@/features/master/company'
 import { useSalaryRegister } from '../api/use-salary-register'
 import {
@@ -166,8 +166,10 @@ export function useSalaryForm() {
 
   const register = useSalaryRegister(filters, params, ready)
 
-  /** Designation titles for the toolbar — the whole master, it's a dropdown. */
-  const designations = useDesignations()
+  /** The toolbar's Designation field — paged and server-searched. */
+  const designations = useDesignationSelect({
+    selected: draftDesignationId === null ? undefined : String(draftDesignationId),
+  })
 
   /* ── How the designation's heads are configured ────────────────────────── */
 
@@ -741,15 +743,6 @@ export function useSalaryForm() {
 
   /* ── What the screen renders from ──────────────────────────────────────── */
 
-  const designationOptions = useMemo(
-    () =>
-      (designations.data?.items ?? []).map((designation) => ({
-        value: String(designation.id),
-        label: designation.designationName,
-      })),
-    [designations.data],
-  )
-
   const monthBounds = useMemo(() => salaryMonthBounds(), [])
 
   return {
@@ -771,8 +764,7 @@ export function useSalaryForm() {
     calculate,
     /** The pickers hold something the register on screen wasn't read for. */
     hasPendingFilters,
-    designationOptions,
-    designationsLoading: designations.isLoading,
+    designations,
     status,
     changeStatus,
     search: pagination.search,

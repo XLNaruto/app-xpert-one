@@ -19,3 +19,4 @@ export { shiftOptions, formatShiftWindow, formatTime, toShift } from './lib/shif
 export { shiftResponseSchema } from './schemas'
 export type { ShiftResponse } from './schemas'
 export type { Shift, ShiftVersion } from './types'
+export { useShiftSelect } from './hooks/use-shift-select'

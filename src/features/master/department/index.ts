@@ -9,3 +9,4 @@ export {
 } from './api/use-department-mutations'
 export { departmentOptions } from './lib/department-mappers'
 export type { Department } from './types'
+export { useDepartmentSelect } from './hooks/use-department-select'

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePagination } from '@/hooks/use-pagination'
 import { useAuthStore } from '@/stores/auth-store'
-import { ALL_ROWS } from '@/lib/pagination'
-import { departmentOptions, useDepartments } from '@/features/master/department'
-import { employeeOptions, useEmployees } from '@/features/hr/employee'
+import { useDepartmentSelect } from '@/features/master/department'
+import { useEmployeeSelect } from '@/features/hr/employee'
 import {
   REPORT_MAX_LIMIT,
   REPORT_PAGE_SIZE,
@@ -161,17 +160,11 @@ export function useReportScreen<TType extends string>(
 
   /* ── Dropdown data ── */
 
-  const departments = useDepartments(ALL_ROWS)
-  const departmentChoices = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
+  const departments = useDepartmentSelect({
+    selected: departmentId === null ? undefined : String(departmentId),
+  })
 
-  const employees = useEmployees(ALL_ROWS)
-  const employeeChoices = useMemo(
-    () => employeeOptions(employees.data?.items ?? []),
-    [employees.data],
-  )
+  const employees = useEmployeeSelect({ selected: employeeIds.map(String) })
 
   const yearChoices = useMemo(() => reportYearOptions(today), [today])
   const monthBounds = useMemo(() => reportMonthBounds(today), [today])
@@ -208,10 +201,6 @@ export function useReportScreen<TType extends string>(
     appliedTypeConfig,
     filters,
     rangeFilters,
-    /** The applied department, for the report heading. */
-    appliedDepartmentName:
-      departmentChoices.find((option) => option.value === String(applied?.departmentId))?.label ??
-      null,
 
     /* The page */
     params,
@@ -224,10 +213,10 @@ export function useReportScreen<TType extends string>(
     onPaginationChange,
 
     /* Dropdown data */
-    departmentChoices,
-    departmentsLoading: departments.isLoading,
-    employeeChoices,
-    employeesLoading: employees.isLoading,
+    /** The Department field — paged and server-searched, spread onto the filter card. */
+    departments,
+    /** The Employee field — paged and server-searched, spread onto the filter card. */
+    employees,
     yearChoices,
     monthBounds,
   }

@@ -28,7 +28,7 @@ interface UseStateSelectOptions {
 }
 
 /** Reads the one state behind a selection the loaded pages don't cover. */
-const STATE_SOURCE: LazyOptionSource = {
+export const STATE_SOURCE: LazyOptionSource = {
   key: (value) => queryKeys.state.detail(Number(value)),
   fetch: async (value) => {
     const state = await fetchState(Number(value))

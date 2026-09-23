@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useShifts } from '../api/use-shifts'
 import { useClearDefaultShift, useSetDefaultShift } from '../api/use-shift-mutations'
-import { shiftOptions } from '../lib/shift-mappers'
+import { useShiftSelect } from './use-shift-select'
 import { useNavigate } from '@tanstack/react-router'
 
 interface UseDefaultShiftOptions {
@@ -36,8 +36,9 @@ export function useDefaultShift({
   departmentId,
   currentShiftId,
 }: UseDefaultShiftOptions) {
-  // The whole master, not a page — this is a dropdown.
-  const shifts = useShifts(undefined, companyId)
+  // A single-row page, read only for its total — whether the company has any
+  // shift at all. The dropdown itself pages through the master as it's scrolled.
+  const shiftCount = useShifts({ limit: 1, offset: 0 }, companyId)
   const setDefault = useSetDefaultShift()
   const clearDefault = useClearDefaultShift()
   const navigate = useNavigate()
@@ -51,7 +52,12 @@ export function useDefaultShift({
     setShiftId(currentShiftId ? String(currentShiftId) : '')
   }, [currentShiftId])
 
-  const options = useMemo(() => shiftOptions(shifts.data?.items ?? []), [shifts.data])
+  const shiftSelect = useShiftSelect({
+    companyId,
+    selected: shiftId || undefined,
+    // The shift master is per company — nothing to list until one is known.
+    enabled: companyId !== undefined,
+  })
 
     const goToList = () => navigate({ to: '/master/department' })
 
@@ -94,10 +100,10 @@ export function useDefaultShift({
   return {
     shiftId,
     setShiftId,
-    options,
-    isLoadingShifts: shifts.isLoading,
+    shiftSelect,
+    isLoadingShifts: shiftCount.isLoading,
     /** No shift exists to pick yet — the company's master is empty. */
-    hasNoShifts: !shifts.isLoading && options.length === 0,
+    hasNoShifts: !shiftCount.isLoading && (shiftCount.data?.total ?? 0) === 0,
     save,
     clear,
     isSaving: setDefault.isPending,

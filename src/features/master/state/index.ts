@@ -1,5 +1,6 @@
 export { useStates } from './api/use-states'
 export { useStatesInfinite } from './api/use-states-infinite'
 export { useStateSelect, type StateSelect } from './hooks/use-state-select'
+export { useStateOption } from './hooks/use-state-option'
 export { fetchStates, fetchStatePage, fetchState, ensureStates } from './api/state-api'
 export type { StateRecord } from './types'

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { documentTypeOptions, useDocumentTypes } from '@/features/master/document-type'
+import { useDocumentTypeSelect } from '@/features/master/document-type'
 import { useDocuments } from '@/features/master/document'
 import {
   DOCUMENT_ROW_KEYS,
@@ -37,9 +37,11 @@ import { useRowSeed } from './use-row-seed'
  * under the chosen document type, so a card's picker stays disabled until it has one.
  *
  * The two dropdowns cascade — type first, then the documents filed under it. The API
- * can narrow that itself (`?document_type_id=`), but both masters are already loaded
- * whole for the dropdowns, so the filter runs over what's in hand and changing type
- * costs no request.
+ * can narrow that itself (`?document_type_id=`), but the document master is already
+ * loaded whole (the required cards are built from it), so the filter runs over
+ * what's in hand and changing type costs no request. The type dropdown itself is
+ * scroll-lazy and server-searched — one per card (`<DocumentTypeCombobox>`), each
+ * handed its saved label by `typeLabelFor` so its trigger never waits on a read.
  *
  * Documents the master marks `isRequired` are not something the user picks: every one
  * of them gets its own card up front, with the type and name already filled in and
@@ -60,7 +62,6 @@ export function useEmployeeDocumentTab({
   const deleteDocument = useDeleteEmployeeDocument(employeeId)
   const uploadFile = useUploadEmployeeDocumentFile()
 
-  const documentTypes = useDocumentTypes()
   const documents = useDocuments()
 
   const form = useForm<EmployeeDocumentListFormValues>({
@@ -82,10 +83,47 @@ export function useEmployeeDocumentTab({
     [documents.data],
   )
 
-  const typeOptions = useMemo(
-    () => documentTypeOptions(documentTypes.data?.items ?? []),
-    [documentTypes.data],
-  )
+  /**
+   * Type names already in hand — the saved attachments and the document master
+   * both carry the name beside the id — so most cards are labelled with no read.
+   */
+  const knownTypeNames = useMemo(() => {
+    const names = new Map<string, string>()
+    for (const document of documents.data?.items ?? []) {
+      if (document.documentTypeName) names.set(String(document.documentTypeId), document.documentTypeName)
+    }
+    for (const attachment of list.data ?? []) {
+      if (attachment.documentTypeId !== null && attachment.documentTypeName) {
+        names.set(String(attachment.documentTypeId), attachment.documentTypeName)
+      }
+    }
+    return names
+  }, [documents.data, list.data])
+
+  /*
+   * A type picked on a card that nobody has a name for — a fresh pick off the
+   * dropdown. One shared select holds them all (it keeps every `selected` among
+   * its options), so the card titles can read their label from it.
+   */
+  const watchedRows = useWatch({ control, name: 'rows' })
+  const unnamedTypeIds = [
+    ...new Set(
+      (watchedRows ?? [])
+        .map((row) => row?.documentTypeId ?? '')
+        .filter((id) => id !== '' && !knownTypeNames.has(id)),
+    ),
+  ]
+  const typeLabels = useDocumentTypeSelect({
+    selected: unnamedTypeIds,
+    enabled: unnamedTypeIds.length > 0,
+  })
+
+  /** A card's document type as its name, when it has one. */
+  const typeLabelFor = (documentTypeId: string) =>
+    documentTypeId
+      ? knownTypeNames.get(documentTypeId) ??
+        typeLabels.options.find((option) => option.value === documentTypeId)?.label
+      : undefined
 
   /**
    * Nothing to seed from until the document master is in hand — the required
@@ -242,11 +280,10 @@ export function useEmployeeDocumentTab({
     fields: rows.fields,
     addRow,
     removeRow,
-    typeOptions,
+    typeLabelFor,
     documentOptionsFor,
     documentNameFor,
     isRequiredRow,
-    isOptionsLoading: documentTypes.isLoading || documents.isLoading,
     changeDocumentType,
     uploadDocumentFile,
     uploadingIndex,

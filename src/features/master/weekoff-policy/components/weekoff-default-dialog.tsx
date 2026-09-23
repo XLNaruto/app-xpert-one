@@ -68,10 +68,8 @@ export function WeekoffDefaultDialog({
                 className="w-full"
                 value={pin.companyId}
                 onChange={pin.setCompanyId}
-                options={pin.companySelectOptions}
-                placeholder={
-                  pin.isCompaniesLoading ? 'Loading…' : 'Select company'
-                }
+                {...pin.companySelect}
+                placeholder="Select company"
                 searchPlaceholder="Search company"
               />
             </Field>
@@ -81,10 +79,8 @@ export function WeekoffDefaultDialog({
                 className="w-full"
                 value={pin.departmentId}
                 onChange={pin.setDepartmentId}
-                options={pin.departmentSelectOptions}
-                placeholder={
-                  pin.isDepartmentsLoading ? 'Loading…' : 'Select department'
-                }
+                {...pin.departmentSelect}
+                placeholder="Select department"
                 searchPlaceholder="Search department"
               />
             </Field>

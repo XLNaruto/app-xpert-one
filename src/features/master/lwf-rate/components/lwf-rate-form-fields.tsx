@@ -4,7 +4,8 @@ import { Landmark } from 'lucide-react'
 import { DateField } from '@/components/common/date-field'
 import { Field } from '@/components/common/form-field'
 import { FormSection } from '@/components/common/form-section'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { StateSelect } from '@/features/master/state'
 import { Input } from '@/components/ui/input'
 import { amountInputProps } from '@/lib/numeric-input'
 import { LWF_LABELS, MONTH_OPTIONS } from '../constants'
@@ -14,8 +15,8 @@ interface LwfRateFormFieldsProps {
   register: UseFormRegister<LwfRateFormValues>
   control: Control<LwfRateFormValues>
   errors: FieldErrors<LwfRateFormValues>
-  stateOptions: ComboboxOption[]
-  isStatesLoading?: boolean
+  /** The State dropdown — scroll-lazy and searched server-side. */
+  stateSelect: StateSelect
 }
 
 /**
@@ -26,8 +27,7 @@ export function LwfRateFormFields({
   register,
   control,
   errors,
-  stateOptions,
-  isStatesLoading,
+  stateSelect,
 }: LwfRateFormFieldsProps) {
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -59,8 +59,7 @@ export function LwfRateFormFields({
               className="w-full"
               value={field.value}
               onChange={field.onChange}
-              options={stateOptions}
-              loading={isStatesLoading}
+              {...stateSelect}
               placeholder="Select State"
               searchPlaceholder="Search state"
             />

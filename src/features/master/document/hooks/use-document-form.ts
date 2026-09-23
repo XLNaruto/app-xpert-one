@@ -1,10 +1,10 @@
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { documentTypeOptions, useDocumentTypes } from '@/features/master/document-type'
+import { useDocumentTypeSelect } from '@/features/master/document-type'
 import { documentSchema, type DocumentFormValues } from '../schemas'
 import { EMPTY_DOCUMENT_FORM } from '../constants'
 import { useDocument } from '../api/use-document'
@@ -21,8 +21,6 @@ export function useDocumentForm(id?: number) {
   const navigate = useNavigate()
 
   const detail = useDocument(id ?? Number.NaN)
-  // The Document Type dropdown is driven by the document type master.
-  const documentTypes = useDocumentTypes()
   const createDocument = useCreateDocument()
   const updateDocument = useUpdateDocument(id ?? Number.NaN)
 
@@ -42,10 +40,18 @@ export function useDocumentForm(id?: number) {
     if (detail.data) reset(documentToFormValues(detail.data))
   }, [detail.data, reset])
 
-  const typeOptions = useMemo(
-    () => documentTypeOptions(documentTypes.data?.items ?? []),
-    [documentTypes.data],
-  )
+  // The Document Type dropdown pages through the document type master as it's
+  // scrolled. The saved record already names its type, so that label is used
+  // while the field still holds it — no by-id read.
+  const documentTypeId = useWatch({ control, name: 'documentTypeId' })
+  const saved = detail.data
+  const typeSelect = useDocumentTypeSelect({
+    selected: documentTypeId,
+    selectedLabel:
+      saved && documentTypeId === String(saved.documentTypeId)
+        ? saved.documentTypeName || undefined
+        : undefined,
+  })
 
   const goToList = () => navigate({ to: '/master/document' })
 
@@ -73,8 +79,7 @@ export function useDocumentForm(id?: number) {
     register,
     control,
     errors,
-    typeOptions,
-    isTypesLoading: documentTypes.isLoading,
+    typeSelect,
     onSubmit,
     isEdit,
     isPending: isEdit ? updateDocument.isPending : createDocument.isPending,

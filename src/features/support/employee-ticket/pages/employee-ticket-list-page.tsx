@@ -403,7 +403,7 @@ export function EmployeeTicketListPage() {
                   icon: UserRoundCog,
                   value: list.filters.assignedToUserId,
                   onChange: list.changeAssignee,
-                  options: list.assigneeOptions,
+                  ...list.assigneeFacet,
                   clearValue: ALL_FILTER,
                   searchPlaceholder: 'Search people',
                 },

@@ -1,7 +1,7 @@
 import { http } from '@/lib/http'
 import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
-import { ALL_ROWS, paginate, type PageParams, type Paginated } from '@/lib/pagination'
+import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { ensureStates } from '@/features/master/state'
 import { ensureDistricts } from '@/features/master/district'
 import { OFFICE_ADDRESS_DEFAULT_SORT } from '../constants'
@@ -20,7 +20,8 @@ import type { OfficeAddress, OfficeFor } from '../types'
 /**
  * Office addresses — `/user/office-addresses`. One endpoint behind all five
  * screens (PF, ESIC, LWF, Factory, Employment Exchange); a record's `office_for`
- * is what decides which screen owns it.
+ * is what decides which screen owns it, and the list read filters on it
+ * server-side (`?office_for=`), so each screen pages over its own rows only.
  *
  * A record references its state and district by id only, so every read joins in
  * both masters to fill the names the list rows display.
@@ -62,64 +63,66 @@ async function recordNames(
 }
 
 /**
- * Every office address matching `search`, in the requested order, across all
- * five `office_for` values.
- *
- * The endpoint has no `office_for` filter, so a screen can't ask the server for
- * just its own rows — see `fetchOfficeAddresses` for what that costs. Order is
- * always sent: this walks every page, and an unordered walk can hand back the
- * same record twice while missing another.
+ * `office_for` plus `search` / `sort` / `sort_by` as the endpoint spells them.
+ * Order is always sent — left off, the server's own default decides it, and a
+ * list whose order isn't pinned can repeat or skip rows as the user pages.
  */
-async function fetchAllOfficeAddresses(params: PageParams): Promise<OfficeAddress[]> {
-  const records: OfficeAddressResponse[] = []
-  let total = 0
-
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const raw = await http.get<unknown>(endpoints.OFFICE_ADDRESSES.LIST, {
-      params: {
-        limit: MAX_LIMIT,
-        offset: page * MAX_LIMIT,
-        ...(params.search?.trim() ? { search: params.search.trim() } : {}),
-        sort: params.sort ?? OFFICE_ADDRESS_DEFAULT_SORT.id,
-        sort_by: params.sortBy ?? (OFFICE_ADDRESS_DEFAULT_SORT.desc ? 'desc' : 'asc'),
-      },
-    })
-    const parsed = officeAddressesResponseSchema.parse(raw)
-    total = parsed.total
-    records.push(...parsed.items)
-    if (parsed.items.length === 0 || records.length >= total) break
+function queryParams(officeFor: OfficeFor, params: PageParams) {
+  return {
+    office_for: officeFor,
+    ...(params.search?.trim() ? { search: params.search.trim() } : {}),
+    sort: params.sort ?? OFFICE_ADDRESS_DEFAULT_SORT.id,
+    sort_by: params.sortBy ?? (OFFICE_ADDRESS_DEFAULT_SORT.desc ? 'desc' : 'asc'),
   }
-
-  // No geography lookup here — the State/District columns read the names off the
-  // record itself, so a page of addresses is exactly the requests it needs.
-  return records.map((item) => toOfficeAddress(item))
 }
 
 /**
- * GET /user/office-addresses — one page of `officeFor`'s addresses.
+ * GET /user/office-addresses — one page of `officeFor`'s addresses, filtered,
+ * searched and ordered server-side.
  *
- * TODO: filter server-side once the endpoint accepts `office_for`.
- * Until then this is the one list in the app that can't be server-paged: the
- * endpoint pages over all five screens' records at once, so its `total` and its
- * page boundaries both belong to the combined set, not to this screen's slice.
- * Asking for `limit: 10` could return anything from 0 to 10 of this screen's
- * rows, and the pager would show the wrong count either way. So we walk the
- * pages (100 at a time), keep the matching `office_for` and page the remainder
- * with `paginate()` — the same contract the screen would get from the server.
+ * `ALL_ROWS` (a negative limit) means "every address of that body": the API caps
+ * a request at 100, so that case walks the pages until `total` is covered.
  *
- * `search` and `sort` *are* supported server-side, so both are forwarded and
- * span every page; filtering and slicing preserve the order they come back in.
+ * No geography lookup here — the State/District columns read the names off the
+ * record itself, so a page of addresses is exactly the requests it needs.
  */
 export async function fetchOfficeAddresses(
   officeFor: OfficeFor,
   params: PageParams = ALL_ROWS,
 ): Promise<Paginated<OfficeAddress>> {
   try {
-    const all = await fetchAllOfficeAddresses(params)
-    const mine = all.filter((address) => address.officeFor === officeFor)
-    // The server already applied `search` and the ordering, so `paginate` only
-    // slices here.
-    return paginate(mine, params)
+    const query = queryParams(officeFor, params)
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.OFFICE_ADDRESSES.LIST, {
+        params: {
+          limit: Math.min(params.limit, MAX_LIMIT),
+          offset: params.offset,
+          ...query,
+        },
+      })
+      const { items, total } = officeAddressesResponseSchema.parse(raw)
+      return { items: items.map((item) => toOfficeAddress(item)), total }
+    }
+
+    const collected: OfficeAddress[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.OFFICE_ADDRESSES.LIST, {
+        params: {
+          limit: MAX_LIMIT,
+          offset: params.offset + page * MAX_LIMIT,
+          ...query,
+        },
+      })
+      const parsed = officeAddressesResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map((item) => toOfficeAddress(item)))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
   } catch (error) {
     throw toApiError(error, "Couldn't load office addresses.")
   }

@@ -1,15 +1,17 @@
 /**
  * Employee Management — the module's public surface.
  *
- * Three screens: the register, the eight-step wizard (create *and* edit), and the
- * read-only 360° view. Cross-feature imports come through here, never through a
+ * Four screens: the register, the eight-step wizard (create *and* edit), the
+ * read-only 360° view, and the printable appointment letter. Cross-feature imports come through here, never through a
  * deep path.
  */
 export { EmployeeListPage } from './pages/employee-list-page'
 export { EmployeeCreatePage } from './pages/employee-create-page'
 export { EmployeeDetailPage } from './pages/employee-detail-page'
+export { EmployeeAppointmentLetterPage } from './pages/employee-appointment-letter-page'
 
 export { useEmployees, useEmployee, useEmployeePicker } from './api/use-employees'
+export { useEmployeeSelect, type EmployeeSelect } from './hooks/use-employee-select'
 /**
  * Step 9's reads. `useEmployeeShiftOnDay` in particular answers "which shift is
  * this person on, on this date, and why" — the question attendance screens will ask

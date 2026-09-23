@@ -1,6 +1,7 @@
 import { UserRoundCog } from 'lucide-react'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
 import { ALL_FILTER } from '../constants'
 
 interface EmployeeTicketAssignDialogProps {
@@ -9,7 +10,8 @@ interface EmployeeTicketAssignDialogProps {
   currentAssignee: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  options: ComboboxOption[]
+  /** The people picker — scroll-lazy and searched server-side. */
+  assignee: PagedSelect
   value: string
   onChange: (value: string) => void
   onConfirm: () => void
@@ -39,14 +41,14 @@ export function EmployeeTicketAssignDialog({
   currentAssignee,
   open,
   onOpenChange,
-  options,
+  assignee,
   value,
   onChange,
   onConfirm,
   loading,
 }: EmployeeTicketAssignDialogProps) {
   const isRelease = !value
-  const picked = options.find((option) => option.value === value)
+  const picked = assignee.options.find((option) => option.value === value)
 
   return (
     <ConfirmDialog
@@ -70,7 +72,7 @@ export function EmployeeTicketAssignDialog({
       <div className="space-y-1.5 text-left">
         <label className="text-sm font-medium text-foreground/90">Handled by</label>
         <Combobox
-          options={options}
+          {...assignee}
           value={value}
           onChange={onChange}
           icon={UserRoundCog}

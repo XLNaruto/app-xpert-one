@@ -4,8 +4,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { decryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { ALL_ROWS } from '@/lib/pagination'
-import { departmentOptions, useDepartments } from '@/features/master/department'
+import { useDepartmentSelect } from '@/features/master/department'
 import {
   fromIsoMonth,
   PAYMENT_HISTORY_MAX_LIMIT,
@@ -87,11 +86,11 @@ export function usePaymentHistoryList(data?: string) {
 
   const history = usePaymentHistory(filters, params, { enabled: companyId !== null })
 
-  const departments = useDepartments(ALL_ROWS)
-  const departmentChoices = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
+  /* A department seeded from the token is kept among the options, read by id
+     if the first page doesn't reach it. */
+  const departments = useDepartmentSelect({
+    selected: departmentId === null ? undefined : String(departmentId),
+  })
   const monthBounds = useMemo(() => paySalaryMonthBounds(today), [today])
 
   const monthValue = useMemo(() => toIsoMonth(month, year), [month, year])
@@ -154,8 +153,8 @@ export function usePaymentHistoryList(data?: string) {
     monthBounds,
     departmentId,
     changeDepartment,
-    departmentChoices,
-    departmentsLoading: departments.isLoading,
+    /** The Department field — paged and server-searched, spread onto the dropdown. */
+    departments,
 
     limit,
     offset,

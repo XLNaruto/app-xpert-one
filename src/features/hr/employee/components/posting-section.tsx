@@ -99,8 +99,6 @@ export function PostingSection({
   // renewal date have nothing to say — and the mappers drop them from the body.
   const isContractual = employmentType !== PERMANENT_EMPLOYMENT_TYPE
 
-  const placeholder = options.isLoading ? 'Loading…' : undefined
-
   return (
     <>
       {showHeading && (
@@ -126,8 +124,8 @@ export function PostingSection({
                 // belong to the new branch any more.
                 setValue('departmentId', '')
               }}
-              options={options.branches}
-              placeholder={placeholder ?? 'Select branch'}
+              {...options.branches}
+              placeholder="Select branch"
               searchPlaceholder="Search branch"
             />
           )}
@@ -149,7 +147,7 @@ export function PostingSection({
               value={field.value}
               onChange={field.onChange}
               options={options.departments}
-              placeholder={placeholder ?? 'Select department'}
+              placeholder={options.isDepartmentsLoading ? 'Loading…' : 'Select department'}
               searchPlaceholder="Search department"
             />
           )}
@@ -170,8 +168,8 @@ export function PostingSection({
               className="w-full"
               value={field.value}
               onChange={field.onChange}
-              options={options.designations}
-              placeholder={placeholder ?? 'Select designation'}
+              {...options.designations}
+              placeholder="Select designation"
               searchPlaceholder="Search designation"
             />
           )}

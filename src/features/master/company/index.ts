@@ -12,3 +12,4 @@ export {
 export { CompanyLogo } from './components/company-logo'
 export type { Company, CompanyBilling } from './types'
 export type { CompanyFormValues } from './schemas'
+export { useCompanySelect } from './hooks/use-company-select'

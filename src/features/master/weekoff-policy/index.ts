@@ -30,3 +30,4 @@ export {
 export { WEEK_DAYS } from './constants'
 
 export type { WeekoffPolicy, WeekoffDay, WeekoffOffType } from './types'
+export { useWeekoffPolicySelect } from './hooks/use-weekoff-policy-select'

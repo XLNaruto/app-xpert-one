@@ -50,9 +50,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
     error,
     isForbidden,
     forbiddenMessage,
-    stateName,
-    districtName,
-    officeName,
+    actNames,
     goToList,
     goToEdit,
   } = useBranchDetail(decryptId(data))
@@ -172,7 +170,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="PF Office Address"
-              value={officeName('PF', acts?.pfOfficeAddressId ?? null)}
+              value={actNames.pfOffice}
             />
             <DetailItem
               icon={UserRound}
@@ -210,7 +208,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="ESIC Office Address"
-              value={officeName('ESIC', acts?.esicOfficeAddressId ?? null)}
+              value={actNames.esicOffice}
             />
             <DetailItem
               icon={UserRound}
@@ -268,7 +266,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="Factory Office Address"
-              value={officeName('FACTORY', acts?.factoryOfficeAddressId ?? null)}
+              value={actNames.factoryOffice}
             />
           </ActCard>
 
@@ -301,12 +299,12 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="PT State"
-              value={stateName(acts?.ptStateId ?? null)}
+              value={actNames.ptState}
             />
             <DetailItem
               icon={MapPin}
               label="PT District"
-              value={districtName(acts?.ptDistrictId ?? null)}
+              value={actNames.ptDistrict}
             />
           </ActCard>
 
@@ -329,7 +327,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="LWF Office Address"
-              value={officeName('LWF', acts?.lwfOfficeAddressId ?? null)}
+              value={actNames.lwfOffice}
             />
             <DetailItem
               icon={UserRound}
@@ -362,7 +360,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             <DetailItem
               icon={MapPin}
               label="Office Address"
-              value={officeName('EMPLOYMENT EXCHANGE', acts?.exOfficeAddressId ?? null)}
+              value={actNames.exOffice}
             />
           </ActCard>
         </div>

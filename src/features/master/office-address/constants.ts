@@ -15,9 +15,8 @@ export const OFFICE_ADDRESS_SORT = {
 
 /**
  * Newest office first — the order the list opens in and reverts to. Order is
- * always pinned to something: this screen walks every page of the endpoint
- * before filtering to its own `office_for`, and an unordered walk can repeat or
- * miss records between pages.
+ * always pinned to something: an unordered read can repeat or miss records
+ * between pages.
  */
 export const OFFICE_ADDRESS_DEFAULT_SORT = {
   id: OFFICE_ADDRESS_SORT.createdAt,

@@ -36,8 +36,7 @@ export function PtRateCreatePage({ data }: PtRateCreatePageProps) {
     isError,
     loadError,
     goToList,
-    stateOptions,
-    isStatesLoading,
+    stateSelect,
     slabFields,
     addSlab,
     removeSlab,
@@ -80,8 +79,7 @@ export function PtRateCreatePage({ data }: PtRateCreatePageProps) {
                 register={register}
                 control={control}
                 errors={errors}
-                stateOptions={stateOptions}
-                isStatesLoading={isStatesLoading}
+                stateSelect={stateSelect}
               />
 
               <PtRateSlabRows

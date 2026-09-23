@@ -112,9 +112,9 @@ export function DashboardFilterBar({
   const extraChips: FilterChipSpec[] = (
     [
       ['companyIds', 'company', 'companies', options.companies],
-      ['branchIds', 'branch', 'branches', options.branches],
-      ['departmentIds', 'department', 'departments', options.departments],
-      ['designationIds', 'designation', 'designations', options.designations],
+      ['branchIds', 'branch', 'branches', options.branches.options],
+      ['departmentIds', 'department', 'departments', options.departments.options],
+      ['designationIds', 'designation', 'designations', options.designations.options],
     ] as const
   ).flatMap(([key, singular, plural, list]) => {
     const selected = filters[key]
@@ -197,7 +197,7 @@ export function DashboardFilterBar({
 
           <PanelField label="Branches">
             <MultiSelect
-              options={options.branches}
+              {...options.branches}
               value={filters.branchIds}
               onChange={(value) => state.setFilter('branchIds', value)}
               placeholder="All branches"
@@ -212,7 +212,7 @@ export function DashboardFilterBar({
           */}
           <PanelField label="Departments">
             <MultiSelect
-              options={options.departments}
+              {...options.departments}
               value={filters.departmentIds}
               onChange={(value) => state.setFilter('departmentIds', value)}
               placeholder="All departments"
@@ -221,7 +221,7 @@ export function DashboardFilterBar({
 
           <PanelField label="Designations">
             <MultiSelect
-              options={options.designations}
+              {...options.designations}
               value={filters.designationIds}
               onChange={(value) => state.setFilter('designationIds', value)}
               placeholder="All designations"
@@ -298,6 +298,8 @@ function MultiSelect({
   placeholder,
   loading,
   icon,
+  onScrollEnd,
+  onSearchChange,
 }: {
   options: ComboboxOption[]
   value: string[]
@@ -305,6 +307,10 @@ function MultiSelect({
   placeholder: string
   loading?: boolean
   icon?: boolean
+  /** Set by a scroll-lazy picker: loads the next page at the list's end. */
+  onScrollEnd?: () => void
+  /** Set by a scroll-lazy picker: the search is sent to the server. */
+  onSearchChange?: (query: string) => void
 }) {
   return (
     <Combobox
@@ -317,6 +323,8 @@ function MultiSelect({
       placeholder={placeholder}
       clearable
       loading={loading}
+      onScrollEnd={onScrollEnd}
+      onSearchChange={onSearchChange}
       maxVisibleLabels={1}
     />
   )

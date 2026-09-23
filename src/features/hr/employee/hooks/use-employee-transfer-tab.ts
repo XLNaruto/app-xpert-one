@@ -3,7 +3,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { useCompanies } from '@/features/master/company'
+import { useCompanySelect } from '@/features/master/company'
 import {
   employeeServiceEditSchema,
   employeeTransferSchema,
@@ -70,8 +70,6 @@ export function useEmployeeTransferTab(employeeId: number) {
   const transferEmployee = useTransferEmployee(employeeId)
   const updateService = useUpdateEmployeeService(employeeId)
   const leaveService = useLeaveEmployeeService(employeeId)
-
-  const companies = useCompanies()
 
   const [dialog, setDialog] = useState<OpenDialog>(null)
   /** The posting a dialog is acting on — the latest one, except for Details. */
@@ -173,7 +171,12 @@ export function useEmployeeTransferTab(employeeId: number) {
 
   const transferBranchId = useWatch({ control: transferForm.control, name: 'branchId' })
   const transferCompanyId = useWatch({ control: transferForm.control, name: 'companyId' })
+  const transferDesignationId = useWatch({
+    control: transferForm.control,
+    name: 'designationId',
+  })
   const editBranchId = useWatch({ control: editForm.control, name: 'branchId' })
+  const editDesignationId = useWatch({ control: editForm.control, name: 'designationId' })
 
   /*
    * The new posting must point at the DESTINATION company's masters, not the
@@ -185,17 +188,35 @@ export function useEmployeeTransferTab(employeeId: number) {
     ? Number(transferCompanyId)
     : undefined
 
-  const transferOptions = usePostingOptions(transferBranchId, destinationCompanyId)
-  const editOptions = usePostingOptions(editBranchId)
+  /*
+   * The records these forms are seeded from already name their branch,
+   * designation and company, so the saved values are labelled without a read —
+   * `usePostingOptions` only uses a name while its field still holds that id.
+   * The seed falls back to the employee's current service, which carries ids
+   * only; those are labelled by a background read instead.
+   */
+  const transferOptions = usePostingOptions({
+    branchId: transferBranchId,
+    designationId: transferDesignationId,
+    saved: postingToFollow,
+    companyId: destinationCompanyId,
+    enabled: dialog === 'transfer' && destinationCompanyId !== undefined,
+  })
+  const editOptions = usePostingOptions({
+    branchId: editBranchId,
+    designationId: editDesignationId,
+    saved: detail.data?.serviceDetail,
+    enabled: dialog === 'edit',
+  })
 
-  const companyOptions = useMemo(
-    () =>
-      (companies.data?.items ?? []).map((company) => ({
-        label: company.companyName,
-        value: String(company.id),
-      })),
-    [companies.data],
-  )
+  const companySelect = useCompanySelect({
+    enabled: dialog === 'transfer',
+    selected: transferCompanyId || undefined,
+    selectedLabel:
+      postingToFollow && String(postingToFollow.companyId) === transferCompanyId
+        ? postingToFollow.companyName || undefined
+        : undefined,
+  })
 
   /**
    * Moving to another company invalidates whatever branch, department and
@@ -416,8 +437,7 @@ export function useEmployeeTransferTab(employeeId: number) {
         destinationCompanyId !== postingToFollow?.companyId,
       /** The masters below belong to a company, so none can be listed without one. */
       needsCompany: destinationCompanyId === undefined,
-      companyOptions,
-      isCompaniesLoading: companies.isLoading,
+      companySelect,
       onSubmit: submitTransfer,
       isPending: transferEmployee.isPending,
     },

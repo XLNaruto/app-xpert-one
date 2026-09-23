@@ -241,8 +241,7 @@ export function SalaryViewListPage() {
       monthBounds={view.monthBounds}
       onMonthChange={view.changePeriod}
       departmentId={view.departmentId}
-      departmentOptions={view.departmentChoices}
-      departmentsLoading={view.departmentsLoading}
+      departments={view.departments}
       onDepartmentChange={view.changeDepartment}
       // Without the delete permission there is no selection to act on.
       selectedCount={canDiscard ? view.selectedCount : 0}

@@ -361,12 +361,10 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                   className="w-full"
                   value={field.value}
                   onChange={field.onChange}
-                  options={form.weekoffPolicySelectOptions}
+                  {...form.weekoffPolicySelect}
                   clearable
                   panelMinWidth={340}
-                  placeholder={
-                    form.isWeekoffPoliciesLoading ? 'Loading…' : 'Follows default'
-                  }
+                  placeholder="Follows default"
                   searchPlaceholder="Search policy"
                 />
               )}

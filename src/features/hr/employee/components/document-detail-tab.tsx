@@ -7,6 +7,7 @@ import { DateField } from '@/components/common/date-field'
 import { Forbidden } from '@/features/error'
 import { useEmployeeDocumentTab } from '../hooks/use-employee-document-tab'
 import { DocumentFileField } from './document-file-field'
+import { DocumentTypeCombobox } from './document-type-combobox'
 import { RepeatCard, RepeatCardBadge, RepeatSection } from './repeat-card'
 import { StepFormFooter } from './step-form-footer'
 
@@ -43,11 +44,10 @@ export function DocumentDetailTab({
     fields,
     addRow,
     removeRow,
-    typeOptions,
+    typeLabelFor,
     documentOptionsFor,
     documentNameFor,
     isRequiredRow,
-    isOptionsLoading,
     changeDocumentType,
     uploadDocumentFile,
     uploadingIndex,
@@ -95,7 +95,7 @@ export function DocumentDetailTab({
         {fields.map((field, index) => {
           const errors = rowErrors?.[index]
           const row = form.watch(`rows.${index}`)
-          const typeLabel = typeOptions.find((o) => o.value === row?.documentTypeId)?.label
+          const typeLabel = typeLabelFor(row?.documentTypeId ?? '')
           const nameLabel = documentNameFor(row?.documentId ?? '')
           const isRequired = isRequiredRow(row?.documentId ?? '')
 
@@ -130,13 +130,10 @@ export function DocumentDetailTab({
                   control={form.control}
                   name={`rows.${index}.documentTypeId`}
                   render={({ field: type }) => (
-                    <Combobox
-                      className="w-full"
+                    <DocumentTypeCombobox
                       value={type.value}
+                      selectedLabel={typeLabel}
                       onChange={(value) => changeDocumentType(index, value, type.onChange)}
-                      options={typeOptions}
-                      placeholder={isOptionsLoading ? 'Loading…' : 'Select Type'}
-                      searchPlaceholder="Search document type"
                       disabled={isRequired}
                     />
                   )}

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { useWeekoffPolicies, weekoffPolicyOptions } from '@/features/master/weekoff-policy'
+import { useWeekoffPolicySelect } from '@/features/master/weekoff-policy'
 import { shiftSchema, type ShiftFormValues } from '../schemas'
 import { EMPTY_SHIFT_FORM, todayIso } from '../constants'
 import { useCreateShift, useUpdateShift } from '../api/use-shift-mutations'
@@ -41,11 +41,6 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
 
   const createShift = useCreateShift(companyId)
   const updateShift = useUpdateShift(editing?.id ?? Number.NaN)
-
-  // The whole master, not a page — this is a dropdown. Most shifts name no policy
-  // and fall back to the department's or company's default, so the field is
-  // clearable rather than required.
-  const weekoffPolicies = useWeekoffPolicies(undefined, companyId)
 
   /**
    * The window/full-day trio as the form last left it in step — what the sync
@@ -189,10 +184,14 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
     createShift.mutate(values, onSettled)
   })
 
-  const weekoffPolicySelectOptions = useMemo(
-    () => weekoffPolicyOptions(weekoffPolicies.data?.items ?? []),
-    [weekoffPolicies.data],
-  )
+  // Paged through as the dropdown is scrolled, never read whole. Most shifts name
+  // no policy and fall back to the department's or company's default, so the
+  // field is clearable rather than required.
+  const weekoffPolicyId = watch('weekoffPolicyId')
+  const weekoffPolicySelect = useWeekoffPolicySelect({
+    companyId,
+    selected: weekoffPolicyId || undefined,
+  })
 
   // The rule behind the late-check-in switch only makes sense while the switch is
   // on, so the tab shows its two fields then — and the unit shown beside the
@@ -210,8 +209,7 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
     isEdit,
     isLateCheckInPenaltyApplicable,
     lateCheckInPenaltyType,
-    weekoffPolicySelectOptions,
-    isWeekoffPoliciesLoading: weekoffPolicies.isLoading,
+    weekoffPolicySelect,
     isPending: isEdit ? updateShift.isPending : createShift.isPending,
     cancelEdit,
   }

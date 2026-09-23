@@ -10,10 +10,9 @@ import type { OfficeFor } from '../types'
  * One limit/offset page — pass the params from `usePagination()`. Called with no
  * params it returns every address for that screen, for dropdowns elsewhere.
  *
- * `enabled` holds the request back until the dropdown reading it is actually
- * reachable: the endpoint has no `office_for` filter, so every call walks the
- * whole master before narrowing, and a screen offering five of these shouldn't
- * walk it five times for a tab nobody opened.
+ * `enabled` holds the request back until the screen reading it is actually
+ * reachable. Dropdowns want `useOfficeAddressSelect` instead — it pages in as
+ * the list is scrolled rather than reading every address up front.
  */
 export function useOfficeAddresses(
   officeFor: OfficeFor,

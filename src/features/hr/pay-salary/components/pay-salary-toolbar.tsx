@@ -1,6 +1,7 @@
 import { Building2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
 import { MonthPicker } from '@/components/ui/month-picker'
 
 interface PaySalaryToolbarProps {
@@ -10,8 +11,8 @@ interface PaySalaryToolbarProps {
   onMonthChange: (value: string) => void
   /** Likewise staged. */
   departmentId: number | null
-  departmentOptions: ComboboxOption[]
-  departmentsLoading: boolean
+  /** The lazy department dropdown — `useDepartmentSelect`, spread onto the field. */
+  departments: PagedSelect
   onDepartmentChange: (value: number | null) => void
   /** Read the list for what the two pickers hold. */
   onLoad: () => void
@@ -40,8 +41,7 @@ export function PaySalaryToolbar({
   monthBounds,
   onMonthChange,
   departmentId,
-  departmentOptions,
-  departmentsLoading,
+  departments,
   onDepartmentChange,
   onLoad,
   hasPendingScope,
@@ -64,9 +64,9 @@ export function PaySalaryToolbar({
           <Combobox
             value={departmentId === null ? '' : String(departmentId)}
             onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
-            options={departmentOptions}
+            {...departments}
             icon={Building2}
-            placeholder={departmentsLoading ? 'Loading…' : 'Every department'}
+            placeholder="Every department"
             searchPlaceholder="Search departments…"
             clearable
           />

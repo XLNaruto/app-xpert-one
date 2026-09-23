@@ -40,7 +40,10 @@ export function Toaster() {
         classNames: {
           toast:
             'toast-pop group pointer-events-auto relative flex w-full cursor-grab touch-pan-y select-none items-center gap-3 rounded-2xl active:cursor-grabbing border border-black/5 bg-popover/95 px-4 py-3 shadow-[0_10px_30px_-8px_rgba(15,23,42,0.28),0_2px_8px_-4px_rgba(15,23,42,0.16)] backdrop-blur-md dark:border-white/10 dark:shadow-[0_10px_30px_-8px_rgba(0,0,0,0.6)]',
-          icon: 'shrink-0',
+          // `relative` + a fixed size: sonner wraps the *loading* icon in an
+          // absolutely-centred box, and with `unstyled` nothing else anchors it —
+          // it would centre on the whole card, over the title.
+          icon: 'relative grid size-8 shrink-0 place-items-center',
           content: 'flex flex-col gap-0.5',
           // `whitespace-pre-line`: a validation failure arrives as one line per
           // refused field (see `getApiErrorMessage`), so the breaks must survive.

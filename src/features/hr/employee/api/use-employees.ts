@@ -1,6 +1,7 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { ALL_ROWS, type PageParams } from '@/lib/pagination'
+import { EMPLOYEE_SORT } from '../constants'
 import { fetchEmployee, fetchEmployeePicker, fetchEmployees } from './employee-api'
 
 /**
@@ -15,6 +16,39 @@ export function useEmployees(params: PageParams = ALL_ROWS) {
     queryFn: () => fetchEmployees(params),
     // Keep the previous page on screen while the next one loads.
     placeholderData: keepPreviousData,
+  })
+}
+
+/** Rows per request for the scroll-lazy employee switcher. */
+export const EMPLOYEE_PAGE_SIZE = 25
+
+/**
+ * GET /user/employees — paged by name, for a scroll-lazy dropdown.
+ *
+ * `offset` is the page param, so the next page starts where the loaded rows end;
+ * `search` is sent to the API, which is why it belongs in the query key.
+ */
+export function useEmployeesInfinite(search?: string, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.employee.infinite(search),
+    enabled,
+    queryFn: ({ pageParam }) =>
+      fetchEmployees({
+        limit: EMPLOYEE_PAGE_SIZE,
+        offset: pageParam,
+        sort: EMPLOYEE_SORT.name,
+        sortBy: 'asc',
+        ...(search ? { search } : {}),
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.items.length, 0)
+      // `undefined` is how TanStack Query is told there's no next page.
+      return loaded < lastPage.total ? loaded : undefined
+    },
+    // A typed term shouldn't blank the list while its first page arrives.
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
   })
 }
 

@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import type { PagedSelect } from '@/hooks/use-paged-select'
 import { useMyCompanies } from '@/features/company'
-import { branchOptions, useBranches } from '@/features/master/branch'
-import { departmentOptions, useDepartments } from '@/features/master/department'
-import { useDesignations } from '@/features/master/designation'
+import { useBranchSelect } from '@/features/master/branch'
+import { useDepartmentSelect } from '@/features/master/department'
+import { useDesignationSelect } from '@/features/master/designation'
 import { EMPTY_DASHBOARD_FILTERS, localTimezone } from '../constants'
 import { resolvePreset } from '../lib/date-presets'
 import {
@@ -43,10 +44,16 @@ function initialFilters(): DashboardFilters {
 
 export interface DashboardFilterOptions {
   companies: ComboboxOption[]
-  branches: ComboboxOption[]
-  departments: ComboboxOption[]
-  designations: ComboboxOption[]
+  /** True while the company picker's own tenants are loading. */
   isLoading: boolean
+  /**
+   * Scroll-lazy, server-searched pickers — spread onto the `<Combobox>`. The
+   * current selection is always kept in each one's `options`, so the chips can
+   * label it.
+   */
+  branches: PagedSelect
+  departments: PagedSelect
+  designations: PagedSelect
 }
 
 export interface DashboardFilterState {
@@ -100,9 +107,9 @@ export function useDashboardFilters(): DashboardFilterState {
    * have branches with no departments, or departments straight under the company
    * — so the department picker deliberately does not depend on the branch one.
    */
-  const branches = useBranches()
-  const departments = useDepartments()
-  const designations = useDesignations()
+  const branchSelect = useBranchSelect({ selected: filters.branchIds })
+  const departmentSelect = useDepartmentSelect({ selected: filters.departmentIds })
+  const designationSelect = useDesignationSelect({ selected: filters.designationIds })
 
   const options = useMemo<DashboardFilterOptions>(
     () => ({
@@ -110,28 +117,12 @@ export function useDashboardFilters(): DashboardFilterState {
         label: company.name,
         value: String(company.id),
       })),
-      branches: branchOptions(branches.data?.items ?? []),
-      departments: departmentOptions(departments.data?.items ?? []),
-      designations: (designations.data?.items ?? []).map((designation) => ({
-        label: designation.designationName,
-        value: String(designation.id),
-      })),
-      isLoading:
-        isCompaniesLoading ||
-        branches.isLoading ||
-        departments.isLoading ||
-        designations.isLoading,
+      isLoading: isCompaniesLoading,
+      branches: branchSelect,
+      departments: departmentSelect,
+      designations: designationSelect,
     }),
-    [
-      companies,
-      branches.data,
-      branches.isLoading,
-      departments.data,
-      departments.isLoading,
-      designations.data,
-      designations.isLoading,
-      isCompaniesLoading,
-    ],
+    [companies, isCompaniesLoading, branchSelect, departmentSelect, designationSelect],
   )
 
   /**

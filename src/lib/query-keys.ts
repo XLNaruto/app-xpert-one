@@ -79,6 +79,9 @@ export const queryKeys = {
         ? ([...queryKeys.adminUser.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.adminUser.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.adminUser.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.adminUser.all, 'infinite', companyId ?? 0, search ?? ''] as const,
     assignableRoles: () => [...queryKeys.adminUser.all, 'assignable-roles'] as const,
   },
   /**
@@ -189,6 +192,9 @@ export const queryKeys = {
         ? ([...queryKeys.company.all, 'list', params] as const)
         : ([...queryKeys.company.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.company.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string) =>
+      [...queryKeys.company.all, 'infinite', search ?? ''] as const,
   },
   branch: {
     all: ['branch'] as const,
@@ -203,6 +209,9 @@ export const queryKeys = {
         ? ([...queryKeys.branch.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.branch.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.branch.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.branch.all, 'infinite', companyId ?? 0, search ?? ''] as const,
   },
   /**
    * A branch's applicable acts — one row per branch, so the branch id is the
@@ -228,6 +237,9 @@ export const queryKeys = {
         ? ([...queryKeys.department.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.department.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.department.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.department.all, 'infinite', companyId ?? 0, search ?? ''] as const,
   },
   /**
    * The company's shifts — read on the Shift tab of the company screen and, as
@@ -242,6 +254,9 @@ export const queryKeys = {
         ? ([...queryKeys.shift.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.shift.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.shift.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.shift.all, 'infinite', companyId ?? 0, search ?? ''] as const,
     /**
      * One shift's dated versions. Its own key rather than part of the detail:
      * editing a shift appends a version, so the history is invalidated by the same
@@ -260,6 +275,9 @@ export const queryKeys = {
         ? ([...queryKeys.weekoffPolicy.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.weekoffPolicy.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.weekoffPolicy.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.weekoffPolicy.all, 'infinite', companyId ?? 0, search ?? ''] as const,
   },
   designation: {
     all: ['designation'] as const,
@@ -274,6 +292,9 @@ export const queryKeys = {
         ? ([...queryKeys.designation.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.designation.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.designation.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string, companyId?: number) =>
+      [...queryKeys.designation.all, 'infinite', companyId ?? 0, search ?? ''] as const,
     /** Effective-dated wage structure history for one designation. */
     wageStructures: (designationId: number) =>
       [...queryKeys.designation.all, 'wage-structures', designationId] as const,
@@ -337,6 +358,9 @@ export const queryKeys = {
         ? ([...queryKeys.officeAddress.all, 'list', officeFor, params] as const)
         : ([...queryKeys.officeAddress.all, 'list', officeFor] as const),
     detail: (id: number) => [...queryKeys.officeAddress.all, 'detail', id] as const,
+    /** Paged, server-searched, one `office_for` — backs the scroll-lazy dropdown. */
+    infinite: (officeFor: string, search?: string) =>
+      [...queryKeys.officeAddress.all, 'infinite', officeFor, search ?? ''] as const,
   },
   state: {
     all: ['state'] as const,
@@ -368,6 +392,9 @@ export const queryKeys = {
         ? ([...queryKeys.leaveType.all, 'list', params] as const)
         : ([...queryKeys.leaveType.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.leaveType.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string) =>
+      [...queryKeys.leaveType.all, 'infinite', search ?? ''] as const,
   },
   holiday: {
     all: ['holiday'] as const,
@@ -392,6 +419,9 @@ export const queryKeys = {
         ? ([...queryKeys.documentType.all, 'list', params] as const)
         : ([...queryKeys.documentType.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.documentType.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
+    infinite: (search?: string) =>
+      [...queryKeys.documentType.all, 'infinite', search ?? ''] as const,
   },
   document: {
     all: ['document'] as const,
@@ -457,6 +487,9 @@ export const queryKeys = {
         ? ([...queryKeys.employee.all, 'list', params] as const)
         : ([...queryKeys.employee.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.employee.all, 'detail', id] as const,
+    /** Paged, server-searched, name-sorted — backs the detail header's scroll-lazy switcher. */
+    infinite: (search?: string) =>
+      [...queryKeys.employee.all, 'infinite', search ?? ''] as const,
     /**
      * The picker list — every company of the account, so no tenant on the key.
      * `search` is matched server-side, which makes each term its own result set.

@@ -35,8 +35,7 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
     isError,
     loadError,
     goToList,
-    stateOptions,
-    isStatesLoading,
+    stateSelect,
     isForbidden,
     forbiddenMessage,
   } = useLwfRateForm(lwfRateId)
@@ -83,8 +82,7 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
                 register={register}
                 control={control}
                 errors={errors}
-                stateOptions={stateOptions}
-                isStatesLoading={isStatesLoading}
+                stateSelect={stateSelect}
               />
 
               <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-5">

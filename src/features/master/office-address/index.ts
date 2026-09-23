@@ -10,7 +10,11 @@ export { OfficeAddressListPage } from './pages/office-address-list-page'
 export { OfficeAddressCreatePage } from './pages/office-address-create-page'
 export { useOfficeAddresses } from './api/use-office-addresses'
 export { useOfficeAddress } from './api/use-office-address'
-export { formatAddress } from './lib/office-address-mappers'
+export {
+  useOfficeAddressSelect,
+  type OfficeAddressSelectOptions,
+} from './hooks/use-office-address-select'
+export { formatAddress, officeAddressLabel } from './lib/office-address-mappers'
 export { OFFICE_FOR_VALUES } from './types'
 export type {
   OfficeAddress,

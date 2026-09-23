@@ -1,121 +1,127 @@
-import { useMemo } from 'react'
-import type { ComboboxOption } from '@/components/ui/combobox'
-import { useStates } from '@/features/master/state'
-import { useDistricts } from '@/features/master/district'
-import { useOfficeAddresses, type OfficeFor } from '@/features/master/office-address'
+import { useWatch, type Control } from 'react-hook-form'
+import type { PagedSelect } from '@/hooks/use-paged-select'
+import { useStateOption, useStateSelect, type StateSelect } from '@/features/master/state'
+import {
+  useDistrictOption,
+  useDistrictSelect,
+  type DistrictSelect,
+} from '@/features/master/district'
+import {
+  useOfficeAddress,
+  useOfficeAddressSelect,
+} from '@/features/master/office-address'
+import type { BranchFormValues } from '../schemas'
+import type { BranchActs } from '../types'
 
-interface UseActLookupsOptions {
+/** A field's saved id as the dropdown's `selected`, or nothing when blank. */
+const asSelected = (value: string | undefined) => (value ? value : undefined)
+
+interface UseActSelectsOptions {
+  control: Control<BranchFormValues>
   /**
-   * Whether the acts tab is actually on screen. Everything here is for that tab
-   * alone, and none of it is cheap — the branch detail step must not pay for it.
+   * Whether the acts tab is actually on screen. The office dropdowns are for that
+   * tab alone — the branch detail step must not pay for them.
    */
   enabled: boolean
-  /**
-   * The state Professional Tax points at, so its districts can be narrowed.
-   * It's the only act carrying a state — the rest record an office instead.
-   */
-  ptStateId?: number
 }
 
 /**
- * The masters the "Applicable Acts" tab points at: states, districts and the
- * statutory offices, all referenced by id.
+ * The "Applicable Acts" tab's dropdowns: the Professional Tax state/district
+ * pair and one office dropdown per statutory body, all scroll-lazy and
+ * server-searched — nothing here reads a whole master.
  *
- * Only Professional Tax carries a state and district; its districts are read
- * narrowed by `state_id` rather than as the whole master, and only once a state
- * is chosen.
- *
- * Office addresses come per `office_for`, so each act only ever offers the
- * offices of its own body.
+ * Each office dropdown lists only the offices of its own body (`office_for`),
+ * and each is handed the id its field holds so a saved office shows its label
+ * before the page holding it loads.
  */
-export function useActLookups({ enabled, ptStateId }: UseActLookupsOptions) {
-  const { data: states } = useStates({ enabled })
-
-  // The cascade waits for its state — no state, nothing to narrow by, and an
-  // unnarrowed read would be the whole master.
-  const ptDistricts = useDistricts(ptStateId, {
-    enabled: enabled && ptStateId !== undefined,
+export function useActSelects({ control, enabled }: UseActSelectsOptions) {
+  const [pf, esic, factory, lwf, ex, ptStateId, ptDistrictId] = useWatch({
+    control,
+    name: [
+      'pfOfficeAddressId',
+      'esicOfficeAddressId',
+      'factoryOfficeAddressId',
+      'lwfOfficeAddressId',
+      'exOfficeAddressId',
+      'ptStateId',
+      'ptDistrictId',
+    ],
   })
 
-  const pfOffices = useOfficeAddresses('PF', undefined, { enabled })
-  const esicOffices = useOfficeAddresses('ESIC', undefined, { enabled })
-  const factoryOffices = useOfficeAddresses('FACTORY', undefined, { enabled })
-  const lwfOffices = useOfficeAddresses('LWF', undefined, { enabled })
-  const exOffices = useOfficeAddresses('EMPLOYMENT EXCHANGE', undefined, { enabled })
+  const ptState: StateSelect = useStateSelect({
+    selected: ptStateId ? { value: ptStateId } : undefined,
+  })
 
-  const stateOptions = useMemo<ComboboxOption[]>(
-    () => (states ?? []).map((s) => ({ label: s.stateName, value: String(s.id) })),
-    [states],
-  )
+  // The cascade waits for its state — the district read is narrowed by `state_id`.
+  const ptDistrict: DistrictSelect = useDistrictSelect({
+    stateId: ptStateId ? Number(ptStateId) : undefined,
+    selected: ptDistrictId ? { value: ptDistrictId } : undefined,
+  })
 
-  const ptDistrictOptions = useMemo<ComboboxOption[]>(
-    () =>
-      (ptDistricts.data ?? []).map((d) => ({
-        label: d.districtName,
-        value: String(d.id),
-      })),
-    [ptDistricts.data],
-  )
-
-  /** Every office the screens know, keyed by the body that owns it. */
-  const offices = useMemo(
-    () => ({
-      PF: pfOffices.data?.items ?? [],
-      ESIC: esicOffices.data?.items ?? [],
-      FACTORY: factoryOffices.data?.items ?? [],
-      LWF: lwfOffices.data?.items ?? [],
-      'EMPLOYMENT EXCHANGE': exOffices.data?.items ?? [],
-    }),
-    [
-      pfOffices.data,
-      esicOffices.data,
-      factoryOffices.data,
-      lwfOffices.data,
-      exOffices.data,
-    ],
-  )
-
-  /**
-   * One body's offices as dropdown options. The city rides along in the label
-   * because office names repeat across a state and the name alone doesn't say
-   * which one the user means.
-   */
-  const officesFor = useMemo(() => {
-    return (officeFor: OfficeFor): ComboboxOption[] =>
-      offices[officeFor].map((office) => ({
-        label: office.city ? `${office.officeName} — ${office.city}` : office.officeName,
-        value: String(office.id),
-      }))
-  }, [offices])
-
-  // ---- name lookups, for the read-only detail screen ----
-
-  const stateName = useMemo(() => {
-    const byId = new Map((states ?? []).map((s) => [s.id, s.stateName]))
-    return (id: number | null) => (id === null ? null : (byId.get(id) ?? null))
-  }, [states])
-
-  const districtName = useMemo(() => {
-    const byId = new Map((ptDistricts.data ?? []).map((d) => [d.id, d.districtName]))
-    return (id: number | null) => (id === null ? null : (byId.get(id) ?? null))
-  }, [ptDistricts.data])
-
-  const officeName = useMemo(() => {
-    return (officeFor: OfficeFor, id: number | null) => {
-      if (id === null) return null
-      const office = offices[officeFor].find((o) => o.id === id)
-      return office ? office.officeName : null
-    }
-  }, [offices])
+  const pfOffice: PagedSelect = useOfficeAddressSelect({
+    officeFor: 'PF',
+    selected: asSelected(pf),
+    enabled,
+  })
+  const esicOffice = useOfficeAddressSelect({
+    officeFor: 'ESIC',
+    selected: asSelected(esic),
+    enabled,
+  })
+  const factoryOffice = useOfficeAddressSelect({
+    officeFor: 'FACTORY',
+    selected: asSelected(factory),
+    enabled,
+  })
+  const lwfOffice = useOfficeAddressSelect({
+    officeFor: 'LWF',
+    selected: asSelected(lwf),
+    enabled,
+  })
+  const exOffice = useOfficeAddressSelect({
+    officeFor: 'EMPLOYMENT EXCHANGE',
+    selected: asSelected(ex),
+    enabled,
+  })
 
   return {
-    stateOptions,
-    ptDistrictOptions,
-    officesFor,
-    stateName,
-    districtName,
-    officeName,
+    ptStateId,
+    ptState,
+    ptDistrict,
+    pfOffice,
+    esicOffice,
+    factoryOffice,
+    lwfOffice,
+    exOffice,
   }
 }
 
-export type ActLookups = ReturnType<typeof useActLookups>
+export type ActSelects = ReturnType<typeof useActSelects>
+
+/**
+ * The names behind the ids an acts row saves, for the read-only detail screen.
+ * Each is read by id — only the rows actually referenced, never a whole master —
+ * and reads as `null` while loading or when the act records none.
+ */
+export function useActNames(acts: BranchActs | null) {
+  // `useOfficeAddress` stays disabled for a non-finite id — an act with no office.
+  const pf = useOfficeAddress(acts?.pfOfficeAddressId ?? NaN).data
+  const esic = useOfficeAddress(acts?.esicOfficeAddressId ?? NaN).data
+  const factory = useOfficeAddress(acts?.factoryOfficeAddressId ?? NaN).data
+  const lwf = useOfficeAddress(acts?.lwfOfficeAddressId ?? NaN).data
+  const ex = useOfficeAddress(acts?.exOfficeAddressId ?? NaN).data
+  const ptState = useStateOption(acts?.ptStateId).data
+  const ptDistrict = useDistrictOption(acts?.ptDistrictId).data
+
+  return {
+    pfOffice: pf?.officeName ?? null,
+    esicOffice: esic?.officeName ?? null,
+    factoryOffice: factory?.officeName ?? null,
+    lwfOffice: lwf?.officeName ?? null,
+    exOffice: ex?.officeName ?? null,
+    ptState: ptState?.label ?? null,
+    ptDistrict: ptDistrict?.label ?? null,
+  }
+}
+
+export type ActNames = ReturnType<typeof useActNames>

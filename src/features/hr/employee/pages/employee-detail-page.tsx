@@ -108,6 +108,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     goToAttendance,
     employeeOptions,
     employeesLoading,
+    loadMoreEmployees,
     setEmployeeSearch,
     changeEmployee,
   } = useEmployeeDetail(data);
@@ -224,6 +225,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           isActive={isActive}
           options={employeeOptions}
           optionsLoading={employeesLoading}
+          onLoadMore={loadMoreEmployees}
           onSearchChange={setEmployeeSearch}
           onChangeEmployee={changeEmployee}
         />
@@ -1259,6 +1261,7 @@ function EmployeeHero({
   isActive,
   options,
   optionsLoading,
+  onLoadMore,
   onSearchChange,
   onChangeEmployee,
 }: {
@@ -1267,6 +1270,7 @@ function EmployeeHero({
   isActive: boolean;
   options: Employee[];
   optionsLoading: boolean;
+  onLoadMore: () => void;
   onSearchChange: (value: string) => void;
   onChangeEmployee: (id: number) => void;
 }) {
@@ -1309,6 +1313,7 @@ function EmployeeHero({
               onChange={(value) => onChangeEmployee(Number(value))}
               options={employeeChoices(employee, options)}
               onSearchChange={onSearchChange}
+              onScrollEnd={onLoadMore}
               loading={optionsLoading}
               placeholder={fullName}
               searchPlaceholder="Search name or code…"

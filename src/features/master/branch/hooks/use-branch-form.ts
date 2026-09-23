@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -15,7 +15,7 @@ import { useBranchActs } from '../api/use-branch-acts'
 import { useSaveBranchActs } from '../api/use-branch-acts-mutations'
 import { branchToFormValues } from '../lib/branch-mappers'
 import { actsToFormValues } from '../lib/act-mappers'
-import { useActLookups } from './use-act-lookups'
+import { useActSelects } from './use-act-lookups'
 
 /** The two tabs of the create/edit screen. */
 export const BRANCH_FORM_TABS = ['detail', 'acts'] as const
@@ -211,30 +211,20 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
     setValue('districtId', '')
   }
 
-  const ptStateId = useWatch({ control, name: 'ptStateId' })
-
-  // The acts tab's own references: the state master, the Professional Tax
-  // district read, and five office lists. None of it is cheap and none of it
-  // belongs to the branch detail step, so it waits until that tab is genuinely
-  // on screen.
-  const lookups = useActLookups({
-    enabled: isEdit && tab === 'acts',
-    ptStateId: ptStateId ? Number(ptStateId) : undefined,
-  })
+  // The acts tab's dropdowns — all scroll-lazy. The office lists belong to that
+  // tab alone, so they wait until it is genuinely on screen.
+  const actSelects = useActSelects({ control, enabled: isEdit && tab === 'acts' })
 
   /** The Professional Tax state/district pair — the only one the acts carry. */
-  const pt = useMemo(
-    () => ({
-      districtOptions: lookups.ptDistrictOptions,
-      hasState: Boolean(ptStateId),
-      changeState: (value: string, onChange: (value: string) => void) => {
-        onChange(value)
-        setValue('ptDistrictId', '')
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ptStateId, lookups.ptDistrictOptions],
-  )
+  const pt = {
+    state: actSelects.ptState,
+    district: actSelects.ptDistrict,
+    hasState: Boolean(actSelects.ptStateId),
+    changeState: (value: string, onChange: (value: string) => void) => {
+      onChange(value)
+      setValue('ptDistrictId', '')
+    },
+  }
 
   const goToList = () => navigate({ to: '/master/branch' })
 
@@ -351,12 +341,11 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
     hasState: Boolean(selectedStateId),
     changeState,
     /** The acts tab's dropdowns. */
-    actStateOptions: lookups.stateOptions,
     pt,
-    pfOfficeOptions: lookups.officesFor('PF'),
-    esicOfficeOptions: lookups.officesFor('ESIC'),
-    factoryOfficeOptions: lookups.officesFor('FACTORY'),
-    lwfOfficeOptions: lookups.officesFor('LWF'),
-    exOfficeOptions: lookups.officesFor('EMPLOYMENT EXCHANGE'),
+    pfOffice: actSelects.pfOffice,
+    esicOffice: actSelects.esicOffice,
+    factoryOffice: actSelects.factoryOffice,
+    lwfOffice: actSelects.lwfOffice,
+    exOffice: actSelects.exOffice,
   }
 }

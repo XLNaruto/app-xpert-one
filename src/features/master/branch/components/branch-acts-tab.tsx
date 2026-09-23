@@ -10,7 +10,10 @@ import {
 } from 'lucide-react'
 import { DateField } from '@/components/common/date-field'
 import { Field } from '@/components/common/form-field'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
+import type { StateSelect } from '@/features/master/state'
+import type { DistrictSelect } from '@/features/master/district'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { ESIC_DEDUCTS_ON_OPTIONS } from '../constants'
@@ -23,7 +26,10 @@ import { ActCard } from './act-card'
  * with and nothing more.
  */
 interface ActGeography {
-  districtOptions: ComboboxOption[]
+  /** Scroll-lazy state dropdown props — spread onto `<Combobox>`. */
+  state: StateSelect
+  /** Scroll-lazy district dropdown, narrowed to the chosen state. */
+  district: DistrictSelect
   hasState: boolean
   /** Pick the state and clear its district — it may not exist under the new one. */
   changeState: (value: string, onChange: (value: string) => void) => void
@@ -33,15 +39,13 @@ interface BranchActsTabProps {
   register: UseFormRegister<BranchFormValues>
   control: Control<BranchFormValues>
   errors: FieldErrors<BranchFormValues>
-  /** The state master, keyed by id — for the Professional Tax card. */
-  stateOptions: ComboboxOption[]
   pt: ActGeography
-  /** Offices of one statutory body, keyed by id. */
-  pfOfficeOptions: ComboboxOption[]
-  esicOfficeOptions: ComboboxOption[]
-  factoryOfficeOptions: ComboboxOption[]
-  lwfOfficeOptions: ComboboxOption[]
-  exOfficeOptions: ComboboxOption[]
+  /** Offices of one statutory body — scroll-lazy dropdown props. */
+  pfOffice: PagedSelect
+  esicOffice: PagedSelect
+  factoryOffice: PagedSelect
+  lwfOffice: PagedSelect
+  exOffice: PagedSelect
 }
 
 /**
@@ -49,18 +53,17 @@ interface BranchActsTabProps {
  * saved to `/user/act-registrations` as one row.
  *
  * Offices are references: each dropdown lists only the offices of its own body,
- * out of the office-address master.
+ * out of the office-address master, paging in as it's scrolled.
  */
 export function BranchActsTab({
   control,
   errors,
-  stateOptions,
   pt,
-  pfOfficeOptions,
-  esicOfficeOptions,
-  factoryOfficeOptions,
-  lwfOfficeOptions,
-  exOfficeOptions,
+  pfOffice,
+  esicOffice,
+  factoryOffice,
+  lwfOffice,
+  exOffice,
 }: BranchActsTabProps) {
   return (
     <div className="space-y-5">
@@ -99,7 +102,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={pfOfficeOptions}
+                {...pfOffice}
                 placeholder="Select PF Office"
                 searchPlaceholder="Search office"
               />
@@ -175,7 +178,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={esicOfficeOptions}
+                {...esicOffice}
                 placeholder="Select ESIC Office"
                 searchPlaceholder="Search office"
               />
@@ -280,7 +283,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={factoryOfficeOptions}
+                {...factoryOffice}
                 placeholder="Select Factory Office"
                 searchPlaceholder="Search office"
               />
@@ -345,7 +348,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={(value) => pt.changeState(value, field.onChange)}
-                options={stateOptions}
+                {...pt.state}
                 placeholder="Select State"
                 searchPlaceholder="Search state"
               />
@@ -361,7 +364,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={pt.districtOptions}
+                {...pt.district}
                 placeholder={pt.hasState ? 'Select District' : 'Select a state first'}
                 searchPlaceholder="Search district"
               />
@@ -402,7 +405,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={lwfOfficeOptions}
+                {...lwfOffice}
                 placeholder="Select LWF Office"
                 searchPlaceholder="Search office"
               />
@@ -462,7 +465,7 @@ export function BranchActsTab({
                 className="w-full"
                 value={field.value}
                 onChange={field.onChange}
-                options={exOfficeOptions}
+                {...exOffice}
                 placeholder="Select Office"
                 searchPlaceholder="Search office"
               />

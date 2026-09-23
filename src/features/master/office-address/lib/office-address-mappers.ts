@@ -111,3 +111,11 @@ export function formatAddress(record: OfficeAddress): string {
   ].filter(Boolean)
   return parts.length ? parts.join(', ') : '—'
 }
+
+/**
+ * An office as a dropdown names it. The city rides along because office names
+ * repeat across a state and the name alone doesn't say which one the user means.
+ */
+export function officeAddressLabel(office: Pick<OfficeAddress, 'officeName' | 'city'>): string {
+  return office.city ? `${office.officeName} — ${office.city}` : office.officeName
+}

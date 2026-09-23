@@ -159,8 +159,7 @@ export function SalaryPage() {
         /* The pickers show the *draft* — what will be run, not what is on
            screen — and only Calculate Salary moves one to the other. */
         designationId={form.draftDesignationId}
-        designationOptions={form.designationOptions}
-        designationsLoading={form.designationsLoading}
+        designations={form.designations}
         onDesignationChange={form.changeDesignation}
         month={form.draftMonth}
         monthBounds={form.monthBounds}

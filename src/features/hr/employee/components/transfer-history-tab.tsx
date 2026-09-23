@@ -322,10 +322,8 @@ export function TransferHistoryTab({
                   className="w-full"
                   value={field.value}
                   onChange={field.onChange}
-                  options={tab.transfer.companyOptions}
-                  placeholder={
-                    tab.transfer.isCompaniesLoading ? 'Loading…' : 'Select company'
-                  }
+                  {...tab.transfer.companySelect}
+                  placeholder="Select company"
                   searchPlaceholder="Search company"
                 />
               )}

@@ -1,13 +1,11 @@
-import { useMemo } from 'react'
 import { Controller } from 'react-hook-form'
 import { Building2, Info, MessageSquare, Network, Plus, Trash2 } from 'lucide-react'
-import { ALL_ROWS } from '@/lib/pagination'
 import { Button } from '@/components/ui/button'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { useDepartments } from '@/features/master/department'
+import { useDepartmentSelect } from '@/features/master/department'
 import { WHOLE_COMPANY_LABEL } from '../constants'
 import type { useAdminUserForm } from '../hooks/use-admin-user-form'
 
@@ -47,16 +45,17 @@ function TalkGrantRow({
   const selectedIds = form.form.watch(`talkAccess.${index}.departmentIds`) ?? []
   const numericCompanyId = companyId ? Number(companyId) : undefined
 
-  const departments = useDepartments(ALL_ROWS, numericCompanyId)
-
-  const departmentOptions = useMemo<ComboboxOption[]>(
-    () =>
-      (departments.data?.items ?? []).map((department) => ({
-        label: department.departmentName,
-        value: String(department.id),
-      })),
-    [departments.data],
-  )
+  // Gated on a real company: without one the read would fall back to the
+  // session's own company and list departments that don't belong to this row.
+  const departmentSelect = useDepartmentSelect({
+    companyId: numericCompanyId,
+    selected: selectedIds,
+    enabled: numericCompanyId !== undefined,
+  })
+  // The picked ids are kept in `options`, but the placeholder only shows with
+  // nothing picked — so empty + settled means the company has none.
+  const hasNoDepartments =
+    !departmentSelect.loading && departmentSelect.options.length === 0
 
   const rowErrors = form.errors.talkAccess?.[index]
   const isWholeCompany = selectedIds.length === 0
@@ -100,21 +99,20 @@ function TalkGrantRow({
                 multiple
                 value={field.value ?? []}
                 onChange={field.onChange}
-                options={departmentOptions}
+                {...departmentSelect}
                 icon={Network}
                 clearable
                 placeholder={
                   !companyId
                     ? 'Pick a company first'
-                    : departments.isLoading
+                    : departmentSelect.loading && departmentSelect.options.length === 0
                       ? 'Loading departments…'
-                      : departmentOptions.length === 0
+                      : hasNoDepartments
                         ? 'No departments — whole company'
                         : WHOLE_COMPANY_LABEL
                 }
                 searchPlaceholder="Search departments"
                 className="w-full"
-                loading={departments.isLoading}
                 panelMinWidth={260}
               />
             )}

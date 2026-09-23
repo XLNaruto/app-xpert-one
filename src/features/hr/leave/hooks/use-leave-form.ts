@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { employeeOptions, useEmployees } from '@/features/hr/employee'
-import { useLeaveTypes } from '@/features/master/leave-type'
+import { useEmployeeSelect } from '@/features/hr/employee'
+import { useLeaveTypeSelect } from '@/features/master/leave-type'
 import { leaveSchemaFor, type LeaveFormValues } from '../schemas'
 import { EMPTY_LEAVE_FORM } from '../constants'
 import { useLeave, useLeaveBalance } from '../api/use-leaves'
@@ -48,8 +48,6 @@ export function useLeaveForm(id?: number) {
   const navigate = useNavigate()
 
   const detail = useLeave(id ?? Number.NaN)
-  const employees = useEmployees()
-  const leaveTypes = useLeaveTypes()
   const createLeave = useCreateLeave()
   const updateLeave = useUpdateLeave(id ?? Number.NaN)
   const uploadAttachment = useUploadLeaveAttachment()
@@ -84,19 +82,24 @@ export function useLeaveForm(id?: number) {
    */
   const isDecided = isEdit && detail.data !== undefined && detail.data.status !== 'PENDING'
 
-  const employeeSelectOptions = useMemo(
-    () => employeeOptions(employees.data?.items ?? []),
-    [employees.data],
-  )
+  // A leave can't change hands, so an edit never opens the picker.
+  const employeeSelect = useEmployeeSelect({ selected: employeeId, enabled: !isEdit })
 
-  const leaveTypeOptions = useMemo(
-    () =>
-      (leaveTypes.data?.items ?? []).map((type) => ({
-        label: `${type.leaveName} (${type.shortName})`,
-        value: String(type.id),
-      })),
-    [leaveTypes.data],
-  )
+  /*
+   * Paged through as the dropdown is scrolled. The saved leave already names its
+   * type — the catalog's current name, or the snapshot taken at filing if the type
+   * has since been deleted — so that label is used while the field still holds
+   * it, with no by-id read. A decided leave's type is locked, so nothing pages.
+   */
+  const saved = detail.data
+  const leaveTypeSelect = useLeaveTypeSelect({
+    selected: leaveTypeId || undefined,
+    selectedLabel:
+      saved && leaveTypeId === String(saved.leaveTypeId)
+        ? saved.leaveTypeName || saved.leaveType || undefined
+        : undefined,
+    enabled: !isDecided,
+  })
 
   /** A half day covers one date, so the two ends are held together. */
   useEffect(() => {
@@ -172,7 +175,8 @@ export function useLeaveForm(id?: number) {
 
   const save = (values: LeaveFormValues) => {
     const typeLabel =
-      leaveTypeOptions.find((option) => option.value === values.leaveTypeId)?.label ?? ''
+      leaveTypeSelect.options.find((option) => option.value === values.leaveTypeId)?.label ??
+      ''
 
     if (!isEdit) {
       createLeave.mutate(values, {
@@ -241,14 +245,12 @@ export function useLeaveForm(id?: number) {
     isDecided,
     /** The status the record was read at — what the lock notice names. */
     decidedStatus: detail.data?.status,
-    employeeSelectOptions,
+    employeeSelect,
     /** Who the leave belongs to, for the locked field on the edit screen. */
     employeeLabel: detail.data
       ? [detail.data.employeeName, detail.data.employeeCode].filter(Boolean).join(' · ')
       : '',
-    isEmployeesLoading: employees.isLoading,
-    leaveTypeOptions,
-    isLeaveTypesLoading: leaveTypes.isLoading,
+    leaveTypeSelect,
     isHalfDay: duration === 'HALF_DAY',
     fromDate,
     /** A new leave starts tomorrow at the earliest — the picker's own floor. */

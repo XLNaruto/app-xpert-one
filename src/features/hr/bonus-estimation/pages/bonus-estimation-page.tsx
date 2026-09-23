@@ -352,8 +352,7 @@ export function BonusEstimationPage() {
         monthBounds={scope.monthBounds}
         toMinDate={scope.toMinDate}
         departmentId={scope.draft.departmentId}
-        departmentOptions={scope.departmentChoices}
-        departmentsLoading={scope.departmentsLoading}
+        departments={scope.departments}
         onDepartmentChange={scope.changeDepartment}
         calculationField={scope.calculationField}
         onCalculationFieldChange={scope.setCalculationField}

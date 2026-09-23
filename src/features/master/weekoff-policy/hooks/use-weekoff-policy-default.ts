@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
-import { useCompanies } from '@/features/master/company'
-import { departmentOptions, useDepartments } from '@/features/master/department'
+import { useCompanySelect } from '@/features/master/company'
+import { useDepartmentSelect } from '@/features/master/department'
 import {
   useClearDefaultWeekoffPolicy,
   useSetDefaultWeekoffPolicy,
@@ -32,8 +32,6 @@ export type WeekoffDefaultLevel = 'company' | 'department'
  * the current state.
  */
 export function useWeekoffPolicyDefault() {
-  const companies = useCompanies()
-  const departments = useDepartments()
   const setDefault = useSetDefaultWeekoffPolicy()
   const clearDefault = useClearDefaultWeekoffPolicy()
 
@@ -45,19 +43,16 @@ export function useWeekoffPolicyDefault() {
   /** The department id as a string — the combobox's value. */
   const [departmentId, setDepartmentId] = useState('')
 
-  const companySelectOptions = useMemo(
-    () =>
-      (companies.data?.items ?? []).map((company) => ({
-        label: company.companyName,
-        value: String(company.id),
-      })),
-    [companies.data],
-  )
-
-  const departmentSelectOptions = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
+  // Both pickers page through their master as they're scrolled, and only while
+  // the dialog is open on the level that shows them.
+  const companySelect = useCompanySelect({
+    selected: companyId || undefined,
+    enabled: pinning !== null && level === 'company',
+  })
+  const departmentSelect = useDepartmentSelect({
+    selected: departmentId || undefined,
+    enabled: pinning !== null && level === 'department',
+  })
 
   const startPinning = (policy: WeekoffPolicy) => {
     setLevel('company')
@@ -140,12 +135,10 @@ export function useWeekoffPolicyDefault() {
     setLevel,
     companyId,
     setCompanyId,
-    companySelectOptions,
-    isCompaniesLoading: companies.isLoading,
+    companySelect,
     departmentId,
     setDepartmentId,
-    departmentSelectOptions,
-    isDepartmentsLoading: departments.isLoading,
+    departmentSelect,
     save,
     clear,
     isSaving: setDefault.isPending,

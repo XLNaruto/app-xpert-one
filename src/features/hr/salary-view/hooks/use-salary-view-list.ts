@@ -5,8 +5,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { ALL_ROWS } from '@/lib/pagination'
-import { departmentOptions, useDepartments } from '@/features/master/department'
+import { useDepartmentSelect } from '@/features/master/department'
 import { useDeleteSalaries } from '@/features/hr/salary'
 import {
   fromIsoMonth,
@@ -81,11 +80,9 @@ export function useSalaryViewList() {
 
   const report = useSalaryReport(filters, params, { enabled: companyId !== null })
 
-  const departments = useDepartments(ALL_ROWS)
-  const departmentChoices = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
+  const departments = useDepartmentSelect({
+    selected: departmentId === null ? undefined : String(departmentId),
+  })
   const monthBounds = useMemo(() => salaryViewMonthBounds(today), [today])
 
   const discard = useDeleteSalaries()
@@ -266,8 +263,8 @@ export function useSalaryViewList() {
     monthBounds,
     departmentId,
     changeDepartment,
-    departmentChoices,
-    departmentsLoading: departments.isLoading,
+    /** The Department field — paged and server-searched, spread onto the toolbar. */
+    departments,
     search,
     setSearch: changeSearch,
 

@@ -3,6 +3,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import type { EmployeeSelect } from '@/features/hr/employee'
+import type { PagedSelect } from '@/hooks/use-paged-select'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Field } from '@/components/common/form-field'
 import { formatIsoMonth, REPORT_MONTH_OPTIONS, reportMonthName } from '../constants'
@@ -29,12 +31,12 @@ interface ReportFilterCardProps<TType extends string> {
   isRangeInvalid: boolean
   departmentId: number | null
   onDepartmentChange: (value: number | null) => void
-  departmentOptions: ComboboxOption[]
-  departmentsLoading: boolean
+  /** The lazy department dropdown — `useDepartmentSelect`, spread onto the field. */
+  departments: PagedSelect
   employeeIds: number[]
   onEmployeesChange: (value: number[]) => void
-  employeeOptions: ComboboxOption[]
-  employeesLoading: boolean
+  /** The lazy employee dropdown — `useEmployeeSelect`, spread onto the field. */
+  employees: EmployeeSelect
   onApply: () => void
   canApply: boolean
   isFetching: boolean
@@ -75,12 +77,10 @@ export function ReportFilterCard<TType extends string>({
   isRangeInvalid,
   departmentId,
   onDepartmentChange,
-  departmentOptions,
-  departmentsLoading,
+  departments,
   employeeIds,
   onEmployeesChange,
-  employeeOptions,
-  employeesLoading,
+  employees,
   onApply,
   canApply,
   isFetching,
@@ -110,7 +110,7 @@ export function ReportFilterCard<TType extends string>({
           </Badge>
           <Badge variant="outline">
             {departmentId
-              ? (departmentOptions.find((o) => o.value === String(departmentId))?.label ??
+              ? (departments.options.find((o) => o.value === String(departmentId))?.label ??
                 'Department')
               : 'All departments'}
           </Badge>
@@ -199,9 +199,9 @@ export function ReportFilterCard<TType extends string>({
             <Combobox
               value={departmentId === null ? '' : String(departmentId)}
               onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
-              options={departmentOptions}
+              {...departments}
               icon={Building2}
-              placeholder={departmentsLoading ? 'Loading…' : 'All departments'}
+              placeholder="All departments"
               searchPlaceholder="Search departments…"
               clearable
             />
@@ -215,9 +215,9 @@ export function ReportFilterCard<TType extends string>({
               multiple
               value={employeeIds.map(String)}
               onChange={(value) => onEmployeesChange(value.map(Number))}
-              options={employeeOptions}
+              {...employees}
               icon={UsersRound}
-              placeholder={employeesLoading ? 'Loading…' : 'All employees'}
+              placeholder="All employees"
               searchPlaceholder="Search employees…"
             />
           </Field>

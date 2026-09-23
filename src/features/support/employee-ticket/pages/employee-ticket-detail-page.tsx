@@ -353,7 +353,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
         currentAssignee={ticket?.assignedToName ?? null}
         open={detail.isAssignOpen}
         onOpenChange={detail.setIsAssignOpen}
-        options={detail.assigneeOptions}
+        assignee={detail.assigneeSelect}
         value={detail.assigneeId}
         onChange={detail.setAssigneeId}
         onConfirm={detail.onAssign}

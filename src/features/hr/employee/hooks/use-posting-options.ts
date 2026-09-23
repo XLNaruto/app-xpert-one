@@ -1,26 +1,61 @@
 import { useMemo } from 'react'
 import type { ComboboxOption } from '@/components/ui/combobox'
-import { branchOptions, useBranches } from '@/features/master/branch'
+import type { PagedSelect } from '@/hooks/use-paged-select'
+import { useBranchSelect } from '@/features/master/branch'
 import { departmentOptions, useDepartments } from '@/features/master/department'
-import { useDesignations } from '@/features/master/designation'
+import { useDesignationSelect } from '@/features/master/designation'
 
 /** The dropdowns a posting is assembled from, ready for `<Combobox>`. */
 export interface PostingOptions {
-  branches: ComboboxOption[]
+  /** Scroll-lazy, server-searched — spread onto the branch `<Combobox>`. */
+  branches: PagedSelect
   departments: ComboboxOption[]
-  designations: ComboboxOption[]
-  isLoading: boolean
+  isDepartmentsLoading: boolean
+  /** Scroll-lazy, server-searched — spread onto the designation `<Combobox>`. */
+  designations: PagedSelect
+}
+
+/** A stored posting that already names its branch and designation. */
+export interface SavedPostingNames {
+  branchId: number | null
+  branchName: string
+  designationId: number | null
+  designationName: string
+}
+
+export interface PostingOptionsParams {
+  /** What the form's branch field holds right now. */
+  branchId: string
+  /** What the form's designation field holds right now. */
+  designationId: string
+  /**
+   * The posting the form was seeded from, when it carries the names — labels the
+   * saved values without a by-id read. Only used while a field still holds that
+   * record's id, so a fresh pick is never shown under the old name.
+   */
+  saved?: SavedPostingNames
+  /** See below — the destination company of a cross-company transfer. */
+  companyId?: number
+  /** Hold the branch/designation reads back until the form is on screen. */
+  enabled?: boolean
+}
+
+/** The saved name, while the field still holds the saved id. */
+function savedLabel(value: string, id: number | null | undefined, name: string | undefined) {
+  return id !== null && id !== undefined && String(id) === value && name ? name : undefined
 }
 
 /**
  * The three masters a posting points at — branch, department, designation.
  *
+ * Branch and designation page in as their lists are scrolled and search
+ * server-side, so the form never pulls either master whole.
+ *
  * **Why the department list is narrowed here rather than by the API.**
  * `GET /user/departments` takes only `company_id`; there is no `branch_id`
- * filter. But a department carries the branch it's pinned to, and each of these
- * reads pulls the whole master anyway (they feed dropdowns, not paged lists), so
- * narrowing to the chosen branch is a filter over data already in hand — not
- * client-side paging of a list.
+ * filter. But a department carries the branch it's pinned to, so the department
+ * read still pulls the whole master and narrows it to the chosen branch — paging
+ * it would show pages thinned (or emptied) by the filter.
  *
  * A department pinned to no branch stays in the list whatever is chosen: it
  * belongs to the company rather than to one branch.
@@ -34,41 +69,49 @@ export interface PostingOptions {
  * branches, departments and designations are what the new posting must point at,
  * so that id is passed straight through to the three reads.
  */
-export function usePostingOptions(branchId: string, companyId?: number): PostingOptions {
-  const branches = useBranches(undefined, companyId)
+export function usePostingOptions({
+  branchId,
+  designationId,
+  saved,
+  companyId,
+  enabled = true,
+}: PostingOptionsParams): PostingOptions {
+  const branches = useBranchSelect({
+    companyId,
+    enabled,
+    selected: branchId || undefined,
+    selectedLabel: savedLabel(branchId, saved?.branchId, saved?.branchName),
+  })
+  const designations = useDesignationSelect({
+    companyId,
+    enabled,
+    selected: designationId || undefined,
+    selectedLabel: savedLabel(designationId, saved?.designationId, saved?.designationName),
+  })
   const departments = useDepartments(undefined, companyId)
-  const designations = useDesignations(undefined, companyId)
 
-  // The query results themselves are the dependencies — `?? []` inside the memo,
-  // never outside it, or the fallback is a fresh array every render and nothing is
+  // The query result itself is the dependency — `?? []` inside the memo, never
+  // outside it, or the fallback is a fresh array every render and nothing is
   // ever memoized.
-  const options = useMemo(() => {
-    const branchList = branches.data?.items ?? []
-    const departmentList = departments.data?.items ?? []
-    const designationList = designations.data?.items ?? []
-
+  const departmentList = useMemo(() => {
+    const all = departments.data?.items ?? []
     const chosenBranch = branchId.trim() ? Number(branchId) : undefined
 
     const scoped =
       chosenBranch === undefined
-        ? departmentList
-        : departmentList.filter(
+        ? all
+        : all.filter(
             (department) =>
               department.branchId === null || department.branchId === chosenBranch,
           )
 
-    return {
-      branches: branchOptions(branchList),
-      departments: departmentOptions(scoped),
-      designations: designationList.map((designation) => ({
-        label: designation.designationName,
-        value: String(designation.id),
-      })),
-    }
-  }, [branches.data, departments.data, designations.data, branchId])
+    return departmentOptions(scoped)
+  }, [departments.data, branchId])
 
   return {
-    ...options,
-    isLoading: branches.isLoading || departments.isLoading || designations.isLoading,
+    branches,
+    departments: departmentList,
+    isDepartmentsLoading: departments.isLoading,
+    designations,
   }
 }

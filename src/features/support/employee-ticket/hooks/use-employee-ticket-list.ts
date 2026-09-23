@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { ALL_ROWS } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '@/features/company'
-import { useAdminUsers } from '@/features/administration/admin-user'
+import { useAdminUserSelect, type AdminUser } from '@/features/administration/admin-user'
 import {
   ALL_FILTER,
   ANY_ASSIGNEE_OPTION,
@@ -87,18 +86,31 @@ export function useEmployeeTicketList() {
    * stay pickable HERE (unlike the hand-over dialog): they may still be holding
    * tickets somebody needs to find.
    */
-  const { data: users } = useAdminUsers(ALL_ROWS)
-
-  const assigneeOptions = useMemo(() => {
-    const roster = (users?.items ?? []).map((user) => ({
+  const toAssigneeOption = useCallback(
+    (user: AdminUser) => ({
       label: user.id === currentUserId ? `${user.name} (you)` : user.name,
       value: String(user.id),
-    }))
+    }),
+    [currentUserId],
+  )
+
+  // Paged through as the facet is scrolled and searched server-side. The reader's
+  // own id is covered by the synthetic row below, so only somebody else's pick
+  // needs keeping among the options.
+  const pickedAssignee = filters.assignedToUserId
+  const assigneeSelect = useAdminUserSelect({
+    selected:
+      pickedAssignee && pickedAssignee !== String(currentUserId) ? pickedAssignee : undefined,
+    toOption: toAssigneeOption,
+  })
+
+  const assigneeOptions = useMemo(() => {
+    const roster = assigneeSelect.options
     // "On my plate" files the reader's own id into the facet, and the chip that
     // then appears is labelled from these options — so the reader has to be one
-    // of them even before the roster answers, and whether or not that endpoint
-    // lists them at all (an owner account isn't an admin user). Otherwise the
-    // chip falls back to the raw id and reads as `14`.
+    // of them even before the roster's page holding them arrives, and whether or
+    // not that endpoint lists them at all (an owner account isn't an admin user).
+    // Otherwise the chip falls back to the raw id and reads as `14`.
     const hasMe = roster.some((option) => option.value === String(currentUserId))
     return [
       ANY_ASSIGNEE_OPTION,
@@ -107,7 +119,7 @@ export function useEmployeeTicketList() {
         : []),
       ...roster,
     ]
-  }, [users?.items, currentUser, currentUserId])
+  }, [assigneeSelect.options, currentUser, currentUserId])
 
   /**
    * '' is every company — the desk is staffed by people, not by company, so an
@@ -259,7 +271,8 @@ export function useEmployeeTicketList() {
     resetFilters,
     hasFilters,
     companyOptions,
-    assigneeOptions,
+    /** The assignee facet — the lazy roster with "Anyone" and the reader on top. */
+    assigneeFacet: { ...assigneeSelect, options: assigneeOptions },
     tabs,
 
     isLoading,

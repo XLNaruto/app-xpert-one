@@ -34,8 +34,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
     register,
     control,
     errors,
-    typeOptions,
-    isTypesLoading,
+    typeSelect,
     onSubmit,
     isEdit,
     isPending,
@@ -105,12 +104,8 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
                       className="w-full"
                       value={field.value}
                       onChange={field.onChange}
-                      options={typeOptions}
-                      placeholder={
-                        isTypesLoading
-                          ? 'Loading…'
-                          : `Select ${DOCUMENT_LABELS.documentType}`
-                      }
+                      {...typeSelect}
+                      placeholder={`Select ${DOCUMENT_LABELS.documentType}`}
                       searchPlaceholder="Search document type"
                     />
                   )}

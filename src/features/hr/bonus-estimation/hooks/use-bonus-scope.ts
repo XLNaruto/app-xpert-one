@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
-import { ALL_ROWS } from '@/lib/pagination'
-import { departmentOptions, useDepartments } from '@/features/master/department'
+import { useDepartmentSelect } from '@/features/master/department'
 import {
   bonusMonthBounds,
   fromIsoMonth,
@@ -68,11 +67,6 @@ export function useBonusScope() {
   const [calculationField, setCalculationField] =
     useState<CalculationField>('basic_pay')
 
-  const departments = useDepartments(ALL_ROWS)
-  const departmentChoices = useMemo(
-    () => departmentOptions(departments.data?.items ?? []),
-    [departments.data],
-  )
   const monthBounds = useMemo(() => bonusMonthBounds(today), [today])
 
   /**
@@ -148,9 +142,19 @@ export function useBonusScope() {
     [scope, companyId],
   )
 
+  /* Both the draft AND the applied department are kept among the options, so the
+     heading can still name what was loaded after the picker has moved on. */
+  const departments = useDepartmentSelect({
+    selected: [draft.departmentId, scope?.departmentId]
+      .filter((id): id is number => id != null)
+      .map(String),
+  })
+
   const departmentName =
-    departmentChoices.find((option) => option.value === String(scope?.departmentId))
-      ?.label ?? null
+    scope?.departmentId == null
+      ? null
+      : (departments.options.find((option) => option.value === String(scope.departmentId))
+          ?.label ?? null)
 
   return {
     companyId,
@@ -166,8 +170,8 @@ export function useBonusScope() {
     monthBounds,
     /** The To picker's floor — the From month, so an inverted range can't be picked. */
     toMinDate,
-    departmentChoices,
-    departmentsLoading: departments.isLoading,
+    /** The Department field — paged and server-searched, spread onto the toolbar. */
+    departments,
     hasPendingScope,
     canLoad,
     load,

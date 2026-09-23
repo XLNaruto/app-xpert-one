@@ -30,7 +30,7 @@ export function DocumentListPage() {
     onSortingChange,
     typeFilter,
     changeTypeFilter,
-    typeOptions,
+    typeSelect,
     isLoading,
     isError,
     error,
@@ -169,7 +169,7 @@ export function DocumentListPage() {
                   icon: FileType2,
                   value: typeFilter,
                   onChange: changeTypeFilter,
-                  options: typeOptions,
+                  ...typeSelect,
                   searchable: true,
                   searchPlaceholder: 'Search document type',
                   // '' is "every type" — the API simply gets no filter.

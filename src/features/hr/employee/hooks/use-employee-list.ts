@@ -61,6 +61,10 @@ export function useEmployeeList() {
   const goToDetail = (id: number) =>
     navigate({ to: '/hr/employee/detail', search: { data: encryptId(id) } })
 
+  /** The printable appointment order for one employee. */
+  const goToAppointmentLetter = (id: number) =>
+    navigate({ to: '/hr/employee/appointment-letter', search: { data: encryptId(id) } })
+
   // A 403 isn't a broken screen, it's a missing permission — the page shows the
   // 403 screen with the server's reason instead of an inline error line.
   const isForbidden = isForbiddenError(error)
@@ -86,6 +90,7 @@ export function useEmployeeList() {
     goToCreate,
     goToEdit,
     goToDetail,
+    goToAppointmentLetter,
     /**
      * `bank_id` → bank name, empty until the master has loaded. Memoised, so the
      * column definitions can list it as a dependency and rebuild when it fills.

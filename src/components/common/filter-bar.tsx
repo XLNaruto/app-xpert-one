@@ -20,6 +20,14 @@ export interface FilterFacet {
   searchPlaceholder?: string
   /** Value that means "no filter applied" (default "all"). */
   clearValue?: string
+  /**
+   * Lazy-loading pass-through for a master too big to list whole — spread a
+   * `PagedSelect` here: the next page loads on scroll-to-end and the search box
+   * is sent to the server instead of filtering `options` locally.
+   */
+  onScrollEnd?: () => void
+  onSearchChange?: (query: string) => void
+  loading?: boolean
 }
 
 interface FilterSearch {
@@ -295,6 +303,9 @@ export function FilterBar({
                       placeholder={facetPlaceholder(facet)}
                       searchable={facet.searchable}
                       searchPlaceholder={facet.searchPlaceholder}
+                      onScrollEnd={facet.onScrollEnd}
+                      onSearchChange={facet.onSearchChange}
+                      loading={facet.loading}
                     />
                   </div>
                 ))}

@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { ALL_ROWS } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
-import { useAdminUsers } from '@/features/administration/admin-user'
+import { useAdminUserSelect, type AdminUser } from '@/features/administration/admin-user'
 import {
   employeeTicketReplySchema,
   employeeTicketResolveSchema,
@@ -92,18 +91,29 @@ export function useEmployeeTicketDetail(id?: number) {
    * checked — parking a ticket with a colleague whose role is still being set
    * up is legitimate.
    */
-  const { data: users } = useAdminUsers(ALL_ROWS)
-
-  const assigneeOptions = useMemo(
-    () =>
-      (users?.items ?? []).map((user) => ({
-        label: user.id === currentUserId ? `${user.name} (you)` : user.name,
-        value: String(user.id),
-        disabled: user.status !== 'active',
-        hint: user.status !== 'active' ? 'Inactive' : (user.roleName ?? undefined),
-      })),
-    [users?.items, currentUserId],
+  const toAssigneeOption = useCallback(
+    (user: AdminUser) => ({
+      label: user.id === currentUserId ? `${user.name} (you)` : user.name,
+      value: String(user.id),
+      disabled: user.status !== 'active',
+      hint: user.status !== 'active' ? 'Inactive' : (user.roleName ?? undefined),
+    }),
+    [currentUserId],
   )
+
+  // Paged through as the picker is scrolled, and only while the dialog is open.
+  // The ticket already names whoever holds it, so that label needs no read.
+  const assigneeSelect = useAdminUserSelect({
+    selected: assigneeId || undefined,
+    selectedLabel:
+      ticket?.assignedToName && assigneeId === String(ticket.assignedToUserId)
+        ? ticket.assignedToUserId === currentUserId
+          ? `${ticket.assignedToName} (you)`
+          : ticket.assignedToName
+        : undefined,
+    toOption: toAssigneeOption,
+    enabled: isAssignOpen,
+  })
 
   const replyForm = useForm<EmployeeTicketReplyFormValues>({
     resolver: zodResolver(employeeTicketReplySchema),
@@ -268,7 +278,7 @@ export function useEmployeeTicketDetail(id?: number) {
     openAssign,
     assigneeId,
     setAssigneeId,
-    assigneeOptions,
+    assigneeSelect,
     onAssign,
     isAssigning: assign.isPending,
 

@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
-import { documentTypeOptions, useDocumentTypes } from '@/features/master/document-type'
+import { useDocumentTypeSelect } from '@/features/master/document-type'
 import { DOCUMENT_DEFAULT_SORT } from '../constants'
 import { useDocuments } from '../api/use-documents'
 import { useDeleteDocument } from '../api/use-document-mutations'
@@ -38,12 +38,9 @@ export function useDocumentList() {
   )
   const deleteDocument = useDeleteDocument()
 
-  // The filter dropdown is driven by the document type master.
-  const documentTypes = useDocumentTypes()
-  const typeOptions = useMemo(
-    () => documentTypeOptions(documentTypes.data?.items ?? []),
-    [documentTypes.data],
-  )
+  // The filter dropdown pages through the document type master as it's
+  // scrolled; the chosen type stays among its options so the chip keeps a label.
+  const typeSelect = useDocumentTypeSelect({ selected: typeFilter || undefined })
 
   const [pendingDelete, setPendingDelete] = useState<Document | null>(null)
 
@@ -91,8 +88,7 @@ export function useDocumentList() {
     /** Type filter — applied server-side via `document_type_id`. */
     typeFilter,
     changeTypeFilter,
-    typeOptions,
-    isTypesLoading: documentTypes.isLoading,
+    typeSelect,
     isLoading,
     isError,
     error,

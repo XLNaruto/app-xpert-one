@@ -48,11 +48,9 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
     isEdit,
     isDecided,
     decidedStatus,
-    employeeSelectOptions,
+    employeeSelect,
     employeeLabel,
-    isEmployeesLoading,
-    leaveTypeOptions,
-    isLeaveTypesLoading,
+    leaveTypeSelect,
     isHalfDay,
     minFromDate,
     minToDate,
@@ -151,10 +149,8 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                         className="w-full"
                         value={field.value}
                         onChange={field.onChange}
-                        options={employeeSelectOptions}
-                        placeholder={
-                          isEmployeesLoading ? 'Loading…' : 'Search & Select Employee…'
-                        }
+                        {...employeeSelect}
+                        placeholder="Search & Select Employee…"
                         searchPlaceholder="Search employee"
                       />
                     )}
@@ -176,8 +172,8 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                       className="w-full"
                       value={field.value}
                       onChange={field.onChange}
-                      options={leaveTypeOptions}
-                      placeholder={isLeaveTypesLoading ? 'Loading…' : 'Select Leave Type'}
+                      {...leaveTypeSelect}
+                      placeholder="Select Leave Type"
                       searchPlaceholder="Search leave type"
                       disabled={isDecided}
                     />

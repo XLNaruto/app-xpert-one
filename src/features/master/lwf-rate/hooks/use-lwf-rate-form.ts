@@ -1,10 +1,10 @@
-import { useEffect, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { useStates } from '@/features/master/state'
+import { useStateSelect } from '@/features/master/state'
 import { lwfRateSchema, type LwfRateFormValues } from '../schemas'
 import { EMPTY_LWF_RATE_FORM } from '../constants'
 import { useLwfRate } from '../api/use-lwf-rate'
@@ -21,7 +21,6 @@ export function useLwfRateForm(id?: number) {
   const navigate = useNavigate()
 
   const detail = useLwfRate(id ?? Number.NaN)
-  const { data: states, isLoading: isStatesLoading } = useStates()
   const createLwfRate = useCreateLwfRate()
   const updateLwfRate = useUpdateLwfRate(id ?? Number.NaN)
 
@@ -41,11 +40,22 @@ export function useLwfRateForm(id?: number) {
     if (detail.data) reset(lwfRateToFormValues(detail.data))
   }, [detail.data, reset])
 
-  // The State dropdown is fed by the state master, not a hard-coded list.
-  const stateOptions = useMemo(
-    () => (states ?? []).map((s) => ({ label: s.stateName, value: String(s.id) })),
-    [states],
-  )
+  // The State dropdown pages through the state master as it's scrolled. The
+  // saved rate already names its state, so that label is used while the field
+  // still holds it — no by-id read.
+  const stateId = useWatch({ control, name: 'stateId' })
+  const saved = detail.data
+  const stateSelect = useStateSelect({
+    selected: stateId
+      ? {
+          value: stateId,
+          label:
+            saved && stateId === String(saved.stateId)
+              ? saved.stateName || undefined
+              : undefined,
+        }
+      : undefined,
+  })
 
   const goToList = () => navigate({ to: '/master/lwf-rate' })
 
@@ -82,7 +92,6 @@ export function useLwfRateForm(id?: number) {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
     goToList,
-    stateOptions,
-    isStatesLoading,
+    stateSelect,
   }
 }

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { branchOptions, useBranches } from '@/features/master/branch'
+import { useBranchSelect } from '@/features/master/branch'
 import { departmentSchema, type DepartmentFormValues } from '../schemas'
 import { EMPTY_DEPARTMENT_FORM } from '../constants'
 import { useDepartment } from '../api/use-department'
@@ -34,8 +34,6 @@ export function useDepartmentForm(id?: number) {
   const [tab, setTab] = useState<DepartmentFormTab>('detail')
 
   const detail = useDepartment(id ?? Number.NaN)
-  // The Branch dropdown is driven by the branch master.
-  const branches = useBranches()
   const createDepartment = useCreateDepartment()
   const updateDepartment = useUpdateDepartment(id ?? Number.NaN)
 
@@ -55,10 +53,9 @@ export function useDepartmentForm(id?: number) {
     if (detail.data) reset(departmentToFormValues(detail.data))
   }, [detail.data, reset])
 
-  const branchList = useMemo(
-    () => branchOptions(branches.data?.items ?? []),
-    [branches.data],
-  )
+  // The Branch dropdown pages through the branch master as it's scrolled.
+  const branchId = useWatch({ control, name: 'branchId' })
+  const branchSelect = useBranchSelect({ selected: branchId })
 
   const goToList = () => navigate({ to: '/master/department' })
 
@@ -125,8 +122,7 @@ export function useDepartmentForm(id?: number) {
     companyId: detail.data?.companyId,
     /** The default already stored, when the API sends one back. */
     defaultShiftId: detail.data?.defaultShiftId ?? null,
-    branchOptions: branchList,
-    isBranchesLoading: branches.isLoading,
+    branchSelect,
     onSubmit,
     isEdit,
     isPending: isEdit ? updateDepartment.isPending : createDepartment.isPending,

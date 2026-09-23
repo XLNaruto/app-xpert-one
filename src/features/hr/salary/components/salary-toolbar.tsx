@@ -7,7 +7,8 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
+import { Combobox } from '@/components/ui/combobox'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { cn, formatDate } from '@/lib/utils'
 import type { SalaryPeriod, SalaryTotals } from '../types'
@@ -15,8 +16,8 @@ import type { SalaryPeriod, SalaryTotals } from '../types'
 interface SalaryToolbarProps {
   /** What the picker holds — staged, not what the register was read for. */
   designationId: number | null
-  designationOptions: ComboboxOption[]
-  designationsLoading: boolean
+  /** The lazy designation dropdown — `useDesignationSelect`, spread onto the field. */
+  designations: PagedSelect
   onDesignationChange: (value: number | null) => void
   /** Likewise staged. */
   month: string
@@ -61,8 +62,7 @@ interface SalaryToolbarProps {
  */
 export function SalaryToolbar({
   designationId,
-  designationOptions,
-  designationsLoading,
+  designations,
   onDesignationChange,
   month,
   monthBounds,
@@ -85,9 +85,9 @@ export function SalaryToolbar({
           <Combobox
             value={designationId === null ? '' : String(designationId)}
             onChange={(value) => onDesignationChange(value ? Number(value) : null)}
-            options={designationOptions}
+            {...designations}
             icon={Briefcase}
-            placeholder={designationsLoading ? 'Loading…' : 'Select a designation'}
+            placeholder="Select a designation"
             searchPlaceholder="Search designations…"
             clearable
           />

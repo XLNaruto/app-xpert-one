@@ -127,3 +127,4 @@ export {
   WAGE_WEEKLY_OFF_OPTIONS,
   WORKING_DAY_CALCULATION_OPTIONS,
 } from './constants'
+export { useDesignationSelect } from './hooks/use-designation-select'

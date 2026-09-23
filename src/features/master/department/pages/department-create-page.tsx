@@ -44,8 +44,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
     departmentId: savedDepartmentId,
     companyId,
     defaultShiftId,
-    branchOptions,
-    isBranchesLoading,
+    branchSelect,
     onSubmit,
     isEdit,
     isPending,
@@ -142,8 +141,8 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                         className="w-full"
                         value={field.value}
                         onChange={field.onChange}
-                        options={branchOptions}
-                        placeholder={isBranchesLoading ? 'Loading…' : 'Select Branch'}
+                        {...branchSelect}
+                        placeholder="Select Branch"
                         searchPlaceholder="Search branch"
                       />
                     )}

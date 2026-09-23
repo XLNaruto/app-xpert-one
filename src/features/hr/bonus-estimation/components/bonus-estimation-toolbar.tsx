@@ -1,7 +1,8 @@
 import { Building2, Calculator, Filter, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import { Combobox } from '@/components/ui/combobox'
+import type { PagedSelect } from '@/hooks/use-paged-select'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Field } from '@/components/common/form-field'
 import { cn } from '@/lib/utils'
@@ -31,8 +32,8 @@ interface BonusEstimationToolbarProps {
 
   /** Likewise staged. */
   departmentId: number | null
-  departmentOptions: ComboboxOption[]
-  departmentsLoading: boolean
+  /** The lazy department dropdown — `useDepartmentSelect`, spread onto the field. */
+  departments: PagedSelect
   onDepartmentChange: (value: number | null) => void
 
   /** Live, not staged — all four bases are already on every estimate line. */
@@ -74,8 +75,7 @@ export function BonusEstimationToolbar({
   monthBounds,
   toMinDate,
   departmentId,
-  departmentOptions,
-  departmentsLoading,
+  departments,
   onDepartmentChange,
   calculationField,
   onCalculationFieldChange,
@@ -122,9 +122,9 @@ export function BonusEstimationToolbar({
             <Combobox
               value={departmentId === null ? '' : String(departmentId)}
               onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
-              options={departmentOptions}
+              {...departments}
               icon={Building2}
-              placeholder={departmentsLoading ? 'Loading…' : 'Every department'}
+              placeholder="Every department"
               searchPlaceholder="Search departments…"
               clearable
             />
