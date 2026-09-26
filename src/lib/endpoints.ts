@@ -41,6 +41,8 @@ export const endpoints = {
     RADAR: '/user/dashboard/radar',
     HEATMAP: '/user/dashboard/heatmap',
     ATTENTION: '/user/dashboard/attention',
+    /** Companies with no holidays yet for the coming (or current) accounting year. */
+    HOLIDAY_REMINDER: '/user/dashboard/holiday-reminder',
   },
   ROLES: {
     LIST: '/user/roles',
@@ -82,6 +84,20 @@ export const endpoints = {
     SUBSCRIPTION: '/user/subscription',
     /** POST — open a subscription on a plan; answers with a payment order. */
     SUBSCRIBE: '/user/subscriptions',
+    /** GET — every plan this account has bought, newest first (paged). */
+    HISTORY: '/user/subscriptions',
+    /** GET — one purchase's invoice as raw PDF bytes (by SUBSCRIPTION id). */
+    INVOICE: (id: number) => `/user/subscriptions/${id}/invoice`,
+    /** POST — price a plan switch; writes nothing. */
+    SWITCH_PREVIEW: '/user/subscriptions/switch/preview',
+    /** POST — apply a switch · DELETE — cancel a booked `next_renewal` one. */
+    SWITCH: '/user/subscriptions/switch',
+    /** GET — the stored-credit balance and its ledger (paged). */
+    CREDITS: '/user/billing/credits',
+    /** POST — ask the super admin for a switch · GET — request history (paged). */
+    SWITCH_REQUESTS: '/user/subscriptions/switch-requests',
+    /** GET — the one pending request or null · DELETE — withdraw it. */
+    SWITCH_REQUEST_PENDING: '/user/subscriptions/switch-requests/pending',
   },
   IP_ADDRESSES: {
     LIST: '/user/ip-addresses',
@@ -183,6 +199,14 @@ export const endpoints = {
     SET_DEFAULT: (id: number) => `/user/shifts/${id}/set-default`,
     CLEAR_DEFAULT: '/user/shifts/clear-default',
   },
+  /** Off-Day Schedule — the date-by-date off / working grid per employee. */
+  SHIFT_SCHEDULES: {
+    LIST: '/user/shift-schedules',
+    GENERATE: '/user/shift-schedules/generate',
+    EMPLOYEE: (employeeId: number) => `/user/shift-schedules/employees/${employeeId}`,
+    DAY: (employeeId: number, date: string) =>
+      `/user/shift-schedules/employees/${employeeId}/days/${date}`,
+  },
   WEEKOFF_POLICIES: {
     LIST: '/user/weekoff-policies',
     POST: '/user/weekoff-policies',
@@ -221,6 +245,8 @@ export const endpoints = {
   HOLIDAYS: {
     LIST: '/user/holidays',
     POST: '/user/holidays',
+    /** Adds a whole accounting year's holidays in one all-or-nothing save. */
+    ACCOUNTING_YEAR: '/user/holidays/accounting-year',
     GET: (id: number) => `/user/holidays/${id}`,
     PATCH: (id: number) => `/user/holidays/${id}`,
     DELETE: (id: number) => `/user/holidays/${id}`,

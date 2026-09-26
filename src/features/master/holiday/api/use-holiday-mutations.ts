@@ -1,7 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
-import type { HolidayFormValues } from '../schemas'
-import { createHoliday, deleteHoliday, updateHoliday } from './holiday-api'
+import type { HolidayFormValues, HolidayYearFormValues } from '../schemas'
+import {
+  createHoliday,
+  createHolidayYear,
+  deleteHoliday,
+  updateHoliday,
+} from './holiday-api'
 
 /** POST /holidays — create a holiday, then refresh the list. */
 export function useCreateHoliday() {
@@ -30,6 +35,21 @@ export function useDeleteHoliday() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => deleteHoliday(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.holiday.all })
+    },
+  })
+}
+
+/**
+ * POST /holidays/accounting-year — a year's holidays in one save. Invalidating
+ * `holiday.all` also re-fetches the dashboard reminder, which clears itself once
+ * the company has a holiday in that year.
+ */
+export function useCreateHolidayYear(companyId?: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (values: HolidayYearFormValues) => createHolidayYear(values, companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.holiday.all })
     },

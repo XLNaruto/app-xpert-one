@@ -1,6 +1,7 @@
 import { Controller, type Control } from 'react-hook-form'
 import { Boxes } from 'lucide-react'
 import { Combobox } from '@/components/ui/combobox'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Field } from '@/components/common/form-field'
@@ -277,6 +278,32 @@ export function AssetDetailTab({
                 />
               </Field>
 
+              {/* A pair: filling either side makes the other required. */}
+              <Field
+                label="Identification Title"
+                required={Boolean(row?.identificationValue?.trim())}
+                error={errors?.identificationTitle?.message}
+                hint="What tells this unit apart from others of the same asset — IMEI, Serial No, Tag No."
+              >
+                <Input
+                  maxLength={100}
+                  placeholder="e.g. IMEI"
+                  {...form.register(`rows.${index}.identificationTitle`)}
+                />
+              </Field>
+
+              <Field
+                label="Identification Value"
+                required={Boolean(row?.identificationTitle?.trim())}
+                error={errors?.identificationValue?.message}
+              >
+                <Input
+                  maxLength={100}
+                  placeholder="e.g. 354812345678901"
+                  {...form.register(`rows.${index}.identificationValue`)}
+                />
+              </Field>
+
               <Field
                 label="Remarks"
                 error={errors?.remarks?.message}
@@ -284,7 +311,7 @@ export function AssetDetailTab({
               >
                 <Textarea
                   rows={2}
-                  placeholder="Serial number, condition, anything worth noting"
+                  placeholder="Condition, accessories, anything worth noting"
                   {...form.register(`rows.${index}.remarks`)}
                 />
               </Field>

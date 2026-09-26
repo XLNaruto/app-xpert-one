@@ -1,5 +1,7 @@
 import { formatCurrency } from '@/lib/utils'
+import { currencyCode } from '@/lib/currency'
 import {
+  CURRENT_SUBSCRIPTION_STATUSES,
   PAISE_PER_RUPEE,
   SLA_PRIORITY_ORDER,
   SLA_TICKET_LABELS,
@@ -11,19 +13,31 @@ import {
 import type {
   AccountOverviewResponse,
   CreateSubscriptionResponse,
+  CreditsResponse,
   PaymentOrderResponse,
   PlanResponse,
+  PurchasedPlanResponse,
+  ScheduledSwitchResponse,
   SubscriptionResponse,
   SupportSlaResponse,
+  SwitchRequestResponse,
+  SwitchResultResponse,
+  SwitchSummaryResponse,
 } from '../schemas'
 import type {
   AccountOverview,
+  CreditLedger,
   PaymentOrder,
   Plan,
   PlanPurchase,
   PlanUsage,
+  PurchasedPlan,
+  ScheduledSwitch,
   Subscription,
   SupportSla,
+  SwitchRequest,
+  SwitchResult,
+  SwitchSummary,
 } from '../types'
 
 /**
@@ -105,6 +119,28 @@ export function toSubscription(response: SubscriptionResponse): Subscription {
     isCancel: response.is_cancel,
     currentPeriodStart: response.current_period_start,
     currentPeriodEnd: response.current_period_end,
+    scheduledSwitch: response.scheduled_switch
+      ? toScheduledSwitch(response.scheduled_switch)
+      : null,
+    amountDue:
+      response.amount_due_paise == null
+        ? null
+        : paiseToRupees(response.amount_due_paise),
+  }
+}
+
+function toScheduledSwitch(response: ScheduledSwitchResponse): ScheduledSwitch {
+  return {
+    planId: response.plan_id,
+    planName: response.plan_name,
+    isYearly: response.is_yearly,
+    price: paiseToRupees(response.price_paise),
+    maxEmployees: response.max_employees,
+    maxCompanies: response.max_companies,
+    discount: paiseToRupees(response.discount_paise ?? 0),
+    startsAt: response.starts_at,
+    bookedAt: response.booked_at ?? null,
+    requestId: response.request_id ?? null,
   }
 }
 
@@ -158,6 +194,52 @@ export function toAccountOverview(
       companyLimit: response.usage.company_limit,
     },
   }
+}
+
+/** Paise → rupees, keeping "not quoted" as null. */
+function nullablePaise(paise: number | null): number | null {
+  return paise === null ? null : paiseToRupees(paise)
+}
+
+/** A purchase-history row → the UI record, money converted to rupees. */
+export function toPurchasedPlan(response: PurchasedPlanResponse): PurchasedPlan {
+  return {
+    id: response.id,
+    planId: response.plan_id,
+    planName: response.plan_name,
+    status: response.status,
+    isYearly: response.is_yearly,
+    isAutopay: response.is_autopay,
+    isCancel: response.is_cancel,
+    maxEmployees: response.max_employees,
+    maxCompanies: response.max_companies,
+    monthPrice: nullablePaise(response.month_price_paise),
+    yearPrice: nullablePaise(response.year_price_paise),
+    monthPricePerEmployee: nullablePaise(response.month_price_per_employee_paise),
+    yearPricePerEmployee: nullablePaise(response.year_price_per_employee_paise),
+    currentPeriodStart: response.current_period_start,
+    currentPeriodEnd: response.current_period_end,
+    razorpayOrderId: response.razorpay_order_id,
+    purchasedAt: response.purchased_at,
+    payment: response.payment
+      ? {
+          id: response.payment.id,
+          razorpayPaymentId: response.payment.razorpay_payment_id,
+          amount: paiseToRupees(response.payment.amount_paise),
+          currency: response.payment.currency,
+          status: response.payment.status,
+          paidAt: response.payment.paid_at,
+        }
+      : null,
+    invoiceNumber: response.invoice_number,
+  }
+}
+
+/** Whether a purchase is the one serving the account now (trialing/active). */
+export function isCurrentPurchase(status: string): boolean {
+  return (CURRENT_SUBSCRIPTION_STATUSES as readonly string[]).includes(
+    status.toLowerCase(),
+  )
 }
 
 /** `past_due` → "Past Due". The wire is snake_case, the screen isn't. */
@@ -312,4 +394,123 @@ export function usageBars(usage: PlanUsage): UsageBar[] {
     toUsageBar('Employees', usage.employeeCount, usage.employeeLimit),
     toUsageBar('Companies', usage.companyCount, usage.companyLimit),
   ]
+}
+
+/**
+ * Rupees with paise shown — for the switch breakdown, where proration lands on
+ * fractions of a rupee and whole-rupee rounding would make the lines stop
+ * adding up to the total beneath them.
+ */
+export function formatRupeesExact(value: number): string {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: currencyCode(),
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+/** A switch summary → the UI one, every paise figure converted to rupees. */
+export function toSwitchSummary(response: SwitchSummaryResponse): SwitchSummary {
+  return {
+    mode: response.mode,
+    extendType: response.extend_type,
+    current: response.current
+      ? {
+          subscriptionId: response.current.subscription_id,
+          planId: response.current.plan_id,
+          planName: response.current.plan_name,
+          status: response.current.status,
+          isYearly: response.current.is_yearly,
+          price: paiseToRupees(response.current.price_paise),
+          periodStart: response.current.period_start,
+          periodEnd: response.current.period_end,
+        }
+      : null,
+    target: {
+      planId: response.target.plan_id,
+      planName: response.target.plan_name,
+      isYearly: response.target.is_yearly,
+      price: paiseToRupees(response.target.price_paise),
+      maxEmployees: response.target.max_employees,
+      maxCompanies: response.target.max_companies,
+    },
+    newTerm: response.new_term,
+    time: response.time
+      ? {
+          termSeconds: response.time.term_seconds,
+          elapsedSeconds: response.time.elapsed_seconds,
+          remainingSeconds: response.time.remaining_seconds,
+        }
+      : null,
+    price: paiseToRupees(response.price_paise),
+    prorationCredit: paiseToRupees(response.proration_credit_paise),
+    prorationUsed: paiseToRupees(response.proration_used_paise),
+    creditSurplus: paiseToRupees(response.credit_surplus_paise),
+    amountBeforeDiscount: paiseToRupees(response.amount_before_discount_paise),
+    discount: paiseToRupees(response.discount_paise),
+    creditBalance: paiseToRupees(response.credit_balance_paise),
+    creditBalanceUsed: paiseToRupees(response.credit_balance_used_paise),
+    amountDue: paiseToRupees(response.amount_due_paise),
+    capacity: response.capacity,
+  }
+}
+
+/** `POST /user/subscriptions/switch` → the outcome, new term and its pricing. */
+export function toSwitchResult(response: SwitchResultResponse): SwitchResult {
+  return {
+    outcome: response.outcome,
+    subscription: toSubscription(response.subscription),
+    summary: toSwitchSummary(response.summary),
+    refreshRequired: response.refresh_required,
+  }
+}
+
+/** `GET /user/billing/credits` → the balance and its ledger, in rupees. */
+export function toCreditLedger(response: CreditsResponse): CreditLedger {
+  return {
+    balance: paiseToRupees(response.balance_paise),
+    items: response.items.map((item) => ({
+      id: item.id,
+      amount: paiseToRupees(item.amount_paise),
+      kind: item.kind,
+      subscriptionId: item.subscription_id,
+      note: item.note,
+      createdAt: item.created_at,
+    })),
+    total: response.total,
+  }
+}
+
+/** A plan change request → the UI record, discount in rupees. */
+export function toSwitchRequest(response: SwitchRequestResponse): SwitchRequest {
+  return {
+    id: response.id,
+    planId: response.plan_id,
+    planName: response.plan_name ?? null,
+    isYearly: response.is_yearly,
+    extendType: response.extend_type,
+    note: response.note,
+    status: response.status,
+    decidedAt: response.decided_at,
+    decisionNote: response.decision_note,
+    approvedExtendType: response.approved_extend_type,
+    discount: nullablePaise(response.discount_paise),
+    resultSubscriptionId: response.result_subscription_id,
+    createdAt: response.created_at,
+  }
+}
+
+/** Seconds → days, one decimal — the "12.5 days used" the summary shows. */
+export function secondsToDays(seconds: number): number {
+  return Math.round((seconds / 86400) * 10) / 10
+}
+
+/**
+ * Whether `next_renewal` can be offered at all. The API refuses it for a term
+ * with no end date, or one already set to cancel — "immediately" is the only
+ * timing those accounts have.
+ */
+export function canBookNextRenewal(subscription: Subscription | null): boolean {
+  return Boolean(subscription?.currentPeriodEnd) && !subscription?.isCancel
 }

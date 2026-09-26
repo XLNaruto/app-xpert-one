@@ -1,4 +1,4 @@
-import type { HolidayFormValues } from './schemas'
+import type { HolidayFormValues, HolidayYearRowValues } from './schemas'
 
 /**
  * The `sort` values `/user/holidays` accepts. Sorting is server-side, so a
@@ -23,11 +23,28 @@ export const HOLIDAY_LABELS = {
   holidayName: 'Holiday Name',
   fromDate: 'From Date',
   toDate: 'To Date',
+  accountingYear: 'Accounting Year',
 } as const
+
+/** The list's year filter value meaning "every year" — no `accounting_year` sent. */
+export const ALL_ACCOUNTING_YEARS = ''
+
+/** Rows the year form opens with. */
+export const HOLIDAY_YEAR_INITIAL_ROWS = 3
+
+/** The API's cap on one year save. */
+export const HOLIDAY_YEAR_MAX_ROWS = 100
 
 /** Blank form values for a new holiday. */
 export const EMPTY_HOLIDAY_FORM: HolidayFormValues = {
   holidayName: '',
+  fromDate: '',
+  toDate: '',
+}
+
+/** A blank row on the year form. */
+export const EMPTY_HOLIDAY_YEAR_ROW: HolidayYearRowValues = {
+  name: '',
   fromDate: '',
   toDate: '',
 }

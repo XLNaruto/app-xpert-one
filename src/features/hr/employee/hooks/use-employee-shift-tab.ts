@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
-import type { PageParams } from '@/lib/pagination'
-import { useShiftSelect, useShifts } from '@/features/master/shift'
+import { ALL_ROWS, type PageParams } from '@/lib/pagination'
+import { formatShiftWindow, useShiftSelect, useShifts } from '@/features/master/shift'
 import {
   employeeRosterSchema,
   employeeShiftAssignmentSchema,
@@ -93,6 +93,36 @@ export function useEmployeeShiftTab(employeeId: number) {
   // One row is enough to know whether the company has any shifts at all — the
   // dropdowns themselves page in lazily below.
   const shiftProbe = useShifts(SHIFT_PROBE, companyId)
+
+  /*
+    A roster row and a timeline entry carry only `shift_id` + `shift_name`, so
+    their times come from the company's shifts — read only once either table
+    has a row to label.
+  */
+  const hasShiftRows =
+    (roster.data?.items.length ?? 0) > 0 || (timeline.data?.items.length ?? 0) > 0
+  const allShifts = useShifts(ALL_ROWS, hasShiftRows ? companyId : undefined)
+  const shiftWindows = useMemo(
+    () => new Map((allShifts.data?.items ?? []).map((s) => [s.id, formatShiftWindow(s)])),
+    [allShifts.data],
+  )
+
+  /** `Shift 1 (10:00 AM – 05:00 PM)` — `name` alone until the times are known. */
+  const withShiftTimes = useCallback(
+    (name: string, shiftId: number | null) => {
+      const times = shiftId !== null ? shiftWindows.get(shiftId) : undefined
+      return times ? `${name} (${times})` : name
+    },
+    [shiftWindows],
+  )
+
+  const rosterShiftLabel = useCallback(
+    (entry: EmployeeRosterEntry) => {
+      const name = entry.shiftName || (entry.shiftId !== null ? `#${entry.shiftId}` : '')
+      return name ? withShiftTimes(name, entry.shiftId) : '—'
+    },
+    [withShiftTimes],
+  )
 
   const createAssignment = useCreateEmployeeShiftAssignment(employeeId)
   const deleteAssignment = useDeleteEmployeeShiftAssignment(employeeId)
@@ -220,6 +250,8 @@ export function useEmployeeShiftTab(employeeId: number) {
     isForbiddenError(roster.error)
 
   return {
+    withShiftTimes,
+    rosterShiftLabel,
     /** The resolved answer for `lookupDate`, and the date itself. */
     lookupDate,
     setLookupDate,

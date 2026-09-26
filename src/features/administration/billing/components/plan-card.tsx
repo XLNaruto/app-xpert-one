@@ -8,6 +8,7 @@ import {
   Gift,
   Headphones,
   Loader2,
+  Send,
   ShieldCheck,
   UsersRound,
 } from 'lucide-react'
@@ -76,16 +77,35 @@ export function PlanCard({
   plan,
   yearly,
   onPurchase,
+  onSwitch,
+  onRequest,
+  isCurrentTerm = plan.isActive,
+  requestPending = false,
   purchasing = false,
 }: {
   plan: Plan
   /** Which cycle's price to show — the grid switches every card together. */
   yearly: boolean
-  /** Omitted when the user may not buy — the card then has no button at all. */
+  /**
+   * Buy it outright — offered only when no plan is running. Omitted when the
+   * user may not buy; with neither this nor `onSwitch` the card has no button.
+   */
   onPurchase?: (plan: Plan) => void
+  /** Change to it from the running plan (self-serve). */
+  onSwitch?: (plan: Plan) => void
+  /** Ask the super admin for it instead. */
+  onRequest?: (plan: Plan) => void
+  /**
+   * This card, on the grid's cycle, IS the running subscription — the one
+   * choice that can't be switched to. The running plan on its other cycle can.
+   */
+  isCurrentTerm?: boolean
+  /** A request is already waiting on the super admin — only one at a time. */
+  requestPending?: boolean
   /** A purchase is in flight somewhere in the grid; every card locks. */
   purchasing?: boolean
 }) {
+  const onPrimary = onSwitch ?? onPurchase
   const price = yearly ? plan.yearPrice : plan.monthPrice
   const perEmployee = yearly ? plan.yearPricePerEmployee : plan.monthPricePerEmployee
   const savings = yearlySavingsPercent(plan)
@@ -215,18 +235,18 @@ export function PlanCard({
             </button>
           )}
 
-          {onPurchase && (
+          {onPrimary && (
             <Button
               type="button"
               className="mt-4 w-full"
               variant={plan.isActive ? 'outline' : 'default'}
-              // The running plan can't be re-bought, and no card is clickable
+              // The running term can't be re-bought, and no card is clickable
               // while another one's purchase is mid-flight — two open orders for
               // the same account is not a state worth allowing.
-              disabled={plan.isActive || purchasing}
-              onClick={() => onPurchase(plan)}
+              disabled={isCurrentTerm || purchasing}
+              onClick={() => onPrimary(plan)}
             >
-              {plan.isActive ? (
+              {isCurrentTerm ? (
                 'Current Plan'
               ) : purchasing ? (
                 <>
@@ -235,10 +255,30 @@ export function PlanCard({
                 </>
               ) : (
                 <>
-                  {plan.isTrial ? 'Start Free Trial' : 'Choose Plan'}
+                  {onSwitch
+                    ? plan.isActive
+                      ? `Switch to ${yearly ? 'Yearly' : 'Monthly'}`
+                      : 'Switch Plan'
+                    : plan.isTrial
+                      ? 'Start Free Trial'
+                      : 'Choose Plan'}
                   <ArrowRight className="size-4" />
                 </>
               )}
+            </Button>
+          )}
+
+          {onRequest && !isCurrentTerm && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-2 w-full text-muted-foreground"
+              disabled={requestPending || purchasing}
+              onClick={() => onRequest(plan)}
+            >
+              <Send className="size-3.5" />
+              {requestPending ? 'Request pending' : 'Request plan extend'}
             </Button>
           )}
         </div>

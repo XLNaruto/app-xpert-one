@@ -8,6 +8,11 @@ import { EMPTY_HOLIDAY_FORM } from '../constants'
 import { useHoliday } from '../api/use-holiday'
 import { useCreateHoliday, useUpdateHoliday } from '../api/use-holiday-mutations'
 import { holidayToFormValues } from '../lib/holiday-mappers'
+import {
+  accountingYearOfDate,
+  accountingYearRange,
+  toPickerDate,
+} from '../lib/accounting-year'
 
 /**
  * Owns the holiday form for both create and edit. In edit mode (`id` set) it
@@ -27,6 +32,7 @@ export function useHolidayForm(id?: number) {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<HolidayFormValues>({
     resolver: zodResolver(holidaySchema),
@@ -39,6 +45,14 @@ export function useHolidayForm(id?: number) {
   }, [detail.data, reset])
 
   const goToList = () => navigate({ to: '/master/holiday' })
+
+  // A holiday can't run past 31 March of the year it starts in, so the to-date
+  // picker stops there once a start is picked.
+  const fromDate = watch('fromDate')
+  const fromYear = fromDate ? accountingYearOfDate(fromDate) : null
+  const yearEnd = fromYear ? accountingYearRange(fromYear)?.to : undefined
+  const toDateMin = fromDate ? toPickerDate(fromDate) : undefined
+  const toDateMax = yearEnd ? toPickerDate(yearEnd) : undefined
 
   const onSubmit = handleSubmit((values) => {
     const mutation = isEdit ? updateHoliday : createHoliday
@@ -61,6 +75,9 @@ export function useHolidayForm(id?: number) {
     control,
     errors,
     onSubmit,
+    fromYear,
+    toDateMin,
+    toDateMax,
     isEdit,
     isPending: isEdit ? updateHoliday.isPending : createHoliday.isPending,
     isLoading: isEdit && detail.isLoading,

@@ -2,6 +2,7 @@ import { DatabaseZap } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { Forbidden } from '@/features/error'
 import { ContractExpiryPanel } from '@/features/hr/contract-expiry'
+import { HolidayReminderBanner } from '@/features/master/holiday'
 import {
   ATTENDANCE_METRICS,
   MOVEMENT_METRICS,
@@ -143,6 +144,12 @@ export function DashboardPage() {
         resolvedWindow={screen.resolvedWindow}
         asOf={screen.asOf}
       />
+
+      {/*
+        "Add next year's holidays" — its own read, independent of the filter
+        bar's window; only the company narrowing reaches it.
+      */}
+      <HolidayReminderBanner companyIds={appliedFilters.companyIds} />
 
       {/*
         The rollup has never run for this account. Every figure below is zero and

@@ -353,6 +353,8 @@ export const EMPTY_EMPLOYEE_ASSET_FORM: EmployeeAssetFormValues = {
   assignedDate: '',
   validTill: '',
   remarks: '',
+  identificationTitle: '',
+  identificationValue: '',
 }
 
 export const EMPTY_EMPLOYEE_TRANSFER_FORM: EmployeeTransferFormValues = {

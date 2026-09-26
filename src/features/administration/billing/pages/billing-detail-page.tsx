@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Building2, CreditCard, Mail, Phone, Sparkles } from 'lucide-react'
+import {
+  Building2,
+  CalendarX,
+  CreditCard,
+  History,
+  Mail,
+  Phone,
+  Sparkles,
+  Undo2,
+} from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, formatCurrency } from '@/lib/utils'
@@ -10,10 +20,14 @@ import { Forbidden } from '@/features/error'
 import { BILLING_LABELS } from '../constants'
 import { useBillingOverview } from '../hooks/use-billing-overview'
 import { usePlanPurchase } from '../hooks/use-plan-purchase'
+import { usePlanSwitchFlow } from '../hooks/use-plan-switch-flow'
+import { usePlanChangeStatus } from '../hooks/use-plan-change-status'
 import { CurrentPlanCard } from '../components/current-plan-card'
 import { PlanUsageMeters } from '../components/plan-usage-meters'
 import { PlanCard } from '../components/plan-card'
 import { BillingCycleToggle } from '../components/billing-cycle-toggle'
+import { PlanSwitchDialog } from '../components/plan-switch-dialog'
+import { PlanChangeBanners } from '../components/plan-change-banners'
 
 /** One billing contact — a tinted glyph, its label, and the value beneath. */
 function BilledToItem({
@@ -46,11 +60,15 @@ function BilledToItem({
 
 /**
  * Billing & Subscription — what the account is on, how much of it is being used,
- * what else could be bought, and the buying of it.
+ * what else could be bought, and the buying of it. Past purchases and their
+ * invoices live on the Purchase History page, reached from the header.
  *
- * A purchase raises an order (`POST /user/subscriptions`) and hands it to the
- * payment sheet; `usePlanPurchase` owns that sequence, and this page only shows
- * it. Layout only — every decision here comes from a hook.
+ * With no plan running, a purchase raises an order (`POST /user/subscriptions`)
+ * and hands it to the payment sheet — `usePlanPurchase`. With one running, a
+ * card opens the extend-plan dialog instead (`usePlanSwitchFlow`), and either
+ * way a card can send the change to the super admin as a request. What's
+ * already in motion — a booked switch, a pending request, stored credit — is
+ * `usePlanChangeStatus`. Layout only — every decision here comes from a hook.
  */
 export function BillingDetailPage() {
   const {
@@ -65,6 +83,7 @@ export function BillingDetailPage() {
     error,
     isForbidden,
     forbiddenMessage,
+    goToHistory,
   } = useBillingOverview()
 
   /**
@@ -88,6 +107,14 @@ export function BillingDetailPage() {
     isPurchasing,
   } = usePlanPurchase({ account, yearly })
 
+  /**
+   * With a plan running, a card changes it (preview → confirm); with none, it's
+   * bought outright through the payment sheet above.
+   */
+  const switchFlow = usePlanSwitchFlow({ subscription })
+  const changeStatus = usePlanChangeStatus()
+  const hasRunningPlan = subscription !== null
+
   /** What the plan awaiting confirmation costs on the cycle being bought. */
   const pendingPrice = pendingPlan
     ? formatCurrency(yearly ? pendingPlan.yearPrice : pendingPlan.monthPrice)
@@ -103,6 +130,12 @@ export function BillingDetailPage() {
       <PageHeader
         title="Billing & Subscription"
         description="Your plan, what it allows, and how much of it you're using."
+        actions={
+          <Button type="button" variant="outline" onClick={goToHistory}>
+            <History className="size-4" />
+            Purchase History
+          </Button>
+        }
       />
 
       {isLoading ? (
@@ -126,6 +159,20 @@ export function BillingDetailPage() {
       ) : (
         <div className="space-y-6">
           <CurrentPlanCard subscription={subscription} plan={currentPlan} />
+
+          <PlanChangeBanners
+            scheduledSwitch={subscription?.scheduledSwitch ?? null}
+            pendingRequest={changeStatus.pendingRequest}
+            creditBalance={changeStatus.creditBalance}
+            onCancelSwitch={
+              canPurchase ? () => changeStatus.setConfirmCancelOpen(true) : undefined
+            }
+            onWithdrawRequest={
+              canPurchase ? () => changeStatus.setConfirmWithdrawOpen(true) : undefined
+            }
+            isCancelling={changeStatus.isCancelling}
+            isWithdrawing={changeStatus.isWithdrawing}
+          />
 
           <PlanUsageMeters bars={usageBars} />
 
@@ -197,7 +244,23 @@ export function BillingDetailPage() {
                     key={plan.id}
                     plan={plan}
                     yearly={yearly}
-                    onPurchase={canPurchase ? requestPurchase : undefined}
+                    onPurchase={
+                      canPurchase && !hasRunningPlan ? requestPurchase : undefined
+                    }
+                    onSwitch={
+                      canPurchase && hasRunningPlan
+                        ? (target) => switchFlow.open(target, 'switch', yearly)
+                        : undefined
+                    }
+                    onRequest={
+                      canPurchase
+                        ? (target) => switchFlow.open(target, 'request', yearly)
+                        : undefined
+                    }
+                    isCurrentTerm={
+                      plan.isActive && (subscription?.isYearly ?? false) === yearly
+                    }
+                    requestPending={changeStatus.pendingRequest !== null}
                     purchasing={isPurchasing}
                   />
                 ))}
@@ -254,6 +317,40 @@ export function BillingDetailPage() {
           ))
         }
         confirmLabel="Continue to payment"
+      />
+
+      <PlanSwitchDialog flow={switchFlow} />
+
+      <ConfirmDialog
+        open={changeStatus.confirmCancelOpen}
+        onOpenChange={changeStatus.setConfirmCancelOpen}
+        onConfirm={changeStatus.cancelScheduledSwitch}
+        keepOpenOnConfirm
+        loading={changeStatus.isCancelling}
+        variant="destructive"
+        icon={CalendarX}
+        title="Cancel the booked plan change?"
+        description={
+          subscription?.scheduledSwitch
+            ? `${subscription.scheduledSwitch.planName ?? 'The new plan'} won't start at renewal, and your current plan's limits apply again.`
+            : undefined
+        }
+        confirmLabel="Cancel change"
+        cancelLabel="Keep it"
+      />
+
+      <ConfirmDialog
+        open={changeStatus.confirmWithdrawOpen}
+        onOpenChange={changeStatus.setConfirmWithdrawOpen}
+        onConfirm={changeStatus.withdrawRequest}
+        keepOpenOnConfirm
+        loading={changeStatus.isWithdrawing}
+        variant="destructive"
+        icon={Undo2}
+        title="Withdraw your request?"
+        description="Our team won't act on it. You can send a new request any time."
+        confirmLabel="Withdraw"
+        cancelLabel="Keep it"
       />
     </div>
   )

@@ -432,6 +432,10 @@ export interface EmployeeAsset extends AuditFields {
   validTill: string
   status: string
   remarks: string
+  /** What the identifier is — "IMEI", "Serial No". Empty when not recorded. */
+  identificationTitle: string
+  /** The identifier itself. Empty when not recorded. */
+  identificationValue: string
 }
 
 /* ── Step 8 — transfer history ───────────────────────────────────────────── */
@@ -544,8 +548,14 @@ export interface EmployeeRosterEntry extends AuditFields {
   employeeServiceId: number
   /** `YYYY-MM-DD`. */
   workDate: string
-  shiftId: number
+  /** Typed nullable by the API; in practice never null in the roster list. */
+  shiftId: number | null
   shiftName: string
+  /**
+   * The Off-Day Schedule's decision for the date: `true` off, `false` working,
+   * `null` left to the week-off policy.
+   */
+  isWeekOff: boolean | null
   sourceType: RosterSourceType
 }
 

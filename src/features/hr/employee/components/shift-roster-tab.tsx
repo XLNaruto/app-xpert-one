@@ -120,7 +120,9 @@ export function ShiftRosterTab({
                   isDefault ? 'text-sm text-muted-foreground' : 'font-medium text-foreground'
                 }
               >
-                {assignmentLabel(entry)}
+                {isDefault
+                  ? assignmentLabel(entry)
+                  : tab.withShiftTimes(assignmentLabel(entry), entry.shiftId)}
               </span>
             </div>
           )
@@ -139,7 +141,7 @@ export function ShiftRosterTab({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [tab.withShiftTimes],
   )
 
   const rosterColumns = useMemo<ColumnDef<EmployeeRosterEntry>[]>(
@@ -179,9 +181,7 @@ export function ShiftRosterTab({
         header: 'Shift',
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-medium text-foreground">
-            {row.original.shiftName || `#${row.original.shiftId}`}
-          </span>
+          <span className="font-medium text-foreground">{tab.rosterShiftLabel(row.original)}</span>
         ),
       },
       {
@@ -210,7 +210,7 @@ export function ShiftRosterTab({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [tab.rosterShiftLabel],
   )
 
   if (tab.isForbidden) return <Forbidden description={tab.forbiddenMessage} />

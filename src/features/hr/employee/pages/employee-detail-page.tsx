@@ -1523,7 +1523,7 @@ function AssetFact({
  * The list used to say only name / issued / status, which leaves out what the
  * section is actually opened to answer: WHICH unit went out (an asset with
  * variants means nothing without its variant), whether it is still out, when it
- * is due back, and anything noted on it — a serial number lives in `remarks`.
+ * is due back, its identifier (IMEI, serial no) and anything noted on it.
  *
  * "Still out" is driven off `stockHeld`, never off the status: a consumable
  * reads RETURNED and still holds its unit, because a consumed unit never goes
@@ -1563,6 +1563,11 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
                 asset stands alone rather than showing an empty badge. */}
             {asset.variantName && (
               <Badge variant="outline">{asset.variantName}</Badge>
+            )}
+            {asset.identificationTitle && asset.identificationValue && (
+              <Badge variant="outline" className="font-mono">
+                {asset.identificationTitle}: {asset.identificationValue}
+              </Badge>
             )}
             <Badge variant={look.badge}>{asset.status || "—"}</Badge>
             {asset.stockHeld && <Badge variant="warning">Holding a unit</Badge>}

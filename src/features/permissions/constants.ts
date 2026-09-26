@@ -79,6 +79,11 @@ export const PERMISSIONS = {
   weekoffPolicies: 'weekoff-policies',
   /** An employee's shift assignment. */
   employeeShifts: 'employee-shifts',
+  /**
+   * Off-Day Schedule. Unlike its neighbours, `shift-schedules:list` is NOT
+   * default-granted — the menu row and the route gate ask for that code itself.
+   */
+  shiftSchedules: 'shift-schedules',
 
   // ── Master · General Setup ────────────────────────────────────────────────
   assets: 'assets',

@@ -359,6 +359,14 @@ export const navGroups: NavGroup[] = [
             icon: CalendarOff,
             permission: PERMISSIONS.weekoffPolicies,
           },
+          {
+            label: "Off-Day Schedule",
+            to: "/master/shift-schedule",
+            icon: CalendarCheck,
+            // `:list` rather than the bare resource — it isn't default-granted,
+            // and a user holding only `:read` has no grid to open.
+            permission: `${PERMISSIONS.shiftSchedules}:list`,
+          },
         ],
       },
       {

@@ -487,6 +487,8 @@ export function toEmployeeAsset(response: EmployeeAssetResponse): EmployeeAsset 
     validTill: response.valid_till ?? '',
     status: response.status ?? '',
     remarks: response.remarks ?? '',
+    identificationTitle: response.identification_title ?? '',
+    identificationValue: response.identification_value ?? '',
     ...auditOf(response),
   }
 }
@@ -501,6 +503,8 @@ export function assetToPayload(values: EmployeeAssetFormValues): EmployeeAssetPa
     assigned_date: toApiDate(values.assignedDate),
     valid_till: toApiDate(values.validTill),
     remarks: orNull(values.remarks),
+    identification_title: orNull(values.identificationTitle),
+    identification_value: orNull(values.identificationValue),
   }
 }
 
@@ -514,6 +518,8 @@ export function assetToFormValues(asset: EmployeeAsset): EmployeeAssetFormValues
     assignedDate: toFormDate(asset.assignedDate),
     validTill: toFormDate(asset.validTill),
     remarks: asset.remarks,
+    identificationTitle: asset.identificationTitle,
+    identificationValue: asset.identificationValue,
   }
 }
 

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
-import { purchasePlan } from './billing-api'
+import { downloadInvoice, purchasePlan } from './billing-api'
 import type { PlanPurchase } from '../types'
 
 /**
@@ -23,5 +23,16 @@ export function usePurchasePlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.billing.all })
     },
+  })
+}
+
+/**
+ * GET /user/subscriptions/:id/invoice — fetch one purchase's invoice PDF and hand
+ * it to the browser. A mutation rather than a query: it's a user-triggered side
+ * effect with nothing to cache (the server rebuilds the PDF every time).
+ */
+export function useDownloadInvoice() {
+  return useMutation<void, Error, { subscriptionId: number; invoiceNumber: string }>({
+    mutationFn: downloadInvoice,
   })
 }

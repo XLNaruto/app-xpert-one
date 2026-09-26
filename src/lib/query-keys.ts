@@ -157,6 +157,27 @@ export const queryKeys = {
     subscription: () => [...queryKeys.billing.all, 'subscription'] as const,
     /** `GET /user/me` — the account, its subscription and its usage counts. */
     account: () => [...queryKeys.billing.all, 'account'] as const,
+    /** `GET /user/subscriptions` — the purchase history, one page at a time. */
+    history: (params?: PageParams) =>
+      [...queryKeys.billing.all, 'history', params ?? 'all'] as const,
+    /**
+     * `POST /user/subscriptions/switch/preview` — read-only pricing, keyed by the
+     * whole choice so every plan / term / timing combination is its own quote.
+     */
+    switchPreview: (choice: {
+      planId: number
+      isYearly: boolean
+      extendType: string | null
+    }) => [...queryKeys.billing.all, 'switch-preview', choice] as const,
+    /** `GET /user/billing/credits` — stored credit and its ledger. */
+    credits: (params?: PageParams) =>
+      [...queryKeys.billing.all, 'credits', params ?? 'all'] as const,
+    /** `GET /user/subscriptions/switch-requests/pending` — the open request. */
+    pendingSwitchRequest: () =>
+      [...queryKeys.billing.all, 'switch-requests', 'pending'] as const,
+    /** `GET /user/subscriptions/switch-requests` — request history. */
+    switchRequests: (params?: PageParams) =>
+      [...queryKeys.billing.all, 'switch-requests', 'list', params ?? 'all'] as const,
   },
   /**
    * IP access control — `features/administration/ip-address`.
@@ -279,6 +300,18 @@ export const queryKeys = {
     infinite: (search?: string, companyId?: number) =>
       [...queryKeys.weekoffPolicy.all, 'infinite', companyId ?? 0, search ?? ''] as const,
   },
+  /**
+   * Off-Day Schedule — the grid (one page of employees over a ≤31-day window)
+   * and one employee's window. The filters and page ride in the key: a different
+   * branch or month is a different result set.
+   */
+  shiftSchedule: {
+    all: ['shift-schedule'] as const,
+    list: (filters: object, params: PageParams) =>
+      [...queryKeys.shiftSchedule.all, 'list', filters, params] as const,
+    employee: (employeeId: number, from: string, to: string) =>
+      [...queryKeys.shiftSchedule.all, 'employee', employeeId, from, to] as const,
+  },
   designation: {
     all: ['designation'] as const,
     /**
@@ -398,11 +431,18 @@ export const queryKeys = {
   },
   holiday: {
     all: ['holiday'] as const,
-    list: (params?: PageParams) =>
+    list: (params?: PageParams, accountingYear?: string) =>
       params
-        ? ([...queryKeys.holiday.all, 'list', params] as const)
+        ? ([...queryKeys.holiday.all, 'list', params, accountingYear ?? ''] as const)
         : ([...queryKeys.holiday.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.holiday.all, 'detail', id] as const,
+    /**
+     * The dashboard's "add next year's holidays" banner. Under `holiday.all` so
+     * any holiday write refreshes it — the banner clears itself once a company
+     * has a holiday in the year.
+     */
+    reminder: (companyIds?: number[]) =>
+      [...queryKeys.holiday.all, 'reminder', companyIds ?? []] as const,
   },
   allowanceDeduction: {
     all: ['allowance-deduction'] as const,

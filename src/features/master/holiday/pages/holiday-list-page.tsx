@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarHeart, Plus } from 'lucide-react'
+import { CalendarHeart, CalendarPlus, CalendarRange } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
+import { FilterBar } from '@/components/common/filter-bar'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
+import { Badge } from '@/components/ui/badge'
 import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
@@ -24,12 +27,15 @@ export function HolidayListPage() {
     onPaginationChange,
     search,
     setSearch,
+    accountingYear,
+    changeAccountingYear,
+    yearOptions,
     sorting,
     onSortingChange,
     isLoading,
     isError,
     error,
-    goToCreate,
+    goToYear,
     goToEdit,
     pendingDelete,
     setPendingDelete,
@@ -91,6 +97,20 @@ export function HolidayListPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatDate(row.original.toDate),
       },
+      {
+        // Not a sort field on the API — the year filter above narrows by it.
+        id: 'accountingYear',
+        accessorKey: 'accountingYear',
+        enableSorting: false,
+        header: HOLIDAY_LABELS.accountingYear,
+        meta: { className: 'whitespace-nowrap' },
+        cell: ({ row }) =>
+          row.original.accountingYear ? (
+            <Badge variant="outline">FY {row.original.accountingYear}</Badge>
+          ) : (
+            '—'
+          ),
+      },
       // Only `created_at` is sortable; "Updated" renders without the control.
       ...auditColumns<Holiday>({ createdAt: HOLIDAY_SORT.createdAt }),
     ],
@@ -104,10 +124,11 @@ export function HolidayListPage() {
         title="Holidays"
         description="Manage your holiday master records."
         actions={
+          // Holidays are added a year at a time; the single form is edit-only.
           canCreate && (
-            <Button onClick={goToCreate}>
-              <Plus className="size-4" />
-              Add Holiday
+            <Button onClick={goToYear}>
+              <CalendarPlus className="size-4" />
+              Add Year's Holidays
             </Button>
           )
         }
@@ -134,25 +155,53 @@ export function HolidayListPage() {
           onPaginationChange={onPaginationChange}
           searchValue={search}
           onSearchChange={setSearch}
+          // The year picker sits beside the search box rather than in the
+          // panel — it's the filter this screen is looked at through.
+          toolbar={
+            <FilterBar
+              search={{ value: search, onChange: setSearch, placeholder: 'Search holiday…' }}
+              leading={
+                <div className="w-full sm:w-44">
+                  <Combobox
+                    icon={CalendarRange}
+                    options={yearOptions}
+                    value={accountingYear}
+                    onChange={changeAccountingYear}
+                    searchable={false}
+                    triggerClassName="h-10"
+                  />
+                </div>
+              }
+              onReset={() => setSearch('')}
+            />
+          }
           manualSorting
           sorting={sorting}
           onSortingChange={onSortingChange}
           emptyState={
             <EmptyState
               icon={CalendarHeart}
-              title={search ? 'No matching holidays' : 'No holidays yet'}
+              title={
+                search
+                  ? 'No matching holidays'
+                  : accountingYear
+                    ? `No holidays for ${accountingYear}`
+                    : 'No holidays yet'
+              }
               description={
                 search
                   ? 'Try a different search term.'
-                  : 'Create your first holiday to get started.'
+                  : accountingYear
+                    ? "Add this year's holidays in one go."
+                    : "Add a year's holidays to get started."
               }
               action={
                 search
                   ? undefined
                   : canCreate && (
-                      <Button onClick={goToCreate}>
-                        <Plus className="size-4" />
-                        Add Holiday
+                      <Button onClick={goToYear}>
+                        <CalendarPlus className="size-4" />
+                        Add Year's Holidays
                       </Button>
                     )
               }

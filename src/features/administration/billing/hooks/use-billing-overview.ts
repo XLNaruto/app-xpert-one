@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { usePlans } from '../api/use-plans'
 import { useSubscription } from '../api/use-subscription'
@@ -15,6 +16,7 @@ import { bestYearlySavingsPercent, usageBars } from '../lib/billing-mappers'
  * with `/user/me` as the fallback so a failure of one doesn't blank the panel.
  */
 export function useBillingOverview() {
+  const navigate = useNavigate()
   const plans = usePlans()
   const subscription = useSubscription()
   const account = useAccountOverview()
@@ -75,5 +77,10 @@ export function useBillingOverview() {
     forbiddenMessage: forbiddenError
       ? getApiErrorMessage(forbiddenError)
       : undefined,
+    /** Open the purchase history — every plan bought, with its invoice. */
+    goToHistory: useCallback(
+      () => navigate({ to: '/administration/billing/history' }),
+      [navigate],
+    ),
   }
 }

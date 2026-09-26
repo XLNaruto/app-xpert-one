@@ -4,14 +4,26 @@ import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { activeCompanyId } from '@/lib/active-company'
 import { HOLIDAY_DEFAULT_SORT } from '../constants'
-import { holidayResponseSchema, holidaysResponseSchema } from '../schemas'
-import { holidayToPayload, toHoliday } from '../lib/holiday-mappers'
+import {
+  holidayReminderResponseSchema,
+  holidayResponseSchema,
+  holidaysResponseSchema,
+  holidayYearResponseSchema,
+} from '../schemas'
+import {
+  holidayToPayload,
+  holidayYearToPayload,
+  toHoliday,
+  toHolidayReminder,
+} from '../lib/holiday-mappers'
 import type {
   HolidayFormValues,
   HolidayPayload,
   HolidayUpdatePayload,
+  HolidayYearFormValues,
+  HolidayYearPayload,
 } from '../schemas'
-import type { Holiday } from '../types'
+import type { Holiday, HolidayReminder } from '../types'
 
 /**
  * Holidays — `/user/holidays`. The endpoint is offset-paginated
@@ -40,13 +52,18 @@ const MAX_PAGES = 20
  *
  * Order is always sent — left off, the server's own default decides it, and a
  * list whose order isn't pinned can repeat or skip rows as the user pages.
+ *
+ * `accountingYear` (`2026-27`) narrows the calendar to one financial year;
+ * omitted, every year is listed.
  */
 export async function fetchHolidays(
   params: PageParams = ALL_ROWS,
+  accountingYear?: string,
 ): Promise<Paginated<Holiday>> {
   try {
     const query = {
       company_id: activeCompanyId('holidays'),
+      ...(accountingYear ? { accounting_year: accountingYear } : {}),
       ...(params.search?.trim() ? { search: params.search.trim() } : {}),
       sort: params.sort ?? HOLIDAY_DEFAULT_SORT.id,
       sort_by: params.sortBy ?? (HOLIDAY_DEFAULT_SORT.desc ? 'desc' : 'asc'),
@@ -135,5 +152,53 @@ export async function deleteHoliday(id: number): Promise<void> {
     await http.delete<unknown>(endpoints.HOLIDAYS.DELETE(id))
   } catch (error) {
     throw toApiError(error, "Couldn't delete the holiday.")
+  }
+}
+
+/**
+ * POST /user/holidays/accounting-year — a whole year's holidays in one save.
+ *
+ * All or nothing: one bad row (outside the year, a duplicate, a start date that
+ * already has a holiday → 409) and nothing is written, so the API's message is
+ * surfaced as-is for the user to fix the named rows. Existing holidays in the
+ * year are kept, never replaced. `companyId` defaults to the active company.
+ */
+export async function createHolidayYear(
+  values: HolidayYearFormValues,
+  companyId?: number,
+): Promise<Holiday[]> {
+  try {
+    const raw = await http.post<unknown, HolidayYearPayload>(
+      endpoints.HOLIDAYS.ACCOUNTING_YEAR,
+      {
+        // The dashboard reminder can name a company other than the active one.
+        company_id: companyId ?? activeCompanyId('holidays'),
+        accounting_year: values.accountingYear,
+        holidays: holidayYearToPayload(values),
+      },
+    )
+    return holidayYearResponseSchema.parse(raw).items.map(toHoliday)
+  } catch (error) {
+    throw toApiError(error, "Couldn't save the year's holidays.")
+  }
+}
+
+/**
+ * GET /user/dashboard/holiday-reminder — which companies still have no holidays
+ * for the coming (from 1 March) or already-started accounting year. The API
+ * only ever answers for companies the user can reach; `companyIds` narrows it.
+ */
+export async function fetchHolidayReminder(
+  companyIds?: number[],
+  signal?: AbortSignal,
+): Promise<HolidayReminder> {
+  try {
+    const raw = await http.get<unknown>(endpoints.DASHBOARD.HOLIDAY_REMINDER, {
+      params: companyIds?.length ? { company_ids: companyIds.join(',') } : undefined,
+      signal,
+    })
+    return toHolidayReminder(holidayReminderResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't load the holiday reminder.")
   }
 }

@@ -32,6 +32,9 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
     control,
     errors,
     onSubmit,
+    fromYear,
+    toDateMin,
+    toDateMax,
     isEdit,
     isPending,
     isLoading,
@@ -105,6 +108,13 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
                 label={HOLIDAY_LABELS.toDate}
                 required
                 error={errors.toDate?.message}
+                minDate={toDateMin}
+                maxDate={toDateMax}
+                hint={
+                  fromYear
+                    ? `A holiday stays inside one accounting year — ${fromYear} ends on 31 March.`
+                    : 'A holiday stays inside one accounting year (1 April – 31 March).'
+                }
               />
 
               <div className="col-span-full mt-4 flex items-center justify-end gap-3 border-t border-border pt-5">

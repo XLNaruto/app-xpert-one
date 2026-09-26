@@ -31,7 +31,17 @@ export const SUBSCRIPTION_STATUS_VARIANTS: Record<
   expired: 'secondary',
   pending: 'warning',
   created: 'warning',
+  completed: 'secondary',
 }
+
+/**
+ * Statuses that mean the purchase is the one serving the account now — a
+ * history row in either reads as "Current".
+ */
+export const CURRENT_SUBSCRIPTION_STATUSES = ['trialing', 'active'] as const
+
+/** The API's page-size ceiling for the purchase history. */
+export const PURCHASE_HISTORY_MAX_LIMIT = 100
 
 /**
  * The share of an allowance at which the usage meter starts warning, and the
@@ -82,3 +92,6 @@ export const SLA_PRIORITY_VARIANTS: Record<string, string> = {
   high: 'bg-warning/15 text-warning',
   critical: 'bg-destructive/12 text-destructive',
 }
+
+/** The longest note a plan change request may carry (the API's own cap). */
+export const SWITCH_REQUEST_NOTE_MAX = 1000

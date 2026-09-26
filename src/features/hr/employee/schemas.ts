@@ -1297,6 +1297,12 @@ export const employeeAssetRowSchema = z.object({
   assignedDate: z.string(),
   validTill: z.string(),
   remarks: z.string(),
+  /**
+   * Which unit this is — "IMEI" / "354812345678901" — for telling apart several
+   * handouts of the same asset and variant. Optional, but a pair: both or neither.
+   */
+  identificationTitle: z.string().max(100, 'Maximum 100 characters'),
+  identificationValue: z.string().max(100, 'Maximum 100 characters'),
 })
 
 export type EmployeeAssetFormValues = z.infer<typeof employeeAssetRowSchema>
@@ -1313,6 +1319,8 @@ export const ASSET_ROW_KEYS = [
   'assignedDate',
   'validTill',
   'remarks',
+  'identificationTitle',
+  'identificationValue',
 ] as const
 
 export const employeeAssetListSchema = z.object({
@@ -1364,6 +1372,24 @@ export const employeeAssetListSchema = z.object({
         }
       }
 
+      // The API refuses half a pair, so flag the empty side before it gets there.
+      const hasTitle = row.identificationTitle.trim() !== ''
+      const hasValue = row.identificationValue.trim() !== ''
+      if (hasTitle && !hasValue) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'identificationValue'],
+          message: 'Please enter the identification value',
+        })
+      }
+      if (hasValue && !hasTitle) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [index, 'identificationTitle'],
+          message: 'Please enter the identification title',
+        })
+      }
+
       if (row.assignedDate && row.validTill && row.validTill < row.assignedDate) {
         ctx.addIssue({
           code: 'custom',
@@ -1395,6 +1421,8 @@ export const employeeAssetResponseSchema = z.object({
   valid_till: z.string().nullish(),
   status: z.string().nullish(),
   remarks: z.string().nullish(),
+  identification_title: z.string().nullish(),
+  identification_value: z.string().nullish(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),
   updated_at: z.string().nullish(),
@@ -1416,6 +1444,13 @@ export interface EmployeeAssetPayload {
   assigned_date: string | null
   valid_till: string | null
   remarks: string | null
+  /**
+   * Both or neither — the API checks the pair as the row will stand after the
+   * write. Always sent together (the form submits the whole row), so a PATCH
+   * with both `null` clears it.
+   */
+  identification_title: string | null
+  identification_value: string | null
 }
 
 /* ── Step 8 — transfers ──────────────────────────────────────────────────── */
@@ -1701,8 +1736,11 @@ export const employeeRosterEntryResponseSchema = z.object({
   employee_id: z.number(),
   employee_service_id: z.number(),
   work_date: z.string(),
-  shift_id: z.number(),
+  /** Typed nullable by the API; in practice never null in the roster list. */
+  shift_id: z.number().nullish(),
   shift_name: z.string().nullish(),
+  /** The Off-Day Schedule's decision for the date — `null` leaves it to the policy. */
+  is_week_off: z.boolean().nullish(),
   source_type: z.string(),
   created_at: z.string().nullish(),
   created_by_name: z.string().nullish(),

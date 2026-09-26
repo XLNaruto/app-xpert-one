@@ -1,9 +1,13 @@
 import type {
   HolidayFormValues,
+  HolidayReminderResponse,
   HolidayResponse,
   HolidayUpdatePayload,
+  HolidayYearFormValues,
+  HolidayYearRowValues,
 } from '../schemas'
-import type { Holiday } from '../types'
+import type { Holiday, HolidayReminder } from '../types'
+import { accountingYearOfDate } from './accounting-year'
 
 /**
  * The API takes and documents both dates as `yyyy-MM-dd`, but a date column can
@@ -25,6 +29,9 @@ export function toHoliday(response: HolidayResponse): Holiday {
     holidayName: response.name,
     fromDate: toDateOnly(response.from_date),
     toDate: toDateOnly(response.to_date),
+    // Older responses may not carry it yet — it's always derivable from the start.
+    accountingYear:
+      response.accounting_year ?? accountingYearOfDate(response.from_date) ?? '',
     createdBy: response.created_by_name ?? '',
     createdAt: response.created_at,
     updatedBy: response.updated_by_name ?? null,
@@ -51,5 +58,42 @@ export function holidayToFormValues(holiday: Holiday): HolidayFormValues {
     holidayName: holiday.holidayName,
     fromDate: holiday.fromDate,
     toDate: holiday.toDate,
+  }
+}
+
+/** A year-form row with nothing in it — skipped on save rather than reported. */
+function isBlankYearRow(row: HolidayYearRowValues): boolean {
+  return !row.name.trim() && !row.fromDate && !row.toDate
+}
+
+/** Validated year form → the `holidays` array, blank rows dropped. */
+export function holidayYearToPayload(
+  values: HolidayYearFormValues,
+): HolidayUpdatePayload[] {
+  return values.rows
+    .filter((row) => !isBlankYearRow(row))
+    .map((row) => ({
+      name: row.name.trim(),
+      from_date: row.fromDate,
+      to_date: row.toDate,
+    }))
+}
+
+/** API reminder → the banner's model. */
+export function toHolidayReminder(response: HolidayReminderResponse): HolidayReminder {
+  const companies = (response.items ?? []).map((item) => ({
+    companyId: item.company_id,
+    companyName: item.company_name ?? item.company_code ?? `Company ${item.company_id}`,
+    companyCode: item.company_code ?? '',
+  }))
+  return {
+    // Nothing to name means nothing to show, whatever the flag says.
+    show: response.show && companies.length > 0 && Boolean(response.accounting_year),
+    accountingYear: response.accounting_year ?? '',
+    startsOn: response.starts_on ?? '',
+    endsOn: response.ends_on ?? '',
+    status: response.status === 'overdue' ? 'overdue' : 'upcoming',
+    daysUntilStart: response.days_until_start ?? 0,
+    companies,
   }
 }

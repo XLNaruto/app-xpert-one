@@ -45,7 +45,7 @@ export function ShiftHistoryDialog({
 
   return (
     <Dialog open={shift !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl" onClose={onClose}>
+      <DialogContent className="max-w-5xl" onClose={onClose}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="size-4" />
@@ -57,7 +57,7 @@ export function ShiftHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 max-h-[60vh] overflow-auto">
+        <div className="mt-4 max-h-[60vh] overflow-auto rounded-xl border border-border">
           {history.isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, index) => (
@@ -75,22 +75,22 @@ export function ShiftHistoryDialog({
               description="This shift has no dated rule set on record."
             />
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Effective From</th>
-                  <th className="py-2 pr-3 font-medium">Timings</th>
-                  <th className="py-2 pr-3 font-medium">Break</th>
-                  <th className="py-2 pr-3 font-medium">Concession</th>
-                  <th className="py-2 pr-3 font-medium">Full / Half Day</th>
-                  <th className="py-2 pr-3 font-medium">Changed By</th>
-                  <th className="py-2 font-medium">Changed On</th>
+                <tr className="sticky top-0 border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Effective From</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Timings</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Break</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Concession</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Full / Half Day</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Changed By</th>
+                  <th className="whitespace-nowrap px-4 py-3 font-medium">Changed On</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(history.data ?? []).map((version) => (
                   <tr key={version.id}>
-                    <td className="whitespace-nowrap py-2.5 pr-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground">
                           {formatDate(version.effectiveDate)}
@@ -101,22 +101,22 @@ export function ShiftHistoryDialog({
                         )}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3 font-mono text-xs">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
                       {formatTime(version.startTime)} – {formatTime(version.endTime)}
                     </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       {version.breakMinutes} min
                     </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       {version.concessionMinutes} min
                     </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3">
+                    <td className="whitespace-nowrap px-4 py-3">
                       {version.minFullDayHours} / {version.minHalfDayHours} hrs
                     </td>
-                    <td className="whitespace-nowrap py-2.5 pr-3 text-muted-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                       {version.updatedBy || version.createdBy || '—'}
                     </td>
-                    <td className="whitespace-nowrap py-2.5 text-muted-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                       {version.updatedAt || version.createdAt
                         ? formatDate((version.updatedAt || version.createdAt) as string)
                         : '—'}
