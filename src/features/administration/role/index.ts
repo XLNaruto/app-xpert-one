@@ -12,5 +12,6 @@ export { useRoles, useRole, useAssignablePermissions } from './api/use-roles'
 export { useCreateRole, useUpdateRole, useDeleteRole } from './api/use-role-mutations'
 
 export { ROLE_SORT, ROLE_DEFAULT_SORT } from './constants'
+export { useRoleSelect } from './hooks/use-role-select'
 
 export type { Role, RoleListRow } from './types'

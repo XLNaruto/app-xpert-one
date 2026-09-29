@@ -410,6 +410,13 @@ export interface SalaryRegisterRow {
   storedWorkingDays: number | null
   storedWorkingHour: number | null
   /**
+   * The cycle's overtime as measured from attendance — `measured.overtime.hours`.
+   * What a pending row's OT hours open on and what the save sends. On a processed
+   * row it is compared with the stored `ot_hours`: a difference means attendance
+   * changed after the month was saved, and the month needs reprocessing.
+   */
+  measuredOtHours: number
+  /**
    * The act settings a processed month was priced on. A revision echoes these
    * rather than the designation's current ones — the wage structure may have
    * been versioned since, and a back-dated month is owed at its own rates.

@@ -165,6 +165,17 @@ export function earnedBasicFor(wagesPerDay: number, presentDays: number): number
   return round(wagesPerDay * presentDays)
 }
 
+/**
+ * A processed month whose stored OT hours no longer match what attendance
+ * measures — attendance was corrected after the month was saved. Stored salaries
+ * are snapshots and are never re-priced behind the reader's back, so the screen
+ * only says the month needs reprocessing.
+ */
+export function otNeedsReprocessing(row: SalaryRegisterRow): boolean {
+  if (!row.isProcessed) return false
+  return Math.abs(row.figures.otHours - row.measuredOtHours) >= 0.01
+}
+
 /** Overtime wage for the hours on the row, at the structure's hourly rate. */
 export function otAmountFor(ratePerHour: number, hours: number): number {
   if (!ratePerHour || !hours) return 0
@@ -600,7 +611,11 @@ export function rowFigures(
    * reads is its `amount_type`'s business: see `headCellAmount`.
    */
   const days = headDaysFor(presentDays, workingDays, figures.wagesPerDay)
-  const otAmount = otAmountFor(figures.otRate, cellNumber(values.otHours))
+  /* Overtime is paid only where the structure allows it. The hours still travel
+     on the save — they are what attendance measured — but price to nothing. */
+  const otAllowed =
+    wageStructure?.isOvertimeApplicable ?? row.storedActs?.isOvertimeApplicable ?? false
+  const otAmount = otAllowed ? otAmountFor(figures.otRate, cellNumber(values.otHours)) : 0
 
   /**
    * One head cell → its line. The cells are aligned with the grid's head

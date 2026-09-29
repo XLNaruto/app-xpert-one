@@ -1,4 +1,4 @@
-import type { LeaveApplication, LeaveGroup } from '../types'
+import type { LeaveApplication, LeaveDuration, LeaveGroup } from '../types'
 
 /**
  * The sentences a leave screen says about paid / unpaid days — pure, no React.
@@ -68,4 +68,36 @@ export function describeGroupSpan(group: LeaveGroup): string {
   const total = group.paidDays + group.unpaidDays
   if (!group.split) return formatDays(total)
   return `all ${formatDays(total)} (${formatSplit(group)})`
+}
+
+/**
+ * An `HH:MM` time as the screen shows it — 12-hour with AM/PM, `13:00` →
+ * `01:00 PM`. The form and the API keep 24-hour; only what's read changes.
+ * Left as-is when it isn't in that shape.
+ */
+export function formatTime12(time: string): string {
+  const match = /^(\d{2}):(\d{2})/.exec(time)
+  if (!match) return time
+  const hour24 = Number(match[1])
+  const hour12 = hour24 % 12 || 12
+  return `${String(hour12).padStart(2, '0')}:${match[2]} ${hour24 < 12 ? 'AM' : 'PM'}`
+}
+
+/**
+ * The duration as a register line reads it — `Half day (09:00 AM–01:00 PM)` or
+ * `Full day`. A half day may span several dates; the slot is the same on each.
+ */
+export function formatDuration({
+  duration,
+  fromTime,
+  toTime,
+}: {
+  duration: LeaveDuration
+  fromTime: string
+  toTime: string
+}): string {
+  if (duration !== 'HALF_DAY') return 'Full day'
+  return fromTime && toTime
+    ? `Half day (${formatTime12(fromTime)}–${formatTime12(toTime)})`
+    : 'Half day'
 }

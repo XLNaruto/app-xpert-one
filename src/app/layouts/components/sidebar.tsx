@@ -5,6 +5,7 @@ import {
   filterNavByCompany,
   filterNavByPermission,
   navGroups,
+  navItemOwnsPath,
   type NavItem,
 } from '@/config/navigation'
 import { useCan } from '@/features/permissions'
@@ -14,10 +15,6 @@ import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 import { SidebarBrand } from '@/components/common/sidebar-brand'
 
-function isActivePath(to: string | undefined, pathname: string) {
-  if (!to) return false
-  return to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(`${to}/`)
-}
 
 /**
  * Wraps a rail control in the shared <Tooltip>. When `enabled` is false the
@@ -310,7 +307,7 @@ function NavParent({
   onNavigate?: () => void
 }) {
   const children = item.children ?? []
-  const childActive = children.some((c) => isActivePath(c.to, pathname))
+  const childActive = children.some((c) => navItemOwnsPath(c, pathname))
   const [open, setOpen] = useState(childActive)
   const Icon = item.icon
 
@@ -364,6 +361,8 @@ function NavParent({
                   activeOptions={{ exact: c.exact ?? false }}
                   onClick={onNavigate}
                   className={cn(
+                    // `active` by hand too, for routes the row claims via `activeFor`.
+                    navItemOwnsPath(c, pathname) && 'active',
                     'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
                     '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',

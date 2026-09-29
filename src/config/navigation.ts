@@ -43,6 +43,10 @@ import {
   UsersRound,
   Wallet,
   Workflow,
+  ClipboardCheck,
+  ClipboardList,
+  FolderKanban,
+  ListChecks,
   // UsersRound,
   // Wallet,
 } from "lucide-react";
@@ -55,6 +59,13 @@ export interface NavItem {
   children?: NavItem[];
   /** Match the active highlight only on an exact path (use when a sibling route extends this one). */
   exact?: boolean;
+  /**
+   * Other routes that belong to this row without living under its path — the
+   * row stays highlighted on them, and they breadcrumb as a step below it
+   * (`path` is a prefix; `label` names that step). E.g. SOP Assignments, reached
+   * only from SOP Tasks, sits at `/office-task/sop-assignment`.
+   */
+  activeFor?: { path: string; label: string }[];
   /**
    * What the user must hold for this row to appear — a `PERMISSIONS` entry from
    * `features/permissions` (a resource, or an array of candidate spellings).
@@ -217,6 +228,54 @@ export const navGroups: NavGroup[] = [
         to: "/hr/bonus-estimation",
         icon: Gift,
         permission: PERMISSIONS.bonusEstimation,
+      },
+    ],
+  },
+  {
+    /*
+      Office Task — SOP checklists and project tasks, in the order the work
+      flows: define a template, assign it, raise project work, then the
+      employee works it (My Tasks) and an approver signs it off.
+
+      The parent carries the SECTION code (`office-task:read`), which the
+      platform grants on the subscription — without it the whole group is
+      hidden. Each row asks for its exact `:list` code: unlike the rest of the
+      catalog, the Office Task `:list` codes are real role checkboxes.
+    */
+    title: "Task Management",
+    items: [
+      {
+        label: "Office Task",
+        icon: ClipboardList,
+        permission: PERMISSIONS.officeTask,
+        children: [
+          // SOP Assignments open from SOP Tasks' "View Assignments", not their own row.
+          {
+            label: "SOP Tasks",
+            to: "/office-task/sop-group",
+            icon: ListChecks,
+            permission: `${PERMISSIONS.sopGroups}:list`,
+            activeFor: [{ path: "/office-task/sop-assignment", label: "SOP Assignments" }],
+          },
+          {
+            label: "Project Tasks",
+            to: "/office-task/project-task",
+            icon: FolderKanban,
+            permission: `${PERMISSIONS.projectTasks}:list`,
+          },
+          {
+            label: "My Tasks",
+            to: "/office-task/my-task",
+            icon: ClipboardCheck,
+            permission: `${PERMISSIONS.myTasks}:list`,
+          },
+          {
+            label: "Task Approval",
+            to: "/office-task/approval",
+            icon: ShieldCheck,
+            permission: `${PERMISSIONS.taskApprovals}:list`,
+          },
+        ],
       },
     ],
   },
@@ -622,9 +681,44 @@ function navItemForPath(pathname: string): (NavItem & { to: string }) | undefine
   );
 }
 
+/** Is `pathname` on `prefix` or below it? */
+function underPath(prefix: string, pathname: string): boolean {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/**
+ * A nav row that claims `pathname` through its `activeFor` list (longest alias
+ * first), with the alias it matched on.
+ */
+function aliasForPath(
+  pathname: string,
+): { item: NavItem & { to: string }; alias: { path: string; label: string } } | undefined {
+  let best: { item: NavItem & { to: string }; alias: { path: string; label: string } } | undefined;
+  for (const item of routableNavItems) {
+    for (const alias of item.activeFor ?? []) {
+      if (underPath(alias.path, pathname) && (!best || alias.path.length > best.alias.path.length)) {
+        best = { item, alias };
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Does this row own `pathname` — its own path, or one it lists in `activeFor`?
+ * The sidebar highlights (and opens the parent of) whatever row this says yes to.
+ */
+export function navItemOwnsPath(item: NavItem, pathname: string): boolean {
+  if (!item.to) return false;
+  const own = item.to === "/" ? pathname === "/" : underPath(item.to, pathname);
+  return own || (item.activeFor ?? []).some((a) => underPath(a.path, pathname));
+}
+
 /** Human-readable page name for a pathname, or undefined if unknown. */
 export function pageNameForPath(pathname: string): string | undefined {
-  return navItemForPath(pathname)?.label ?? extraTitles[pathname];
+  return (
+    navItemForPath(pathname)?.label ?? extraTitles[pathname] ?? aliasForPath(pathname)?.alias.label
+  );
 }
 
 /**
@@ -635,7 +729,7 @@ export function pageNameForPath(pathname: string): string | undefined {
  * still name, but has no icon to lend).
  */
 export function pageIconForPath(pathname: string): LucideIcon | undefined {
-  return navItemForPath(pathname)?.icon;
+  return (navItemForPath(pathname) ?? aliasForPath(pathname)?.item)?.icon;
 }
 
 export interface BreadcrumbCrumb {
@@ -655,7 +749,9 @@ function titleCase(segment: string): string {
  * routes that aren't in the nav at all.
  */
 export function breadcrumbsForPath(pathname: string): BreadcrumbCrumb[] {
-  const match = navItemForPath(pathname);
+  const direct = navItemForPath(pathname);
+  const alias = direct ? undefined : aliasForPath(pathname);
+  const match = direct ?? alias?.item;
 
   if (!match) {
     const extra = extraTitles[pathname];
@@ -685,7 +781,11 @@ export function breadcrumbsForPath(pathname: string): BreadcrumbCrumb[] {
 
   crumbs.push({ label: match.label, to: match.to });
 
-  const rest = pathname.slice(match.to.length).split("/").filter(Boolean);
+  // An `activeFor` route: the row, then the step it names, then what's below.
+  const base = alias ? alias.alias.path : match.to;
+  if (alias) crumbs.push({ label: alias.alias.label, to: alias.alias.path });
+
+  const rest = pathname.slice(base.length).split("/").filter(Boolean);
   for (const segment of rest) crumbs.push({ label: titleCase(segment) });
 
   return crumbs;

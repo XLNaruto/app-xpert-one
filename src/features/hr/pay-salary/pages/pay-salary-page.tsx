@@ -8,7 +8,7 @@ import {
   UsersRound,
   Wallet,
 } from 'lucide-react'
-import { DataTable } from '@/components/data-table'
+import { DataTable, rowNumber } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EmptyState } from '@/components/common/empty-state'
@@ -95,9 +95,9 @@ export function PaySalaryPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm tabular-nums text-muted-foreground">
-            {view.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -194,7 +194,6 @@ export function PaySalaryPage() {
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      view.offset,
       view.selected,
       view.allSelected,
       view.selectableCount,

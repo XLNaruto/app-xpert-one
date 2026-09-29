@@ -558,6 +558,8 @@ export function toEmployeeTransferDetail(
 
   return {
     wageStructure: {
+      source: wage.source ?? null,
+      employeeWageId: wage.employee_wage_id ?? null,
       designationWageStructureId: wage.designation_wage_structure_id ?? null,
       salaryType: wage.salary_type ?? '',
       basicPay: wage.basic_pay ?? null,
@@ -634,7 +636,35 @@ export function transferToPayload(
   }
 }
 
+/**
+ * The posting-correction body. The PATCH is a true partial edit — an omitted
+ * field is left as stored and an explicit `null` clears it — so given the values
+ * the form was seeded with, only the fields that actually changed are sent. A
+ * field emptied on the form therefore travels as `null` and clears; one left
+ * alone never travels at all. Switching to `PERMANENT` clears the contract fields
+ * server-side.
+ */
 export function serviceEditToPayload(
+  values: EmployeeServiceEditFormValues,
+  initial?: EmployeeServiceEditFormValues,
+): Partial<EmployeeServiceEditPayload> {
+  const next = fullServiceEditPayload(values)
+  if (!initial) return next
+
+  const before = fullServiceEditPayload(initial)
+  const changed: Partial<EmployeeServiceEditPayload> = {}
+  const keys = new Set([...Object.keys(next), ...Object.keys(before)]) as Set<
+    keyof EmployeeServiceEditPayload
+  >
+  for (const key of keys) {
+    if (JSON.stringify(next[key] ?? null) !== JSON.stringify(before[key] ?? null)) {
+      Object.assign(changed, { [key]: next[key] ?? null })
+    }
+  }
+  return changed
+}
+
+function fullServiceEditPayload(
   values: EmployeeServiceEditFormValues,
 ): EmployeeServiceEditPayload {
   const isContractual = values.employmentType !== PERMANENT_EMPLOYMENT_TYPE

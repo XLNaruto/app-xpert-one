@@ -17,7 +17,7 @@ import { FilterBar } from '@/components/common/filter-bar'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { formatDateTime } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Forbidden } from '@/features/error'
@@ -84,9 +84,9 @@ export function EmployeeTicketListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {list.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -272,7 +272,7 @@ export function EmployeeTicketListPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.offset, canView],
+    [canView],
   )
 
   if (list.isForbidden) return <Forbidden description={list.forbiddenMessage} />

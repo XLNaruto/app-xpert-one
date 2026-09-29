@@ -27,6 +27,15 @@ export const LEAVE_DURATION_OPTIONS: ComboboxOption[] = [
 ]
 
 /**
+ * One-click half-day slots. Each is exactly `HALF_DAY_HOURS` long, which is the
+ * only length the API accepts.
+ */
+export const HALF_DAY_PRESETS = [
+  { label: 'First half', fromTime: '09:00', toTime: '13:00' },
+  { label: 'Second half', fromTime: '14:00', toTime: '18:00' },
+] as const
+
+/**
  * The pay-type filter. It narrows what you're LOOKING at, which is a different
  * thing from choosing it: nobody picks paid or unpaid on a leave — the server
  * spends the type's allowance and the rest falls through as unpaid.
@@ -35,6 +44,17 @@ export const LEAVE_PAY_TYPE_FILTER_OPTIONS: ComboboxOption[] = [
   { label: 'Paid & unpaid', value: '' },
   { label: 'Paid only', value: 'PAID' },
   { label: 'Unpaid only', value: 'UNPAID' },
+]
+
+/**
+ * What a new leave can be recorded as. `APPROVED` / `REJECTED` are decisions and
+ * need approver rights (`leaves:update` plus a place in the company's approval
+ * chain); anyone who can create a leave can file it `PENDING`.
+ */
+export const LEAVE_RECORD_STATUS_OPTIONS: ComboboxOption[] = [
+  { label: 'Approved', value: 'APPROVED' },
+  { label: 'Pending', value: 'PENDING' },
+  { label: 'Rejected', value: 'REJECTED' },
 ]
 
 /** Status filter on the leave register — `''` is every status. */
@@ -80,7 +100,8 @@ export const LEAVE_ATTACHMENT_ACCEPT = LEAVE_ATTACHMENT_CONTENT_TYPES.join(',')
  * only choice, and the server decides which of the days it pays for.
  *
  * `status` opens on `APPROVED` because a back-office desk recording a leave *is*
- * the approval.
+ * the approval — for an approver. The form switches it to `PENDING` for a user
+ * without `leaves:update`, whom the API would answer with a 403.
  */
 export const EMPTY_LEAVE_FORM: LeaveFormValues = {
   employeeId: '',
@@ -91,6 +112,7 @@ export const EMPTY_LEAVE_FORM: LeaveFormValues = {
   fromTime: '',
   toTime: '',
   status: 'APPROVED',
+  remark: '',
   leaveReason: '',
   attachment: '',
 }

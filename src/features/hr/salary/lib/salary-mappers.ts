@@ -412,6 +412,7 @@ export function toSalaryRegisterRow(item: SalaryRegisterItemResponse): SalaryReg
     storedPresentDays: item.salary?.present_days ?? null,
     storedWorkingDays: item.salary?.working_days ?? null,
     storedWorkingHour: item.salary?.working_hour ?? null,
+    measuredOtHours: item.measured?.overtime?.hours ?? 0,
     storedActs: item.salary ? toStoredActs(item.salary) : null,
     isProcessed: item.salary !== null,
     salaryId: item.salary?.id ?? null,
@@ -521,7 +522,13 @@ export function toSalaryRow(
     workingDays: cell(
       row.storedWorkingDays ?? row.wageStructure?.workingDays ?? row.attendance.workingDays,
     ),
-    otHours: row.figures.otHours ? cell(row.figures.otHours) : '',
+    /* A processed month opens on the hours it was saved at; a pending one on the
+       overtime measured from attendance — breaks excluded, shift-aware — so a
+       corrected attendance flows into the salary without anyone retyping it. */
+    otHours: (() => {
+      const hours = row.isProcessed ? row.figures.otHours : row.measuredOtHours
+      return hours ? cell(hours) : ''
+    })(),
     allowances: cells(heads.allowances, row.figures.allowances),
     deductions: cells(heads.deductions, row.figures.deductions),
     /* Opened on the stored figures, which is what a processed row is owed at and

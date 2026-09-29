@@ -5,7 +5,7 @@ import {
   type UseFormRegister,
   type UseFormSetValue,
 } from 'react-hook-form'
-import { Eye, Lock, Pencil } from 'lucide-react'
+import { AlertTriangle, Eye, Lock, Pencil } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import {
@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils'
 import {
   liveRow,
+  otNeedsReprocessing,
   presentDaysProblem,
   PRESENT_DAYS_LIMIT,
   rowFigures,
@@ -218,7 +219,7 @@ const GROUP_META: Record<SalaryGroup, { label: string; tone: string; hint: strin
   overtime: {
     label: 'OT (Overtime)',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'Overtime hours for the month, at the wage structure’s hourly rate. Only editable where the structure allows overtime.',
+    hint: 'Overtime hours for the month, measured from attendance — recorded breaks excluded, against the employee’s shift — at the wage structure’s hourly rate. Editable where the structure allows overtime. A warning on a processed row means attendance changed after the month was saved: reprocess it to pick up the new hours.',
   },
   deduction: {
     label: 'Deduction',
@@ -316,7 +317,7 @@ function buildColumns(heads: {
       width: 136,
     },
 
-    { key: 'otHours', label: 'Hrs', kind: 'otHours', group: 'overtime', width: 82 },
+    { key: 'otHours', label: 'Hrs', kind: 'otHours', group: 'overtime', width: 104 },
     { key: 'otRate', label: 'Rate', kind: 'otRate', group: 'overtime', width: 110 },
     { key: 'otWage', label: 'Wage', kind: 'otWage', group: 'overtime', width: 124 },
 
@@ -806,13 +807,31 @@ function RowCell({
 
     case 'otHours': {
       const allowed = wageStructure?.isOvertimeApplicable ?? false
-      return (
+      const input = (
         <GridAmountInput
           className="text-center"
           disabled={row.isPaid || !allowed}
           placeholder={allowed ? '0' : NO_VALUE}
           {...register(`rows.${index}.otHours`)}
         />
+      )
+      /* The stored month is a snapshot: when attendance has since measured a
+         different overtime, the cell says so rather than silently re-pricing. */
+      if (!otNeedsReprocessing(row)) return input
+      return (
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">{input}</div>
+          <CellTooltip
+            label={`Needs reprocessing — attendance now measures ${formatDecimal(row.measuredOtHours)} OT hours, the saved month has ${formatDecimal(row.figures.otHours)}.`}
+          >
+            <span
+              className="grid size-7 shrink-0 cursor-help place-items-center text-amber-600 dark:text-amber-400"
+              aria-label="Overtime needs reprocessing"
+            >
+              <AlertTriangle className="size-3.5" />
+            </span>
+          </CellTooltip>
+        </div>
       )
     }
 

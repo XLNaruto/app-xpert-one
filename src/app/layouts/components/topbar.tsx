@@ -59,7 +59,7 @@ export function Topbar() {
   const phone = identity.contact?.replace(/^\+91/, '')
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/80 px-6 backdrop-blur">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 border-b bg-background/80 px-6 backdrop-blur">
       <div className="flex min-w-0 items-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -80,7 +80,7 @@ export function Topbar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         {/* Notifications — temporarily hidden
         <Button variant="ghost" size="icon" className="relative" title="Notifications">
           <Bell className="size-5" />

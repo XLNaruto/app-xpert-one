@@ -186,13 +186,22 @@ export const ASSET_STATUS_OPTIONS: ComboboxOption[] = [
   { label: 'Lost', value: 'LOST' },
 ]
 
-/** Earliest passing year the education dropdown reaches back to. */
+/** The earliest passing year the API accepts. */
+export const EARLIEST_PASSING_YEAR = 1950
+
 /**
- * The floor of the passing-year picker. A qualification older than this belongs to
- * someone past retirement, so the decade view starts here rather than scrolling
- * back through empty centuries.
+ * The floor of the passing-year picker — the API's own floor, so the decade view
+ * starts there rather than scrolling back through empty centuries.
  */
-export const EARLIEST_PASSING_DATE = new Date(1970, 0, 1)
+export const EARLIEST_PASSING_DATE = new Date(EARLIEST_PASSING_YEAR, 0, 1)
+
+/**
+ * The latest passing year — NEXT year, so a qualification being completed can be
+ * recorded. Computed on call, not frozen at module load.
+ */
+export function latestPassingYear(): number {
+  return new Date().getFullYear() + 1
+}
 
 /** Youngest an employee may be, in years. */
 export const MINIMUM_EMPLOYEE_AGE = 18

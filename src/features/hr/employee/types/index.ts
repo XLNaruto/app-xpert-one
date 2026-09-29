@@ -493,6 +493,13 @@ export interface EmployeeServiceDetail {
 
 /** The wage structure a posting was held under — a summary, not the full step 3. */
 export interface EmployeeTransferWageStructure {
+  /**
+   * The wage actually in force for this posting: the employee's own wage
+   * version if one applies, else the designation's structure as of the
+   * posting's date. `null` — no wage at all.
+   */
+  source: 'EMPLOYEE' | 'DESIGNATION' | null
+  employeeWageId: number | null
   designationWageStructureId: number | null
   salaryType: string
   basicPay: number | null

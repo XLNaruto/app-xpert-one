@@ -607,9 +607,20 @@ function PostingDetailDialog({
                 <FormSection
                   icon={ArrowRightLeft}
                   title="Wage Structure"
-                  description="Inherited from the designation this posting was held under"
+                  description="The wage in force for this posting — the employee's own version if one applies, otherwise the designation's as of the posting date"
                 />
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <DetailItem
+                    icon={ArrowRight}
+                    label="Source"
+                    value={
+                      detail.wageStructure.source === 'EMPLOYEE'
+                        ? "Employee's own wage"
+                        : detail.wageStructure.source === 'DESIGNATION'
+                          ? 'Designation wage structure'
+                          : 'No wage in force'
+                    }
+                  />
                   <DetailItem
                     icon={ArrowRight}
                     label="Salary Type"

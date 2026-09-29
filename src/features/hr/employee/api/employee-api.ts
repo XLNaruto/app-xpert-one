@@ -187,6 +187,22 @@ export async function updateEmployee(
 }
 
 /**
+ * DELETE /user/employees/:id — soft-delete the employee (`204`).
+ *
+ * Frees the plan seat, the primary mobile number and the employee code, signs
+ * them out of the app, removes their Talk login and push devices, and lists the
+ * id in `deleted-data` so attendance devices drop it. `404` for one outside the
+ * user's companies.
+ */
+export async function deleteEmployee(id: number): Promise<void> {
+  try {
+    await http.delete<unknown>(endpoints.EMPLOYEES.DELETE(id))
+  } catch (error) {
+    throw toApiError(error, "Couldn't delete the employee.")
+  }
+}
+
+/**
  * DELETE /user/employees/:id/face — de-register the employee's face, answering
  * how many captured images went with it.
  *

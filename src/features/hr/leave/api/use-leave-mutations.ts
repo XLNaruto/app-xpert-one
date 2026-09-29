@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { isConflictError } from '@/lib/api-error'
 import { queryKeys } from '@/lib/query-keys'
 import {
   createLeave,
@@ -69,6 +70,9 @@ export function useDecideLeave() {
     mutationFn: ({ id, values }: { id: number; values: LeaveDecisionFormValues }) =>
       decideLeave(id, values),
     onSuccess: invalidate,
+    // 409 — the employee changed the application while it was open here. What's
+    // on screen is stale, so re-read it before anyone decides again.
+    onError: (error) => isConflictError(error) && invalidate(),
   })
 }
 

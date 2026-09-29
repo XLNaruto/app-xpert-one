@@ -8,7 +8,7 @@ import {
   Trash2,
   Wallet,
 } from 'lucide-react'
-import { DataTable } from '@/components/data-table'
+import { DataTable, rowNumber } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -93,9 +93,9 @@ export function SalaryViewListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground tabular-nums">
-            {view.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -228,7 +228,7 @@ export function SalaryViewListPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [view.offset, view.selected, view.allSelected, view.selectableCount, canDiscard],
+    [view.selected, view.allSelected, view.selectableCount, canDiscard],
   )
 
   if (view.isForbidden) return <Forbidden description={view.forbiddenMessage} />

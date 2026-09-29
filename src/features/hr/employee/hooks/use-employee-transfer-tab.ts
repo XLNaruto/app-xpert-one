@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
 import { useCompanySelect } from '@/features/master/company'
 import {
   employeeServiceEditSchema,
@@ -358,31 +358,59 @@ export function useEmployeeTransferTab(employeeId: number) {
 
   /* ── Submits ───────────────────────────────────────────────────────────── */
 
+  /**
+   * A 409 means another change got there first (a double submit, a posting
+   * closed elsewhere). The mutation has already re-read the register, so the
+   * dialog closes onto the fresh list instead of inviting a blind retry.
+   */
+  const failWith = (fallback: string) => (error: unknown) => {
+    if (isConflictError(error)) {
+      toast.error(getApiErrorMessage(error, fallback), {
+        description: 'The service history has been refreshed — review it and try again.',
+      })
+      closeDialog()
+      return
+    }
+    toast.error(getApiErrorMessage(error, fallback))
+  }
+
   const submitTransfer = transferForm.handleSubmit((values) => {
+    const isCompanyMove =
+      values.companyId.trim() !== '' &&
+      Number(values.companyId) !== postingToFollow?.companyId
     transferEmployee.mutate(
       { values, currentCompanyId: postingToFollow?.companyId },
       {
         onSuccess: () => {
-          toast.success('Employee transferred')
+          // A company move re-codes the employee to the target company's next
+          // code; the employee queries are invalidated, so it refreshes on screen.
+          toast.success('Employee transferred', {
+            description: isCompanyMove
+              ? 'The employee has been given the new company’s next employee code.'
+              : undefined,
+          })
           closeDialog()
         },
-        onError: (error) =>
-          toast.error(getApiErrorMessage(error, "Couldn't transfer the employee.")),
+        onError: failWith("Couldn't transfer the employee."),
       },
     )
   })
 
   const submitEdit = editForm.handleSubmit((values) => {
     if (activeServiceId === undefined) return
+    // `reset()` in the seed effect made the loaded posting the form's defaults,
+    // so only what changed from it is sent: omitted = unchanged, null = clear.
+    const initial = editForm.formState.defaultValues as
+      | EmployeeServiceEditFormValues
+      | undefined
     updateService.mutate(
-      { serviceId: activeServiceId, values },
+      { serviceId: activeServiceId, values, initial },
       {
         onSuccess: () => {
           toast.success('Posting updated')
           closeDialog()
         },
-        onError: (error) =>
-          toast.error(getApiErrorMessage(error, "Couldn't update the posting.")),
+        onError: failWith("Couldn't update the posting."),
       },
     )
   })
@@ -396,8 +424,7 @@ export function useEmployeeTransferTab(employeeId: number) {
           toast.success('Posting closed')
           closeDialog()
         },
-        onError: (error) =>
-          toast.error(getApiErrorMessage(error, "Couldn't close the posting.")),
+        onError: failWith("Couldn't close the posting."),
       },
     )
   })

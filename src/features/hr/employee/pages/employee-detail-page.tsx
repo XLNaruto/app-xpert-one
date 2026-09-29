@@ -166,7 +166,19 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     );
   }
 
-  if (!employee) return <NotFound />;
+  // A 404 is also an employee outside the user's companies.
+  if (!employee) {
+    return (
+      <NotFound
+        title="Employee not found"
+        description={
+          detail.error
+            ? getApiErrorMessage(detail.error, "We couldn't find that employee.")
+            : undefined
+        }
+      />
+    );
+  }
 
   const service = employee.service;
   const familyRows = family.data ?? [];

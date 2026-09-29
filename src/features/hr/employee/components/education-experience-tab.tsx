@@ -10,7 +10,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { YearPicker } from '@/components/ui/year-picker'
 import { Field } from '@/components/common/form-field'
 import { Forbidden } from '@/features/error'
-import { EARLIEST_PASSING_DATE, EXPERIENCE_CTC_TYPE_OPTIONS } from '../constants'
+import {
+  EARLIEST_PASSING_DATE,
+  EXPERIENCE_CTC_TYPE_OPTIONS,
+  latestPassingYear,
+} from '../constants'
 import { useEmployeeEducationTab } from '../hooks/use-employee-education-tab'
 import { RepeatCard, RepeatCardBadge, RepeatSection } from './repeat-card'
 import { StepFormFooter } from './step-form-footer'
@@ -153,7 +157,7 @@ export function EducationExperienceTab({
                       value={year.value}
                       onChange={year.onChange}
                       minDate={EARLIEST_PASSING_DATE}
-                      maxDate={new Date()}
+                      maxDate={new Date(latestPassingYear(), 11, 31)}
                       invalid={Boolean(errors?.passingYear)}
                     />
                   )}

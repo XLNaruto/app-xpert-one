@@ -181,17 +181,21 @@ function BalanceRow({ item }: { item: LeaveBalanceItem }) {
         )}
       </TableCell>
 
+      {/* `unpaid` is the API's own count of days taken unpaid; `used` / `pending`
+          count paid days only. Older responses without it fall back to the
+          overflow past the allowance. */}
       <TableCell className="whitespace-nowrap text-right">
-        {item.overflow > 0 ? (
+        {(item.unpaid || item.overflow) > 0 ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex cursor-help">
-                <Badge variant="warning">{formatDays(item.overflow)}</Badge>
+                <Badge variant="warning">{formatDays(item.unpaid || item.overflow)}</Badge>
               </span>
             </TooltipTrigger>
             <TooltipContent className="max-w-64 text-pretty font-normal">
-              Days of this type past its paid allowance. They were still granted —
-              running out never refuses a leave — but payroll won't pay for them.
+              Days of this type taken unpaid, past its paid allowance. They were
+              still granted — running out never refuses a leave — but payroll won't
+              pay for them. Used and Pending count paid days only.
             </TooltipContent>
           </Tooltip>
         ) : (

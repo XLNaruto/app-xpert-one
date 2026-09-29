@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Forbidden } from '@/features/error'
+import { Forbidden, NotFound } from '@/features/error'
 import { EMPLOYEE_TAB_LABELS } from '../constants'
 import { asEmployeeTab, useEmployeeWizard } from '../hooks/use-employee-wizard'
 import {
@@ -60,6 +60,9 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
 
   // Reading this employee was refused — show the 403 screen, not a broken wizard.
   if (wizard.isForbidden) return <Forbidden description={wizard.forbiddenMessage} />
+  if (wizard.isNotFound) {
+    return <NotFound title="Employee not found" description={wizard.notFoundMessage} />
+  }
 
   const employee = wizard.employee
   const title = employeeId === undefined ? 'Add Employee' : 'Edit Employee'

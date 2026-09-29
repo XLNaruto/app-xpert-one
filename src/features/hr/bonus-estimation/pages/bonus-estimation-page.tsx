@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { CalendarRange, Filter, Gift, ListTree, Save } from 'lucide-react'
-import { DataTable } from '@/components/data-table'
+import { DataTable, rowNumber } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -117,9 +117,9 @@ export function BonusEstimationPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm tabular-nums text-muted-foreground">
-            {estimate.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -236,7 +236,6 @@ export function BonusEstimationPage() {
     [
       canSave,
       scope.calculationField,
-      estimate.offset,
       estimate.rows,
       estimate.selected,
       estimate.allSelected,
@@ -252,9 +251,9 @@ export function BonusEstimationPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm tabular-nums text-muted-foreground">
-            {saved.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -326,7 +325,7 @@ export function BonusEstimationPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [saved.offset, saved.openMonths],
+    [saved.openMonths],
   )
 
   if (view.isForbidden) return <Forbidden description={view.forbiddenMessage} />

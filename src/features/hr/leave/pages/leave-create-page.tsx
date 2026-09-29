@@ -1,6 +1,15 @@
 import { Controller } from 'react-hook-form'
-import { AlertTriangle, ArrowLeft, CalendarDays, Lock } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  Lock,
+  Sunrise,
+  Sunset,
+} from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
+import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/common/page-header'
 import { FormSection } from '@/components/common/form-section'
 import { Field } from '@/components/common/form-field'
@@ -14,8 +23,9 @@ import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { LEAVE_DURATION_OPTIONS } from '../constants'
-import { formatDays, formatSplit } from '../lib/leave-summary'
+import { LEAVE_DURATION_OPTIONS, LEAVE_RECORD_STATUS_OPTIONS } from '../constants'
+import { HALF_DAY_HOURS } from '../lib/leave-dates'
+import { formatDays, formatSplit, formatTime12 } from '../lib/leave-summary'
 import { LeaveAttachmentField } from '../components/leave-attachment-field'
 import { useLeaveForm } from '../hooks/use-leave-form'
 
@@ -52,6 +62,11 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
     employeeLabel,
     leaveTypeSelect,
     isHalfDay,
+    canRecordDecision,
+    status,
+    fromTime,
+    halfDayPresets,
+    applyHalfDayPreset,
     minFromDate,
     minToDate,
     balanceItem,
@@ -200,7 +215,11 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 label="To Date"
                 required
                 error={errors.toDate?.message}
-                hint={isHalfDay ? 'A half day covers a single date.' : undefined}
+                hint={
+                  isHalfDay
+                    ? 'A half day may cover a range — it means half of every day in it.'
+                    : undefined
+                }
                 minDate={minToDate ?? minFromDate}
                 disabled={isDecided}
               />
@@ -221,15 +240,62 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                     />
                   )}
                 />
+                {/* A half day counts 0.5 for every date in its range. */}
+                {requestedDaysLabel && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {isHalfDay ? `Half of each day — ${requestedDaysLabel} in total` : requestedDaysLabel}
+                  </p>
+                )}
               </Field>
 
               {/*
-                No status field: recording a leave from the back office IS the
-                approval, so a new record is filed as `APPROVED` (the form's own
-                default). A leave that still needs deciding arrives as `PENDING`
-                from the employee's side, and the register's Approve / Reject
-                actions settle it through `PATCH …/:id/status`.
+                Status on a NEW leave only. Recording it APPROVED or REJECTED is a
+                decision and needs approver rights, so a user without
+                `leaves:update` doesn't see the field — the form files it PENDING.
+                Once recorded, a decision goes through the register's Approve /
+                Reject (`PATCH …/:id/status`).
               */}
+              {!isEdit && canRecordDecision && (
+                <Field
+                  label="Status"
+                  required
+                  error={errors.status?.message}
+                  hint="Approved or Rejected records your decision and notifies the employee. Pending files it for the approval chain."
+                >
+                  <Controller
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <Combobox
+                        className="w-full"
+                        searchable={false}
+                        value={field.value}
+                        onChange={field.onChange}
+                        options={LEAVE_RECORD_STATUS_OPTIONS}
+                        placeholder="Select status"
+                      />
+                    )}
+                  />
+                </Field>
+              )}
+
+              {!isEdit && status !== 'PENDING' && canRecordDecision && (
+                <Field
+                  label="Remark"
+                  required={status === 'REJECTED'}
+                  error={errors.remark?.message}
+                  hint="What the employee reads with the decision."
+                  className="md:col-span-2"
+                >
+                  <Textarea
+                    rows={2}
+                    placeholder={
+                      status === 'REJECTED' ? 'Why is this leave being rejected?' : 'Remark (optional)'
+                    }
+                    {...form.register('remark')}
+                  />
+                </Field>
+              )}
 
               {isHalfDay && (
                 <>
@@ -243,18 +309,71 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                     name="fromTime"
                     label="From Time"
                     required
+                    hint="The same slot applies to every day in the range."
                     error={errors.fromTime?.message}
                     disabled={isDecided}
                   />
 
+                  {/*
+                    A half day is exactly `HALF_DAY_HOURS` long — any other length
+                    answers a 400 — so the end follows the start and isn't picked.
+                  */}
                   <TimeField
                     control={form.control}
                     name="toTime"
                     label="To Time"
                     required
+                    hint={`Set automatically — a half day is exactly ${HALF_DAY_HOURS} hours.`}
                     error={errors.toTime?.message}
-                    disabled={isDecided}
+                    disabled
                   />
+
+                  {!isDecided && (
+                    <Field
+                      label="Quick Slot"
+                      hint="Fills both times with a standard half — the same slot applies to every day in the range."
+                      className="md:col-span-2"
+                    >
+                      <div role="group" aria-label="Quick slot" className="grid grid-cols-2 gap-2">
+                        {halfDayPresets.map((preset, index) => {
+                          const selected = fromTime === preset.fromTime
+                          const Icon = index === 0 ? Sunrise : Sunset
+                          return (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => applyHalfDayPreset(preset)}
+                              className={cn(
+                                'flex h-9 min-w-0 cursor-pointer items-center gap-2 rounded-md border px-3 text-left text-sm transition-colors',
+                                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                                selected
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-input bg-background text-foreground hover:bg-accent',
+                              )}
+                            >
+                              <Icon
+                                className={cn(
+                                  'size-4 shrink-0',
+                                  selected ? 'text-primary' : 'text-muted-foreground',
+                                )}
+                              />
+                              <span className="shrink-0 font-medium">{preset.label}</span>
+                              <span
+                                className={cn(
+                                  'ml-auto truncate text-xs tabular-nums',
+                                  selected ? 'text-primary/80' : 'text-muted-foreground',
+                                )}
+                              >
+                                {formatTime12(preset.fromTime)} – {formatTime12(preset.toTime)}
+                              </span>
+                              {selected && <Check className="size-3.5 shrink-0" />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </Field>
+                  )}
                 </>
               )}
 

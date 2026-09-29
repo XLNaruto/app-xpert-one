@@ -3,11 +3,12 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { PERMISSIONS, useCan } from '@/features/permissions'
 import { useEmployeeSelect } from '@/features/hr/employee'
 import { useLeaveTypeSelect } from '@/features/master/leave-type'
 import { leaveSchemaFor, type LeaveFormValues } from '../schemas'
-import { EMPTY_LEAVE_FORM } from '../constants'
+import { EMPTY_LEAVE_FORM, HALF_DAY_PRESETS } from '../constants'
 import { useLeave, useLeaveBalance } from '../api/use-leaves'
 import {
   useCreateLeave,
@@ -15,7 +16,12 @@ import {
   useUploadLeaveAttachment,
 } from '../api/use-leave-mutations'
 import { leaveToFormValues } from '../lib/leave-mappers'
-import { asLocalDate, earliestLeaveDate, leaveDayCount } from '../lib/leave-dates'
+import {
+  asLocalDate,
+  earliestLeaveDate,
+  halfDayEndTime,
+  leaveDayCount,
+} from '../lib/leave-dates'
 import { describeApplication, formatDays } from '../lib/leave-summary'
 import type { LeaveBalanceItem } from '../types'
 
@@ -52,11 +58,17 @@ export function useLeaveForm(id?: number) {
   const updateLeave = useUpdateLeave(id ?? Number.NaN)
   const uploadAttachment = useUploadLeaveAttachment()
 
+  /**
+   * A decided application's schedule is settled. Only the reason and the
+   * attachment stay editable, which is the one PATCH the API allows on it.
+   */
+  const isDecided = isEdit && detail.data !== undefined && detail.data.status !== 'PENDING'
+
   /*
    * The date floor is part of the schema, so it can't be a fresh object every
    * render — that would rebuild the resolver on each keystroke.
    */
-  const schema = useMemo(() => leaveSchemaFor({ isEdit }), [isEdit])
+  const schema = useMemo(() => leaveSchemaFor({ isEdit, isDecided }), [isEdit, isDecided])
 
   const form = useForm<LeaveFormValues>({
     resolver: zodResolver(schema),
@@ -69,18 +81,28 @@ export function useLeaveForm(id?: number) {
   const duration = useWatch({ control, name: 'duration' })
   const fromDate = useWatch({ control, name: 'fromDate' })
   const toDate = useWatch({ control, name: 'toDate' })
+  const fromTime = useWatch({ control, name: 'fromTime' })
+  const status = useWatch({ control, name: 'status' })
+
+  /*
+   * Recording a leave as APPROVED or REJECTED is a DECISION: it needs the same
+   * rights as the Approve / Reject button. Without `leaves:update` the only
+   * thing this user may file is a PENDING application, so that's what the form
+   * holds — the API would answer the default APPROVED with a 403.
+   */
+  const { can, isLoading: isRoleLoading } = useCan()
+  const canRecordDecision = can(`${PERMISSIONS.leaves}:update`)
+
+  useEffect(() => {
+    if (isEdit || isRoleLoading || form.getFieldState('status').isDirty) return
+    setValue('status', canRecordDecision ? 'APPROVED' : 'PENDING')
+  }, [isEdit, isRoleLoading, canRecordDecision, setValue, form])
   const attachment = useWatch({ control, name: 'attachment' })
 
   // Seed the form once the record loads (edit mode only).
   useEffect(() => {
     if (detail.data) reset(leaveToFormValues(detail.data, EMPTY_LEAVE_FORM))
   }, [detail.data, reset])
-
-  /**
-   * A decided application's schedule is settled. Only the reason and the
-   * attachment stay editable, which is the one PATCH the API allows on it.
-   */
-  const isDecided = isEdit && detail.data !== undefined && detail.data.status !== 'PENDING'
 
   // A leave can't change hands, so an edit never opens the picker.
   const employeeSelect = useEmployeeSelect({ selected: employeeId, enabled: !isEdit })
@@ -101,10 +123,23 @@ export function useLeaveForm(id?: number) {
     enabled: !isDecided,
   })
 
-  /** A half day covers one date, so the two ends are held together. */
+  /*
+   * A half day is exactly `HALF_DAY_HOURS` long — the API refuses any other
+   * length — so the end time isn't a choice: it follows the start. The date range
+   * is free; a half day covers half of every date in it. A decided leave's times
+   * are frozen, so an old one saved before the rule is left alone.
+   */
   useEffect(() => {
-    if (duration === 'HALF_DAY' && fromDate) setValue('toDate', fromDate)
-  }, [duration, fromDate, setValue])
+    if (duration !== 'HALF_DAY' || isDecided) return
+    const end = halfDayEndTime(fromTime)
+    if (form.getValues('toTime') !== end) setValue('toTime', end, { shouldValidate: !!end })
+  }, [duration, fromTime, isDecided, setValue, form])
+
+  /** Fill both times from a First half / Second half slot. */
+  const applyHalfDayPreset = (preset: (typeof HALF_DAY_PRESETS)[number]) => {
+    setValue('fromTime', preset.fromTime, { shouldDirty: true, shouldValidate: true })
+    setValue('toTime', preset.toTime, { shouldDirty: true, shouldValidate: true })
+  }
 
   /*
    * The allowance is a per-YEAR ledger, and the year that matters is the one the
@@ -188,8 +223,22 @@ export function useLeaveForm(id?: number) {
           })
           goToList()
         },
-        onError: (error) =>
-          toast.error(getApiErrorMessage(error, "Couldn't save the leave.")),
+        onError: (error) => {
+          /*
+           * `leaves:update` isn't the whole of it — the approval chain decides
+           * who may approve for this company. A 403 on a decision means this user
+           * isn't that approver, so the form falls back to filing it PENDING.
+           */
+          if (isForbiddenError(error) && values.status !== 'PENDING') {
+            setValue('status', 'PENDING', { shouldDirty: true })
+            toast.error(getApiErrorMessage(error, "You can't decide this leave."), {
+              description:
+                "You aren't an approver for this company, so the status is now Pending — save again to file it for a decision.",
+            })
+            return
+          }
+          toast.error(getApiErrorMessage(error, "Couldn't save the leave."))
+        },
       })
       return
     }
@@ -252,6 +301,12 @@ export function useLeaveForm(id?: number) {
       : '',
     leaveTypeSelect,
     isHalfDay: duration === 'HALF_DAY',
+    /** May record the leave as a decision (APPROVED / REJECTED), not only PENDING. */
+    canRecordDecision,
+    status,
+    fromTime,
+    halfDayPresets: HALF_DAY_PRESETS,
+    applyHalfDayPreset,
     fromDate,
     /** A new leave starts tomorrow at the earliest — the picker's own floor. */
     minFromDate: isEdit ? undefined : asLocalDate(earliestLeaveDate()),

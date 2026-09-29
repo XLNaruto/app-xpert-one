@@ -30,6 +30,15 @@ function toFormDate(value: string | null | undefined): string {
   return value.slice(0, DATE_LENGTH)
 }
 
+/**
+ * An API time (`09:00:00`) → the `HH:MM` the form holds and the register shows.
+ * Left as-is when it isn't in that shape.
+ */
+function toFormTime(value: string | null | undefined): string {
+  if (!value) return ''
+  return /^\d{2}:\d{2}/.test(value) ? value.slice(0, 5) : value
+}
+
 /** A blank text field is stored as `null`, not `""`. */
 function orNull(value: string): string | null {
   const trimmed = value.trim()
@@ -72,8 +81,8 @@ export function toLeave(response: LeaveResponse): Leave {
     fromDate: response.from_date ?? '',
     toDate: response.to_date ?? '',
     duration: response.duration ?? 'FULL_DAY',
-    fromTime: response.from_time ?? '',
-    toTime: response.to_time ?? '',
+    fromTime: toFormTime(response.from_time),
+    toTime: toFormTime(response.to_time),
     // Read-only: set by the server from what was left of the type's allowance.
     payType: response.pay_type ?? 'PAID',
     leaveTypeId: response.leave_type_id ?? null,
@@ -255,9 +264,13 @@ export function leaveToPayload(
 
   if (mode === 'schedule') return { ...schedule, ...notes }
 
+  // The remark belongs to a decision; the API ignores it on PENDING.
+  const remark = values.status === 'PENDING' ? null : orNull(values.remark)
+
   return {
     employee_id: idOrNull(values.employeeId),
     status: values.status,
+    ...(remark ? { remark } : {}),
     ...schedule,
     ...notes,
   }
@@ -318,6 +331,7 @@ export function toLeaveBalance(response: LeaveBalanceResponse): LeaveBalance {
       pending: item.pending ?? 0,
       available: item.available ?? null,
       overflow: item.overflow ?? 0,
+      unpaid: item.unpaid ?? 0,
     })),
   }
 }

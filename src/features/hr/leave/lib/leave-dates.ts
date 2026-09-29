@@ -38,7 +38,8 @@ export function asLocalDate(day: string): Date {
 
 /**
  * How many days a range covers, inclusive — `2 Nov → 6 Nov` is 5, not 4. A half
- * day is half of the single date it covers.
+ * day is half of **every** date in its range, so `1 Oct → 5 Oct` at half a day
+ * each is `2.5`.
  *
  * Used only to warn that a range will overflow the type's paid allowance; the
  * server does the authoritative arithmetic (it also knows about weekly offs and
@@ -50,7 +51,42 @@ export function leaveDayCount(
   duration: 'FULL_DAY' | 'HALF_DAY',
 ): number {
   if (!fromDate || !toDate || toDate < fromDate) return 0
-  if (duration === 'HALF_DAY') return 0.5
   const span = asLocalDate(toDate).getTime() - asLocalDate(fromDate).getTime()
-  return Math.round(span / MS_PER_DAY) + 1
+  const days = Math.round(span / MS_PER_DAY) + 1
+  return duration === 'HALF_DAY' ? days * 0.5 : days
+}
+
+/** A half day is exactly this long — the API refuses any other length with a 400. */
+export const HALF_DAY_HOURS = 4
+
+const MINUTES_PER_DAY = 24 * 60
+
+/** `HH:MM` (or `HH:MM:SS`) → minutes since midnight, `null` if unreadable. */
+function toMinutes(time: string): number | null {
+  const match = /^(\d{2}):(\d{2})/.exec(time)
+  if (!match) return null
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+/**
+ * Where a half day that starts at `fromTime` has to end — `HALF_DAY_HOURS`
+ * later, as `HH:MM`. Blank when the start is blank, or when the slot would run
+ * past midnight (the API compares the two times on one day, so there is no valid
+ * end to offer).
+ */
+export function halfDayEndTime(fromTime: string): string {
+  const start = toMinutes(fromTime)
+  if (start === null) return ''
+  const end = start + HALF_DAY_HOURS * 60
+  if (end >= MINUTES_PER_DAY) return ''
+  const hh = String(Math.floor(end / 60)).padStart(2, '0')
+  const mm = String(end % 60).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
+/** Minutes between two `HH:MM` times — negative when `to` is earlier. */
+export function minutesBetween(fromTime: string, toTime: string): number | null {
+  const from = toMinutes(fromTime)
+  const to = toMinutes(toTime)
+  return from === null || to === null ? null : to - from
 }

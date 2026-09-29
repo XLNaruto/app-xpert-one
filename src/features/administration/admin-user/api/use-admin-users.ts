@@ -19,12 +19,17 @@ export function useAdminUsers(params: PageParams = ALL_ROWS, companyId?: number)
   })
 }
 
-/** GET /user/admin-users/:id — one user, as the edit form loads it. */
-export function useAdminUser(id: number) {
+/**
+ * GET /user/admin-users/:id — one user, as the edit form loads it.
+ *
+ * Also read by the list's Scope cell for the named companies, which the list
+ * rows don't carry — `enabled: false` there skips a row that needs none.
+ */
+export function useAdminUser(id: number, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: queryKeys.adminUser.detail(id),
     queryFn: () => fetchAdminUser(id),
-    enabled: Number.isFinite(id),
+    enabled: enabled && Number.isFinite(id),
   })
 }
 

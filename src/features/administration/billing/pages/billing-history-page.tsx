@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowLeft, Download, Loader2, ReceiptText } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
-import { DataTable } from '@/components/data-table'
+import { DataTable, rowNumber } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -42,9 +42,9 @@ export function BillingHistoryPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {history.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -152,7 +152,7 @@ export function BillingHistoryPage() {
         },
       },
     ],
-    [history.offset, downloadInvoice, downloadingId],
+    [downloadInvoice, downloadingId],
   )
 
   if (history.isForbidden) {

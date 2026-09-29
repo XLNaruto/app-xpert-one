@@ -12,7 +12,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Field } from '@/components/common/form-field'
 import { formatDate } from '@/lib/utils'
-import { describeGroupSpan, formatSplit } from '../lib/leave-summary'
+import { describeGroupSpan, formatDuration, formatSplit } from '../lib/leave-summary'
 import type { LeaveDecisionFormValues } from '../schemas'
 import type { LeaveGroup } from '../types'
 
@@ -72,7 +72,8 @@ export function LeaveDecisionDialog({
               {formatDate(leave.fromDate)}
               {leave.toDate && leave.toDate !== leave.fromDate
                 ? ` – ${formatDate(leave.toDate)}`
-                : ''}
+                : ''}{' '}
+              · {formatDuration(leave)}
             </p>
             <p className="mt-0.5 text-muted-foreground">
               {leave.employeeName}

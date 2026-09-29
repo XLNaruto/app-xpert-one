@@ -22,7 +22,10 @@ import type { ContractPeriodType, ExpiringContract } from '../types'
  * an `expired` row, renewed after the term already lapsed.
  *
  * The end date this hook computes is GUIDANCE ONLY, shown before the call. After
- * it, the screen quotes `contractEndsOn` off the response.
+ * it, the screen quotes `contractEndsOn` off the response — and the posting's
+ * `contract_period` / unit now hold the WHOLE term from the joining date (a
+ * 1-year contract renewed for 1 year reads `2 YEAR`; the unit may become MONTH or
+ * DAY), which the employee screens re-read through the invalidation.
  */
 export function useContractRenewForm(
   row: ExpiringContract | null,

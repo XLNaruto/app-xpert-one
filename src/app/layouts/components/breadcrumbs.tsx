@@ -9,50 +9,40 @@ import { cn } from '@/lib/utils'
 export function Breadcrumbs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const crumbs = breadcrumbsForPath(pathname)
+  const fullTrail = ['Home', ...crumbs.map((c) => c.label)].join(' › ')
 
+  /*
+    Crumbs show their full labels and the trail is clipped as one line — every
+    child is inline so `truncate` on the nav ellipsises the tail, and the tooltip
+    carries the whole trail when it's shortened.
+  */
   return (
-    <nav className="flex min-w-0 items-center gap-1 text-sm whitespace-nowrap text-muted-foreground">
-      <Link
-        to="/dashboard"
-        className="shrink-0 transition-colors hover:text-foreground"
-      >
-        Home
-      </Link>
-      {crumbs.map((crumb, i) => {
-        const isLast = i === crumbs.length - 1
-        return (
-          <span key={`${crumb.label}-${i}`} className="flex min-w-0 items-center gap-1">
-            <ChevronRight className="size-3.5 shrink-0" />
-            {/*
-              A crumb is clipped at `max-w-32`, so the tooltip is what a shortened
-              one is read by — it carries the label in full whether the crumb is a
-              link or the page you're on.
-            */}
-            <Tooltip>
-              <TooltipTrigger asChild>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <nav className="min-w-0 truncate text-sm text-muted-foreground">
+          <Link to="/dashboard" className="transition-colors hover:text-foreground">
+            Home
+          </Link>
+          {crumbs.map((crumb, i) => {
+            const isLast = i === crumbs.length - 1
+            return (
+              <span key={`${crumb.label}-${i}`}>
+                <ChevronRight className="mx-1 inline-block size-3.5 align-[-0.15em]" />
                 {isLast || !crumb.to ? (
-                  <span
-                    className={cn(
-                      'max-w-32 truncate',
-                      isLast && 'font-medium text-foreground',
-                    )}
-                  >
+                  <span className={cn(isLast && 'font-medium text-foreground')}>
                     {crumb.label}
                   </span>
                 ) : (
-                  <Link
-                    to={crumb.to}
-                    className="max-w-32 truncate transition-colors hover:text-foreground"
-                  >
+                  <Link to={crumb.to} className="transition-colors hover:text-foreground">
                     {crumb.label}
                   </Link>
                 )}
-              </TooltipTrigger>
-              <TooltipContent>{crumb.label}</TooltipContent>
-            </Tooltip>
-          </span>
-        )
-      })}
-    </nav>
+              </span>
+            )
+          })}
+        </nav>
+      </TooltipTrigger>
+      <TooltipContent>{fullTrail}</TooltipContent>
+    </Tooltip>
   )
 }

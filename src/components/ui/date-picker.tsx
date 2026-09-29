@@ -31,6 +31,8 @@ interface DatePickerProps {
   minDate?: Date
   maxDate?: Date
   disabled?: boolean
+  /** Show the × button (default true). Off for a field that must always hold a date. */
+  clearable?: boolean
   /** Width utility for the control (defaults to full width). */
   className?: string
 }
@@ -73,6 +75,7 @@ export function DatePicker({
   minDate,
   maxDate,
   disabled = false,
+  clearable = true,
   className,
 }: DatePickerProps) {
   const parsed = value ? parseISO(value) : null
@@ -181,7 +184,7 @@ export function DatePicker({
         calendarIcon={<CalendarDays className="size-4 text-muted-foreground" />}
       />
 
-      {value && !disabled && (
+      {clearable && value && !disabled && (
         <button
           type="button"
           aria-label="Close date picker"

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
+import { isConflictError } from '@/lib/api-error'
 import type {
   EmployeeAssetFormValues,
   EmployeeDocumentFormValues,
@@ -277,6 +278,9 @@ export function useDeleteEmployeeAsset(employeeId: number) {
 export function useTransferEmployee(employeeId: number) {
   const invalidate = useInvalidateEmployee()
   return useMutation({
+    // A double submit is serialised server-side and the second answers 409 —
+    // the register has moved on, so re-read it rather than leave it stale.
+    onError: (error) => isConflictError(error) && invalidate(),
     mutationFn: ({
       values,
       currentCompanyId,
@@ -293,13 +297,17 @@ export function useTransferEmployee(employeeId: number) {
 export function useUpdateEmployeeService(employeeId: number) {
   const invalidate = useInvalidateEmployee()
   return useMutation({
+    onError: (error) => isConflictError(error) && invalidate(),
     mutationFn: ({
       serviceId,
       values,
+      initial,
     }: {
       serviceId: number
       values: EmployeeServiceEditFormValues
-    }) => updateEmployeeService(employeeId, serviceId, values),
+      /** The seeded values — the PATCH carries only what changed from them. */
+      initial?: EmployeeServiceEditFormValues
+    }) => updateEmployeeService(employeeId, serviceId, values, initial),
     onSuccess: invalidate,
   })
 }
@@ -312,6 +320,8 @@ export function useUpdateEmployeeService(employeeId: number) {
 export function useLeaveEmployeeService(employeeId: number) {
   const invalidate = useInvalidateEmployee()
   return useMutation({
+    // "Already left this posting" — another change closed it first.
+    onError: (error) => isConflictError(error) && invalidate(),
     mutationFn: ({
       serviceId,
       values,

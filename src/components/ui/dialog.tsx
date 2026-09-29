@@ -18,7 +18,8 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   React.useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onOpenChange(false)
+      // Escape belongs to an image viewer opened from inside, not to us.
+      if (e.key === 'Escape' && !document.querySelector('.xl-lightbox')) onOpenChange(false)
     }
     document.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
@@ -33,7 +34,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="app-modal fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
     >
@@ -61,7 +62,9 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        'dialog-pop relative z-10 w-full max-w-lg rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl dark:bg-[#0E1726]',
+        // Never taller than the screen: a `DialogBody` inside scrolls while the
+        // header and footer stay put.
+        'dialog-pop relative z-10 flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-xl dark:bg-[#0E1726]',
         className,
       )}
       {...props}
@@ -82,13 +85,30 @@ export function DialogContent({
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col gap-2', className)} {...props} />
+  return <div className={cn('flex shrink-0 flex-col gap-2', className)} {...props} />
+}
+
+/**
+ * The part of a dialog that scrolls when it's long — sits between
+ * `DialogHeader` and `DialogFooter`, which stay fixed. Bleeds to the dialog's
+ * edges so the scrollbar sits at the side, not inside the padding.
+ */
+export function DialogBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('-mx-6 min-h-0 flex-1 overflow-y-auto px-6', className)} {...props} />
+}
+
+/**
+ * A `<form>` that fills a dialog the same way — so its `DialogBody` scrolls and
+ * its header and footer stay put.
+ */
+export function DialogForm({ className, ...props }: React.FormHTMLAttributes<HTMLFormElement>) {
+  return <form className={cn('flex min-h-0 flex-1 flex-col', className)} {...props} />
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      className={cn('flex shrink-0 flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
   )

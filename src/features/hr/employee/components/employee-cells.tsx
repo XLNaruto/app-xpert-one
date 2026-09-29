@@ -50,11 +50,9 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
  * are optional: each renders only when its handler is passed, so nothing dead
  * shows in the menu. Service History opens the wizard straight on step 8 —
  * closing a posting is the register's own action, and reaching it shouldn't mean
- * walking the whole wizard. There is no Delete on this screen — the API exposes no
- * `DELETE /user/employees/:id`, and deliberately so, since payroll, attendance
- * and leave history all reference the row. Taking someone off strength means
- * closing their open posting, which is done from the Service History tab where
- * the leaving date and reason are chosen.
+ * walking the whole wizard. Delete (`employees:delete`) soft-deletes the record;
+ * taking someone off strength is still closing their open posting from the
+ * Service History tab.
  */
 export function EmployeeRowActions({
   onView,

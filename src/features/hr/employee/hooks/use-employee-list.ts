@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { useBanks } from '@/features/master/bank'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId, encryptParams } from '@/lib/crypto'
@@ -7,20 +8,18 @@ import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { EMPLOYEE_DEFAULT_SORT } from '../constants'
 import { useEmployees } from '../api/use-employees'
+import { useDeleteEmployee } from '../api/use-employee-mutations'
+import type { Employee } from '../types'
 
 /**
- * Orchestrates the employee list screen: the paged query and navigation into the
- * wizard and the detail view.
+ * Orchestrates the employee list screen: the paged query, navigation into the
+ * wizard and the detail view, and the delete flow.
  *
- * The list has no activate/deactivate action and no Active/Inactive column. The
- * API exposes no `DELETE /user/employees/:id` — an employee is never removed,
- * because payroll, leave and attendance history all point at the row — and taking
- * someone off strength means closing their open posting
- * (`POST …/transfers/:serviceId/leave-service`), which is done from the Service
- * History tab where the leaving date and reason are chosen. A list row couldn't
- * drive that anyway: `GET /user/employees` answers the person and their completion
- * flags but not their current posting, so showing live status here would mean one
- * detail request per row.
+ * **Delete** (`DELETE /user/employees/:id`, `employees:delete`) is a soft delete
+ * that frees the plan seat, the primary mobile and the code — for a record that
+ * shouldn't exist. Taking someone off strength is still closing their open
+ * posting (`POST …/transfers/:serviceId/leave-service`) from the Service History
+ * tab, which keeps their history intact.
  */
 export function useEmployeeList() {
   const navigate = useNavigate()
@@ -46,6 +45,22 @@ export function useEmployeeList() {
   )
 
   const goToCreate = () => navigate({ to: '/hr/employee/create' })
+
+  /* ── Delete ── */
+  const deleteEmployee = useDeleteEmployee()
+  const [pendingDelete, setPendingDelete] = useState<Employee | null>(null)
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return
+    const { id, name } = pendingDelete
+    deleteEmployee.mutate(id, {
+      onSuccess: () => {
+        toast.success(`${name || 'Employee'} deleted`)
+        setPendingDelete(null)
+      },
+      onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't delete the employee.")),
+    })
+  }
 
   /**
    * Open the wizard on one employee. The id travels encrypted in `?data=`
@@ -91,6 +106,11 @@ export function useEmployeeList() {
     goToEdit,
     goToDetail,
     goToAppointmentLetter,
+    pendingDelete,
+    askDelete: setPendingDelete,
+    cancelDelete: () => setPendingDelete(null),
+    confirmDelete,
+    isDeleting: deleteEmployee.isPending,
     /**
      * `bank_id` → bank name, empty until the master has loaded. Memoised, so the
      * column definitions can list it as a dependency and rebuild when it fills.

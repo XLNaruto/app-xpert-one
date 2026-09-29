@@ -44,7 +44,7 @@ export function Switch({
 
   if (presentational) {
     return (
-      <span aria-hidden className={cn(track, disabled && 'opacity-50')}>
+      <span aria-hidden className={cn(track, disabled && 'cursor-not-allowed opacity-50')}>
         {thumb}
       </span>
     )

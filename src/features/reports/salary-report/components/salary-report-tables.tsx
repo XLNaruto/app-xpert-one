@@ -58,7 +58,7 @@ export function PaySlipTable({ rows, ...table }: TableProps<PaySlipRow>) {
 
   const columns = useMemo<ColumnDef<PaySlipRow>[]>(
     () => [
-      serialColumn<PaySlipRow>(table.offset),
+      serialColumn<PaySlipRow>(),
       {
         id: 'employee_name',
         header: 'Employee Name',
@@ -128,7 +128,7 @@ export function PaySlipTable({ rows, ...table }: TableProps<PaySlipRow>) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -141,7 +141,7 @@ export function PayRegisterTable({ rows, ...table }: TableProps<PayRegisterRow>)
 
   const columns = useMemo<ColumnDef<PayRegisterRow>[]>(
     () => [
-      serialColumn<PayRegisterRow>(table.offset),
+      serialColumn<PayRegisterRow>(),
       {
         id: 'employee_name',
         header: 'Employee Name',
@@ -339,7 +339,7 @@ export function PayRegisterTable({ rows, ...table }: TableProps<PayRegisterRow>)
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -352,7 +352,7 @@ export function GrossSalaryTable({ rows, ...table }: TableProps<GrossSalaryRow>)
 
   const columns = useMemo<ColumnDef<GrossSalaryRow>[]>(
     () => [
-      serialColumn<GrossSalaryRow>(table.offset),
+      serialColumn<GrossSalaryRow>(),
       {
         id: 'employee_name',
         header: 'Employee Name',
@@ -417,7 +417,7 @@ export function GrossSalaryTable({ rows, ...table }: TableProps<GrossSalaryRow>)
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -430,7 +430,7 @@ export function PaidSalaryTable({ rows, ...table }: TableProps<PaidSalaryRow>) {
 
   const columns = useMemo<ColumnDef<PaidSalaryRow>[]>(
     () => [
-      serialColumn<PaidSalaryRow>(table.offset),
+      serialColumn<PaidSalaryRow>(),
       {
         id: 'employee_name',
         header: 'Employee Name',
@@ -464,7 +464,7 @@ export function PaidSalaryTable({ rows, ...table }: TableProps<PaidSalaryRow>) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -477,7 +477,7 @@ export function UnpaidSalaryTable({ rows, ...table }: TableProps<UnpaidSalaryRow
 
   const columns = useMemo<ColumnDef<UnpaidSalaryRow>[]>(
     () => [
-      serialColumn<UnpaidSalaryRow>(table.offset),
+      serialColumn<UnpaidSalaryRow>(),
       {
         id: 'employee_name',
         header: 'Employee Name',
@@ -510,7 +510,7 @@ export function UnpaidSalaryTable({ rows, ...table }: TableProps<UnpaidSalaryRow
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />

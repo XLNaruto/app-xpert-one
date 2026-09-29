@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
-import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
 import { LEAVE_DEFAULT_SORT, LEAVE_TAB_MINE } from '../constants'
 import { leaveDecisionSchema, type LeaveDecisionFormValues } from '../schemas'
 import { useLeaves } from '../api/use-leaves'
@@ -118,9 +118,21 @@ export function useLeaveList() {
          * exactly what tells the user who to chase, so it is surfaced verbatim.
          * A 400 "already approved" says the row on screen is stale. The dialog
          * stays open behind either rather than closing on a failure.
+         *
+         * A 409 is different: the employee changed the dates while it was open.
+         * The list has been re-read, so the dialog closes onto the fresh row to
+         * be reviewed again.
          */
-        onError: (error) =>
-          toast.error(getApiErrorMessage(error, "Couldn't record the decision.")),
+        onError: (error) => {
+          if (isConflictError(error)) {
+            toast.error(getApiErrorMessage(error, 'This leave application was changed.'), {
+              description: 'The list has been refreshed — review it and decide again.',
+            })
+            closeDecision()
+            return
+          }
+          toast.error(getApiErrorMessage(error, "Couldn't record the decision."))
+        },
       },
     )
   })

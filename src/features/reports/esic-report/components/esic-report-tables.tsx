@@ -43,7 +43,7 @@ export function EsicStatementTable({ rows, ...table }: TableProps<EsicStatementR
 
   const columns = useMemo<ColumnDef<EsicStatementRow>[]>(
     () => [
-      serialColumn<EsicStatementRow>(table.offset),
+      serialColumn<EsicStatementRow>(),
       {
         id: 'insurance_no',
         header: 'Insurance No.',
@@ -117,7 +117,7 @@ export function EsicStatementTable({ rows, ...table }: TableProps<EsicStatementR
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -130,7 +130,7 @@ export function EsicChallanTable({ rows, ...table }: TableProps<EsicChallanRow>)
 
   const columns = useMemo<ColumnDef<EsicChallanRow>[]>(
     () => [
-      serialColumn<EsicChallanRow>(table.offset),
+      serialColumn<EsicChallanRow>(),
       {
         id: 'ip_no',
         header: 'IP No.',
@@ -197,7 +197,7 @@ export function EsicChallanTable({ rows, ...table }: TableProps<EsicChallanRow>)
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />

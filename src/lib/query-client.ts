@@ -1,6 +1,7 @@
 import { MutationCache, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ApiError } from './api-error'
+import { queryKeys } from './query-keys'
 
 /** Where the account's plan — and a booked plan change — is managed. */
 const BILLING_PATH = '/administration/billing'
@@ -57,4 +58,16 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
+})
+
+/**
+ * Office Task is live work — a run started on a phone, a hand-in answered by an
+ * approver a minute ago — so nothing under `office-task` is served from cache:
+ * every screen, every tab and every filter reads the API when it's shown, and
+ * a query nobody is looking at is dropped at once.
+ */
+queryClient.setQueryDefaults(queryKeys.officeTask.all, {
+  staleTime: 0,
+  gcTime: 0,
+  refetchOnMount: 'always',
 })

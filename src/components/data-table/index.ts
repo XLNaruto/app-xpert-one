@@ -1,4 +1,4 @@
-export { DataTable } from './data-table'
+export { DataTable, DEFAULT_TABLE_MAX_HEIGHT, rowNumber } from './data-table'
 export { DataTableColumnHeader } from './data-table-column-header'
 export { auditColumns } from './audit-columns'
 export {

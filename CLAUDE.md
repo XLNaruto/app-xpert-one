@@ -150,6 +150,10 @@ src/
     and passes `data` straight to the page.
   - The page decrypts with `decryptId(data)` — `undefined` means create mode on a
     create page, "not found" on a detail page. Never decrypt inside a hook.
+- **One-page modules** (e.g. `office-task/project-task`) skip `create.tsx`/`detail.tsx`:
+  the list page opens add/edit/view in a right-side `<Sheet>` (`components/ui/sheet`),
+  driven by the list hook's `drawer` state. Use this only when a module is agreed to be
+  one page; everything else keeps the create/detail routes.
 - Query hooks in `features/<name>/api/`: `use<Thing>` (queries), `use<Action>` (mutations).
 - Forms: react-hook-form + Zod resolver, inline field errors.
 - Env only through `config/env.ts` (zod-parsed).

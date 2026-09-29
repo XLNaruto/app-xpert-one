@@ -43,7 +43,7 @@ export function PtReportPage() {
 
   const columns = useMemo<ColumnDef<PtReportRow>[]>(
     () => [
-      serialColumn<PtReportRow>(view.offset),
+      serialColumn<PtReportRow>(),
       {
         id: 'employee_name',
         header: 'Name',
@@ -82,7 +82,7 @@ export function PtReportPage() {
         cell: ({ row }) => <MoneyCell value={row.original.ptAmount} tone="negative" />,
       },
     ],
-    [view.offset],
+    [],
   )
 
   if (view.isForbidden) return <Forbidden description={view.forbiddenMessage} />

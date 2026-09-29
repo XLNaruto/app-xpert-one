@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ASSET_VARIANT_SORT } from '../constants'
 import { useAssetVariantList } from '../hooks/use-asset-variant-list'
@@ -85,8 +85,8 @@ export function AssetVariantTable({
         id: 'serial',
         header: 'Sr No.',
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{offset + row.index + 1}</span>
+        cell: ({ row, table }) => (
+          <span className="text-sm text-muted-foreground">{rowNumber(row, table)}</span>
         ),
       },
       {
@@ -182,7 +182,7 @@ export function AssetVariantTable({
       ...auditColumns<AssetVariant>({ createdAt: ASSET_VARIANT_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [canUpdate, canDelete, canView, offset],
+    [canUpdate, canDelete, canView],
   )
 
   return (

@@ -14,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { FilterBar } from '@/components/common/filter-bar'
 import { EmptyState } from '@/components/common/empty-state'
@@ -27,7 +27,7 @@ import { useMediaUrl } from '@/hooks/use-media-url'
 import { ScopedDataError } from '@/features/company'
 import { LEAVE_PAY_TYPE_FILTER_OPTIONS, LEAVE_SORT, LEAVE_TABS } from '../constants'
 import { useLeaveList } from '../hooks/use-leave-list'
-import { describeGroupSpan, formatDays, formatSplit } from '../lib/leave-summary'
+import { describeGroupSpan, formatDays, formatSplit, formatTime12 } from '../lib/leave-summary'
 import { LeaveDecisionDialog } from '../components/leave-decision-dialog'
 import { LeaveEmployeeCell } from '../components/leave-employee-cell'
 import type { LeaveGroup } from '../types'
@@ -75,9 +75,9 @@ export function LeaveListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {leave.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -206,13 +206,14 @@ export function LeaveListPage() {
           <DataTableColumnHeader column={column} title="Duration" />
         ),
         meta: { className: 'whitespace-nowrap' },
+        // A half day can span a range now — the slot is the same on every date.
         cell: ({ row }) =>
           row.original.duration === 'HALF_DAY' ? (
             <span>
               Half day
               {row.original.fromTime && (
                 <span className="ml-1 text-xs text-muted-foreground">
-                  {row.original.fromTime}–{row.original.toTime}
+                  ({formatTime12(row.original.fromTime)}–{formatTime12(row.original.toTime)})
                 </span>
               )}
             </span>
@@ -331,7 +332,7 @@ export function LeaveListPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [leave.offset, canUpdate, canDelete],
+    [canUpdate, canDelete],
   )
 
   if (leave.isForbidden) return <Forbidden description={leave.forbiddenMessage} />

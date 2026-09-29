@@ -59,6 +59,8 @@ export const queryKeys = {
         ? ([...queryKeys.role.all, 'list', params, companyId ?? 0] as const)
         : ([...queryKeys.role.all, 'list', companyId ?? 0] as const),
     detail: (id: number) => [...queryKeys.role.all, 'detail', id] as const,
+    /** Paged, server-searched — backs the scroll-lazy dropdown (`use-role-select`). */
+    infinite: (search?: string) => [...queryKeys.role.all, 'infinite', search ?? ''] as const,
     assignablePermissions: () =>
       [...queryKeys.role.all, 'assignable-permissions'] as const,
   },
@@ -850,5 +852,49 @@ export const queryKeys = {
      */
     attentionInfinite: (query: QueryParams) =>
       [...queryKeys.dashboard.all, 'attention', 'infinite', query] as const,
+  },
+  /**
+   * Office Task — `features/office-task/*`. Every module reads one shared mock
+   * store (a template's assignment feeds My Tasks, which feeds Task Approval),
+   * so a write in any of them invalidates `all`. `filters` and the page ride in
+   * each list key: a different filter is a different result set.
+   */
+  officeTask: {
+    all: ['office-task'] as const,
+    /** The shared employee picker, per target (+ group for `already_assigned`). */
+    employees: (filters: QueryParams, search?: string) =>
+      [...queryKeys.officeTask.all, 'employees', filters, search ?? ''] as const,
+    sopGroups: (params: PageParams) =>
+      [...queryKeys.officeTask.all, 'sop-group', 'list', params] as const,
+    sopGroupOptions: () => [...queryKeys.officeTask.all, 'sop-group', 'options'] as const,
+    sopGroup: (id: number) =>
+      [...queryKeys.officeTask.all, 'sop-group', 'detail', id] as const,
+    sopGroupAssignees: (id: number) =>
+      [...queryKeys.officeTask.all, 'sop-group', 'assignees', id] as const,
+    sopAssignments: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'sop-assignment', 'list', filters, params] as const,
+    sopAssignment: (id: number) =>
+      [...queryKeys.officeTask.all, 'sop-assignment', 'detail', id] as const,
+    sopAssignmentItems: (id: number) =>
+      [...queryKeys.officeTask.all, 'sop-assignment', 'items', id] as const,
+    sopAssignmentRuns: (id: number, range: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'sop-assignment', 'runs', id, range, params] as const,
+    projectTasks: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'project-task', 'list', filters, params] as const,
+    projectTask: (id: number) =>
+      [...queryKeys.officeTask.all, 'project-task', 'detail', id] as const,
+    projectWorks: (id: number, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'project-task', 'works', id, params] as const,
+    projectWork: (id: number, workId: number) =>
+      [...queryKeys.officeTask.all, 'project-task', 'work', id, workId] as const,
+    projectWorkActivity: (id: number, workId: number) =>
+      [...queryKeys.officeTask.all, 'project-task', 'activity', id, workId] as const,
+    mySopTasks: (date: string) => [...queryKeys.officeTask.all, 'my-task', 'sop', date] as const,
+    myProjectTasks: (date: string) =>
+      [...queryKeys.officeTask.all, 'my-task', 'project', date] as const,
+    sopApprovals: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'approval', 'sop', filters, params] as const,
+    projectApprovals: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'approval', 'project', filters, params] as const,
   },
 } as const

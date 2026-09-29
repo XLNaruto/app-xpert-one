@@ -509,6 +509,16 @@ export const salaryRegisterResponseSchema = z.object({
       salary_component_source: z.enum(['EMPLOYEE', 'DESIGNATION']).nullish(),
       salary: storedSalarySchema,
       components: z.array(storedComponentSchema).optional(),
+      /**
+       * What the server measured and the browser can't. Only `overtime` is read
+       * here: the cycle's OT in decimal hours (6.5 = 6h 30m), shift-aware with
+       * recorded breaks excluded — always present, `0` when there is none.
+       */
+      measured: z
+        .object({
+          overtime: z.object({ hours: z.number() }).nullish(),
+        })
+        .nullish(),
     }),
   ),
   total: z.number(),

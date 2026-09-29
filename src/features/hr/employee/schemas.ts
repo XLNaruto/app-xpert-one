@@ -24,7 +24,12 @@ import {
   recordNameField,
   uanField,
 } from '@/lib/validation'
-import { MINIMUM_EMPLOYEE_AGE, PERMANENT_EMPLOYMENT_TYPE } from './constants'
+import {
+  EARLIEST_PASSING_YEAR,
+  MINIMUM_EMPLOYEE_AGE,
+  PERMANENT_EMPLOYMENT_TYPE,
+  latestPassingYear,
+} from './constants'
 
 /**
  * Zod for the employee module: one form schema per step, plus the response shape
@@ -78,8 +83,7 @@ function yearsSince(date: string): number {
  * designation is of no use to payroll, and catching that in the form beats
  * discovering it later.
  */
-export const employeeBasicSchema = z
-  .object({
+const employeeBasicFields = z.object({
     /** Object key from the photo presign — never the file. */
     photo: z.string(),
 
@@ -163,37 +167,90 @@ export const employeeBasicSchema = z
     leavingDate: z.string(),
     leavingReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
   })
-  // Two numbers that are the same are one number — the alternate is there to
-  // reach the employee when the first doesn't answer.
-  .refine((v) => !v.mobileNumber2 || v.mobileNumber2.trim() !== v.mobileNumber1.trim(), {
-    path: ['mobileNumber2'],
-    message: 'Alternate mobile must be different from the mobile number',
-  })
-  // A contract only means something with a period behind it.
-  .refine(
-    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
-    { path: ['contractPeriod'], message: 'Please enter the contract period' },
-  )
-  .refine(
-    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.renewalDate.trim() !== '',
-    { path: ['renewalDate'], message: 'Please select a renewal date' },
-  )
-  // Confirmation can't precede the day the employee started.
-  .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
-    path: ['confirmationDate'],
-    message: 'Confirmation date cannot be before the joining date',
-  })
-  .refine((v) => !v.joiningDate || !v.leavingDate || v.leavingDate >= v.joiningDate, {
-    path: ['leavingDate'],
-    message: 'Leaving date cannot be before the joining date',
-  })
-  // A leaving date without a reason leaves the record unexplained, and vice versa.
-  .refine((v) => !v.leavingDate || v.leavingReason.trim() !== '', {
-    path: ['leavingReason'],
-    message: 'Please enter the leaving reason',
-  })
 
-export type EmployeeBasicFormValues = z.infer<typeof employeeBasicSchema>
+/** Any 10 digits — what an EDIT accepts, so a number stored before the 6–9 rule still saves. */
+const LEGACY_MOBILE_RE = /^\d{10}$/
+
+/**
+ * Step 1's cross-field rules, shared by the create and edit schemas — they
+ * differ only in how strict the mobile numbers are.
+ */
+function withBasicRules<T extends z.ZodType<z.infer<typeof employeeBasicFields>>>(schema: T) {
+  return (
+    schema
+      // Two numbers that are the same are one number — the alternate is there to
+      // reach the employee when the first doesn't answer.
+      .refine((v) => !v.mobileNumber2 || v.mobileNumber2.trim() !== v.mobileNumber1.trim(), {
+        path: ['mobileNumber2'],
+        message: 'Alternate mobile must be different from the mobile number',
+      })
+      // A contract only means something with a period behind it — and the API
+      // wants both halves of it, the number and its unit.
+      .refine(
+        (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
+        { path: ['contractPeriod'], message: 'Please enter the contract period' },
+      )
+      .refine(
+        (v) =>
+          v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
+        { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+      )
+      .refine(
+        (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.renewalDate.trim() !== '',
+        { path: ['renewalDate'], message: 'Please select a renewal date' },
+      )
+      // None of the posting's dates may precede the day the employee started.
+      .refine(
+        (v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate,
+        {
+          path: ['confirmationDate'],
+          message: 'Confirmation date cannot be before the joining date',
+        },
+      )
+      .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
+        path: ['renewalDate'],
+        message: 'Renewal date cannot be before the joining date',
+      })
+      .refine((v) => !v.joiningDate || !v.leavingDate || v.leavingDate >= v.joiningDate, {
+        path: ['leavingDate'],
+        message: 'Leaving date cannot be before the joining date',
+      })
+      // A leaving date without a reason leaves the record unexplained, and a
+      // reason without a date explains nothing — the API refuses the latter.
+      .refine((v) => !v.leavingDate || v.leavingReason.trim() !== '', {
+        path: ['leavingReason'],
+        message: 'Please enter the leaving reason',
+      })
+      .refine((v) => !v.leavingReason.trim() || v.leavingDate.trim() !== '', {
+        path: ['leavingDate'],
+        message: 'Please select the leaving date for this reason',
+      })
+  )
+}
+
+/**
+ * Step 1 on CREATE — mobile numbers are 10 digits starting 6–9, as the API
+ * requires on a new employee.
+ */
+export const employeeBasicSchema = withBasicRules(employeeBasicFields)
+
+/**
+ * Step 1 on EDIT. The API accepts any 10 digits here so numbers stored before
+ * the 6–9 rule still save; the primary can't be cleared (it is the app login),
+ * which the required field already enforces.
+ */
+export const employeeBasicEditSchema = withBasicRules(
+  employeeBasicFields.extend({
+    mobileNumber1: z
+      .string()
+      .trim()
+      .min(1, 'Please enter a mobile number')
+      .regex(LEGACY_MOBILE_RE, 'Enter a 10-digit mobile number'),
+    mobileNumber2: optionalMatch(LEGACY_MOBILE_RE, 'Enter a 10-digit mobile number'),
+  }),
+)
+
+export type EmployeeBasicFormValues = z.infer<typeof employeeBasicFields>
 
 /** `completed_steps` on the employee record. */
 export const completedStepsResponseSchema = z.object({
@@ -898,11 +955,22 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
         message: 'A board name must contain at least one letter',
       })
     }
-    if (row.passingYear.trim() === '') {
+    const year = row.passingYear.trim()
+    if (year === '') {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'passingYear'],
         message: 'Please select the passing year',
+      })
+    } else if (
+      !/^\d{4}$/.test(year) ||
+      Number(year) < EARLIEST_PASSING_YEAR ||
+      Number(year) > latestPassingYear()
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [index, 'passingYear'],
+        message: `Passing year must be between ${EARLIEST_PASSING_YEAR} and ${latestPassingYear()}`,
       })
     }
 
@@ -1296,7 +1364,7 @@ export const employeeAssetRowSchema = z.object({
   status: z.string(),
   assignedDate: z.string(),
   validTill: z.string(),
-  remarks: z.string(),
+  remarks: z.string().trim().max(1000, 'Cannot exceed 1000 characters'),
   /**
    * Which unit this is — "IMEI" / "354812345678901" — for telling apart several
    * handouts of the same asset and variant. Optional, but a pair: both or neither.
@@ -1496,6 +1564,14 @@ export const employeeTransferSchema = z
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
     { path: ['contractPeriod'], message: 'Please enter the contract period' },
   )
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
+    { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+  )
+  .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
+    path: ['renewalDate'],
+    message: 'Renewal date cannot be before the joining date',
+  })
 
 export type EmployeeTransferFormValues = z.infer<typeof employeeTransferSchema>
 
@@ -1526,6 +1602,14 @@ export const employeeServiceEditSchema = z
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
     { path: ['contractPeriod'], message: 'Please enter the contract period' },
   )
+  .refine(
+    (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
+    { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+  )
+  .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
+    path: ['renewalDate'],
+    message: 'Renewal date cannot be before the joining date',
+  })
 
 export type EmployeeServiceEditFormValues = z.infer<typeof employeeServiceEditSchema>
 
@@ -1598,6 +1682,11 @@ export const employeeServiceDetailResponseSchema = z.object({
 })
 
 export const employeeTransferWageStructureResponseSchema = z.object({
+  /** Which wage is in force for the posting — `null` when there is none. */
+  source: z.enum(['EMPLOYEE', 'DESIGNATION']).nullish(),
+  /** Set when `source` is `EMPLOYEE`. */
+  employee_wage_id: z.number().nullish(),
+  /** Set only when `source` is `DESIGNATION`. */
   designation_wage_structure_id: z.number().nullish(),
   salary_type: z.string().nullish(),
   basic_pay: z.number().nullish(),

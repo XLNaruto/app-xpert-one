@@ -178,10 +178,15 @@ export interface LeaveBalanceItem {
   /** The yearly paid allowance for this type. `0` with `NONE` = no paid days. */
   total: number
   quotaSource: LeaveQuotaSource
-  /** Already approved. */
+  /** Already approved — PAID days only on a paid type. */
   used: number
-  /** Awaiting a decision — it already reduces what is free. */
+  /** Awaiting a decision — paid days only; it already reduces what is free. */
   pending: number
+  /**
+   * Days of this type taken UNPAID (past the allowance). Kept out of `used` /
+   * `pending`, which count paid days only.
+   */
+  unpaid: number
   /**
    * `max(0, total − used − pending)`, never negative. `null` on an UNPAID type,
    * which is uncapped — render that as "Unlimited", never as `0`.

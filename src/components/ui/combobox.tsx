@@ -294,12 +294,17 @@ export function Combobox(props: ComboboxProps) {
           {visibleLabels.map((option) => (
             <span
               key={option.value}
-              className="flex min-w-0 items-center gap-1 rounded bg-primary/10 py-0.5 pl-1.5 pr-1 text-xs text-primary"
+              className={cn(
+                'flex min-w-0 items-center gap-1 rounded bg-primary/10 py-0.5 pl-1.5 text-xs text-primary',
+                option.disabled ? 'pr-1.5' : 'pr-1',
+              )}
             >
               <span className="max-w-40 truncate">{option.label}</span>
               {/* Drops just this one — the trigger's × next to the chevron
                   clears the lot. Valid only because the multi trigger is a
-                  div: a <button> can't hold another one. */}
+                  div: a <button> can't hold another one. A disabled option
+                  can't be unticked in the list, so its chip has no × either. */}
+              {!option.disabled && (
               <button
                 type="button"
                 aria-label={`Remove ${option.label}`}
@@ -311,6 +316,7 @@ export function Combobox(props: ComboboxProps) {
               >
                 <X className="size-3" />
               </button>
+              )}
             </span>
           ))}
           {hiddenCount > 0 ? (

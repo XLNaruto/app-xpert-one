@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { encryptId, encryptParams } from '@/lib/crypto'
-import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { getApiErrorMessage, isForbiddenError, isNotFoundError } from '@/lib/api-error'
 import {
   EMPLOYEE_PROGRESS_STEPS,
   EMPLOYEE_TABS,
@@ -167,6 +167,9 @@ export function useEmployeeWizard(employeeId: number | undefined, openTab: Emplo
   }, [])
 
   const isForbidden = employeeId !== undefined && isForbiddenError(detail.error)
+  /* A 404 is also what an employee outside the user's companies answers — the
+     API doesn't admit it exists — so both read as "not found". */
+  const isNotFound = employeeId !== undefined && isNotFoundError(detail.error)
 
   return {
     tab,
@@ -183,6 +186,8 @@ export function useEmployeeWizard(employeeId: number | undefined, openTab: Emplo
     loadError: detail.error,
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(detail.error) : undefined,
+    isNotFound,
+    notFoundMessage: isNotFound ? getApiErrorMessage(detail.error) : undefined,
     goToList,
     goToDetail,
     goToNextTab,

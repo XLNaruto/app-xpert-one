@@ -317,6 +317,8 @@ export const endpoints = {
     POST: '/user/employees',
     GET: (id: number) => `/user/employees/${id}`,
     PATCH: (id: number) => `/user/employees/${id}`,
+    /** Soft delete — frees the plan seat, primary mobile and code; 204. */
+    DELETE: (id: number) => `/user/employees/${id}`,
     DELETE_FACE: (id: number) => `/user/employees/${id}/face`,
     KYC: (id: number) => `/user/employees/${id}/kyc`,
     WAGE_STRUCTURE: (id: number) => `/user/employees/${id}/wage-structure`,
@@ -455,6 +457,72 @@ export const endpoints = {
     SALARY_IMPORT: '/user/uploads/salary-import',
     SALARY_PAYMENT_DOCUMENT: '/user/uploads/salary-payment-document',
     SUPPORT_ATTACHMENT: '/user/uploads/support-attachment',
+    /** One presign for every Office Task hand-in, run or share or progress note. */
+    OFFICE_TASK_PROOF: '/user/uploads/office-task-proof',
+  },
+  /**
+   * Office Task — SOP checklists, their assignments, project tasks, the approval
+   * queue and the employee's own board. Every route is scoped to the session's
+   * active company (no `company_id` anywhere), so a company switch must drop the
+   * whole `officeTask` cache.
+   */
+  OFFICE_TASK: {
+    /** The shared picker behind SOP Tasks tab 2 and the Project Task drawer. */
+    EMPLOYEES: '/user/office-task/employees',
+    SOP_GROUPS: {
+      LIST: '/user/office-task/sop-groups',
+      POST: '/user/office-task/sop-groups',
+      /** Bare array, unpaged — the SOP Assignments group filter. */
+      OPTIONS: '/user/office-task/sop-groups/options',
+      GET: (id: number) => `/user/office-task/sop-groups/${id}`,
+      PATCH: (id: number) => `/user/office-task/sop-groups/${id}`,
+      DELETE: (id: number) => `/user/office-task/sop-groups/${id}`,
+      ITEM: (id: number, itemId: number) => `/user/office-task/sop-groups/${id}/items/${itemId}`,
+      ASSIGNEES: (id: number) => `/user/office-task/sop-groups/${id}/assignees`,
+      ASSIGNEE: (id: number, assignmentId: number) =>
+        `/user/office-task/sop-groups/${id}/assignees/${assignmentId}`,
+    },
+    SOP_ASSIGNMENTS: {
+      LIST: '/user/office-task/sop-assignments',
+      GET: (id: number) => `/user/office-task/sop-assignments/${id}`,
+      DELETE: (id: number) => `/user/office-task/sop-assignments/${id}`,
+      ITEMS: (id: number) => `/user/office-task/sop-assignments/${id}/items`,
+      RUNS: (id: number) => `/user/office-task/sop-assignments/${id}/runs`,
+      STOP: (id: number) => `/user/office-task/sop-assignments/${id}/stop`,
+      START: (id: number) => `/user/office-task/sop-assignments/${id}/start`,
+      /** A tab 2 action despite the path — gated by `sop-groups:delete`. */
+      CUSTOM_TASK: (id: number, itemId: number) =>
+        `/user/office-task/sop-assignments/${id}/custom-tasks/${itemId}`,
+    },
+    PROJECT_TASKS: {
+      LIST: '/user/office-task/project-tasks',
+      POST: '/user/office-task/project-tasks',
+      BULK: '/user/office-task/project-tasks/bulk',
+      GET: (id: number) => `/user/office-task/project-tasks/${id}`,
+      PATCH: (id: number) => `/user/office-task/project-tasks/${id}`,
+      DELETE: (id: number) => `/user/office-task/project-tasks/${id}`,
+      PRIORITY: (id: number) => `/user/office-task/project-tasks/${id}/priority`,
+      WORKS: (id: number) => `/user/office-task/project-tasks/${id}/works`,
+      WORK: (id: number, workId: number) => `/user/office-task/project-tasks/${id}/works/${workId}`,
+      WORK_ACTIVITY: (id: number, workId: number) =>
+        `/user/office-task/project-tasks/${id}/works/${workId}/activity`,
+    },
+    APPROVALS: {
+      SOP: '/user/office-task/approvals/sop',
+      PROJECT: '/user/office-task/approvals/project',
+      SOP_DECIDE: '/user/office-task/approvals/sop/decide',
+      PROJECT_DECIDE: '/user/office-task/approvals/project/decide',
+    },
+    MY_TASKS: {
+      SOP: '/user/office-task/my-tasks/sop',
+      SOP_START: (id: number) => `/user/office-task/my-tasks/sop/${id}/start`,
+      SOP_PAUSE: (id: number) => `/user/office-task/my-tasks/sop/${id}/pause`,
+      SOP_COMPLETE: (id: number) => `/user/office-task/my-tasks/sop/${id}/complete`,
+      PROJECT: '/user/office-task/my-tasks/project',
+      PROJECT_START: (workId: number) => `/user/office-task/my-tasks/project/${workId}/start`,
+      PROJECT_PROGRESS: (workId: number) => `/user/office-task/my-tasks/project/${workId}/progress`,
+      PROJECT_COMPLETE: (workId: number) => `/user/office-task/my-tasks/project/${workId}/complete`,
+    },
   },
   BANKS: {
     LIST: '/user/banks',

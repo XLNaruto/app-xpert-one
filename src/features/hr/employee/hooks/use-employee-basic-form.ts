@@ -7,7 +7,11 @@ import { IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { checkFileContent } from '@/lib/file-signature'
 import { useStateSelect } from '@/features/master/state'
 import { useDistrictSelect } from '@/features/master/district'
-import { employeeBasicSchema, type EmployeeBasicFormValues } from '../schemas'
+import {
+  employeeBasicEditSchema,
+  employeeBasicSchema,
+  type EmployeeBasicFormValues,
+} from '../schemas'
 import { EMPTY_EMPLOYEE_BASIC_FORM } from '../constants'
 import {
   useCreateEmployee,
@@ -51,7 +55,9 @@ export function useEmployeeBasicForm({
   const uploadPhoto = useUploadEmployeePhoto()
 
   const form = useForm<EmployeeBasicFormValues>({
-    resolver: zodResolver(employeeBasicSchema),
+    // Edit accepts any 10-digit mobile, so a number stored before the 6–9 rule
+    // doesn't lock the record.
+    resolver: zodResolver(isEdit ? employeeBasicEditSchema : employeeBasicSchema),
     defaultValues: EMPTY_EMPLOYEE_BASIC_FORM,
   })
   const { control, setValue, reset, handleSubmit } = form

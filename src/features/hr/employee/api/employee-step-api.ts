@@ -509,11 +509,13 @@ export async function updateEmployeeService(
   employeeId: number,
   serviceId: number,
   values: EmployeeServiceEditFormValues,
+  /** What the form was seeded with — only fields that differ from it are sent. */
+  initial?: EmployeeServiceEditFormValues,
 ): Promise<EmployeeTransferDetail> {
   try {
-    const raw = await http.patch<unknown, EmployeeServiceEditPayload>(
+    const raw = await http.patch<unknown, Partial<EmployeeServiceEditPayload>>(
       endpoints.EMPLOYEES.TRANSFER(employeeId, serviceId),
-      serviceEditToPayload(values),
+      serviceEditToPayload(values, initial),
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {

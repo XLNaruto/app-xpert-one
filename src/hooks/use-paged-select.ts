@@ -15,6 +15,8 @@ export interface PagedSelect {
   loading: boolean
   onScrollEnd: () => void
   onSearchChange: (query: string) => void
+  /** The last page's failure, if any — so a screen can tell "none" from "couldn't load". */
+  error?: unknown
 }
 
 /** What a master's `use<Thing>Select` hook takes from the screen using it. */
@@ -152,5 +154,6 @@ export function usePagedSelect<T>({
       if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage()
     },
     onSearchChange: setSearch,
+    error: query.error ?? undefined,
   }
 }

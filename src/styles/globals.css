@@ -106,7 +106,7 @@
   --popover-foreground: #e6ebf0;
 
   --primary: #38bdf8; /* sky-400 on dark  */
-  --primary-foreground: #04121f; /* dark ink on bright sky */
+  --primary-foreground: #ffffff; /* white ink on sky */
   --primary-hover: #0ea5e9; /* sky-500          */
 
   --secondary: #262f38; /* blue-gray fill   */
@@ -1315,6 +1315,12 @@ input[type='number']::-webkit-inner-spin-button {
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+/* One layer at a time: a lightbox opened from inside a dialog or sheet hides
+   it (kept mounted, so it comes back as it was when the viewer closes). */
+body:has(.xl-lightbox) .app-modal {
+  visibility: hidden;
 }
 
 /* ── Image lightbox ────────────────────────────────────────────────────────

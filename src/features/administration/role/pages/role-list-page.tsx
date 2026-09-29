@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ScopedDataError } from '@/features/company'
@@ -28,9 +28,9 @@ export function RoleListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {list.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -91,7 +91,7 @@ export function RoleListPage() {
       ...auditColumns<RoleListRow>({ createdAt: ROLE_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.offset, canUpdate, canDelete],
+    [canUpdate, canDelete],
   )
 
   if (list.isForbidden) return <Forbidden description={list.forbiddenMessage} />

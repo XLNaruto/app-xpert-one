@@ -3,6 +3,7 @@ import { queryKeys } from '@/lib/query-keys'
 import type { EmployeeBasicFormValues } from '../schemas'
 import {
   createEmployee,
+  deleteEmployee,
   deleteEmployeeFace,
   updateEmployee,
   uploadEmployeePhoto,
@@ -38,6 +39,21 @@ export function useUpdateEmployee(id: number) {
   return useMutation({
     mutationFn: (values: EmployeeBasicFormValues) => updateEmployee(id, values),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.employee.all })
+    },
+  })
+}
+
+/**
+ * DELETE /user/employees/:id — soft delete. The detail entry is dropped rather
+ * than refetched: it would only answer 404 now.
+ */
+export function useDeleteEmployee() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteEmployee(id),
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: queryKeys.employee.detail(id) })
       queryClient.invalidateQueries({ queryKey: queryKeys.employee.all })
     },
   })

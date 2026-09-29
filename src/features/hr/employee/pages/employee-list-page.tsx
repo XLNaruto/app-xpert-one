@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
-import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
@@ -49,11 +49,18 @@ export function EmployeeListPage() {
     goToEdit,
     goToDetail,
     goToAppointmentLetter,
+    pendingDelete,
+    askDelete,
+    cancelDelete,
+    confirmDelete,
+    isDeleting,
     bankNames,
   } = useEmployeeList()
 
   // Which of this screen's actions this role may see.
-  const { canCreate, canView, canUpdate } = useResourceAccess(PERMISSIONS.employees)
+  const { canCreate, canView, canUpdate, canDelete } = useResourceAccess(
+    PERMISSIONS.employees,
+  )
 
   // The faces dialog reads the row out of `rows`, so a clear is reflected in it.
   const {
@@ -74,8 +81,8 @@ export function EmployeeListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{offset + row.index + 1}</span>
+        cell: ({ row, table }) => (
+          <span className="text-sm text-muted-foreground">{rowNumber(row, table)}</span>
         ),
       },
       {
@@ -99,6 +106,7 @@ export function EmployeeListPage() {
             onAppointmentLetter={
               canView ? () => goToAppointmentLetter(row.original.id) : undefined
             }
+            onDelete={canDelete ? () => askDelete(row.original) : undefined}
           />
         ),
       },
@@ -204,7 +212,7 @@ export function EmployeeListPage() {
     // `bankNames` arrives after the first render, so the Bank Name column has to
     // be rebuilt when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [offset, bankNames, canView, canUpdate],
+    [bankNames, canView, canUpdate, canDelete],
   )
 
   // Reading the list was refused — show the 403 screen, not a broken table.
@@ -294,6 +302,25 @@ export function EmployeeListPage() {
         loading={isDeletingFaces}
         keepOpenOnConfirm
         onConfirm={confirmDeleteFaces}
+      />
+
+      {/* A soft delete: the seat, primary mobile and code are freed, the employee
+          is signed out of the app and dropped from attendance devices. */}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && cancelDelete()}
+        variant="destructive"
+        icon={Trash2}
+        title="Delete employee?"
+        description={
+          pendingDelete
+            ? `${pendingDelete.name || 'This employee'}${pendingDelete.code ? ` (${pendingDelete.code})` : ''} will be removed. Their plan seat, primary mobile number and employee code are freed, they are signed out of the app, and attendance devices drop them. To record an exit instead, close their posting from Service History.`
+            : undefined
+        }
+        confirmLabel="Delete employee"
+        loading={isDeleting}
+        keepOpenOnConfirm
+        onConfirm={confirmDelete}
       />
     </div>
   )

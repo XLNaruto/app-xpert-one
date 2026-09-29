@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { earliestLeaveDate } from './lib/leave-dates'
+import { earliestLeaveDate, HALF_DAY_HOURS, minutesBetween } from './lib/leave-dates'
 
 /** `HH:MM`, 24-hour — the shape the half-day time fields hold. */
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -25,6 +25,11 @@ function baseLeaveShape() {
     fromTime: z.string(),
     toTime: z.string(),
     status: z.string(),
+    /**
+     * The decision note when a leave is RECORDED as a decision — required on
+     * `REJECTED`, optional on `APPROVED`, not sent on `PENDING`. Create only.
+     */
+    remark: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
     leaveReason: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
     /** The storage KEY from the presign, never the file itself. */
     attachment: z.string().trim().max(500, 'Cannot exceed 500 characters'),
@@ -43,18 +48,40 @@ export type LeaveFormValues = z.infer<ReturnType<typeof baseLeaveShape>>
  * re-validating it would make an untouched row unsavable the moment its start
  * date arrives.
  *
+ * `isDecided` is a notes-only edit: the schedule isn't sent, so none of its rules
+ * run. That keeps an old half day (saved before the 4-hour rule) editable for
+ * its reason and attachment, exactly as the API allows.
+ *
  * Build it through `useMemo` — a fresh schema object every render would reset the
  * resolver on each keystroke.
  */
-export function leaveSchemaFor({ isEdit }: { isEdit: boolean }) {
+export function leaveSchemaFor({
+  isEdit,
+  isDecided = false,
+}: {
+  isEdit: boolean
+  isDecided?: boolean
+}) {
   const earliest = earliestLeaveDate()
 
   return baseLeaveShape().superRefine((values, ctx) => {
+    if (isDecided) return
+
     if (!isEdit && values.fromDate && values.fromDate < earliest) {
       ctx.addIssue({
         code: 'custom',
         path: ['fromDate'],
         message: 'A leave has to start tomorrow or later',
+      })
+    }
+
+    // Recording a leave as REJECTED is a decision the employee is told about, so
+    // it has to say why — the API answers a blank remark with a 400.
+    if (!isEdit && values.status === 'REJECTED' && values.remark.trim() === '') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['remark'],
+        message: 'Say why the leave is being rejected',
       })
     }
 
@@ -66,8 +93,9 @@ export function leaveSchemaFor({ isEdit }: { isEdit: boolean }) {
       })
     }
 
-    // A half day is a slice of ONE day, so it carries the two times a full day
-    // mustn't — and both of its ends fall on the same date.
+    // A half day is half of EVERY date in its range, so it may span several
+    // days — but it carries the two times a full day mustn't, and they are
+    // exactly `HALF_DAY_HOURS` apart.
     if (values.duration !== 'HALF_DAY') return
 
     if (!TIME_RE.test(values.fromTime)) {
@@ -76,6 +104,7 @@ export function leaveSchemaFor({ isEdit }: { isEdit: boolean }) {
         path: ['fromTime'],
         message: 'Enter a start time as HH:MM',
       })
+      return
     }
     if (!TIME_RE.test(values.toTime)) {
       ctx.addIssue({
@@ -83,18 +112,21 @@ export function leaveSchemaFor({ isEdit }: { isEdit: boolean }) {
         path: ['toTime'],
         message: 'Enter an end time as HH:MM',
       })
-    } else if (values.fromTime && values.toTime <= values.fromTime) {
+      return
+    }
+
+    const minutes = minutesBetween(values.fromTime, values.toTime) ?? 0
+    if (minutes <= 0) {
       ctx.addIssue({
         code: 'custom',
         path: ['toTime'],
         message: 'End time must be after the start time',
       })
-    }
-    if (values.fromDate !== values.toDate) {
+    } else if (minutes !== HALF_DAY_HOURS * 60) {
       ctx.addIssue({
         code: 'custom',
-        path: ['toDate'],
-        message: 'A half day covers a single date',
+        path: ['toTime'],
+        message: `A half day must be exactly ${HALF_DAY_HOURS} hours`,
       })
     }
   })
@@ -215,6 +247,8 @@ const leaveBalanceItemSchema = z.object({
   /** `null` on an UNPAID type — uncapped, so "Unlimited" rather than `0`. */
   available: z.number().nullish(),
   overflow: z.number().nullish(),
+  /** Days of this type taken UNPAID — `used`/`pending` count paid days only. */
+  unpaid: z.number().nullish(),
 })
 
 export const leaveBalanceResponseSchema = z.object({
@@ -252,8 +286,14 @@ export type LeaveBalanceResponse = z.infer<typeof leaveBalanceResponseSchema>
 export interface LeavePayload {
   /** Create only — a leave can't be moved to a different employee. */
   employee_id?: number | null
-  /** Create only — a decision goes through `PATCH …/:id/status`. */
+  /**
+   * Create only — a later decision goes through `PATCH …/:id/status`. Defaults
+   * to `APPROVED` server-side, which needs approver rights; a user without them
+   * sends `PENDING`.
+   */
   status?: string
+  /** Create only — the note on an APPROVED/REJECTED record; required on REJECTED. */
+  remark?: string | null
   from_date?: string | null
   to_date?: string | null
   duration?: string

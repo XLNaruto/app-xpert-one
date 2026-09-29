@@ -64,7 +64,7 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
 
   const columns = useMemo<ColumnDef<PfChallanRow>[]>(
     () => [
-      serialColumn<PfChallanRow>(table.offset),
+      serialColumn<PfChallanRow>(),
       {
         id: 'employee_name',
         header: 'Name',
@@ -184,7 +184,7 @@ export function PfChallanTable({ rows, ...table }: TableProps<PfChallanRow>) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -197,7 +197,7 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
 
   const columns = useMemo<ColumnDef<PfStatementRow>[]>(
     () => [
-      serialColumn<PfStatementRow>(table.offset),
+      serialColumn<PfStatementRow>(),
       {
         id: 'employee_name',
         header: 'Name',
@@ -281,7 +281,7 @@ export function PfStatementTable({ rows, ...table }: TableProps<PfStatementRow>)
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -294,7 +294,7 @@ export function PfNewJoiningTable({ rows, ...table }: TableProps<PfNewJoiningRow
 
   const columns = useMemo<ColumnDef<PfNewJoiningRow>[]>(
     () => [
-      serialColumn<PfNewJoiningRow>(table.offset),
+      serialColumn<PfNewJoiningRow>(),
       {
         id: 'employee_name',
         header: 'Name',
@@ -390,7 +390,7 @@ export function PfNewJoiningTable({ rows, ...table }: TableProps<PfNewJoiningRow
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />
@@ -403,7 +403,7 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
 
   const columns = useMemo<ColumnDef<PfEcrRow>[]>(
     () => [
-      serialColumn<PfEcrRow>(table.offset),
+      serialColumn<PfEcrRow>(),
       {
         /* The key the portal files on — first column, because a line without one
            isn't on this report at all. */
@@ -504,7 +504,7 @@ export function PfEcrTable({ rows, ...table }: TableProps<PfEcrRow>) {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [table.offset],
+    [],
   )
 
   return <ReportTable columns={columns} rows={rows} {...table} />

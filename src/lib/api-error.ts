@@ -208,6 +208,37 @@ export function isNoActiveCompanyError(error: unknown): boolean {
   return error instanceof ApiError && error.code === NO_ACTIVE_COMPANY_CODE
 }
 
+/** HTTP status of a write refused because the record moved under it. */
+export const CONFLICT_STATUS = 409
+
+/** HTTP status of a record that doesn't exist — or is outside the user's companies. */
+export const NOT_FOUND_STATUS = 404
+
+function statusOf(error: unknown): number | undefined {
+  if (error instanceof ApiError) return error.status
+  if (error instanceof AxiosError) return error.response?.status
+  return undefined
+}
+
+/**
+ * Did the write lose a race (`409`)? Someone else changed the record first — a
+ * double-submitted transfer, an application edited while it was being approved,
+ * a master still in use. The answer is to refresh and look again, never to retry
+ * blindly.
+ */
+export function isConflictError(error: unknown): boolean {
+  return statusOf(error) === CONFLICT_STATUS
+}
+
+/**
+ * Was the record not found (`404`)? On a company-scoped resource this is also
+ * what a record outside the user's companies answers — the API doesn't say it
+ * exists.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  return statusOf(error) === NOT_FOUND_STATUS
+}
+
 /**
  * Did this failure come back as forbidden? Safe to call on any thrown value,
  * including a query's `error` (which is typed `unknown`).

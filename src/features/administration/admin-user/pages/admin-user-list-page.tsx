@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Building2,
   Crown,
-  Globe2,
   Mail,
   MessageSquare,
   Plus,
@@ -17,11 +16,12 @@ import { FilterBar } from '@/components/common/filter-bar'
 import { TableRowActions } from '@/components/common/table-row-actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { auditColumns, DataTable, DataTableColumnHeader } from '@/components/data-table'
+import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ADMIN_USER_SORT } from '../constants'
+import { AdminUserScopeCell } from '../components/admin-user-scope-cell'
 import { roleLabel } from '../lib/admin-user-mappers'
 import { useAdminUserList } from '../hooks/use-admin-user-list'
 import type { AdminUser } from '../types'
@@ -46,9 +46,9 @@ export function AdminUserListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {list.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -151,22 +151,14 @@ export function AdminUserListPage() {
         },
       },
       {
-        // The list carries the two reach SCALARS only — the named company and
-        // Talk lists cost two joins per row, so they come from the detail read.
+        // The list carries the two reach SCALARS only, so a `COMPANY` row's
+        // named companies are read by the cell from the detail endpoint.
         id: 'access_level',
         accessorKey: 'accessLevel',
         header: 'Scope',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) =>
-          row.original.accessLevel === 'GLOBAL' ? (
-            <Badge variant="default" className="gap-1">
-              <Globe2 className="size-3" />
-              All companies
-            </Badge>
-          ) : (
-            <Badge variant="secondary">Selected companies</Badge>
-          ),
+        cell: ({ row }) => <AdminUserScopeCell user={row.original} />,
       },
       {
         id: 'talk_enabled',
@@ -201,7 +193,7 @@ export function AdminUserListPage() {
       ...auditColumns<AdminUser>({ createdAt: ADMIN_USER_SORT.createdAt }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.offset, list.currentUserId, list.companyNames, canUpdate, canDelete],
+    [list.currentUserId, list.companyNames, canUpdate, canDelete],
   )
 
   if (list.isForbidden) return <Forbidden description={list.forbiddenMessage} />

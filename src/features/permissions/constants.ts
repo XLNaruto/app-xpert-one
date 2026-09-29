@@ -47,6 +47,27 @@ export const PERMISSIONS = {
    */
   bonusEstimation: 'bonus-estimation',
 
+  // ── Office Task ───────────────────────────────────────────────────────────
+  /**
+   * The SECTION code (`office-task:read`) — gates the menu group, not a route.
+   * Unlike the rest, it is NOT in the owner's baseline: the platform grants it on
+   * the subscription, so a tenant without it sees no Office Task at all.
+   */
+  officeTask: 'office-task',
+  /**
+   * SOP Tasks — ONE resource for both tabs, including tab 2's save, removing an
+   * assignee and deleting a custom task (whose URL is an assignment's).
+   */
+  sopGroups: 'sop-groups',
+  /** SOP Assignments — no `create` (born on SOP Tasks tab 2); `update` is Start / Stop. */
+  sopAssignments: 'sop-assignments',
+  /** `update` covers the drawer, the row's priority dropdown and the bulk edit. */
+  projectTasks: 'project-tasks',
+  /** Only `list` and `update` (Approve / Reject). */
+  taskApprovals: 'task-approvals',
+  /** Only `list` and `update` (start / pause / progress / hand-in on one's OWN work). */
+  myTasks: 'my-tasks',
+
   // ── Reports ───────────────────────────────────────────────────────────────
   salaryReport: 'salary-report',
   pfReport: 'pf-report',

@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
+import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useDocumentTypeSelect } from '@/features/master/document-type'
 import { DOCUMENT_DEFAULT_SORT } from '../constants'
@@ -63,8 +63,18 @@ export function useDocumentList() {
         toast.success('Document deleted')
         setPendingDelete(null)
       },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete document'),
+      /* 409 — employees still have this document attached; the server's message
+         says how many. It can't go until they're detached, so the confirm closes. */
+      onError: (err) => {
+        if (isConflictError(err)) {
+          toast.error(getApiErrorMessage(err, 'This document is still in use.'), {
+            description: 'Remove it from those employees first, then delete it.',
+          })
+          setPendingDelete(null)
+          return
+        }
+        toast.error(getApiErrorMessage(err, 'Failed to delete document'))
+      },
     })
   }
 

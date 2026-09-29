@@ -9,7 +9,7 @@ import {
   type FilterFacet,
 } from '@/components/common/filter-bar'
 import { Combobox } from '@/components/ui/combobox'
-import { DataTable } from '@/components/data-table'
+import { DataTable, rowNumber } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { ScopedDataError, useMyCompanies } from '@/features/company'
 import {
@@ -63,9 +63,9 @@ export function ContractExpiryListPage() {
         header: 'Sr No.',
         enableSorting: false,
         meta: { className: 'w-px whitespace-nowrap text-center text-muted-foreground' },
-        cell: ({ row }) => (
+        cell: ({ row, table }) => (
           <span className="text-sm text-muted-foreground">
-            {list.offset + row.index + 1}
+            {rowNumber(row, table)}
           </span>
         ),
       },
@@ -121,7 +121,7 @@ export function ContractExpiryListPage() {
         ),
       },
     ],
-    [list.offset, list.canUpdate, list.setPendingRenew, list.setPendingComplete],
+    [list.canUpdate, list.setPendingRenew, list.setPendingComplete],
   )
 
   const facets: FilterFacet[] = [
