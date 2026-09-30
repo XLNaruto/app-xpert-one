@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -26,7 +27,8 @@ import {
   type AttendanceSession,
 } from '../lib/attendance-mappers'
 import { DAY_STATUS_LABEL, DAY_STATUS_TONE } from '../constants'
-import type { AttendanceDay, AttendancePunch } from '../types'
+import type { AttendanceDay, AttendanceDayTask, AttendancePunch } from '../types'
+import { AttendanceDayTasks } from './attendance-day-tasks'
 
 /**
  * One day of the month, opened.
@@ -36,20 +38,37 @@ import type { AttendanceDay, AttendancePunch } from '../types'
  * coordinates and face image it carried. A day with no punches says so rather
  * than opening on an empty list: on a weekly off or an approved leave that is
  * the correct and complete answer.
+ *
+ * Under the punches, the Office Task work of the day — only when the month says
+ * tasks are visible at all (`tasksEnabled`), never inferred from an empty list.
  */
 export function AttendanceDayDialog({
   day,
   onClose,
+  tasksEnabled,
+  servedAt,
+  canOpenTask,
+  onOpenTask,
 }: {
   day: AttendanceDay | null
   onClose: () => void
+  tasksEnabled: boolean
+  /** When the month was served — a running task counts forward from here. */
+  servedAt: number
+  canOpenTask: (task: AttendanceDayTask) => boolean
+  onOpenTask: (task: AttendanceDayTask) => void
 }) {
   if (!day) return null
   const tone = DAY_STATUS_TONE[day.status]
 
   return (
     <Dialog open={Boolean(day)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg" onClose={onClose}>
+      {/* Wider when the task timesheet is on — six columns and long task
+          names don't fit in lg. */}
+      <DialogContent
+        className={tasksEnabled ? 'sm:max-w-5xl' : 'sm:max-w-lg'}
+        onClose={onClose}
+      >
         <DialogHeader className="pr-10">
           <DialogTitle className="flex items-center gap-2">
             {formatDate(day.date)}
@@ -71,7 +90,7 @@ export function AttendanceDayDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           {/* The rollup — the same three figures the row on the group screen
               carries, so the two screens can't disagree. */}
           <div className="grid grid-cols-3 gap-2">
@@ -97,7 +116,18 @@ export function AttendanceDayDialog({
                than inheriting the last day's open rows. */
             <SessionList key={day.date} punches={day.punches} />
           )}
-        </div>
+
+          {tasksEnabled && (
+            <AttendanceDayTasks
+              key={day.date}
+              tasks={day.tasks}
+              taskSeconds={day.taskSeconds}
+              servedAt={servedAt}
+              canOpenTask={canOpenTask}
+              onOpenTask={onOpenTask}
+            />
+          )}
+        </DialogBody>
       </DialogContent>
     </Dialog>
   )
@@ -148,7 +178,7 @@ function SessionList({ punches }: { punches: AttendancePunch[] }) {
 
   return (
     <>
-      <ul className="max-h-80 space-y-2 overflow-y-auto pr-1">
+      <ul className="space-y-2">
         {sessions.map((session) => (
           <SessionCard
             key={session.index}

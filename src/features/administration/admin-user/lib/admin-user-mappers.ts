@@ -1,4 +1,5 @@
 import { toCompanyRef, toTalkGrant } from '@/features/permissions'
+import type { EmployeePickerEntry } from '@/features/hr/employee'
 import type {
   AdminUserFormValues,
   AdminUserPayload,
@@ -32,6 +33,7 @@ export function toAdminUser(response: AdminUserResponse): AdminUser {
     name: response.name,
     email: response.email,
     mobileNumber: response.mobile_number ?? null,
+    employeeId: response.employee_id ?? null,
     roleId: response.role_id ?? null,
     roleName: response.role_name ?? null,
     companyId: response.company_id ?? null,
@@ -46,6 +48,25 @@ export function toAdminUser(response: AdminUserResponse): AdminUser {
     createdAt: response.created_at ?? '',
     updatedBy: response.updated_by_name ?? null,
     updatedAt: response.updated_at ?? null,
+  }
+}
+
+/**
+ * The three identity fields the endpoint still requires, taken from the picked
+ * employee instead of being typed.
+ *
+ * An employee carries ONE name, so it is split at the first space: the first
+ * word is the first name and the rest the last name. A one-word name has
+ * nothing to split and the endpoint refuses an empty last name, so the word is
+ * used for both. The mobile goes up as digits only — how the endpoint compares
+ * it against every other identity on the platform.
+ */
+export function employeeIdentity(employee: EmployeePickerEntry) {
+  const [first = '', ...rest] = employee.name.trim().split(/\s+/)
+  return {
+    firstName: first,
+    lastName: rest.join(' ') || first,
+    mobileNumber: (employee.mobileNumber ?? '').replace(/\D/g, ''),
   }
 }
 
@@ -91,6 +112,7 @@ function reachPayload(values: AdminUserFormValues) {
  */
 export function adminUserToPayload(values: AdminUserFormValues): AdminUserPayload {
   return {
+    employee_id: Number(values.employeeId),
     first_name: values.firstName.trim(),
     last_name: values.lastName.trim(),
     email: values.email.trim(),
@@ -104,8 +126,10 @@ export function adminUserToPayload(values: AdminUserFormValues): AdminUserPayloa
 /**
  * Validated form values → the PATCH body, which is a genuine partial.
  *
- * Two keys are omitted rather than sent:
+ * Three keys are omitted rather than sent:
  *
+ * - **`employee_id`** unless it was re-pointed — the link can't be cleared, so
+ *   an unchanged (or absent) pick has nothing to say.
  * - **`password`** when the box was left blank — that's "keep the current
  *   credential", and sending an empty string would be a reset to nothing.
  * - **`role_id`** when the pick still matches what's stored. An unchanged role
@@ -122,6 +146,7 @@ export function adminUserToUpdatePayload(
   record: AdminUser,
 ): AdminUserUpdatePayload {
   const roleId = Number(values.roleId)
+  const employeeId = Number(values.employeeId)
 
   return {
     first_name: values.firstName.trim(),
@@ -130,6 +155,7 @@ export function adminUserToUpdatePayload(
     mobile_number: values.mobileNumber.trim(),
     status: values.status,
     ...reachPayload(values),
+    ...(employeeId && employeeId !== record.employeeId ? { employee_id: employeeId } : {}),
     ...(roleId && roleId !== record.roleId ? { role_id: roleId } : {}),
     ...(values.password ? { password: values.password } : {}),
   }
@@ -138,6 +164,7 @@ export function adminUserToUpdatePayload(
 /** Hydrate the edit form from a stored record. The password boxes start empty. */
 export function adminUserToFormValues(user: AdminUser): AdminUserFormValues {
   return {
+    employeeId: user.employeeId ? String(user.employeeId) : '',
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,

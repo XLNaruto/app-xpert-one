@@ -1,3 +1,5 @@
+import type { TaskStatus, WorkSession } from '@/features/office-task/common'
+
 /**
  * Attendance Management — the UI-facing record types.
  *
@@ -103,6 +105,38 @@ export interface AttendancePunch {
   device: string
 }
 
+/**
+ * One piece of Office Task work the employee did on a day.
+ *
+ * An SOP run sits on the day it was owed; a project share sits on every day one
+ * of its stretches fell on — so `id` is unique within a day, never across days.
+ */
+export interface AttendanceDayTask {
+  kind: 'sop' | 'project'
+  /** SOP → the run id · project → the work (share) id. */
+  id: number
+  /** SOP only — the assignment to link to. */
+  assignmentId: number | null
+  /** Project only — the project task to link to. */
+  taskId: number | null
+  task: string
+  /** SOP only — the group name. */
+  templateName: string | null
+  /** SOP only — run `slot` of `slots`. */
+  slot: number | null
+  slots: number | null
+  status: TaskStatus
+  /** Project only. `null` = nobody has reported progress — NOT 0%. */
+  latestPercent: number | null
+  /** This day's seconds, a running stretch counted to when the response was served. */
+  workedSeconds: number
+  /**
+   * This day's Start → Stop stretches, oldest first, already clipped to the day.
+   * Empty with a non-zero total on history recorded before stretches were kept.
+   */
+  sessions: WorkSession[]
+}
+
 /** One day of the month grid — every day is present, worked or not. */
 export interface AttendanceDay {
   /** `yyyy-MM-dd`. */
@@ -123,6 +157,10 @@ export interface AttendanceDay {
   holidayName: string
   leaveType: string
   punches: AttendancePunch[]
+  /** Office Task work on this day — `[]` when none, or when tasks are not visible. */
+  tasks: AttendanceDayTask[]
+  /** The server's sum of `tasks[].workedSeconds` — never re-sum it. */
+  taskSeconds: number
 }
 
 /** How the month counted, day by day. */
@@ -149,6 +187,11 @@ export interface AttendanceMonthResult {
   today: string
   /** The weekly-off pattern in words, as the company configured it. */
   weeklyOff: string
+  /**
+   * Whether task work is visible at all. Hide the section on this, never on a
+   * month of empty lists — an employee who tracked nothing looks the same.
+   */
+  tasksEnabled: boolean
   days: AttendanceDay[]
   counts: AttendanceMonthCounts
 }

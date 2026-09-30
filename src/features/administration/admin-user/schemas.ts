@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { companyRefResponseSchema, talkGrantResponseSchema } from '@/features/permissions'
-import { emailField, mobileField, personNameField } from '@/lib/validation'
+import { emailField } from '@/lib/validation'
 
 /**
  * The API's own limits, so the form refuses what the endpoint would anyway —
@@ -61,9 +61,16 @@ export type TalkGrantFormValues = z.infer<typeof talkGrantFormSchema>
 export function adminUserSchema({
   requirePassword,
   requireRole = true,
+  requireEmployee = true,
 }: {
   requirePassword: boolean
   requireRole?: boolean
+  /**
+   * Create always ties the login to an employee. An edit may leave it empty — an
+   * owner or a console-provisioned login has none — and once set it can only be
+   * re-pointed, never cleared.
+   */
+  requireEmployee?: boolean
 }) {
   const password = z
     .string()
@@ -71,11 +78,21 @@ export function adminUserSchema({
 
   return z
     .object({
-      firstName: personNameField('the first name', { max: MAX_ADMIN_USER_NAME }),
-      lastName: personNameField('the last name', { max: MAX_ADMIN_USER_NAME }),
+      /**
+       * The employee this login IS. Held as a string: it comes from a
+       * `<Combobox>`, which speaks strings.
+       */
+      employeeId: z.string().trim(),
+      /*
+       * Not typed on this screen — copied from the picked employee (see
+       * `employeeIdentity`), because the endpoint still requires all three. Their
+       * problems are reported on the employee field, the one the user can act on.
+       */
+      firstName: z.string(),
+      lastName: z.string(),
+      mobileNumber: z.string(),
       /** The login itself — unique across the whole platform, not just this account. */
       email: emailField({ required: true, max: MAX_ADMIN_USER_EMAIL }),
-      mobileNumber: mobileField({ required: true }),
       /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
       roleId: requireRole ? z.string().trim().min(1, 'Pick a role') : z.string().trim(),
       password,
@@ -94,6 +111,38 @@ export function adminUserSchema({
       talkAccess: z.array(talkGrantFormSchema),
     })
     .superRefine((values, ctx) => {
+      if (requireEmployee && !values.employeeId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['employeeId'],
+          message: 'Select an employee',
+        })
+      } else if (values.employeeId) {
+        if (!values.firstName.trim()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['employeeId'],
+            message: 'This employee has no name on record — complete their employee record first',
+          })
+        } else if (!values.mobileNumber) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['employeeId'],
+            message:
+              'This employee has no mobile number on record — add one to their employee record first',
+          })
+        } else if (
+          values.firstName.length > MAX_ADMIN_USER_NAME ||
+          values.lastName.length > MAX_ADMIN_USER_NAME
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['employeeId'],
+            message: `This employee's name is longer than the ${MAX_ADMIN_USER_NAME} characters a login allows`,
+          })
+        }
+      }
+
       // The reach rules run FIRST: the password branch below returns early, and
       // a missing password must not hide a scope error on the same submit.
 
@@ -204,6 +253,8 @@ export const adminUserResponseSchema = z.object({
   name: z.string(),
   email: z.string(),
   mobile_number: z.string().nullish(),
+  /** The employee this login is. Null only for an owner or a console-provisioned login. */
+  employee_id: z.number().nullish(),
   role_id: z.number().nullish(),
   /** Null for an account owner, who holds no role. */
   role_name: z.string().nullish(),
@@ -272,6 +323,8 @@ export interface TalkAccessPayload {
  * companies this person can act in.
  */
 export interface AdminUserPayload {
+  /** Ties the login to an employee of the ROLE's company. Can be re-pointed, never cleared. */
+  employee_id?: number
   first_name: string
   last_name: string
   email: string

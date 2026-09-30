@@ -168,6 +168,7 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
           <AttendanceMonthCalendar
             month={employee.month}
             dayByDate={employee.dayByDate}
+            tasksEnabled={employee.tasksEnabled}
             onSelectDay={employee.setOpenDay}
           />
         </Card>
@@ -176,6 +177,10 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
       <AttendanceDayDialog
         day={employee.openDay}
         onClose={() => employee.setOpenDay(null)}
+        tasksEnabled={employee.tasksEnabled}
+        servedAt={employee.servedAt}
+        canOpenTask={employee.canOpenTask}
+        onOpenTask={employee.openTask}
       />
     </div>
   )

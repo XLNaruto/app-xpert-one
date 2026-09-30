@@ -5,6 +5,7 @@ import type {
 } from '../schemas'
 import type {
   AttendanceDay,
+  AttendanceDayTask,
   AttendanceEmployee,
   AttendanceGroup,
   AttendanceGroupEmployeesResult,
@@ -103,6 +104,27 @@ function toPunch(
   }
 }
 
+function toDayTask(
+  raw: AttendanceMonthResponse['data']['list'][number]['tasks'][number],
+): AttendanceDayTask {
+  return {
+    kind: raw.kind,
+    id: raw.id,
+    assignmentId: raw.assignment_id,
+    taskId: raw.task_id,
+    task: raw.task,
+    templateName: raw.template_name,
+    slot: raw.slot,
+    slots: raw.slots,
+    status: raw.status,
+    latestPercent: raw.latest_percent,
+    workedSeconds: raw.worked_seconds,
+    // Instants pass through untouched — the server has already clipped them to
+    // the day in the business zone.
+    sessions: raw.sessions,
+  }
+}
+
 function toDay(raw: AttendanceMonthResponse['data']['list'][number]): AttendanceDay {
   return {
     date: raw.shift_date,
@@ -115,6 +137,8 @@ function toDay(raw: AttendanceMonthResponse['data']['list'][number]): Attendance
     holidayName: raw.holiday_name ?? '',
     leaveType: raw.leave_type ?? '',
     punches: (raw.log ?? []).map(toPunch),
+    tasks: raw.tasks.map(toDayTask),
+    taskSeconds: raw.task_seconds,
   }
 }
 
@@ -125,6 +149,7 @@ export function toAttendanceMonth(raw: AttendanceMonthResponse): AttendanceMonth
     employeeId: data.employee_id,
     today: data.today ?? '',
     weeklyOff: data.weekly_off ?? '',
+    tasksEnabled: data.tasks_enabled,
     days: data.list.map(toDay),
     counts: {
       present: data.counts.present,
@@ -147,6 +172,55 @@ export function toAttendanceMonth(raw: AttendanceMonthResponse): AttendanceMonth
  */
 export function indexDaysByDate(days: AttendanceDay[]): Map<string, AttendanceDay> {
   return new Map(days.map((day) => [day.date, day]))
+}
+
+/** Is this row's clock running right now? Only a trailing `end: null` means that. */
+export function isTaskRunning(task: AttendanceDayTask): boolean {
+  const last = task.sessions[task.sessions.length - 1]
+  return Boolean(last && last.end === null)
+}
+
+/** The subtitle under a task's name — group + run for SOP, progress for project. */
+export function taskSubtitle(task: AttendanceDayTask): string {
+  if (task.kind === 'sop') {
+    const run = task.slot != null && task.slots != null ? `run ${task.slot}/${task.slots}` : ''
+    return [task.templateName, run].filter(Boolean).join(' · ')
+  }
+  // `null` means nobody has reported progress — which is not 0%.
+  return task.latestPercent != null ? `${task.latestPercent}%` : ''
+}
+
+/** One line of the day's task timesheet — a single Start → Stop stretch. */
+export interface TaskTimelineRow {
+  key: string
+  task: AttendanceDayTask
+  /** ISO instants as sent; `''` on a row with no recorded stretch. */
+  start: string
+  /** `null` while the clock is running. */
+  end: string | null
+}
+
+/**
+ * The day's tasks as a timesheet: one row per stretch, in the order the work
+ * was done, so interleaved tasks read as the day actually went. A task with no
+ * stretch history (recorded before stretches were kept) gets one row with its
+ * total and no times, after the timed ones. ISO instants sort as strings.
+ */
+export function taskTimeline(tasks: AttendanceDayTask[]): TaskTimelineRow[] {
+  const timed: TaskTimelineRow[] = []
+  const untimed: TaskTimelineRow[] = []
+  for (const task of tasks) {
+    const base = `${task.kind}-${task.id}`
+    if (task.sessions.length === 0) {
+      untimed.push({ key: base, task, start: '', end: null })
+      continue
+    }
+    task.sessions.forEach((session, i) =>
+      timed.push({ key: `${base}-${i}`, task, start: session.start, end: session.end }),
+    )
+  }
+  timed.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0))
+  return [...timed, ...untimed]
 }
 
 /** Percent clamped to what a bar can actually draw. */

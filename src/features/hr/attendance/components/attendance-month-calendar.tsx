@@ -1,9 +1,10 @@
 import type { ReactElement } from 'react'
 import Calendar from 'react-calendar'
-import { Briefcase, Clock } from 'lucide-react'
+import { Briefcase, Clock, ListChecks } from 'lucide-react'
 import { format, isSameDay, parseISO } from 'date-fns'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { formatDuration } from '@/features/office-task/common'
 import { formatClockTime } from '../lib/attendance-mappers'
 import { DAY_STATUS_LABEL, DAY_STATUS_TONE } from '../constants'
 import type { AttendanceDay } from '../types'
@@ -53,13 +54,27 @@ function hasWorkedTime(totalDisplay: string): boolean {
  * left inert rather than offered as a button that goes nowhere.
  *
  * A holiday and an approved leave stay openable: either can still carry a punch
- * from somebody who worked it.
+ * from somebody who worked it. So does any past day with tracked task work —
+ * an off day somebody spent on a project still has something to show.
  */
-function canOpenDay(day: AttendanceDay): boolean {
+function canOpenDay(day: AttendanceDay, tasksEnabled: boolean): boolean {
+  if (day.status === 'future') return false
+  if (tasksEnabled && day.tasks.length > 0) return true
+  return day.status !== 'absent' && day.status !== 'weekly_off'
+}
+
+/**
+ * The day's task time, from the server's `task_seconds` — hidden at zero and
+ * whenever tasks are not visible on this account.
+ */
+function TaskChip({ seconds }: { seconds: number }) {
   return (
-    day.status !== 'future' &&
-    day.status !== 'absent' &&
-    day.status !== 'weekly_off'
+    <CellLine tip={`Task time: ${formatDuration(seconds)}`}>
+      <span className="inline-flex max-w-full min-w-0 items-center justify-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-primary">
+        <ListChecks className="size-3 shrink-0" aria-hidden />
+        <span className="truncate">{formatDuration(seconds)}</span>
+      </span>
+    </CellLine>
   )
 }
 
@@ -91,10 +106,13 @@ export function AttendanceMonthCalendar({
   month,
   /** Every day of that month by `yyyy-MM-dd`. */
   dayByDate,
+  tasksEnabled,
   onSelectDay,
 }: {
   month: string
   dayByDate: Map<string, AttendanceDay>
+  /** Office Task work is visible — shows each day's task-time chip. */
+  tasksEnabled: boolean
   onSelectDay: (day: AttendanceDay) => void
 }) {
   const activeMonth = parseISO(`${month}-01`)
@@ -127,12 +145,12 @@ export function AttendanceMonthCalendar({
         formatDay={(_locale, date) => format(date, 'dd')}
         onClickDay={(date) => {
           const day = dayFor(date)
-          if (day && canOpenDay(day)) onSelectDay(day)
+          if (day && canOpenDay(day, tasksEnabled)) onSelectDay(day)
         }}
         tileDisabled={({ date, view }) => {
           if (view !== 'month') return false
           const day = dayFor(date)
-          return !day || !canOpenDay(day)
+          return !day || !canOpenDay(day, tasksEnabled)
         }}
         tileClassName={({ date, view }) => {
           if (view !== 'month') return undefined
@@ -157,6 +175,8 @@ export function AttendanceMonthCalendar({
           const tone = DAY_STATUS_TONE[day.status]
           const note = day.holidayName || day.leaveType || ''
           const worked = hasWorkedTime(day.totalDisplay)
+          const taskChip =
+            tasksEnabled && day.taskSeconds > 0 ? <TaskChip seconds={day.taskSeconds} /> : null
 
           // An off day is the whole cell already — a bar on top of a solid fill
           // would be a second badge saying what the fill just said.
@@ -167,6 +187,7 @@ export function AttendanceMonthCalendar({
                 <span className="text-[11px] font-semibold uppercase tracking-wide">
                   {DAY_STATUS_LABEL[day.status]}
                 </span>
+                {taskChip}
               </span>
             )
           }
@@ -236,6 +257,8 @@ export function AttendanceMonthCalendar({
                   </span>
                 </CellLine>
               ) : null}
+
+              {taskChip}
             </div>
           )
         }}

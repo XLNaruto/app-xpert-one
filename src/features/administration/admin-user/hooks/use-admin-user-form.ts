@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -6,11 +6,13 @@ import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '@/features/company'
+import { employeePickerOptions, useEmployeePicker } from '@/features/hr/employee'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { adminUserSchema, type AdminUserFormValues } from '../schemas'
 import { EMPTY_ADMIN_USER_FORM } from '../constants'
 import { useAdminUser, useAssignableRoles } from '../api/use-admin-users'
 import { useCreateAdminUser, useUpdateAdminUser } from '../api/use-admin-user-mutations'
-import { adminUserToFormValues } from '../lib/admin-user-mappers'
+import { adminUserToFormValues, employeeIdentity } from '../lib/admin-user-mappers'
 
 /**
  * Owns the Create / Edit User screen — personal information, the login
@@ -62,7 +64,12 @@ export function useAdminUserForm(id?: number) {
    * the record on screen rather than declared once.
    */
   const schema = useMemo(
-    () => adminUserSchema({ requirePassword: !isEdit, requireRole: !isOwner }),
+    () =>
+      adminUserSchema({
+        requirePassword: !isEdit,
+        requireRole: !isOwner,
+        requireEmployee: !isEdit,
+      }),
     [isEdit, isOwner],
   )
 
@@ -87,6 +94,11 @@ export function useAdminUserForm(id?: number) {
     if (!detail.data || seededId.current === detail.data.id) return
     seededId.current = detail.data.id
     reset(adminUserToFormValues(detail.data))
+    // The picker only loads one page per search, so the linked employee may
+    // not be on it — label them with the stored name meanwhile.
+    if (detail.data.employeeId) {
+      setPickedEmployee({ label: detail.data.name, value: String(detail.data.employeeId) })
+    }
   }, [detail.data, reset])
 
   /**
@@ -110,6 +122,62 @@ export function useAdminUserForm(id?: number) {
     openedUnderCompanyId.current = activeCompanyId
     navigate({ to: '/administration/admin-user' })
   }, [activeCompanyId, navigate])
+
+  /* ── The employee picker ────────────────────────────────────────────────── */
+
+  /**
+   * The employee this login IS. Their name and mobile are copied from the
+   * picked row (the endpoint still requires both) rather than typed, and their
+   * email seeds the login when that box is still empty.
+   *
+   * The picker endpoint spans every company of the account and matches the
+   * NAME server-side, so the dropdown's search box travels as the term. The
+   * server only accepts an employee of the ROLE's company — a mismatch comes
+   * back as the endpoint's own message on save.
+   */
+  const employeeId = useWatch({ control, name: 'employeeId' }) ?? ''
+  const [employeeSearch, setEmployeeSearch] = useState('')
+  const debouncedEmployeeSearch = useDebouncedValue(employeeSearch, 300)
+  const employees = useEmployeePicker(debouncedEmployeeSearch)
+
+  /**
+   * The picked option, remembered — the list is re-fetched per term, so the
+   * choice drops out of `options` as soon as something else is typed, and a
+   * `<Combobox>` with no matching option shows a blank trigger.
+   */
+  const [pickedEmployee, setPickedEmployee] = useState<{
+    label: string
+    value: string
+  } | null>(null)
+
+  const employeeOptions = useMemo(() => {
+    const options = employeePickerOptions(employees.data?.items ?? [])
+    if (pickedEmployee && !options.some((option) => option.value === pickedEmployee.value)) {
+      return [pickedEmployee, ...options]
+    }
+    return options
+  }, [employees.data, pickedEmployee])
+
+  const setEmployeeId = (value: string) => {
+    const options = { shouldValidate: true, shouldDirty: true }
+    const entry = employees.data?.items.find((item) => String(item.id) === value)
+    setPickedEmployee(employeeOptions.find((option) => option.value === value) ?? null)
+    // Identity first, so validating the employee field sees the new values.
+    if (entry) {
+      const identity = employeeIdentity(entry)
+      setValue('firstName', identity.firstName)
+      setValue('lastName', identity.lastName)
+      setValue('mobileNumber', identity.mobileNumber)
+      if (entry.email && !form.getValues('email').trim()) {
+        setValue('email', entry.email, options)
+      }
+    }
+    setValue('employeeId', value, options)
+  }
+
+  /** One page only (the API caps `limit` at 100) — say so rather than hide a colleague. */
+  const hasMoreEmployees =
+    (employees.data?.total ?? 0) > (employees.data?.items.length ?? 0)
 
   const roleId = useWatch({ control, name: 'roleId' }) ?? ''
   const status = useWatch({ control, name: 'status' }) ?? 'active'
@@ -246,6 +314,14 @@ export function useAdminUserForm(id?: number) {
     user: detail.data,
     isSelf,
     isOwner,
+
+    /* Employee */
+    employeeId,
+    setEmployeeId,
+    employeeOptions,
+    setEmployeeSearch,
+    isEmployeesLoading: employees.isFetching,
+    hasMoreEmployees,
 
     /* Role & access */
     roleId,

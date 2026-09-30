@@ -13,6 +13,7 @@ import { Field } from '@/components/common/form-field'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -92,27 +93,33 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
               <FormSection
                 icon={UserRound}
                 title="Personal Information"
-                description="Who this person is. The mobile number is one identity on the platform, so it has to be theirs alone."
+                description="The employee this login belongs to. An employee of the role's company — once linked it can be changed, never removed."
                 className="mt-0"
               />
 
-              <Field label="First Name" required error={form.errors.firstName?.message}>
-                <Input placeholder="e.g. Priya" {...form.form.register('firstName')} />
-              </Field>
-
-              <Field label="Last Name" required error={form.errors.lastName?.message}>
-                <Input placeholder="e.g. Sharma" {...form.form.register('lastName')} />
-              </Field>
-
               <Field
-                label="Mobile Number"
-                required
-                error={form.errors.mobileNumber?.message}
+                label="Employee"
+                required={!form.isEdit}
+                error={form.errors.employeeId?.message}
+                hint={
+                  form.hasMoreEmployees
+                    ? 'Showing the first 100 — type to search the rest by name.'
+                    : 'Their name and mobile number are taken from the employee record.'
+                }
+                className="md:col-span-2"
               >
-                <Input
-                  inputMode="numeric"
-                  placeholder="10-digit mobile number"
-                  {...form.form.register('mobileNumber')}
+                <Combobox
+                  value={form.employeeId}
+                  onChange={form.setEmployeeId}
+                  options={form.employeeOptions}
+                  icon={UserRound}
+                  placeholder="Select employee"
+                  // Matched server-side, by name, across every company.
+                  onSearchChange={form.setEmployeeSearch}
+                  searchPlaceholder="Search employees by name"
+                  loading={form.isEmployeesLoading}
+                  panelMinWidth={280}
+                  className="w-full"
                 />
               </Field>
 

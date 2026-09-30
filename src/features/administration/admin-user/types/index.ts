@@ -24,6 +24,8 @@ export interface AdminUser extends AuditFields {
   /** The user's LOGIN. Unique across the whole platform, not just this account. */
   email: string
   mobileNumber: string | null
+  /** The employee this login is — null only for an owner or a console-provisioned login. */
+  employeeId: number | null
   roleId: number | null
   /** Null for an account owner, who holds no role. */
   roleName: string | null

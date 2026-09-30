@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { taskStatusSchema } from '@/features/office-task/common'
 
 /**
  * Attendance Management — the wire shapes.
@@ -93,6 +94,26 @@ const punchSchema = z.object({
   device: z.string().nullish(),
 })
 
+/**
+ * One piece of Office Task work on a day. `kind` decides which half is filled —
+ * the other half arrives as `null`, never absent. `sessions` are already clipped
+ * to the day in the business zone; `end: null` means the clock is running now.
+ */
+const dayTaskSchema = z.object({
+  kind: z.enum(['sop', 'project']),
+  id: z.number(),
+  assignment_id: z.number().nullable(),
+  task_id: z.number().nullable(),
+  task: z.string(),
+  template_name: z.string().nullable(),
+  slot: z.number().nullable(),
+  slots: z.number().nullable(),
+  status: taskStatusSchema,
+  latest_percent: z.number().nullable(),
+  worked_seconds: z.number(),
+  sessions: z.array(z.object({ start: z.string(), end: z.string().nullable() })),
+})
+
 const monthDaySchema = z.object({
   shift_date: z.string(),
   status: dayStatusSchema,
@@ -104,6 +125,13 @@ const monthDaySchema = z.object({
   holiday_name: z.string().nullish(),
   leave_type: z.string().nullish(),
   log: z.array(punchSchema).nullish(),
+  /*
+   * On every day, always — `[]` / `0` when there was no work. Defaulted only so
+   * a server that predates Office Task work reads as "no section" rather than
+   * failing the whole month.
+   */
+  tasks: z.array(dayTaskSchema).default([]),
+  task_seconds: z.number().default(0),
 })
 
 /**
@@ -117,6 +145,8 @@ export const attendanceMonthResponseSchema = z.object({
     employee_id: z.number(),
     today: z.string().nullish(),
     weekly_off: z.string().nullish(),
+    /** `false` → no Office Task on the account or no `office-task:read`; hide the section. */
+    tasks_enabled: z.boolean().default(false),
     list: z.array(monthDaySchema),
     counts: z.object({
       present: z.number(),

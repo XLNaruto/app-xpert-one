@@ -129,23 +129,22 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
         id: 'status',
         header: 'Status',
         enableSorting: false,
-        cell: ({ row }) => <TaskStatusBadge status={row.original.status} />,
+        // Status already says approved (Completed) or waiting (Awaiting Approval);
+        // a rejection sends the run back to work, so that one verdict rides here.
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5">
+            <TaskStatusBadge status={row.original.status} />
+            {row.original.verdict === 'rejected' && row.original.status !== 'completed' && (
+              <VerdictBadge verdict="rejected" />
+            )}
+          </div>
+        ),
       },
       {
         id: 'worked',
         header: 'Time Worked',
         enableSorting: false,
         cell: ({ row }) => formatDuration(row.original.workedSeconds),
-      },
-      {
-        id: 'approval',
-        header: 'Approval',
-        enableSorting: false,
-        cell: ({ row }) => {
-          const t = row.original
-          if (!t.needsApproval) return <span className="text-xs text-muted-foreground">Not required</span>
-          return t.status === 'pending_approval' || t.verdict ? <VerdictBadge verdict={t.verdict} /> : '—'
-        },
       },
     ],
     [],

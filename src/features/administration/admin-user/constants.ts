@@ -37,6 +37,7 @@ export const ADMIN_USER_STATUS_OPTIONS: ComboboxOption[] = [
  * may do and the scope below decides where, so both are chosen deliberately.
  */
 export const EMPTY_ADMIN_USER_FORM: AdminUserFormValues = {
+  employeeId: '',
   firstName: '',
   lastName: '',
   email: '',

@@ -4,13 +4,14 @@ import { addMonths, format, parseISO } from 'date-fns'
 import { decryptParams, encryptId, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { ATTENDANCE_MAX_LIMIT } from '../constants'
 import {
   useAttendanceGroupEmployees,
   useAttendanceMonth,
 } from '../api/use-attendance'
 import { indexDaysByDate } from '../lib/attendance-mappers'
-import type { AttendanceDay, AttendanceGroupBy } from '../types'
+import type { AttendanceDay, AttendanceDayTask, AttendanceGroupBy } from '../types'
 
 /** What the `?data=` token carries into the month screen. */
 interface AttendanceEmployeeParams {
@@ -68,7 +69,13 @@ export function useAttendanceEmployee(token?: string) {
   /** `yyyy-MM` — opens on the month the day being reviewed falls in. */
   const [month, setMonth] = useState(() => monthOf(parsed?.date ?? ''))
   /** The day whose punches are open in the dialog. */
-  const [openDay, setOpenDay] = useState<AttendanceDay | null>(null)
+  /*
+   * Held by date and read back out of the latest response, not as a snapshot:
+   * a refetch while the dialog is open must replace its task totals too, or a
+   * running clock would count forward from a stale figure.
+   */
+  const [openDate, setOpenDate] = useState<string | null>(null)
+  const setOpenDay = (day: AttendanceDay | null) => setOpenDate(day?.date ?? null)
 
   /**
    * The person can be switched from this screen, so the one on show is a local
@@ -141,6 +148,7 @@ export function useAttendanceEmployee(token?: string) {
      otherwise the index below is rebuilt on every keystroke elsewhere. */
   const days = useMemo(() => query.data?.days ?? [], [query.data?.days])
   const dayByDate = useMemo(() => indexDaysByDate(days), [days])
+  const openDay = openDate ? (dayByDate.get(openDate) ?? null) : null
 
   const stepMonth = (delta: number) =>
     setMonth(format(addMonths(parseISO(`${month}-01`), delta), 'yyyy-MM'))
@@ -178,6 +186,34 @@ export function useAttendanceEmployee(token?: string) {
     })
   }
 
+  /*
+   * A task row in the day dialog links to where the work lives — an SOP run to
+   * its assignment, a project share to its task — but only when that screen is
+   * reachable; otherwise the row is plain text rather than a link to a 403.
+   */
+  const { canView: canViewSopAssignments } = useResourceAccess(PERMISSIONS.sopAssignments)
+  const { canView: canViewProjectTasks } = useResourceAccess(PERMISSIONS.projectTasks)
+
+  const canOpenTask = (task: AttendanceDayTask) =>
+    task.kind === 'sop'
+      ? canViewSopAssignments && task.assignmentId != null
+      : canViewProjectTasks && task.taskId != null
+
+  const openTask = (task: AttendanceDayTask) => {
+    if (!canOpenTask(task)) return
+    if (task.kind === 'sop' && task.assignmentId != null) {
+      void navigate({
+        to: '/office-task/sop-assignment/detail',
+        search: { data: encryptId(task.assignmentId) },
+      })
+    } else if (task.kind === 'project' && task.taskId != null) {
+      void navigate({
+        to: '/office-task/project-task/detail',
+        search: { data: encryptId(task.taskId) },
+      })
+    }
+  }
+
   const isForbidden = isForbiddenError(query.error)
 
   return {
@@ -213,6 +249,12 @@ export function useAttendanceEmployee(token?: string) {
     /** A tile's day, by `yyyy-MM-dd`. */
     dayByDate,
     counts: query.data?.counts,
+    /** Office Task work is visible — hides the dialog section and the cell chip when not. */
+    tasksEnabled: query.data?.tasksEnabled ?? false,
+    /** When the month was served — a running task's clock counts forward from here. */
+    servedAt: query.dataUpdatedAt,
+    canOpenTask,
+    openTask,
 
     openDay,
     setOpenDay,
