@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import type { ComboboxOption } from '@/components/ui/combobox'
 import { getApiErrorMessage } from '@/lib/api-error'
+import { encryptParams } from '@/lib/crypto'
 import { useDesignationSelect } from '@/features/master/designation'
 import { useRoleSelect } from '@/features/administration/role'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
@@ -55,8 +56,12 @@ import type { SopGroupAssignee, SopGroupDetail, SopGroupRemoval } from '../types
  * assignee, a custom task) doesn't wait for Save: it is confirmed and sent
  * straight away.
  */
-export function useSopGroupForm(id: number | undefined, initialTab: SopGroupTab) {
+export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupTab) {
   const navigate = useNavigate()
+  // The URL is rewritten as the screen moves on (below), so read it only once:
+  // the page keeps its own state rather than reloading on every tab click.
+  const [id] = useState(routeId)
+  const [initialTab] = useState(routeTab)
   const access = useResourceAccess(PERMISSIONS.sopGroups)
   const queryClient = useQueryClient()
   /**
@@ -175,6 +180,18 @@ export function useSopGroupForm(id: number | undefined, initialTab: SopGroupTab)
       setTabLoading(false)
     }
   }
+
+  // Mirror the saved group and open tab into `?data=`, so a refresh comes back
+  // to the same group on the same tab instead of an empty tab 1.
+  useEffect(() => {
+    if (savedId === undefined) return
+    void navigate({
+      to: '/office-task/sop-group/create',
+      search: { data: encryptParams(tab === 'assign' ? { id: savedId, tab } : { id: savedId }) },
+      replace: true,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedId, tab])
 
   const items = useFieldArray({ control, name: 'items' })
   const assignees = useFieldArray({ control, name: 'assignees' })

@@ -73,7 +73,9 @@ export function AssigneeTaskGroup({
   // be older than the group's current one — show theirs, and say if it moved on.
   const checklist = a.locked ? a.heldChecklist : f.watchedItems
   const sig = (rows: typeof checklist) =>
-    rows.map((t) => `${t.task.trim()}|${t.frequency}|${t.photoRequired}|${t.needsApproval}`).join('\n')
+    rows
+      .map((t) => `${t.task.trim()}|${t.description.trim()}|${t.frequency}|${t.photoRequired}|${t.needsApproval}`)
+      .join('\n')
   const checklistMoved = a.locked && sig(a.heldChecklist) !== sig(f.watchedItems)
   const perDay = (rows: typeof checklist) => rows.reduce((sum, t) => sum + (Number(t?.frequency) || 0), 0)
   const taskCount = checklist.length + custom.fields.length
@@ -210,7 +212,11 @@ export function AssigneeTaskGroup({
                       <Lock className="size-3.5" />
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>From the group checklist — edit it in Group Details</TooltipContent>
+                  <TooltipContent className="max-w-64">
+                    {a.locked
+                      ? 'Their copy of the checklist from when they were assigned — Group Details edits don’t change it'
+                      : 'From the group checklist — edit it in Group Details'}
+                  </TooltipContent>
                 </Tooltip>
               </td>
               <td className={cell}>
