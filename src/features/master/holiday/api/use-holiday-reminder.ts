@@ -13,6 +13,6 @@ export function useHolidayReminder(companyIds?: number[], enabled = true) {
     queryKey: queryKeys.holiday.reminder(companyIds),
     queryFn: ({ signal }) => fetchHolidayReminder(companyIds, signal),
     enabled,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 }

@@ -26,7 +26,7 @@ export function useMyCompanies() {
     queryKey: queryKeys.myCompany.list(),
     queryFn: () =>
       env.VITE_USE_MOCK_API ? mockFetchMyCompanies() : fetchMyCompanies(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 
   const companies = query.data ?? []

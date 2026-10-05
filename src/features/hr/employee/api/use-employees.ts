@@ -48,7 +48,7 @@ export function useEmployeesInfinite(search?: string, enabled = true) {
     },
     // A typed term shouldn't blank the list while its first page arrives.
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 }
 
@@ -69,7 +69,7 @@ export function useEmployeePicker(search?: string, enabled = true) {
     enabled,
     // A typed term shouldn't blank the list while the next page arrives.
     placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   })
 }
 
