@@ -203,6 +203,20 @@ export const queryKeys = {
   companySettings: {
     all: ['company-settings'] as const,
     detail: (companyId: number) => [...queryKeys.companySettings.all, companyId] as const,
+    /** Every history page — what a save or a withdrawal invalidates. */
+    changesAll: () => [...queryKeys.companySettings.all, 'changes'] as const,
+    changes: (
+      companyId: number,
+      params: PageParams,
+      filters: { settingKey?: string; status?: string },
+    ) =>
+      [
+        ...queryKeys.companySettings.changesAll(),
+        companyId,
+        params,
+        filters.settingKey ?? '',
+        filters.status ?? '',
+      ] as const,
   },
   /**
    * The signed-in user's own companies (tenants) + active selection —

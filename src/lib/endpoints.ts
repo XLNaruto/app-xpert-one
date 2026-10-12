@@ -109,6 +109,11 @@ export const endpoints = {
   },
   /** Administration → Settings — one row of switches per company. */
   COMPANY_SETTINGS: '/user/company-settings',
+  /** Administration → Settings — the dated history of every booked change. */
+  COMPANY_SETTING_CHANGES: {
+    LIST: '/user/company-settings/changes',
+    DELETE: (id: number) => `/user/company-settings/changes/${id}`,
+  },
   SUPPORT_TICKETS: {
     LIST: '/user/support/tickets',
     POST: '/user/support/tickets',
