@@ -47,10 +47,16 @@ export function PostingSection({
    * as the record holds them and travel back to the API untouched.
    */
   showDates = true,
+  /**
+   * The earliest joining date the host accepts (ISO) — a rejoin must start after
+   * the last posting ended. Omitted, any date can be picked.
+   */
+  minJoiningDate,
 }: {
   options: PostingOptions
   showHeading?: boolean
   showDates?: boolean
+  minJoiningDate?: string
 }) {
   const {
     register,
@@ -286,6 +292,7 @@ export function PostingSection({
             label="Joining Date"
             required
             error={errors.joiningDate?.message}
+            minDate={minJoiningDate ? new Date(`${minJoiningDate}T00:00:00`) : undefined}
           />
 
           <DateField

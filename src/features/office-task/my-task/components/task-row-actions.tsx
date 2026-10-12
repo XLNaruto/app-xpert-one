@@ -1,4 +1,4 @@
-import { Check, Eye, Play, Send, Square } from 'lucide-react'
+import { Check, Eye, Play, Send, Square, TrendingUp } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -46,6 +46,53 @@ function LockedHint({ locked, children }: { locked: boolean; children: ReactNode
   )
 }
 
+/** Complete, or Submit when the work goes to an approver first. */
+function HandInButton({
+  needsApproval,
+  busy,
+  onClick,
+}: {
+  needsApproval: boolean
+  busy: boolean
+  onClick: () => void
+}) {
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className={needsApproval ? tone.submit : tone.complete}
+      onClick={onClick}
+      disabled={busy}
+    >
+      {needsApproval ? <Send className="size-3" /> : <Check className="size-3" />}
+      {needsApproval ? 'Submit' : 'Complete'}
+    </Button>
+  )
+}
+
+/** Stop plus the live clock beside it. */
+function StopWithClock({
+  busy,
+  onStop,
+  workedSeconds,
+}: {
+  busy: boolean
+  onStop: () => void
+  workedSeconds: number
+}) {
+  return (
+    <>
+      <Button size="sm" variant="outline" className={tone.stop} onClick={onStop} disabled={busy}>
+        <Square className="size-3 fill-current" />
+        Stop
+      </Button>
+      <span className="w-[4.5rem] font-mono text-sm font-semibold tabular-nums">
+        {formatClock(workedSeconds)}
+      </span>
+    </>
+  )
+}
+
 /**
  * An SOP run's buttons: Start → Stop (with the live clock) / Resume → Complete
  * (or Submit when it needs approval). Only today's runs can be worked. "Stop"
@@ -62,10 +109,16 @@ export function SopRowActions({
   onView,
   workedSeconds,
   readOnly = false,
+  direct = false,
 }: {
   row: MySopRow
   /** Without `my-tasks:update` the board is look-only. */
   readOnly?: boolean
+  /**
+   * The company hands SOP runs in DIRECTLY — no Start / Resume, just Complete.
+   * A clock started before the switch keeps its Stop so the time isn't lost.
+   */
+  direct?: boolean
   /** Another run's clock is going — Start/Resume wait until it's stopped. */
   startLocked: boolean
   /** Banked + live seconds, ticking while the run is going. */
@@ -85,6 +138,17 @@ export function SopRowActions({
       null
     )
   }
+  if (direct) {
+    if (row.status !== 'pending' && row.status !== 'in_progress') return null
+    return (
+      <div className="flex items-center gap-1.5">
+        <HandInButton needsApproval={row.needsApproval} busy={busy} onClick={onComplete} />
+        {row.runningSince && (
+          <StopWithClock busy={busy} onStop={onPause} workedSeconds={workedSeconds} />
+        )}
+      </div>
+    )
+  }
   if (row.status === 'pending') {
     return (
       <LockedHint locked={startLocked}>
@@ -99,32 +163,9 @@ export function SopRowActions({
 
   return (
     <div className="flex items-center gap-1.5">
-      <Button
-        size="sm"
-        variant="outline"
-        className={row.needsApproval ? tone.submit : tone.complete}
-        onClick={onComplete}
-        disabled={busy}
-      >
-        {row.needsApproval ? <Send className="size-3" /> : <Check className="size-3" />}
-        {row.needsApproval ? 'Submit' : 'Complete'}
-      </Button>
+      <HandInButton needsApproval={row.needsApproval} busy={busy} onClick={onComplete} />
       {row.runningSince ? (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onPause}
-            disabled={busy}
-            className={tone.stop}
-          >
-            <Square className="size-3 fill-current" />
-            Stop
-          </Button>
-          <span className="w-[4.5rem] font-mono text-sm font-semibold tabular-nums">
-            {formatClock(workedSeconds)}
-          </span>
-        </>
+        <StopWithClock busy={busy} onStop={onPause} workedSeconds={workedSeconds} />
       ) : (
         <LockedHint locked={startLocked}>
           <Button size="sm" variant="outline" className={tone.start} onClick={onStart} disabled={busy || startLocked}>
@@ -142,6 +183,10 @@ export function SopRowActions({
  * clock) / Resume. Stop asks for a progress update and stops with it — there's
  * no separate Progress button. The clock only runs from today's board;
  * "Stop" pauses it — the work stays in progress until it's handed in.
+ *
+ * Under DIRECT submission there's no clock: Progress records a note without a
+ * Stop toggle, and Complete hands in a share nobody started. A clock already
+ * running from before the switch keeps its Stop, which saves progress with it.
  */
 export function ProjectRowActions({
   row,
@@ -154,11 +199,18 @@ export function ProjectRowActions({
   onStop,
   onComplete,
   onView,
+  onProgress,
   readOnly = false,
+  direct = false,
 }: {
   row: MyProjectRow
   /** Without `my-tasks:update` the board is look-only. */
   readOnly?: boolean
+  /** The company hands project shares in DIRECTLY — Progress / Complete, no clock. */
+  direct?: boolean
+  /** Opens Record Progress without stopping anything (DIRECT only). */
+  onProgress: () => void
+  /** The share's start date has come — before it, the API refuses any action. */
   canStart: boolean
   isToday: boolean
   busy: boolean
@@ -173,6 +225,23 @@ export function ProjectRowActions({
   onView: () => void
 }) {
   if (readOnly || row.status === 'completed') return <ViewButton onView={onView} />
+  if (direct && (row.status === 'pending' || row.status === 'in_progress')) {
+    if (!canStart) return <span className="text-xs text-muted-foreground">Not started yet</span>
+    return (
+      <div className="flex items-center gap-1.5">
+        <HandInButton needsApproval={row.needsVerification} busy={busy} onClick={onComplete} />
+        {isToday &&
+          (row.runningSince ? (
+            <StopWithClock busy={busy} onStop={onStop} workedSeconds={workedSeconds} />
+          ) : (
+            <Button size="sm" variant="outline" className={tone.neutral} onClick={onProgress} disabled={busy}>
+              <TrendingUp className="size-3" />
+              Progress
+            </Button>
+          ))}
+      </div>
+    )
+  }
   if (row.status === 'pending') {
     if (!canStart) return <span className="text-xs text-muted-foreground">Not started yet</span>
     if (!isToday) return null
@@ -190,29 +259,12 @@ export function ProjectRowActions({
   return (
     <div className="flex items-center gap-1.5">
       {row.status === 'in_progress' && (
-        <Button
-          size="sm"
-          variant="outline"
-          className={row.needsVerification ? tone.submit : tone.complete}
-          onClick={onComplete}
-          disabled={busy}
-        >
-          {row.needsVerification ? <Send className="size-3" /> : <Check className="size-3" />}
-          {row.needsVerification ? 'Submit' : 'Complete'}
-        </Button>
+        <HandInButton needsApproval={row.needsVerification} busy={busy} onClick={onComplete} />
       )}
       {row.status === 'in_progress' &&
         isToday &&
         (row.runningSince ? (
-          <>
-            <Button size="sm" variant="outline" className={tone.stop} onClick={onStop} disabled={busy}>
-              <Square className="size-3 fill-current" />
-              Stop
-            </Button>
-            <span className="w-[4.5rem] font-mono text-sm font-semibold tabular-nums">
-              {formatClock(workedSeconds)}
-            </span>
-          </>
+          <StopWithClock busy={busy} onStop={onStop} workedSeconds={workedSeconds} />
         ) : (
           <LockedHint locked={startLocked}>
             <Button size="sm" variant="outline" className={tone.start} onClick={onStart} disabled={busy || startLocked}>

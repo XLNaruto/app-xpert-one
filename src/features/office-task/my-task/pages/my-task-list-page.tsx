@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { CalendarClock, ClipboardCheck, FolderKanban, Undo2 } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DataTable } from '@/components/data-table'
@@ -11,6 +12,7 @@ import { CompanyRequired, ScopedDataError } from '@/features/company'
 import {
   deadlineInfo,
   formatDuration,
+  periodLabel,
   PriorityBadge,
   ProgressBar,
   RuleIcons,
@@ -63,15 +65,25 @@ function SentBack({
 }
 
 /**
- * "Updates 1/2 today" — progress notes recorded on the viewed day against the
- * task's per-day target. Amber while an open task is still short.
+ * "Updates 1/2 today" / "Updates 1/2 this week" — progress notes recorded in the
+ * task's current period against its target. Amber while an open task is still short.
  */
-function UpdatesToday({ row }: { row: MyProjectRow }) {
-  const behind = row.status === 'in_progress' && row.updatesToday < row.updatesPerDay
+function UpdatesThisPeriod({ row }: { row: MyProjectRow }) {
+  const behind = row.status === 'in_progress' && row.updatesThisPeriod < row.updatesPerDay
   return (
     <p className={cn('text-xs', behind ? 'font-medium text-amber-600 dark:text-amber-400' : 'text-muted-foreground')}>
-      Updates {row.updatesToday}/{row.updatesPerDay} today
+      Updates {row.updatesThisPeriod}/{row.updatesPerDay} {periodLabel(row.updateFrequency)}
     </p>
+  )
+}
+
+/** A delegated row — worked here for an outside person, on their clock. */
+function OnBehalfBadge({ row }: { row: MyProjectRow }) {
+  if (!row.onBehalfOf) return null
+  return (
+    <Badge variant="secondary" className="mt-1">
+      On behalf of {row.onBehalfOf.fullName}
+    </Badge>
   )
 }
 
@@ -91,13 +103,14 @@ export function MyTaskListPage() {
             row={row.original}
             isToday={board.isToday}
             busy={board.busyId === row.original.id}
-            startLocked={board.anyRunning && !row.original.runningSince}
+            startLocked={board.startLocked(row.original)}
             onStart={() => board.startSop(row.original)}
             onPause={() => board.pauseSop(row.original)}
             onComplete={() => board.openComplete({ kind: 'sop', row: row.original })}
             onView={() => board.openView({ kind: 'sop', row: row.original })}
             workedSeconds={board.workedSeconds(row.original)}
             readOnly={!board.canAct}
+            direct={board.sopDirect}
           />
         ),
       },
@@ -160,7 +173,7 @@ export function MyTaskListPage() {
     ],
     // The clock ticks through `workedSeconds`, so the columns follow it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [board.workedSeconds, board.isToday, board.busyId, board.anyRunning, board.canAct],
+    [board.workedSeconds, board.isToday, board.busyId, board.startLocked, board.canAct, board.sopDirect],
   )
 
   const projectColumns = useMemo<ColumnDef<MyProjectRow>[]>(
@@ -176,13 +189,15 @@ export function MyTaskListPage() {
             canStart={row.original.startDate <= todayIso()}
             isToday={board.isToday}
             busy={board.busyProjectId === row.original.id}
-            startLocked={board.anyRunning && !row.original.runningSince}
+            startLocked={board.startLocked(row.original)}
             workedSeconds={board.workedSeconds(row.original)}
             onStart={() => board.startProject(row.original)}
             onStop={() => board.openProgress(row.original)}
+            onProgress={() => board.openProgress(row.original)}
             onComplete={() => board.openComplete({ kind: 'project', row: row.original })}
             onView={() => board.openView({ kind: 'project', row: row.original })}
             readOnly={!board.canAct}
+            direct={board.projectDirect}
           />
         ),
       },
@@ -204,7 +219,8 @@ export function MyTaskListPage() {
                 by={row.original.verdictBy}
               />
             </p>
-            <UpdatesToday row={row.original} />
+            <UpdatesThisPeriod row={row.original} />
+            <OnBehalfBadge row={row.original} />
           </button>
         ),
       },
@@ -288,11 +304,16 @@ export function MyTaskListPage() {
     ],
     // The clock ticks through `workedSeconds`, so the columns follow it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [board.workedSeconds, board.isToday, board.busyProjectId, board.anyRunning, board.canAct],
+    [board.workedSeconds, board.isToday, board.busyProjectId, board.startLocked, board.canAct, board.projectDirect],
   )
 
   const filters: MyTaskFilter[] = ['all', 'todo', 'in_hand', 'done', 'missed']
-  const completingSeconds = board.completing?.kind === 'sop' ? board.workedSeconds(board.completing.row) : undefined
+  // A run handed in directly was never timed — "Time worked: 0m" would only mislead.
+  const completingSeconds =
+    board.completing?.kind === 'sop' &&
+    !(board.sopDirect && board.workedSeconds(board.completing.row) === 0)
+      ? board.workedSeconds(board.completing.row)
+      : undefined
   const viewingSeconds = board.viewing?.kind === 'sop' ? board.workedSeconds(board.viewing.row) : undefined
 
   const empty = (

@@ -199,6 +199,11 @@ export const queryKeys = {
         : ([...queryKeys.ipAddress.all, 'list'] as const),
     mode: () => [...queryKeys.ipAddress.all, 'mode'] as const,
   },
+  /** Administration → Settings — one company's switches; the company is in the key. */
+  companySettings: {
+    all: ['company-settings'] as const,
+    detail: (companyId: number) => [...queryKeys.companySettings.all, companyId] as const,
+  },
   /**
    * The signed-in user's own companies (tenants) + active selection —
    * `features/company`. Kept separate from the `company` master list below so a
@@ -524,9 +529,9 @@ export const queryKeys = {
    */
   employee: {
     all: ['employee'] as const,
-    list: (params?: PageParams) =>
+    list: (params?: PageParams, status = 'all') =>
       params
-        ? ([...queryKeys.employee.all, 'list', params] as const)
+        ? ([...queryKeys.employee.all, 'list', params, status] as const)
         : ([...queryKeys.employee.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.employee.all, 'detail', id] as const,
     /** Paged, server-searched, name-sorted — backs the detail header's scroll-lazy switcher. */
@@ -573,6 +578,8 @@ export const queryKeys = {
     /** Step 9 — the assignment timeline, newest first. Unpaginated. */
     shiftTimeline: (id: number) =>
       [...queryKeys.employee.all, 'shift-timeline', id] as const,
+    /** Step 8 — whether a de-active employee may rejoin, and into which companies. */
+    rejoin: (id: number) => [...queryKeys.employee.all, 'rejoin', id] as const,
     /** Step 9 — the per-date roster overrides inside one window. */
     roster: (id: number, from: string, to: string, params?: PageParams) =>
       params
@@ -864,6 +871,9 @@ export const queryKeys = {
     /** The shared employee picker, per target (+ group for `already_assigned`). */
     employees: (filters: QueryParams, search?: string) =>
       [...queryKeys.officeTask.all, 'employees', filters, search ?? ''] as const,
+    /** The delegate picker of an "other" project task — the active company's people. */
+    delegates: (search?: string) =>
+      [...queryKeys.officeTask.all, 'delegates', search ?? ''] as const,
     sopGroups: (params: PageParams) =>
       [...queryKeys.officeTask.all, 'sop-group', 'list', params] as const,
     sopGroupOptions: () => [...queryKeys.officeTask.all, 'sop-group', 'options'] as const,
@@ -892,9 +902,25 @@ export const queryKeys = {
     mySopTasks: (date: string) => [...queryKeys.officeTask.all, 'my-task', 'sop', date] as const,
     myProjectTasks: (date: string) =>
       [...queryKeys.officeTask.all, 'my-task', 'project', date] as const,
+    /** The active company's submission modes (START_STOP | DIRECT) for the board. */
+    myTaskSettings: () => [...queryKeys.officeTask.all, 'my-task', 'settings'] as const,
     sopApprovals: (filters: QueryParams, params: PageParams) =>
       [...queryKeys.officeTask.all, 'approval', 'sop', filters, params] as const,
     projectApprovals: (filters: QueryParams, params: PageParams) =>
       [...queryKeys.officeTask.all, 'approval', 'project', filters, params] as const,
+    sopAnalysis: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'sop', filters, params] as const,
+    projectAnalysis: (filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'project', filters, params] as const,
+    sopAnalysisEmployee: (employeeId: number, range: QueryParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'sop', 'employee', employeeId, range] as const,
+    sopAnalysisRuns: (employeeId: number, filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'sop', 'employee', employeeId, 'runs', filters, params] as const,
+    sopAnalysisChecklists: (employeeId: number, range: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'sop', 'employee', employeeId, 'checklists', range, params] as const,
+    projectAnalysisEmployee: (employeeId: number, range: QueryParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'project', 'employee', employeeId, range] as const,
+    projectAnalysisTasks: (employeeId: number, filters: QueryParams, params: PageParams) =>
+      [...queryKeys.officeTask.all, 'analysis', 'project', 'employee', employeeId, 'tasks', filters, params] as const,
   },
 } as const

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { useNavigate } from '@tanstack/react-router'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
 import { useCompanySelect } from '@/features/master/company'
+import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   employeeServiceEditSchema,
   employeeTransferSchema,
@@ -18,6 +20,7 @@ import {
   PERMANENT_EMPLOYMENT_TYPE,
 } from '../constants'
 import {
+  useEmployeeRejoinEligibility,
   useEmployeeTransferDetail,
   useEmployeeTransfers,
 } from '../api/use-employee-steps'
@@ -30,6 +33,7 @@ import { useEmployee } from '../api/use-employees'
 import { serviceDetailToEditFormValues } from '../lib/employee-step-mappers'
 import { deriveRenewalDate, toFormDate, todayIso } from '../lib/employee-dates'
 import { usePostingOptions } from './use-posting-options'
+import { useEmployeeRejoin } from './use-employee-rejoin'
 import type { EmployeeTransfer } from '../types'
 
 /** Which of the tab's four dialogs is open, if any. */
@@ -60,11 +64,15 @@ function maxIso(a: string, b: string): string {
  * - **Leave service** (`POST …/leave-service`) closes the open posting without
  *   opening another — the employee exits. This is also what the list's Deactivate
  *   does.
+ * - **Rejoin** (`POST …/rejoin`) opens a new spell of service once every posting
+ *   is closed. `GET …/rejoin` decides up front whether it's allowed and into which
+ *   earlier companies; a refusal's `reason` explains the disabled button.
  *
  * There is no delete: a posting is a fact about the past, and payroll for that
  * period points at it.
  */
 export function useEmployeeTransferTab(employeeId: number) {
+  const navigate = useNavigate()
   const list = useEmployeeTransfers(employeeId)
   const employee = useEmployee(employeeId)
   const transferEmployee = useTransferEmployee(employeeId)
@@ -78,14 +86,24 @@ export function useEmployeeTransferTab(employeeId: number) {
   const rows = list.data ?? []
   /** The open posting: the newest row with no leaving date. */
   const openPosting = rows.find((row) => row.isCurrent && !row.leavingDate)
+
+  /* ── Rejoin — only once every posting is closed ───────────────────────── */
+
+  // Opening the form needs `employees:read` (the wizard already does); saving
+  // needs `employees:create`, so the button is offered only with it.
+  const { canCreate: canRejoinPermission } = useResourceAccess(PERMISSIONS.employees)
+  const hasLeft = !list.isLoading && rows.length > 0 && openPosting === undefined
+  const rejoinEligibility = useEmployeeRejoinEligibility(
+    employeeId,
+    hasLeft && canRejoinPermission,
+  )
+  const rejoin = useEmployeeRejoin()
   const latestPosting = rows.find((row) => row.isLatest) ?? rows[0]
   const currentService = employee.data?.service
   /**
-   * The employee has left — every posting is closed. A new posting can still be
-   * added (they rejoin); only the two closing actions have nothing to act on.
+   * The posting a transfer is seeded from. A transfer is only offered while one
+   * is open — once the employee has left, Rejoin opens the next posting instead.
    */
-  const isRejoining = openPosting === undefined && latestPosting !== undefined
-  /** The posting a new one is seeded from — the open one, or the last one held. */
   const postingToFollow = openPosting ?? latestPosting
   const serviceToFollow = postingToFollow ?? currentService
 
@@ -93,13 +111,8 @@ export function useEmployeeTransferTab(employeeId: number) {
     const posting = postingToFollow
     const service = serviceToFollow
     const baseJoiningDate = posting?.joiningDate ?? service?.joiningDate ?? ''
-    const baseLeavingDate = posting?.leavingDate ?? service?.leavingDate ?? ''
-    const leavingDate = isRejoining
-      ? toFormDate(baseLeavingDate)
-      : maxIso(todayIso(), toFormDate(baseJoiningDate))
-    const startDate = isRejoining
-      ? maxIso(todayIso(), nextDayIso(leavingDate))
-      : nextDayIso(leavingDate)
+    const leavingDate = maxIso(todayIso(), toFormDate(baseJoiningDate))
+    const startDate = nextDayIso(leavingDate)
 
     return {
       ...EMPTY_EMPLOYEE_TRANSFER_FORM,
@@ -133,7 +146,7 @@ export function useEmployeeTransferTab(employeeId: number) {
         service?.contractPeriodType ||
         EMPTY_EMPLOYEE_TRANSFER_FORM.contractPeriodType,
     }
-  }, [employee.data?.companyId, isRejoining, postingToFollow, serviceToFollow])
+  }, [employee.data?.companyId, postingToFollow, serviceToFollow])
 
   /* ── Forms ─────────────────────────────────────────────────────────────── */
 
@@ -299,11 +312,6 @@ export function useEmployeeTransferTab(employeeId: number) {
    * transfer usually changes one thing — a branch, a designation — rather than
    * everything; and the leaving date defaults to today with the new posting
    * starting the day after, which is what the schema requires anyway.
-   *
-   * When the employee has already left there is nothing left to close, so the
-   * closed posting's own leaving date is what the (still mandatory) leaving field
-   * repeats, and the new posting starts today — or the day after the exit, when
-   * they left today, since the schema won't take the two on the same day.
    */
   useEffect(() => {
     if (dialog !== 'transfer' || employee.isLoading || !employee.data) return
@@ -324,7 +332,7 @@ export function useEmployeeTransferTab(employeeId: number) {
   const startTransfer = () => {
     const posting = postingToFollow
     const service = serviceToFollow
-    if (!posting && !service) return
+    if (!openPosting || (!posting && !service)) return
 
     setActiveServiceId(posting?.id ?? service?.id)
     setDialog('transfer')
@@ -390,6 +398,9 @@ export function useEmployeeTransferTab(employeeId: number) {
               : undefined,
           })
           closeDialog()
+          // The record now belongs to another company, so this screen no longer
+          // has anything to edit — fall back to the list.
+          if (isCompanyMove) void navigate({ to: '/hr/employee' })
         },
         onError: failWith("Couldn't transfer the employee."),
       },
@@ -439,12 +450,23 @@ export function useEmployeeTransferTab(employeeId: number) {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(list.error) : undefined,
 
-    /** True while a posting is open — closing the service needs one. */
+    /** True while a posting is open — closing the service or transferring needs one. */
     hasOpenPosting: openPosting !== undefined,
-    /** Adding a posting only needs an earlier one to follow, open or closed. */
-    canAddService: postingToFollow !== undefined,
-    /** True when the new posting is a rejoin rather than a move. */
-    isRejoining,
+
+    /** Every posting is closed and the role may save a rejoin — show the button. */
+    showRejoin: hasLeft && canRejoinPermission,
+    /** The eligibility read allows it — the button is enabled. */
+    canRejoin: rejoinEligibility.data?.canRejoin === true,
+    /** Why it's disabled: the API's own sentence, or the read still being in flight. */
+    rejoinHint: rejoinEligibility.isLoading
+      ? 'Checking whether this employee can rejoin…'
+      : rejoinEligibility.error
+        ? getApiErrorMessage(rejoinEligibility.error, "Couldn't check whether this employee can rejoin.")
+        : rejoinEligibility.data && !rejoinEligibility.data.canRejoin
+          ? rejoinEligibility.data.reason || 'This employee cannot rejoin right now.'
+          : undefined,
+    startRejoin: () => rejoin.open({ id: employeeId, name: employee.data?.name ?? '' }),
+    rejoin,
     /** The joining date of the posting being followed, as the dialogs' floor. */
     openPostingJoiningDate: toFormDate(postingToFollow?.joiningDate),
 

@@ -4,6 +4,7 @@ import {
   proofResponseSchema,
   sopRunResponseSchema,
   taskStatusSchema,
+  updateFrequencySchema,
   verdictResponseSchema,
 } from '@/features/office-task/common'
 
@@ -53,6 +54,13 @@ export const projectApprovalsResponseSchema = z.object({
       note: z.string().nullish(),
       proof: z.array(proofResponseSchema).nullish(),
       is_late: z.boolean(),
+      updates_per_day: z.number().nullish(),
+      update_frequency: updateFrequencySchema.nullish(),
+      /** Set when the work is an "other"'s — someone outside the staff. */
+      task_other_id: z.number().nullish(),
+      mobile_number: z.string().nullish(),
+      /** Who may update it for the other — they may have made this hand-in. */
+      delegate_name: z.string().nullish(),
     }),
   ),
   total: z.number(),

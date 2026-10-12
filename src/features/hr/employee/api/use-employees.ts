@@ -1,7 +1,7 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { ALL_ROWS, type PageParams } from '@/lib/pagination'
-import { EMPLOYEE_SORT } from '../constants'
+import { EMPLOYEE_SORT, type EmployeeStatusFilter } from '../constants'
 import { fetchEmployee, fetchEmployeePicker, fetchEmployees } from './employee-api'
 
 /**
@@ -10,10 +10,10 @@ import { fetchEmployee, fetchEmployeePicker, fetchEmployees } from './employee-a
  * One limit/offset page — pass the params from `usePagination()`. Called with no
  * argument it returns everyone, for the pickers that point at an employee.
  */
-export function useEmployees(params: PageParams = ALL_ROWS) {
+export function useEmployees(params: PageParams = ALL_ROWS, status: EmployeeStatusFilter = 'all') {
   return useQuery({
-    queryKey: queryKeys.employee.list(params),
-    queryFn: () => fetchEmployees(params),
+    queryKey: queryKeys.employee.list(params, status),
+    queryFn: () => fetchEmployees(params, status),
     // Keep the previous page on screen while the next one loads.
     placeholderData: keepPreviousData,
   })

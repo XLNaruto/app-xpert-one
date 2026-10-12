@@ -1,4 +1,12 @@
-import type { Priority, ProofFile, SopTask, TaskStatus, Verdict, VerdictInfo } from '@/features/office-task/common'
+import type {
+  Priority,
+  ProofFile,
+  SopTask,
+  TaskStatus,
+  UpdateFrequency,
+  Verdict,
+  VerdictInfo,
+} from '@/features/office-task/common'
 
 export type ApprovalKind = 'sop' | 'project'
 
@@ -51,6 +59,14 @@ export interface ProjectApprovalRow extends VerdictInfo {
   proof: ProofFile[]
   /** Handed in after the deadline — derived on read, never stored. */
   isLate: boolean
+  /** The task's progress-update target and the period it's counted over. */
+  updatesPerDay: number
+  updateFrequency: UpdateFrequency
+  /** Set for an "other"'s work — then `mobileNumber` is theirs and `employeeCode` is empty. */
+  taskOtherId: number | null
+  mobileNumber: string | null
+  /** Who may update it for the other; `null` when nobody is named. */
+  delegateName: string | null
 }
 
 /** A page plus how many rows sit under each status tab (for the tab badges). */

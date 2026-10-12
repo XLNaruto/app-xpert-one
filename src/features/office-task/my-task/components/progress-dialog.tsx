@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { ProgressBar } from '@/features/office-task/common'
+import { periodLabel, ProgressBar } from '@/features/office-task/common'
 import { useProgressForm } from '../hooks/use-progress-form'
 import type { MyProjectRow } from '../types'
 
@@ -24,8 +24,10 @@ function ProgressForm({ row, onClose }: { row: MyProjectRow; onClose: () => void
       <DialogHeader>
         <DialogTitle className="pr-10">{stopping ? 'Stop & Record Progress' : 'Record Progress'}</DialogTitle>
         <DialogDescription>
-          {row.task} · update {Math.min(row.updatesToday + 1, row.updatesPerDay)} of {row.updatesPerDay} today
-          {row.updatesToday >= row.updatesPerDay && ' (target already met)'}
+          {row.onBehalfOf && `For ${row.onBehalfOf.fullName} · `}
+          {row.task} · update {Math.min(row.updatesThisPeriod + 1, row.updatesPerDay)} of {row.updatesPerDay}{' '}
+          {periodLabel(row.updateFrequency)}
+          {row.updatesThisPeriod >= row.updatesPerDay && ' (target already met)'}
           {stopping && ' · the clock stops when you save'}
         </DialogDescription>
       </DialogHeader>
@@ -61,7 +63,7 @@ function ProgressForm({ row, onClose }: { row: MyProjectRow; onClose: () => void
   )
 }
 
-/** Stop a project task's clock with its new progress %. */
+/** Record a project task's new progress % — stopping its clock too when one runs. */
 export function ProgressDialog({ row, onClose }: { row: MyProjectRow | null; onClose: () => void }) {
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>

@@ -16,6 +16,7 @@ import {
   employeeFamilyResponseSchema,
   employeeKycResponseSchema,
   employeeTransferDetailResponseSchema,
+  employeeRejoinEligibilityResponseSchema,
   employeeTransferListResponseSchema,
   employeeWageStructureResponseSchema,
 } from '../schemas'
@@ -27,6 +28,8 @@ import {
   familyToPayload,
   kycToPayload,
   leaveServiceToPayload,
+  rejoinToPayload,
+  toEmployeeRejoinEligibility,
   serviceEditToPayload,
   toEmployeeAsset,
   toEmployeeDocument,
@@ -58,6 +61,8 @@ import type {
   EmployeeTransferPayload,
   LeaveServiceFormValues,
   LeaveServicePayload,
+  EmployeeRejoinFormValues,
+  EmployeeRejoinPayload,
 } from '../schemas'
 import type {
   EmployeeAsset,
@@ -68,6 +73,7 @@ import type {
   EmployeeKyc,
   EmployeeTransfer,
   EmployeeTransferDetail,
+  EmployeeRejoinEligibility,
   EmployeeWageStructure,
 } from '../types'
 
@@ -540,5 +546,44 @@ export async function leaveEmployeeService(
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't close the posting.")
+  }
+}
+
+/**
+ * GET /user/employees/:id/rejoin — may this de-active employee rejoin, and into
+ * which of their earlier companies. Guarded by `employees:read`.
+ */
+export async function fetchEmployeeRejoinEligibility(
+  employeeId: number,
+): Promise<EmployeeRejoinEligibility> {
+  try {
+    const raw = await http.get<unknown>(endpoints.EMPLOYEES.REJOIN(employeeId))
+    return toEmployeeRejoinEligibility(employeeRejoinEligibilityResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't check whether this employee can rejoin.")
+  }
+}
+
+/**
+ * POST /user/employees/:id/rejoin — open a new spell of service in a company the
+ * employee worked in before. Old postings are untouched; a company other than the
+ * record's moves the record to it, as a company transfer does. Answers the NEW
+ * posting with the wage structure it inherits. Guarded by `employees:create`.
+ *
+ * Refused 409 while their service runs anywhere (or another live record with the
+ * same Aadhaar / PAN / UAN does) — the message names where, for the form's banner.
+ */
+export async function rejoinEmployee(
+  employeeId: number,
+  values: EmployeeRejoinFormValues,
+): Promise<EmployeeTransferDetail> {
+  try {
+    const raw = await http.post<unknown, EmployeeRejoinPayload>(
+      endpoints.EMPLOYEES.REJOIN(employeeId),
+      rejoinToPayload(values),
+    )
+    return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't rejoin the employee.")
   }
 }

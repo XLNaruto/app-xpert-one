@@ -1,5 +1,5 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
-import { todayIso } from '@/features/office-task/common'
+import { PICK_BY_OPTIONS, todayIso } from '@/features/office-task/common'
 import type { BulkEditValues, ProjectTaskFormValues } from './schemas'
 
 export const PROJECT_TASK_SORT = {
@@ -26,15 +26,25 @@ export const PROJECT_PRIORITY_FILTER: ComboboxOption[] = [
   { label: 'Low', value: 'low' },
 ]
 
+/** "Pick People By" for a project task — the SOP pair plus one named "other". */
+export const PROJECT_PICK_BY_OPTIONS: ComboboxOption[] = [
+  ...PICK_BY_OPTIONS,
+  { label: 'Other', value: 'other' },
+]
+
 export const emptyProjectTaskForm = (): ProjectTaskFormValues => ({
   pickBy: 'designation',
   designationId: '',
   roleId: '',
   employeeIds: [],
+  otherName: '',
+  otherMobile: '',
+  delegate: '',
   task: '',
   priority: 'medium',
   description: '',
   updatesPerDay: '1',
+  updateFrequency: 'daily',
   startDate: todayIso(),
   deadline: '',
   photoRequired: false,

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useLogin } from '../hooks/use-login'
+import { COMPANY_CODE_MASK } from '../lib/company-code'
 
 const fieldClasses =
   'h-11 border border-border bg-white/80 pl-10 text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground/60 focus-visible:border-primary focus-visible:ring-0 dark:border-white/15 dark:bg-white/5 dark:focus-visible:border-primary'
@@ -25,6 +26,8 @@ export function LoginPage() {
   const {
     register,
     errors,
+    registerCompanyCode,
+    companyCode,
     isOwner,
     setIsOwner,
     onSubmit,
@@ -188,11 +191,23 @@ export function LoginPage() {
               autoCorrect="off"
               autoCapitalize="characters"
               spellCheck={false}
-              maxLength={50}
-              placeholder="Enter your company code"
-              className={fieldClasses}
-              {...register('companyCode')}
+              maxLength={COMPANY_CODE_MASK.length}
+              placeholder={COMPANY_CODE_MASK}
+              className={cn(fieldClasses, 'font-mono tracking-wider')}
+              {...registerCompanyCode}
             />
+            {/* Ghost of the rest of the mask, drawn behind the typed text */}
+            {companyCode && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-px flex items-center whitespace-pre pl-10 font-mono text-sm tracking-wider"
+              >
+                <span className="invisible">{companyCode}</span>
+                <span className="text-muted-foreground/60">
+                  {COMPANY_CODE_MASK.slice(companyCode.length)}
+                </span>
+              </span>
+            )}
           </div>
           {errors.companyCode && (
             <p className="text-xs text-destructive">

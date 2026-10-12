@@ -5,6 +5,8 @@ import type {
   ProofFile,
   SopTask,
   TaskStatus,
+  TaskSubmissionMode,
+  UpdateFrequency,
   VerdictInfo,
 } from '@/features/office-task/common'
 
@@ -26,9 +28,19 @@ export interface MyProjectRow extends VerdictInfo {
   priority: Priority
   startDate: string
   deadline: string
-  /** Progress notes expected per day, and how many were recorded on the viewed day. */
+  /**
+   * Progress notes expected per period (the API's `updates_per_day`), the period,
+   * and how many were recorded on the viewed day / in its current period.
+   */
   updatesPerDay: number
+  updateFrequency: UpdateFrequency
   updatesToday: number
+  updatesThisPeriod: number
+  /**
+   * The "other" this row is worked for — set when the user is their delegate.
+   * Its clock is THEIR clock: the user's own running task doesn't block it.
+   */
+  onBehalfOf: OnBehalfOf | null
   photoRequired: boolean
   needsVerification: boolean
   status: TaskStatus
@@ -43,6 +55,13 @@ export interface MyProjectRow extends VerdictInfo {
   note: string
   proof: ProofFile[]
   progress: ProgressNote[]
+}
+
+/** The outside person a delegated project row belongs to. */
+export interface OnBehalfOf {
+  taskOtherId: number
+  fullName: string
+  mobileNumber: string
 }
 
 /** What the Complete / Submit dialog is handing in. */
@@ -68,3 +87,9 @@ export interface ProgressInput {
 
 /** What a hand-in became: done, or waiting on an approver. */
 export type HandInStatus = 'completed' | 'pending_approval'
+
+/** How the active company hands work in, per kind of task. */
+export interface MyTaskSettings {
+  sop: TaskSubmissionMode
+  project: TaskSubmissionMode
+}

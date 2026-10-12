@@ -6,7 +6,7 @@ import { usePagination } from '@/hooks/use-pagination'
 import { encryptId, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
-import { EMPLOYEE_DEFAULT_SORT } from '../constants'
+import { EMPLOYEE_DEFAULT_SORT, type EmployeeStatusFilter } from '../constants'
 import { useEmployees } from '../api/use-employees'
 import { useDeleteEmployee } from '../api/use-employee-mutations'
 import type { Employee } from '../types'
@@ -34,7 +34,15 @@ export function useEmployeeList() {
     onSortingChange,
   } = usePagination(DEFAULT_PAGE_SIZE, EMPLOYEE_DEFAULT_SORT)
 
-  const { data, isLoading, isError, error } = useEmployees(params)
+  // The Active / De-active tabs → `?status=`, opening on current staff. A new
+  // tab starts back on page one.
+  const [status, setStatus] = useState<EmployeeStatusFilter>('active')
+  const changeStatus = (next: EmployeeStatusFilter) => {
+    setStatus(next)
+    onPaginationChange({ limit, offset: 0 })
+  }
+
+  const { data, isLoading, isError, error } = useEmployees(params, status)
 
   // A row carries `bank_id`, not the bank's name. The master is small and
   // session-stable, so it's read once and turned into a lookup for the column.
@@ -93,6 +101,8 @@ export function useEmployeeList() {
     onPaginationChange,
     search,
     setSearch,
+    status,
+    changeStatus,
     // Server-side ordering — a header click re-queries instead of sorting the
     // page already on screen.
     sorting,

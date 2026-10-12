@@ -10,9 +10,17 @@ import {
   handInResponseSchema,
   myProjectTasksResponseSchema,
   mySopTasksResponseSchema,
+  myTaskSettingsResponseSchema,
 } from '../schemas'
 import { toMyProjectRow } from '../lib/my-task-mappers'
-import type { HandInInput, HandInStatus, MyProjectRow, MySopRow, ProgressInput } from '../types'
+import type {
+  HandInInput,
+  HandInStatus,
+  MyProjectRow,
+  MySopRow,
+  MyTaskSettings,
+  ProgressInput,
+} from '../types'
 
 /**
  * `/user/office-task/my-tasks` — the signed-in login's OWN board: work given to
@@ -22,9 +30,24 @@ import type { HandInInput, HandInStatus, MyProjectRow, MySopRow, ProgressInput }
  *
  * ONE clock at a time across SOP runs and project shares: starting anything
  * while something else runs is a 409 that names the running task.
+ *
+ * Under a company's `DIRECT` submission mode (per kind of task) Start answers
+ * 409, and complete / progress are accepted on a task nobody started.
  */
 
 const { MY_TASKS } = endpoints.OFFICE_TASK
+
+/** GET /my-tasks/settings — the active company's submission modes. */
+export async function fetchMyTaskSettings(): Promise<MyTaskSettings> {
+  try {
+    requireCompany()
+    const raw = await http.get<unknown>(MY_TASKS.SETTINGS)
+    const parsed = myTaskSettingsResponseSchema.parse(raw)
+    return { sop: parsed.sop_task_submission, project: parsed.project_task_submission }
+  } catch (error) {
+    throw toOfficeTaskError(error, "Couldn't load your task settings.")
+  }
+}
 
 // ── SOP ───────────────────────────────────────────────────────────────────
 

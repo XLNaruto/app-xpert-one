@@ -19,7 +19,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <span className={cn('font-medium', className)}>{title}</span>
+    return <span className={className}>{title}</span>
   }
 
   const sorted = column.getIsSorted()
@@ -29,7 +29,9 @@ export function DataTableColumnHeader<TData, TValue>({
       variant="ghost"
       size="sm"
       className={cn(
-        '-ml-3 h-8 cursor-pointer text-inherit hover:bg-transparent hover:text-inherit',
+        // A <button> resets text-transform and weight, so carry the <th>'s look over —
+        // otherwise sortable headers read differently from plain ones.
+        '-ml-3 h-8 cursor-pointer font-semibold uppercase tracking-wider text-inherit hover:bg-transparent hover:text-inherit',
         className,
       )}
       onClick={() => column.toggleSorting(sorted === 'asc')}

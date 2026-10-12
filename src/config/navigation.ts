@@ -11,6 +11,7 @@ import {
   CalendarDays,
   CalendarHeart,
   CalendarOff,
+  ChartColumn,
   Calculator,
   CreditCard,
   Clock,
@@ -275,6 +276,12 @@ export const navGroups: NavGroup[] = [
             icon: ShieldCheck,
             permission: `${PERMISSIONS.taskApprovals}:list`,
           },
+          {
+            label: "Task Analysis",
+            to: "/office-task/analysis",
+            icon: ChartColumn,
+            permission: `${PERMISSIONS.taskAnalysis}:list`,
+          },
         ],
       },
     ],
@@ -479,6 +486,14 @@ export const navGroups: NavGroup[] = [
         to: "/administration/ip-address",
         icon: Network,
         permission: PERMISSIONS.ipAddresses,
+      },
+      {
+        // The company's behaviour switches — task submission mode today.
+        // Gated on `settings:read` itself: the route asks for the same code.
+        label: "Settings",
+        to: "/administration/settings",
+        icon: SlidersHorizontal,
+        permission: `${PERMISSIONS.settings}:read`,
       },
       {
         /*

@@ -9,6 +9,7 @@ import type {
   EmployeeKycFormValues,
   EmployeeServiceEditFormValues,
   EmployeeTransferFormValues,
+  EmployeeRejoinFormValues,
 } from './schemas'
 import type { LetterLang } from './lib/appointment-letter-fields'
 
@@ -93,6 +94,18 @@ export const EMPLOYEE_SORT = {
 
 /** Newest employee first — the order the list opens in and reverts to. */
 export const EMPLOYEE_DEFAULT_SORT = { id: EMPLOYEE_SORT.createdAt, desc: true }
+
+/**
+ * `?status=` on the employee list. `all` sends nothing (current staff AND people
+ * who used to serve in the company) — what the pickers use; the list screen
+ * itself only offers the Active / De-active tabs.
+ */
+export type EmployeeStatusFilter = 'all' | 'active' | 'deactive'
+
+export const EMPLOYEE_STATUS_FILTER: ComboboxOption[] = [
+  { label: 'Active', value: 'active' },
+  { label: 'De-active', value: 'deactive' },
+]
 
 /* ── Option sets ─────────────────────────────────────────────────────────── */
 
@@ -369,6 +382,20 @@ export const EMPTY_EMPLOYEE_ASSET_FORM: EmployeeAssetFormValues = {
 export const EMPTY_EMPLOYEE_TRANSFER_FORM: EmployeeTransferFormValues = {
   leavingDate: '',
   leavingReason: '',
+  companyId: '',
+  branchId: '',
+  departmentId: '',
+  designationId: '',
+  grade: '',
+  employmentType: PERMANENT_EMPLOYMENT_TYPE,
+  contractPeriod: '',
+  contractPeriodType: 'YEAR',
+  joiningDate: '',
+  confirmationDate: '',
+  renewalDate: '',
+}
+
+export const EMPTY_EMPLOYEE_REJOIN_FORM: EmployeeRejoinFormValues = {
   companyId: '',
   branchId: '',
   departmentId: '',

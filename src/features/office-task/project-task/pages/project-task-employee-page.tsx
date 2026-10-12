@@ -1,4 +1,17 @@
-import { ArrowLeft, CalendarCheck, CalendarClock, Clock, Flag, Hourglass, ListChecks, Play, Send, Timer } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarCheck,
+  CalendarClock,
+  Clock,
+  Flag,
+  Hourglass,
+  ListChecks,
+  MessageSquareText,
+  Paperclip,
+  Play,
+  Send,
+  Timer,
+} from 'lucide-react'
 import { decryptParams } from '@/lib/crypto'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 import { PageHeader } from '@/components/common/page-header'
@@ -10,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ScopedDataError } from '@/features/company'
 import {
   formatDuration,
+  updatesHeading,
   ProgressBar,
   ProofStrip,
   TaskStatusBadge,
@@ -62,11 +76,16 @@ export function ProjectTaskEmployeePage({ data }: { data?: string }) {
 
   const standing = deadlineStanding(work, work.deadline, todayIso())
   const events = activity ? workActivity({ ...work, ...activity }) : []
-  const behind = work.status === 'in_progress' && work.updatesToday < task.updatesPerDay
+  const target = work.updatesPerDay ?? task.updatesPerDay
+  const frequency = work.updateFrequency ?? task.updateFrequency
+  const behind = work.status === 'in_progress' && work.updatesThisPeriod < target
+  const who = work.taskOtherId
+    ? [work.mobileNumber, work.delegate && `updated by ${work.delegate.name}`].filter(Boolean).join(' · ')
+    : work.employeeCode
 
   return (
     <div className="space-y-6">
-      <PageHeader title={work.employeeName} description={`${work.employeeCode} · ${work.task}`} actions={back} />
+      <PageHeader title={work.employeeName} description={[who, work.task].filter(Boolean).join(' · ')} actions={back} />
 
       <Card>
         <CardContent className="space-y-6 py-5">
@@ -99,8 +118,8 @@ export function ProjectTaskEmployeePage({ data }: { data?: string }) {
             <DetailItem icon={Flag} label="Deadline" value={formatDate(work.deadline)} />
             <DetailItem
               icon={ListChecks}
-              label="Updates Today"
-              value={`${work.updatesToday} / ${task.updatesPerDay}${behind ? ' · behind' : ''}`}
+              label={updatesHeading(frequency)}
+              value={`${work.updatesThisPeriod} / ${target}${behind ? ' · behind' : ''}`}
             />
             <DetailItem icon={Clock} label="Total Updates" value={String(work.totalUpdates)} />
             <DetailItem icon={CalendarClock} label="Last Update" value={formatDateTime(work.lastUpdateAt)} />
@@ -110,10 +129,29 @@ export function ProjectTaskEmployeePage({ data }: { data?: string }) {
 
       {work.submittedAt && (
         <Card>
-          <CardContent className="space-y-2 py-5">
-            <h3 className="text-sm font-semibold">Handed In</h3>
-            {work.note && <p className="text-sm">{work.note}</p>}
-            <ProofStrip files={work.proof} required={task.photoRequired} size="sm" />
+          <CardContent className="space-y-4 py-5">
+            <div>
+              <h3 className="text-sm font-semibold">Handed In</h3>
+              <p className="text-xs text-muted-foreground">
+                What was submitted with the work on {formatDateTime(work.submittedAt)}.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground">
+                <MessageSquareText className="size-3.5" />
+                Note
+              </p>
+              <p className="whitespace-pre-wrap text-sm">
+                {work.note || <span className="text-muted-foreground">No note added.</span>}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-1.5 text-xs font-medium uppercase text-muted-foreground">
+                <Paperclip className="size-3.5" />
+                Proof
+              </p>
+              <ProofStrip files={work.proof} required={task.photoRequired} size="sm" />
+            </div>
           </CardContent>
         </Card>
       )}

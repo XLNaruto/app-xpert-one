@@ -53,7 +53,7 @@ export function TaskDetailDialog({
               <DialogDescription>
                 {target.kind === 'sop'
                   ? `SOP · ${target.row.templateName} · ${dayLabel(target.row.date)}`
-                  : `Project Task · ${formatDate(target.row.startDate)} → ${formatDate(target.row.deadline)}`}
+                  : `Project Task${target.row.onBehalfOf ? ` · on behalf of ${target.row.onBehalfOf.fullName}` : ''} · ${formatDate(target.row.startDate)} → ${formatDate(target.row.deadline)}`}
               </DialogDescription>
             </DialogHeader>
 
@@ -81,7 +81,7 @@ export function TaskDetailDialog({
                     <DetailItem
                       label="Remaining"
                       value={target.row.status === 'completed' ? 'Done' : deadlineInfo(target.row.deadline).label}
-                      hint={`Progress updates: ${frequencyLabel(target.row.updatesPerDay)}`}
+                      hint={`Progress updates: ${frequencyLabel(target.row.updatesPerDay, target.row.updateFrequency)}`}
                     />
                   </>
                 )}

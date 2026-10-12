@@ -133,6 +133,8 @@ export interface Employee extends AuditFields {
   isStampAgreement: boolean
 
   completedSteps: EmployeeCompletedSteps
+  /** The service in the company is closed (relieved / transferred away) — the list's "Exited" badge. */
+  exit: boolean
   /** The current posting — `null` on a record whose postings are all closed. */
   service: EmployeeService | null
   /**
@@ -597,4 +599,23 @@ export interface EmployeeShiftOnDay {
    * attendance month grid, not badged in advance.
    */
   weekoffFlexibleDays: number | null
+}
+
+/** One earlier company a de-active employee may rejoin. */
+export interface EmployeeRejoinCompany {
+  companyId: number
+  companyName: string
+  /** When their last posting there ended — ISO date, or '' when unknown. */
+  lastLeavingDate: string
+}
+
+/** Step 8 — may this de-active employee rejoin, and into which companies. */
+export interface EmployeeRejoinEligibility {
+  canRejoin: boolean
+  /** Why not, as a ready-to-show sentence — set only when `canRejoin` is false. */
+  reason: string
+  /** The latest leaving date across every posting; the new joining date must be after it. */
+  lastLeavingDate: string
+  /** Newest leaving first — the first is preselected. */
+  companies: EmployeeRejoinCompany[]
 }

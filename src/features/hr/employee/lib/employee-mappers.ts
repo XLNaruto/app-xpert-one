@@ -136,6 +136,7 @@ export function toEmployee(response: EmployeeResponse): Employee {
     isStampAgreement: response.is_stamp_agreement ?? false,
 
     completedSteps: toCompletedSteps(response.completed_steps),
+    exit: response.exit ?? false,
     service: toService(response.service),
     kyc: {
       pfNumber: response.pf_number ?? '',

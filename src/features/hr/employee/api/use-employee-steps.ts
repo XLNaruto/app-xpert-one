@@ -7,6 +7,7 @@ import {
   fetchEmployeeExperiences,
   fetchEmployeeFamily,
   fetchEmployeeKyc,
+  fetchEmployeeRejoinEligibility,
   fetchEmployeeTransferDetail,
   fetchEmployeeTransfers,
   fetchEmployeeWageStructure,
@@ -109,5 +110,19 @@ export function useEmployeeTransferDetail(employeeId: number, serviceId?: number
     queryKey: queryKeys.employee.transfer(employeeId, serviceId ?? 0),
     queryFn: () => fetchEmployeeTransferDetail(employeeId, serviceId as number),
     enabled: canRead(employeeId) && serviceId !== undefined,
+  })
+}
+
+/**
+ * Step 8 — may this de-active employee rejoin, and into which companies. Read
+ * only once it matters (the employee has no open posting, or the dialog opened),
+ * and always fresh: it answers for the whole account, not just this record.
+ */
+export function useEmployeeRejoinEligibility(employeeId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.employee.rejoin(employeeId),
+    queryFn: () => fetchEmployeeRejoinEligibility(employeeId),
+    enabled: canRead(employeeId) && enabled,
+    staleTime: 0,
   })
 }

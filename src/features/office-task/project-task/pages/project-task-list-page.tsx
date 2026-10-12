@@ -86,7 +86,7 @@ export function ProjectTaskListPage() {
           <button
             type="button"
             onClick={() => list.openView(row.original.id)}
-            className="max-w-72 cursor-pointer text-left"
+            className="w-64 max-w-80 cursor-pointer text-left"
           >
             <p className="line-clamp-2 font-medium hover:text-primary">{row.original.task}</p>
             {row.original.description && (
@@ -103,7 +103,11 @@ export function ProjectTaskListPage() {
         cell: ({ row }) => (
           <div className="min-w-40 space-y-1">
             <PeopleChips names={row.original.assignees.map((a) => a.name)} />
-            <p className="text-xs text-muted-foreground">{row.original.appliesTo}</p>
+            <p className="text-xs text-muted-foreground">
+              {row.original.pickBy === 'other'
+                ? ['Other', row.original.assignees[0]?.mobileNumber].filter(Boolean).join(' · ')
+                : row.original.appliesTo}
+            </p>
           </div>
         ),
       },
@@ -136,10 +140,11 @@ export function ProjectTaskListPage() {
       },
       {
         id: 'updates',
-        header: 'Updates / Day',
+        header: 'Progress Updates',
         enableSorting: false,
+        meta: { className: 'min-w-44 whitespace-nowrap' },
         cell: ({ row }) => (
-          <span className="whitespace-nowrap text-sm">{frequencyLabel(row.original.updatesPerDay)}</span>
+          <span className="whitespace-nowrap text-sm">{frequencyLabel(row.original.updatesPerDay, row.original.updateFrequency)}</span>
         ),
       },
       {
@@ -226,7 +231,7 @@ export function ProjectTaskListPage() {
         onSortingChange={list.onSortingChange}
         toolbar={
           <FilterBar
-            search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search tasks…' }}
+            search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search task, other name or mobile…' }}
             facets={[
               {
                 key: 'status',
@@ -254,7 +259,7 @@ export function ProjectTaskListPage() {
           <EmptyState
             icon={FolderKanban}
             title="No project tasks found"
-            description="Add a task and assign it to people by designation or role."
+            description="Add a task and assign it by designation, by role, or to an outside person."
             action={addButton}
           />
         }

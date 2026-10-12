@@ -107,6 +107,8 @@ export const endpoints = {
     DELETE: (id: number) => `/user/ip-addresses/${id}`,
     MODE: '/user/ip-addresses/mode',
   },
+  /** Administration → Settings — one row of switches per company. */
+  COMPANY_SETTINGS: '/user/company-settings',
   SUPPORT_TICKETS: {
     LIST: '/user/support/tickets',
     POST: '/user/support/tickets',
@@ -358,6 +360,8 @@ export const endpoints = {
       `/user/employees/${id}/transfers/${serviceId}`,
     LEAVE_SERVICE: (id: number, serviceId: number) =>
       `/user/employees/${id}/transfers/${serviceId}/leave-service`,
+    /** GET = may they rejoin (and where); POST = open the new spell of service. */
+    REJOIN: (id: number) => `/user/employees/${id}/rejoin`,
     SHIFT_ON_DAY: (id: number) => `/user/employees/${id}/shift`,
     SHIFTS: (id: number) => `/user/employees/${id}/shifts`,
     SHIFT_ENTRY: (id: number, entryId: number) =>
@@ -469,6 +473,8 @@ export const endpoints = {
   OFFICE_TASK: {
     /** The shared picker behind SOP Tasks tab 2 and the Project Task drawer. */
     EMPLOYEES: '/user/office-task/employees',
+    /** Who may update an "other" person's project task for them — employees and panel users. */
+    DELEGATES: '/user/office-task/delegates',
     SOP_GROUPS: {
       LIST: '/user/office-task/sop-groups',
       POST: '/user/office-task/sop-groups',
@@ -522,6 +528,18 @@ export const endpoints = {
       PROJECT_START: (workId: number) => `/user/office-task/my-tasks/project/${workId}/start`,
       PROJECT_PROGRESS: (workId: number) => `/user/office-task/my-tasks/project/${workId}/progress`,
       PROJECT_COMPLETE: (workId: number) => `/user/office-task/my-tasks/project/${workId}/complete`,
+      /** The active company's submission modes — which buttons the board offers. */
+      SETTINGS: '/user/office-task/my-tasks/settings',
+    },
+    /** Task Analysis — read-only rollups; every route needs `task-analysis:list`. */
+    ANALYSIS: {
+      SOP: '/user/office-task/analysis/sop',
+      PROJECT: '/user/office-task/analysis/project',
+      SOP_EMPLOYEE: (employeeId: number) => `/user/office-task/analysis/sop/${employeeId}`,
+      SOP_CHECKLISTS: (employeeId: number) => `/user/office-task/analysis/sop/${employeeId}/checklists`,
+      SOP_RUNS: (employeeId: number) => `/user/office-task/analysis/sop/${employeeId}/runs`,
+      PROJECT_EMPLOYEE: (employeeId: number) => `/user/office-task/analysis/project/${employeeId}`,
+      PROJECT_TASKS: (employeeId: number) => `/user/office-task/analysis/project/${employeeId}/tasks`,
     },
   },
   BANKS: {

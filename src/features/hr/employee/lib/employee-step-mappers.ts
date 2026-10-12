@@ -27,6 +27,9 @@ import type {
   EmployeeWageStructureResponse,
   LeaveServiceFormValues,
   LeaveServicePayload,
+  EmployeeRejoinEligibilityResponse,
+  EmployeeRejoinFormValues,
+  EmployeeRejoinPayload,
 } from '../schemas'
 import type {
   EmployeeAsset,
@@ -37,6 +40,7 @@ import type {
   EmployeeKyc,
   EmployeeTransfer,
   EmployeeTransferDetail,
+  EmployeeRejoinEligibility,
   EmployeeWageComponent,
   EmployeeWageStructure,
 } from '../types'
@@ -709,5 +713,46 @@ export function leaveServiceToPayload(
   return {
     leaving_date: toRequiredApiDate(values.leavingDate),
     leaving_reason: values.leavingReason.trim(),
+  }
+}
+
+export function toEmployeeRejoinEligibility(
+  response: EmployeeRejoinEligibilityResponse,
+): EmployeeRejoinEligibility {
+  return {
+    canRejoin: response.can_rejoin,
+    reason: response.reason ?? '',
+    lastLeavingDate: toFormDate(response.last_leaving_date),
+    companies: response.companies.map((company) => ({
+      companyId: company.company_id,
+      companyName: company.company_name ?? '',
+      lastLeavingDate: toFormDate(company.last_leaving_date),
+    })),
+  }
+}
+
+/**
+ * The rejoin body. The contract pair travels only on a contractual posting — the
+ * API refuses either one on a permanent posting, so both are left off entirely.
+ */
+export function rejoinToPayload(values: EmployeeRejoinFormValues): EmployeeRejoinPayload {
+  const isContractual = values.employmentType !== PERMANENT_EMPLOYMENT_TYPE
+
+  return {
+    company_id: Number(values.companyId),
+    branch_id: idOrNull(values.branchId),
+    department_id: idOrNull(values.departmentId),
+    designation_id: Number(values.designationId),
+    grade: values.grade,
+    employment_type: values.employmentType,
+    ...(isContractual
+      ? {
+          contract_period: idOrNull(values.contractPeriod),
+          contract_period_type: values.contractPeriodType,
+        }
+      : {}),
+    joining_date: toRequiredApiDate(values.joiningDate),
+    confirmation_date: toRequiredApiDate(values.confirmationDate),
+    renewal_date: isContractual ? toApiDate(values.renewalDate) : null,
   }
 }

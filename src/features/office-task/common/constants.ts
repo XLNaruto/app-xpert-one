@@ -1,5 +1,5 @@
 import type { ComboboxOption } from '@/components/ui/combobox'
-import type { Priority, TaskStatus, Verdict } from './types'
+import type { Priority, TaskStatus, TaskSubmissionMode, UpdateFrequency, Verdict } from './types'
 
 /** How each status reads and which badge tone carries it. */
 export const TASK_STATUS_META: Record<
@@ -43,6 +43,12 @@ export const PICK_BY_OPTIONS: ComboboxOption[] = [
   { label: 'Role', value: 'role' },
 ]
 
+export const UPDATE_FREQUENCY_OPTIONS: { label: string; value: UpdateFrequency }[] = [
+  { label: 'Daily', value: 'daily' },
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+]
+
 /** Times-per-day bounds for an SOP item and a project task's slots. */
 export const FREQUENCY_MIN = 1
 export const FREQUENCY_MAX = 24
@@ -65,3 +71,21 @@ export const PROOF_CONTENT_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ] as const
 
+
+/** Every company starts here, and it is exactly the pre-settings behaviour. */
+export const DEFAULT_TASK_SUBMISSION_MODE: TaskSubmissionMode = 'START_STOP'
+
+/** How each submission mode reads on the Settings screen. */
+export const TASK_SUBMISSION_MODE_META: Record<
+  TaskSubmissionMode,
+  { label: string; hint: string }
+> = {
+  START_STOP: {
+    label: 'Start / Stop, then submit',
+    hint: 'Employees start the task, stop or pause it, then hand it in. Time worked is recorded.',
+  },
+  DIRECT: {
+    label: 'Direct submission (no Start / Stop)',
+    hint: 'Employees submit the task directly. No time is recorded.',
+  },
+}

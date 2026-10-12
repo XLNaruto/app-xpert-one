@@ -1,10 +1,12 @@
 import { useForm } from 'react-hook-form'
+import type { ChangeEvent } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuthChallengeStore } from '@/stores/auth-challenge-store'
 import { useLogin as useLoginMutation } from '../api/use-auth'
 import { loginSchema, type LoginValues } from '../schemas'
+import { formatCompanyCode } from '../lib/company-code'
 
 /**
  * Sign-in form controller: owns the react-hook-form wiring, the login mutation
@@ -53,6 +55,24 @@ export function useLogin() {
     clearErrors('companyCode')
   }
 
+  /**
+   * The company-code field is masked: its registration is wrapped so every
+   * keystroke is coerced to `XXXX-0000` before the form sees it.
+   */
+  const companyCodeField = register('companyCode')
+  const registerCompanyCode = {
+    ...companyCodeField,
+    onChange: (e: ChangeEvent<HTMLInputElement>) => {
+      const inputType = (e.nativeEvent as InputEvent).inputType ?? ''
+      e.target.value = formatCompanyCode(
+        e.target.value,
+        inputType.startsWith('delete'),
+      )
+      return companyCodeField.onChange(e)
+    },
+  }
+  const companyCode = watch('companyCode')
+
   const onSubmit = handleSubmit((values) =>
     login.mutate(values, {
       onSuccess: (outcome) => {
@@ -72,6 +92,8 @@ export function useLogin() {
   return {
     register,
     errors,
+    registerCompanyCode,
+    companyCode,
     isOwner,
     setIsOwner,
     onSubmit,

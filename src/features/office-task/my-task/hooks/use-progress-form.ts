@@ -8,8 +8,9 @@ import { clampPercentInput } from '../lib/percent-input'
 import type { MyProjectRow } from '../types'
 
 /**
- * Stop a running project share: it asks only for the new percent (opening on
- * the last reported one), and saving records it and stops the clock together.
+ * Record a project share's progress: it asks only for the new percent (opening
+ * on the last reported one). On a running share saving also stops the clock;
+ * under DIRECT submission there's no clock, so it's a plain progress note.
  */
 export function useProgressForm(row: MyProjectRow | null, onDone: () => void) {
   const add = useAddProjectProgress()

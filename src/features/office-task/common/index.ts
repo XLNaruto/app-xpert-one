@@ -14,6 +14,7 @@ export {
 export { uploadProofFiles, type EmployeePickerFilter } from './api/office-task-api'
 export { useOfficeTaskMutation } from './api/use-office-task-mutation'
 export { useOfficeTaskEmployeeSelect, personHint } from './hooks/use-office-task-employee-select'
+export { useOfficeTaskDelegateSelect } from './hooks/use-office-task-delegate-select'
 export {
   toAudit,
   toProof,
@@ -25,6 +26,8 @@ export {
   toWorkSession,
   targetPayload,
   assigneeKindOf,
+  delegateValue,
+  parseDelegateValue,
 } from './lib/office-task-mappers'
 export * from './schemas'
 export {
@@ -34,6 +37,8 @@ export {
   eachIso,
   dayLabel,
   frequencyLabel,
+  periodLabel,
+  updatesHeading,
   formatStopwatch,
   formatClock,
   formatDuration,

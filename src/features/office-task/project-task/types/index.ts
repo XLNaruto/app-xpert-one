@@ -1,18 +1,36 @@
 import type { AuditFields } from '@/types/audit'
 import type {
-  PickBy,
   Priority,
   ProgressNote,
   ProofFile,
   TaskStatus,
+  UpdateFrequency,
   Verdict,
   VerdictInfo,
   WorkSession,
 } from '@/features/office-task/common'
 
+import type { ProjectPickBy } from '../schemas'
+
+/** Who may update an "other"'s task for them — exactly one id is set. */
+export interface TaskDelegate {
+  employeeId: number | null
+  userId: number | null
+  name: string
+}
+
+/** The "other" side of an assignee — every field null for an employee or panel user. */
+export interface OtherAssigneeFields {
+  /** Set only for an "other" (not an employee, no panel login). */
+  taskOtherId: number | null
+  /** The other's mobile — their employee-app login. */
+  mobileNumber: string | null
+  delegate: TaskDelegate | null
+}
+
 /** One person on a project task; `hasStarted` means they can't be removed (R12). */
-export interface ProjectAssignee {
-  /** Whichever of `employeeId` / `userId` is set — what the picker lists them by. */
+export interface ProjectAssignee extends OtherAssigneeFields {
+  /** Whichever of `employeeId` / `userId` / `taskOtherId` is set — what the picker lists them by. */
   personId: number
   employeeId: number | null
   userId: number | null
@@ -26,16 +44,18 @@ export interface ProjectTaskRow extends AuditFields {
   task: string
   description: string
   priority: Priority
-  pickBy: PickBy
+  pickBy: ProjectPickBy
   designationId: number | null
   roleId: number | null
-  /** The designation or role name it targets. */
+  /** The designation or role name it targets — the person's name for an "other". */
   appliesTo: string
   designationName: string
   roleName: string
   assignees: ProjectAssignee[]
-  /** Progress notes each assignee is expected to record per day (1–24). */
+  /** Progress notes each assignee is expected to record per period (1–24) — the API's `updates_per_day`. */
   updatesPerDay: number
+  /** The period `updatesPerDay` is counted over. */
+  updateFrequency: UpdateFrequency
   startDate: string
   deadline: string
   photoRequired: boolean
@@ -60,9 +80,9 @@ export interface ProjectTaskFilters {
 }
 
 /** One assignee's share as the task's Employees table lists it. */
-export interface ProjectWorkRow {
+export interface ProjectWorkRow extends OtherAssigneeFields {
   id: number
-  /** Exactly one is set — an employee or a panel user. */
+  /** Exactly one of these or `taskOtherId` is set — an employee, a panel user or an other. */
   employeeId: number | null
   userId: number | null
   employeeName: string
@@ -70,6 +90,8 @@ export interface ProjectWorkRow {
   status: TaskStatus
   latestPercent: number
   updatesToday: number
+  /** Notes in the task's current period — equals `updatesToday` on a daily task. */
+  updatesThisPeriod: number
   startedAt: string | null
   submittedAt: string | null
   completedAt: string | null
@@ -85,6 +107,9 @@ export interface ProjectWorkDetail extends ProjectWorkRow, VerdictInfo {
   taskId: number
   task: string
   deadline: string
+  /** The task's target and its period — `null` when the API didn't send them. */
+  updatesPerDay: number | null
+  updateFrequency: UpdateFrequency | null
   totalUpdates: number
   lastUpdateAt: string | null
   note: string

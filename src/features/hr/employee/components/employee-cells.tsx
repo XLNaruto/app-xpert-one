@@ -7,8 +7,10 @@ import {
   ScanFace,
   Trash2,
   UserMinus,
+  UserPlus,
 } from 'lucide-react'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
+import { Badge } from '@/components/ui/badge'
 import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import type { Employee } from '../types'
@@ -18,7 +20,8 @@ import type { Employee } from '../types'
 /**
  * Photo, name and employee code in one cell — the column a reader scans by. The
  * code sits under the name because it's what tells two people with the same name
- * apart, and it's how the API's search matches too.
+ * apart, and it's how the API's search matches too. Someone whose service in the
+ * company is closed carries an "Exited" badge.
  */
 export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
   const label = [employee.prefix, employee.name].filter(Boolean).join(' ')
@@ -33,7 +36,11 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
         className="object-cover"
       />
       <div className="leading-tight">
-        <span className="block font-medium text-foreground">{label || '—'}</span>
+        <span className="flex items-center gap-1.5 font-medium text-foreground">
+          {label || '—'}
+          {/* Their service here is closed — relieved, or transferred to another company. */}
+          {employee.exit && <Badge variant="destructive">Exited</Badge>}
+        </span>
         <span className="block text-xs text-muted-foreground">
           {employee.code || 'No code yet'}
         </span>
@@ -62,7 +69,8 @@ export function EmployeeRowActions({
   onDeleteFaces,
   faceCount = 0,
   onDelete,
-  onDeactivate,
+  onExit,
+  onRejoin,
   onViewAttendance,
   onAppointmentLetter,
 }: {
@@ -76,7 +84,10 @@ export function EmployeeRowActions({
   onDeleteFaces?: () => void
   faceCount?: number
   onDelete?: () => void
-  onDeactivate?: () => void
+  /** Closes the open posting (Leave Service) — only offered while one is open. */
+  onExit?: () => void
+  /** Opens Rejoin — only offered on an exited employee. */
+  onRejoin?: () => void
   onViewAttendance?: () => void
   onAppointmentLetter?: () => void
 }) {
@@ -113,8 +124,9 @@ export function EmployeeRowActions({
 
   if (onDelete)
     actions.push({ label: 'Delete', icon: Trash2, onSelect: onDelete, destructive: true })
-  if (onDeactivate)
-    actions.push({ label: 'Deactive Employee', icon: UserMinus, onSelect: onDeactivate })
+  if (onExit)
+    actions.push({ label: 'Exit Employee', icon: UserMinus, onSelect: onExit, destructive: true })
+  if (onRejoin) actions.push({ label: 'Rejoin', icon: UserPlus, onSelect: onRejoin })
   if (onViewAttendance)
     actions.push({
       label: 'View Attendance',

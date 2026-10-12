@@ -6,9 +6,14 @@ import type { ComboboxOption } from '@/components/ui/combobox'
 import { useDesignationSelect } from '@/features/master/designation'
 import { useRoleSelect } from '@/features/administration/role'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
-import { useOfficeTaskEmployeeSelect, type PickBy } from '@/features/office-task/common'
+import { ApiError, CONFLICT_STATUS, NOT_FOUND_STATUS } from '@/lib/api-error'
+import {
+  TASK_STARTED_CODE,
+  useOfficeTaskDelegateSelect,
+  useOfficeTaskEmployeeSelect,
+} from '@/features/office-task/common'
 import { emptyProjectTaskForm } from '../constants'
-import { projectTaskSchema, type ProjectTaskFormValues } from '../schemas'
+import { projectTaskSchema, type ProjectPickBy, type ProjectTaskFormValues } from '../schemas'
 import { useCreateProjectTask, useProjectTask, useUpdateProjectTask } from '../api/use-project-tasks'
 import { projectTaskToFormValues } from '../lib/project-task-mappers'
 
@@ -65,6 +70,8 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
   const employeeIds = useWatch({ control, name: 'employeeIds' })
   const startDate = useWatch({ control, name: 'startDate' })
   const updatesPerDay = Number(useWatch({ control, name: 'updatesPerDay' })) || 0
+  const updateFrequency = useWatch({ control, name: 'updateFrequency' })
+  const delegate = useWatch({ control, name: 'delegate' })
 
   const lockedFields = useMemo(() => new Set(task?.lockedFields ?? []), [task])
   const isCompleted = task?.isCompleted ?? false
@@ -92,12 +99,30 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
     enabled: pickBy === 'role',
   })
 
-  /** A new "Pick by" empties the designation/role it no longer asks for, and the people. */
-  const changePickBy = (value: PickBy) => {
+  /**
+   * The saved "other" — the task's one assignee. Once they have started, their
+   * mobile is fixed (a new number would replace the person); the name and the
+   * delegate stay editable until the task is completed.
+   */
+  const savedOther = task?.pickBy === 'other' ? task.assignees[0] : undefined
+  const otherStarted = savedOther?.hasStarted ?? false
+
+  const delegateSelect = useOfficeTaskDelegateSelect({
+    selected: delegate,
+    selectedLabel: savedOther?.delegate?.name,
+    enabled: pickBy === 'other',
+  })
+
+  /** A new "Pick by" empties whatever the old one asked for — target, people, or the other. */
+  const changePickBy = (value: ProjectPickBy) => {
     setValue('pickBy', value)
     setValue('designationId', '')
     setValue('roleId', '')
     setValue('employeeIds', [])
+    setValue('otherName', '')
+    setValue('otherMobile', '')
+    setValue('delegate', '')
+    form.clearErrors()
   }
   /** A new target means new people — whoever was picked for the old one goes. */
   const changeTarget = (field: 'designationId' | 'roleId', value: string) => {
@@ -105,9 +130,14 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
     setValue('employeeIds', getValues('employeeIds').filter((e) => startedIds.has(e)))
   }
 
-  const targetId = pickBy === 'designation' ? designationId : roleId
+  const targetId = pickBy === 'designation' ? designationId : pickBy === 'role' ? roleId : ''
   const picked = !!targetId
-  const employeeSelect = useOfficeTaskEmployeeSelect({ pickBy, targetId, selected: employeeIds })
+  // Held back for an "other" — `targetId` stays empty, so nothing is read.
+  const employeeSelect = useOfficeTaskEmployeeSelect({
+    pickBy: pickBy === 'role' ? 'role' : 'designation',
+    targetId,
+    selected: employeeIds,
+  })
 
   /**
    * The saved people first — named from the task itself, and the ones who have
@@ -144,13 +174,35 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
       shouldValidate: form.formState.isSubmitted,
     })
 
+  /**
+   * An "other"'s refusals belong under the input they're about: a mobile that
+   * is an employee's, another company's, already registered, or (on edit) a
+   * replacement for someone who has started — and a delegate the picker no
+   * longer offers. Everything else is a toast.
+   */
+  const showOtherError = (err: Error): boolean => {
+    if (getValues('pickBy') !== 'other' || !(err instanceof ApiError)) return false
+    if (err.status === NOT_FOUND_STATUS) {
+      form.setError('delegate', { message: err.message })
+      return true
+    }
+    if (err.status === CONFLICT_STATUS || err.code === TASK_STARTED_CODE) {
+      form.setError('otherMobile', { message: err.message })
+      return true
+    }
+    return false
+  }
+
   const onSubmit = handleSubmit((values) => {
     const options = {
       onSuccess: () => {
         toast.success(isEdit ? 'Project task updated' : 'Project task created')
         onSaved()
       },
-      onError: (err: Error) => toast.error(err.message),
+      onError: (err: Error) => {
+        showOtherError(err)
+        toast.error(err.message)
+      },
     }
     if (id === undefined) create.mutate(values, options)
     else update.mutate({ id, values }, options)
@@ -162,7 +214,10 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
     picked,
     startDate,
     updatesPerDay,
+    updateFrequency,
     changePickBy,
+    delegateSelect,
+    otherStarted,
     changeTarget,
     designationSelect,
     roleSelect,

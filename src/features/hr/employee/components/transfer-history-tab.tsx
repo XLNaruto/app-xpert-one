@@ -8,6 +8,7 @@ import {
   Info,
   LogOut,
   Pencil,
+  UserPlus,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ import { formatDate } from '@/lib/utils'
 import { useEmployeeTransferTab } from '../hooks/use-employee-transfer-tab'
 import { PostingSection } from './posting-section'
 import { StepDialog } from './step-dialog'
+import { EmployeeRejoinDialog } from './employee-rejoin-dialog'
 import { StepNavFooter } from './step-nav-footer'
 import type { EmployeeTransfer, EmployeeTransferDetail } from '../types'
 
@@ -46,7 +48,9 @@ import type { EmployeeTransfer, EmployeeTransferDetail } from '../types'
  * actions a row offers follows from what the API allows —
  *
  * - **Transfer** and **Leave Service** need a posting that's still open, so they sit
- *   in the header and disappear once the employee has left.
+ *   in the header and disable once the employee has left.
+ * - **Rejoin** takes their place once every posting is closed — enabled only when
+ *   `GET …/rejoin` allows it, with the API's reason on hover when it doesn't.
  * - **Edit** appears on the *latest* posting only: the endpoint refuses a
  *   `service_id` from closed history, since correcting the past would rewrite what
  *   payroll already ran against.
@@ -193,19 +197,48 @@ export function TransferHistoryTab({
           <Button
             type="button"
             size="sm"
-            disabled={!tab.canAddService}
+            variant={tab.showRejoin ? 'outline' : 'default'}
+            disabled={!tab.hasOpenPosting}
             onClick={tab.startTransfer}
           >
             <ArrowRightLeft className="size-4" />
-            Add Service
+            Transfer Service
           </Button>
+          {tab.showRejoin &&
+            (tab.canRejoin ? (
+              <Button type="button" size="sm" onClick={tab.startRejoin}>
+                <UserPlus className="size-4" />
+                Rejoin
+              </Button>
+            ) : (
+              // A disabled button fires no hover, so the span carries the tooltip.
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-not-allowed">
+                    <Button type="button" size="sm" disabled>
+                      <UserPlus className="size-4" />
+                      Rejoin
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {tab.rejoinHint && (
+                  <TooltipContent className="max-w-72 text-pretty font-normal">
+                    {tab.rejoinHint}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
         </div>
       </div>
 
       {!tab.hasOpenPosting && !tab.isLoading && tab.rows.length > 0 && (
         <p className="mt-4 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
           This employee has no open posting — they've left. Nothing is left to
-          close; Add Service starts a fresh posting if they rejoin.
+          close or transfer; Rejoin starts a new spell of service in a company they
+          worked in before.
+          {tab.showRejoin && !tab.canRejoin && tab.rejoinHint && (
+            <span className="mt-1 block font-medium">{tab.rejoinHint}</span>
+          )}
         </p>
       )}
 
@@ -246,26 +279,18 @@ export function TransferHistoryTab({
         <StepDialog
           open={tab.dialog === 'transfer'}
           onOpenChange={(open) => !open && tab.closeDialog()}
-          title="Add Service"
-          description={
-            tab.isRejoining
-              ? 'The employee has already left — this opens a fresh posting on top of the closed history.'
-              : 'One call closes the current posting and opens the new one, so the history survives.'
-          }
+          title="Transfer Service"
+          description="One call closes the current posting and opens the new one, so the history survives."
           onSubmit={tab.transfer.onSubmit}
           isPending={tab.transfer.isPending}
-          submitLabel={tab.isRejoining ? 'Add Service' : 'Transfer'}
+          submitLabel="Transfer"
           size="wide"
         >
           <div className="sm:col-span-2">
             <FormSection
               icon={LogOut}
-              title={tab.isRejoining ? 'The posting being followed' : 'Close the current posting'}
-              description={
-                tab.isRejoining
-                  ? 'Already closed — the exit is repeated here as it was recorded'
-                  : 'The leaving details recorded against the posting being left'
-              }
+              title="Close the current posting"
+              description="The leaving details recorded against the posting being left"
               className="mt-0"
             />
           </div>
@@ -412,6 +437,10 @@ export function TransferHistoryTab({
           />
         </Field>
       </StepDialog>
+
+      {/* ── Rejoin ──────────────────────────────────────────────────────── */}
+
+      <EmployeeRejoinDialog rejoin={tab.rejoin} />
 
       {/* ── Row details ─────────────────────────────────────────────────── */}
 

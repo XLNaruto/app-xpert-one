@@ -34,5 +34,10 @@ export function toProjectApprovalRow(r: ProjectApprovalResponse): ProjectApprova
     note: r.note ?? '',
     proof: toProofs(r.proof),
     isLate: r.is_late,
+    updatesPerDay: r.updates_per_day ?? 1,
+    updateFrequency: r.update_frequency ?? 'daily',
+    taskOtherId: r.task_other_id ?? null,
+    mobileNumber: r.mobile_number ?? null,
+    delegateName: r.delegate_name ?? null,
   }
 }

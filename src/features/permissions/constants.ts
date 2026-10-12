@@ -67,6 +67,8 @@ export const PERMISSIONS = {
   taskApprovals: 'task-approvals',
   /** Only `list` and `update` (start / pause / progress / hand-in on one's OWN work). */
   myTasks: 'my-tasks',
+  /** Task Analysis — read-only; `list` is the only action and every endpoint needs it. */
+  taskAnalysis: 'task-analysis',
 
   // ── Reports ───────────────────────────────────────────────────────────────
   salaryReport: 'salary-report',
@@ -140,6 +142,12 @@ export const PERMISSIONS = {
   leaveApprovalChain: 'leave-approval-chain',
   access: 'access',
   ipAddresses: 'ip-addresses',
+  /**
+   * Administration → Settings — the company's behaviour switches (task
+   * submission mode today). Two codes only: `settings:read` opens the screen,
+   * `settings:update` saves it.
+   */
+  settings: 'settings',
   talkMonitoring: 'talk-monitoring',
   talkCredentials: 'talk-credentials',
   supervisorApp: 'supervisor-app',

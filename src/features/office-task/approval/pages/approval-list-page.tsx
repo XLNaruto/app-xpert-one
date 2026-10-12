@@ -5,6 +5,7 @@ import { Building2, Check, ClipboardCheck, FolderKanban, ShieldCheck, UserCog, U
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { FilterBar } from '@/components/common/filter-bar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -15,6 +16,7 @@ import { cn, formatDate, formatDateTime } from '@/lib/utils'
 import { CompanyRequired, ScopedDataError } from '@/features/company'
 import {
   formatDuration,
+  frequencyLabel,
   PriorityBadge,
   ProofStrip,
   TaskStatusBadge,
@@ -217,6 +219,9 @@ export function ApprovalListPage() {
           <div className="max-w-64 space-y-1">
             <p className="font-medium">{row.original.task}</p>
             <PriorityBadge priority={row.original.priority} />
+            <p className="text-xs text-muted-foreground">
+              Updates: {frequencyLabel(row.original.updatesPerDay, row.original.updateFrequency)}
+            </p>
           </div>
         ),
       },
@@ -224,12 +229,29 @@ export function ApprovalListPage() {
         id: APPROVAL_SORT.employeeName,
         accessorKey: 'employeeName',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Employee" />,
-        cell: ({ row }) => (
-          <div>
-            <p className="font-medium">{row.original.employeeName}</p>
-            <p className="text-xs text-muted-foreground">{row.original.departmentName}</p>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const r = row.original
+          if (!r.taskOtherId) {
+            return (
+              <div>
+                <p className="font-medium">{r.employeeName}</p>
+                <p className="text-xs text-muted-foreground">{r.departmentName}</p>
+              </div>
+            )
+          }
+          // An outside person — their mobile instead of a department, and who
+          // may have handed it in for them.
+          return (
+            <div>
+              <p className="flex items-center gap-1.5 font-medium">
+                {r.employeeName}
+                <Badge variant="secondary">Other</Badge>
+              </p>
+              <p className="text-xs text-muted-foreground">{r.mobileNumber}</p>
+              {r.delegateName && <p className="text-xs text-muted-foreground">Delegate: {r.delegateName}</p>}
+            </div>
+          )
+        },
       },
       {
         id: APPROVAL_SORT.date,

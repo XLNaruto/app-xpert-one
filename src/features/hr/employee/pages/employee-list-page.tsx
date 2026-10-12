@@ -5,15 +5,20 @@ import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
 import { ScopedDataError } from '@/features/company'
-import { EMPLOYEE_SORT } from '../constants'
+import { EMPLOYEE_SORT, EMPLOYEE_STATUS_FILTER, type EmployeeStatusFilter } from '../constants'
 import { useEmployeeList } from '../hooks/use-employee-list'
 import { useEmployeeFaces } from '../hooks/use-employee-faces'
 import { EmployeeFacesDialog } from '../components/employee-faces-dialog'
+import { EmployeeExitDialog } from '../components/employee-exit-dialog'
+import { useEmployeeExit } from '../hooks/use-employee-exit'
+import { useEmployeeRejoin } from '../hooks/use-employee-rejoin'
+import { EmployeeRejoinDialog } from '../components/employee-rejoin-dialog'
 import { EmployeeIdentityCell, EmployeeRowActions } from '../components/employee-cells'
 import type { Employee } from '../types'
 
@@ -38,6 +43,8 @@ export function EmployeeListPage() {
     onPaginationChange,
     search,
     setSearch,
+    status,
+    changeStatus,
     sorting,
     onSortingChange,
     isLoading,
@@ -74,6 +81,13 @@ export function EmployeeListPage() {
     isDeletingFaces,
   } = useEmployeeFaces(rows)
 
+  // "Exit Employee" — closes the row's open posting from a dialog.
+  const exit = useEmployeeExit()
+
+  // "Rejoin" — a new spell of service for an exited row. Saving needs
+  // `employees:create`; the dialog asks `GET …/rejoin` whether it's allowed.
+  const rejoin = useEmployeeRejoin()
+
   const columns = useMemo<ColumnDef<Employee>[]>(
     () => [
       {
@@ -107,6 +121,14 @@ export function EmployeeListPage() {
               canView ? () => goToAppointmentLetter(row.original.id) : undefined
             }
             onDelete={canDelete ? () => askDelete(row.original) : undefined}
+            onExit={
+              canUpdate && exit.canExit(row.original) ? () => exit.open(row.original) : undefined
+            }
+            onRejoin={
+              canCreate && row.original.exit
+                ? () => rejoin.open({ id: row.original.id, name: row.original.name })
+                : undefined
+            }
           />
         ),
       },
@@ -212,7 +234,7 @@ export function EmployeeListPage() {
     // `bankNames` arrives after the first render, so the Bank Name column has to
     // be rebuilt when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bankNames, canView, canUpdate, canDelete],
+    [bankNames, canView, canCreate, canUpdate, canDelete],
   )
 
   // Reading the list was refused — show the 403 screen, not a broken table.
@@ -232,6 +254,22 @@ export function EmployeeListPage() {
           )
         }
       />
+
+      {/* Active = a running service in the company; De-active = relieved or
+          transferred away. */}
+      <Tabs
+        className="mb-4"
+        value={status}
+        onValueChange={(v) => changeStatus(v as EmployeeStatusFilter)}
+      >
+        <TabsList>
+          {EMPLOYEE_STATUS_FILTER.map((o) => (
+            <TabsTrigger key={o.value} value={o.value}>
+              {o.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {isError ? (
         <ScopedDataError
@@ -274,6 +312,10 @@ export function EmployeeListPage() {
           }
         />
       )}
+
+      <EmployeeExitDialog exit={exit} />
+
+      <EmployeeRejoinDialog rejoin={rejoin} />
 
       <EmployeeFacesDialog
         employee={facesEmployee}

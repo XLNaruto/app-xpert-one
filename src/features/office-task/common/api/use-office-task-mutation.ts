@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
+import { isNotFoundError } from '@/lib/api-error'
 import { isStaleRowError } from './office-task-request'
 
 /**
@@ -11,6 +12,9 @@ import { isStaleRowError } from './office-task-request'
  * and every other conflict means the row moved under the screen — either way
  * the row's flags (`can_delete`, `locked_fields`, …) are stale and are re-read,
  * so the refused button disappears instead of being pressed again.
+ *
+ * So does a 404: the row is gone from under the screen — a delegated My Tasks
+ * row whose delegate was changed away from this user answers 404 to every action.
  */
 export function useOfficeTaskMutation<TVars, TResult = unknown>(
   mutationFn: (vars: TVars) => Promise<TResult>,
@@ -21,7 +25,7 @@ export function useOfficeTaskMutation<TVars, TResult = unknown>(
     mutationFn,
     onSuccess: refresh,
     onError: (error) => {
-      if (isStaleRowError(error)) void refresh()
+      if (isStaleRowError(error) || isNotFoundError(error)) void refresh()
     },
   })
 }

@@ -11,6 +11,7 @@ import type {
   EmployeeServiceEditFormValues,
   EmployeeTransferFormValues,
   LeaveServiceFormValues,
+  EmployeeRejoinFormValues,
 } from '../schemas'
 import {
   createEmployeeAsset,
@@ -24,6 +25,7 @@ import {
   deleteEmployeeExperience,
   deleteEmployeeFamilyMember,
   leaveEmployeeService,
+  rejoinEmployee,
   saveEmployeeKyc,
   transferEmployee,
   updateEmployeeAsset,
@@ -308,6 +310,50 @@ export function useUpdateEmployeeService(employeeId: number) {
       /** The seeded values — the PATCH carries only what changed from them. */
       initial?: EmployeeServiceEditFormValues
     }) => updateEmployeeService(employeeId, serviceId, values, initial),
+    onSuccess: invalidate,
+  })
+}
+
+/**
+ * The same leave-service write, addressed per call — for the employee list's
+ * "Exit Employee", where the row (not the screen) names the employee.
+ */
+export function useExitEmployee() {
+  const invalidate = useInvalidateEmployee()
+  return useMutation({
+    onError: (error) => isConflictError(error) && invalidate(),
+    mutationFn: ({
+      employeeId,
+      serviceId,
+      values,
+    }: {
+      employeeId: number
+      serviceId: number
+      values: LeaveServiceFormValues
+    }) => leaveEmployeeService(employeeId, serviceId, values),
+    onSuccess: invalidate,
+  })
+}
+
+/**
+ * POST /user/employees/:id/rejoin — a new spell of service for a de-active
+ * employee. The id rides with the values: the list opens it on any row.
+ *
+ * Every answer re-reads `employee.all` — success adds the latest posting and
+ * flips `exit` back, and a 409 means the register (or another record) moved
+ * since eligibility was read, so the next look should be fresh.
+ */
+export function useRejoinEmployee() {
+  const invalidate = useInvalidateEmployee()
+  return useMutation({
+    onError: (error) => isConflictError(error) && invalidate(),
+    mutationFn: ({
+      employeeId,
+      values,
+    }: {
+      employeeId: number
+      values: EmployeeRejoinFormValues
+    }) => rejoinEmployee(employeeId, values),
     onSuccess: invalidate,
   })
 }

@@ -3,15 +3,40 @@ import {
   auditResponseSchema,
   FREQUENCY_MAX,
   FREQUENCY_MIN,
-  pickBySchema,
   prioritySchema,
   progressNoteResponseSchema,
   proofResponseSchema,
   taskStatusSchema,
+  updateFrequencySchema,
   verdictResponseSchema,
   verdictSchema,
   workSessionResponseSchema,
+  type UpdateFrequency,
 } from '@/features/office-task/common'
+
+/** What the API accepts as an other's mobile: 10 digits, starting 6–9. */
+export const OTHER_MOBILE_PATTERN = /^[6-9]\d{9}$/
+
+/**
+ * A project task targets people by designation, by role — or names one "other":
+ * someone who is neither an employee nor a panel user (a contractor, a vendor's
+ * technician), who works it from the employee app with their phone OTP.
+ */
+export const projectPickBySchema = z.enum(['designation', 'role', 'other'])
+
+/** Who may update an "other"'s task on their behalf — one employee OR one panel user. */
+const delegateResponseSchema = z.object({
+  employee_id: z.number().nullish(),
+  user_id: z.number().nullish(),
+  name: z.string(),
+})
+
+/** The "other" fields an assignee / work row carries — all null for an employee or user. */
+const otherAssigneeResponseSchema = z.object({
+  task_other_id: z.number().nullish(),
+  mobile_number: z.string().nullish(),
+  delegate: delegateResponseSchema.nullish(),
+})
 
 // ── Responses ──────────────────────────────────────────────────────────────
 
@@ -21,15 +46,16 @@ export const projectTaskResponseSchema = auditResponseSchema.extend({
   task: z.string(),
   description: z.string().nullish(),
   priority: prioritySchema,
-  pick_by: pickBySchema,
+  pick_by: projectPickBySchema,
   designation_id: z.number().nullable(),
   role_id: z.number().nullable(),
   applies_to: z.string().nullish(),
   designation_name: z.string().nullish(),
   role_name: z.string().nullish(),
   assignees: z.array(
-    // Exactly one id is set — an employee (designation task) or a panel user (role task).
-    z.object({
+    // Exactly one id is set — an employee (designation task), a panel user (role
+    // task) or an "other" (`task_other_id`, with their mobile and delegate).
+    otherAssigneeResponseSchema.extend({
       employee_id: z.number().nullable(),
       user_id: z.number().nullish(),
       name: z.string(),
@@ -37,6 +63,8 @@ export const projectTaskResponseSchema = auditResponseSchema.extend({
     }),
   ),
   updates_per_day: z.number(),
+  /** How `updates_per_day` is counted — absent before the migration, i.e. daily. */
+  update_frequency: updateFrequencySchema.nullish(),
   start_date: z.string(),
   deadline: z.string(),
   photo_required: z.boolean(),
@@ -56,16 +84,18 @@ export const projectTaskListResponseSchema = z.object({
 })
 
 /** GET /project-tasks/:id/works row — one assignee's share. */
-export const projectWorkRowResponseSchema = z.object({
+export const projectWorkRowResponseSchema = otherAssigneeResponseSchema.extend({
   id: z.number(),
   employee_id: z.number().nullable(),
   user_id: z.number().nullish(),
-  /** The person's name from EITHER master; `employee_code` is null for a user. */
+  /** The person's name, whatever kind; `employee_code` is null for a user or an other. */
   employee_name: z.string(),
   employee_code: z.string().nullish(),
   status: taskStatusSchema,
   latest_percent: z.number(),
   updates_today: z.number(),
+  /** Notes in the task's current period (day / Mon–Sun week / month) — compared with `updates_per_day`. */
+  updates_this_period: z.number().nullish(),
   started_at: z.string().nullable(),
   submitted_at: z.string().nullable(),
   completed_at: z.string().nullable(),
@@ -87,6 +117,8 @@ export const projectWorkDetailResponseSchema = projectWorkRowResponseSchema
     task_id: z.number(),
     task: z.string(),
     deadline: z.string(),
+    updates_per_day: z.number().nullish(),
+    update_frequency: updateFrequencySchema.nullish(),
     total_updates: z.number(),
     last_update_at: z.string().nullable(),
     note: z.string().nullish(),
@@ -114,21 +146,37 @@ export type ProjectWorkActivityResponse = z.infer<typeof projectWorkActivityResp
  * the assignee list is the COMPLETE new list, diffed server-side. It is named
  * after the target — `employee_ids` for `pick_by: designation`, `user_ids` for
  * `pick_by: role` — and never both. Switching `pick_by` must carry the new list.
+ *
+ * `pick_by: other` sends the `other` block instead, and none of the target or
+ * people keys. On PATCH it is the COMPLETE new value: the same mobile keeps the
+ * person (name and delegate updated), a new mobile replaces them, and leaving
+ * both delegate ids out clears the delegate.
  */
 export interface ProjectTaskPayload {
   task: string
   description: string
   priority: 'high' | 'medium' | 'low'
-  pick_by: 'designation' | 'role'
+  pick_by: ProjectPickBy
   designation_id?: number
   role_id?: number
   employee_ids?: number[]
   user_ids?: number[]
+  other?: OtherAssigneePayload
   updates_per_day: number
+  update_frequency: UpdateFrequency
   start_date: string
   deadline: string
   photo_required: boolean
   needs_verification: boolean
+}
+
+/** The `other` block — at most ONE of the two delegate ids. */
+export interface OtherAssigneePayload {
+  full_name: string
+  /** 10 digits starting 6–9 — no `+91`, no spaces. */
+  mobile_number: string
+  delegate_employee_id?: number
+  delegate_user_id?: number
 }
 
 /** PATCH /project-tasks/bulk — only non-null fields are applied, all-or-nothing. */
@@ -142,16 +190,22 @@ export interface BulkEditPayload {
 // ── Forms ──────────────────────────────────────────────────────────────────
 
 /**
- * A project task: who it's for (picked by designation or role), the work, its
- * schedule and its rules. The designation/role requirement follows "Pick by".
+ * A project task: who it's for (picked by designation or role, or one "other"
+ * person), the work, its schedule and its rules. What "who" requires follows
+ * "Pick by".
  */
 export const projectTaskSchema = z
   .object({
-    pickBy: z.enum(['designation', 'role']),
+    pickBy: projectPickBySchema,
     designationId: z.string(),
     roleId: z.string(),
     /** The PEOPLE's ids — employees or panel users, per `pickBy`. */
-    employeeIds: z.array(z.string()).min(1, 'Assign at least one person'),
+    employeeIds: z.array(z.string()),
+    /** An "other"'s full name and mobile — only read for `pickBy: other`. */
+    otherName: z.string().trim().max(255, 'Keep it under 255 characters'),
+    otherMobile: z.string().trim(),
+    /** `employee:12` / `user:3` / `''` for nobody — see `delegateValue`. */
+    delegate: z.string(),
     task: z.string().trim().min(1, 'Task name is required').max(255, 'Keep it under 255 characters'),
     priority: z.enum(['high', 'medium', 'low']),
     description: z.string().trim().max(1000, 'Keep it under 1000 characters'),
@@ -163,6 +217,7 @@ export const projectTaskSchema = z
         (v) => Number(v) >= FREQUENCY_MIN && Number(v) <= FREQUENCY_MAX,
         `Between ${FREQUENCY_MIN} and ${FREQUENCY_MAX}`,
       ),
+    updateFrequency: updateFrequencySchema,
     startDate: z.string().min(1, 'Start date is required'),
     deadline: z.string().min(1, 'Deadline is required'),
     photoRequired: z.boolean(),
@@ -175,12 +230,29 @@ export const projectTaskSchema = z
     if (v.pickBy === 'role' && !v.roleId) {
       ctx.addIssue({ code: 'custom', path: ['roleId'], message: 'Role is required' })
     }
+    if (v.pickBy === 'other') {
+      if (!v.otherName) {
+        ctx.addIssue({ code: 'custom', path: ['otherName'], message: 'Full name is required' })
+      }
+      if (!v.otherMobile) {
+        ctx.addIssue({ code: 'custom', path: ['otherMobile'], message: 'Mobile number is required' })
+      } else if (!OTHER_MOBILE_PATTERN.test(v.otherMobile)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['otherMobile'],
+          message: 'Please enter a valid 10-digit mobile number.',
+        })
+      }
+    } else if (v.employeeIds.length === 0) {
+      ctx.addIssue({ code: 'custom', path: ['employeeIds'], message: 'Assign at least one person' })
+    }
     if (v.startDate && v.deadline && v.deadline < v.startDate) {
       ctx.addIssue({ code: 'custom', path: ['deadline'], message: 'Cannot be before the start date' })
     }
   })
 
 export type ProjectTaskFormValues = z.infer<typeof projectTaskSchema>
+export type ProjectPickBy = z.infer<typeof projectPickBySchema>
 
 /** The bulk bar — only the fields the manager touched are applied. */
 export const bulkEditSchema = z

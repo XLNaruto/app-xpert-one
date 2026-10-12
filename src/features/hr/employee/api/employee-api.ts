@@ -4,7 +4,7 @@ import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { activeCompanyId } from '@/lib/active-company'
 import { uploadFile, IMAGE_CONTENT_TYPES } from '@/lib/uploads'
-import { EMPLOYEE_DEFAULT_SORT } from '../constants'
+import { EMPLOYEE_DEFAULT_SORT, type EmployeeStatusFilter } from '../constants'
 import {
   deleteFaceResponseSchema,
   employeePickerListResponseSchema,
@@ -48,9 +48,10 @@ const MAX_PAGES = 50
  * them. Order is always sent — left off, the server's own default decides it, and
  * a list whose order isn't pinned can repeat or skip rows as the user pages.
  */
-function queryParams(params: PageParams) {
+function queryParams(params: PageParams, status: EmployeeStatusFilter) {
   return {
     company_id: activeCompanyId('employees'),
+    ...(status !== 'all' ? { status } : {}),
     ...(params.search?.trim() ? { search: params.search.trim() } : {}),
     sort: params.sort ?? EMPLOYEE_DEFAULT_SORT.id,
     sort_by: params.sortBy ?? (EMPLOYEE_DEFAULT_SORT.desc ? 'desc' : 'asc'),
@@ -64,12 +65,16 @@ function queryParams(params: PageParams) {
  *
  * `ALL_ROWS` (a negative limit) means "everyone": the API caps a request at 100,
  * so that case walks the pages until `total` is covered.
+ *
+ * The company's list includes people who USED to serve there (`exit: true`) —
+ * `status: 'active'` keeps it to current staff, `'deactive'` to the exited.
  */
 export async function fetchEmployees(
   params: PageParams = ALL_ROWS,
+  status: EmployeeStatusFilter = 'all',
 ): Promise<Paginated<Employee>> {
   try {
-    const query = queryParams(params)
+    const query = queryParams(params, status)
 
     if (params.limit > 0) {
       const raw = await http.get<unknown>(endpoints.EMPLOYEES.LIST, {

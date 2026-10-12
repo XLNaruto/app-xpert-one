@@ -17,10 +17,19 @@ export type Verdict = 'approved' | 'rejected'
 
 export type Priority = 'high' | 'medium' | 'low'
 
+/**
+ * The window a project task's progress-update count is measured over — a
+ * business day, a Monday–Sunday week, or the calendar month.
+ */
+export type UpdateFrequency = 'daily' | 'weekly' | 'monthly'
+
 /** Whether an SOP group / project task targets people by designation or role. */
 export type PickBy = 'designation' | 'role'
 
 export type AssignmentStatus = 'active' | 'stopped'
+
+/** `START_STOP` — timed, start before hand-in; `DIRECT` — hand in without a clock. */
+export type TaskSubmissionMode = 'START_STOP' | 'DIRECT'
 
 /**
  * One proof-of-work file as the API returns it. `key` is a storage path — the
@@ -140,4 +149,17 @@ export interface OfficeTaskEmployee {
   /** Already runs the group the picker was opened for (`sop_group_id`). */
   alreadyAssigned: boolean
   assignmentId: number | null
+}
+
+/**
+ * A row of the delegate picker (`GET /user/office-task/delegates`) — someone who
+ * may update an "other" person's project task on their behalf.
+ */
+export interface OfficeTaskDelegate {
+  /** Posted back as `delegate_employee_id` or `delegate_user_id`, per `kind`. */
+  id: number
+  kind: AssigneeKind
+  name: string
+  /** Employee code; `''` for a panel user. */
+  code: string
 }

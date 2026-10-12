@@ -1,4 +1,5 @@
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
+import type { UpdateFrequency } from '../types'
 
 /**
  * Pure date + duration helpers for the Office Task screens. Every calendar date
@@ -36,9 +37,24 @@ export function dayLabel(date: string): string {
   return format(parseISO(date), 'EEE, dd MMM yyyy')
 }
 
-/** "Once a day" / "3× a day". */
-export function frequencyLabel(times: number): string {
-  return times <= 1 ? 'Once a day' : `${times}× a day`
+const PERIOD_NOUN: Record<UpdateFrequency, string> = { daily: 'day', weekly: 'week', monthly: 'month' }
+
+/** "Once a day" / "Twice a week" / "3 times a month". */
+export function frequencyLabel(times: number, frequency: UpdateFrequency = 'daily'): string {
+  const period = PERIOD_NOUN[frequency]
+  if (times <= 1) return `Once a ${period}`
+  if (times === 2) return `Twice a ${period}`
+  return `${times} times a ${period}`
+}
+
+/** The current window a progress count covers: "today" / "this week" / "this month". */
+export function periodLabel(frequency: UpdateFrequency = 'daily'): string {
+  return frequency === 'daily' ? 'today' : `this ${PERIOD_NOUN[frequency]}`
+}
+
+/** The same window as a heading: "Updates Today" / "Updates This Week" / "Updates This Month". */
+export function updatesHeading(frequency: UpdateFrequency = 'daily'): string {
+  return frequency === 'daily' ? 'Updates Today' : `Updates This ${PERIOD_NOUN[frequency] === 'week' ? 'Week' : 'Month'}`
 }
 
 /** Seconds as a stopwatch: `4:05` under an hour, `1:04:05` past it. */

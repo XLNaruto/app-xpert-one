@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Camera, CalendarRange, Repeat, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, Camera, CalendarRange, Repeat, ShieldCheck, UserCheck, Users } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
 import { cn, formatDate, formatDateTime } from '@/lib/utils'
 import { PageHeader } from '@/components/common/page-header'
@@ -16,6 +16,7 @@ import {
   deadlineInfo,
   formatDuration,
   frequencyLabel,
+  updatesHeading,
   PriorityBadge,
   ProgressBar,
   TaskStatusBadge,
@@ -34,6 +35,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
 
   const deadline = task?.deadline
   const updatesPerDay = task?.updatesPerDay ?? 1
+  const updateFrequency = task?.updateFrequency ?? 'daily'
   const needsVerification = task?.needsVerification ?? false
 
   const columns = useMemo<ColumnDef<ProjectWorkRow>[]>(
@@ -52,7 +54,12 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
         cell: ({ row }) => (
           <button type="button" onClick={() => openWork(row.original.id)} className="cursor-pointer text-left">
             <p className="font-medium hover:text-primary">{row.original.employeeName}</p>
-            <p className="font-mono text-xs text-muted-foreground">{row.original.employeeCode}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+              {row.original.taskOtherId ? row.original.mobileNumber : row.original.employeeCode}
+            </p>
+            {row.original.delegate && (
+              <p className="text-xs text-muted-foreground">Updated by {row.original.delegate.name}</p>
+            )}
           </button>
         ),
       },
@@ -85,14 +92,14 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
       },
       {
         id: 'updates',
-        header: 'Updates Today',
+        header: updatesHeading(updateFrequency),
         enableSorting: false,
         cell: ({ row }) => {
           const w = row.original
-          const behind = w.status === 'in_progress' && w.updatesToday < updatesPerDay
+          const behind = w.status === 'in_progress' && w.updatesThisPeriod < updatesPerDay
           return (
             <span className={cn('tabular-nums', behind && 'font-medium text-amber-600 dark:text-amber-400')}>
-              {w.updatesToday} / {updatesPerDay}
+              {w.updatesThisPeriod} / {updatesPerDay}
             </span>
           )
         },
@@ -139,7 +146,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
         },
       },
     ],
-    [openWork, deadline, updatesPerDay, needsVerification],
+    [openWork, deadline, updatesPerDay, updateFrequency, needsVerification],
   )
 
   const back = (
@@ -200,17 +207,32 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
             <span className="text-sm font-semibold">{task.progress}%</span>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            <DetailItem
-              icon={Users}
-              label={task.pickBy === 'designation' ? 'Designation' : 'Role'}
-              value={task.appliesTo}
-            />
+            {task.pickBy === 'other' ? (
+              <>
+                <DetailItem
+                  icon={Users}
+                  label="Other"
+                  value={[task.appliesTo, task.assignees[0]?.mobileNumber].filter(Boolean).join(' · ')}
+                />
+                <DetailItem
+                  icon={UserCheck}
+                  label="Delegate"
+                  value={task.assignees[0]?.delegate?.name ?? 'Nobody — only they update it'}
+                />
+              </>
+            ) : (
+              <DetailItem
+                icon={Users}
+                label={task.pickBy === 'designation' ? 'Designation' : 'Role'}
+                value={task.appliesTo}
+              />
+            )}
             <DetailItem
               icon={CalendarRange}
               label="Schedule"
               value={`${formatDate(task.startDate)} → ${formatDate(task.deadline)}`}
             />
-            <DetailItem icon={Repeat} label="Progress Updates" value={frequencyLabel(task.updatesPerDay)} />
+            <DetailItem icon={Repeat} label="Progress Updates" value={frequencyLabel(task.updatesPerDay, task.updateFrequency)} />
             <DetailItem icon={Camera} label="Photo Proof" value={task.photoRequired ? 'Required' : 'Not required'} />
             <DetailItem
               icon={ShieldCheck}
@@ -239,7 +261,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
             onPaginationChange={works.onPaginationChange}
             searchValue={works.search}
             onSearchChange={works.setSearch}
-            searchPlaceholder="Search employee name or code…"
+            searchPlaceholder="Search name, code or mobile…"
           />
         )}
       </div>

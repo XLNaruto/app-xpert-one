@@ -1,6 +1,7 @@
 import type { AuditFields } from '@/types/audit'
 import type {
   AuditResponse,
+  OfficeTaskDelegateResponse,
   OfficeTaskEmployeeResponse,
   ProgressNoteResponse,
   ProofResponse,
@@ -11,6 +12,7 @@ import type {
 } from '../schemas'
 import type {
   AssigneeKind,
+  OfficeTaskDelegate,
   OfficeTaskEmployee,
   ProgressNote,
   ProofFile,
@@ -118,6 +120,23 @@ export function toOfficeTaskEmployee(r: OfficeTaskEmployeeResponse): OfficeTaskE
     alreadyAssigned: r.already_assigned ?? false,
     assignmentId: r.assignment_id ?? null,
   }
+}
+
+export function toOfficeTaskDelegate(r: OfficeTaskDelegateResponse): OfficeTaskDelegate {
+  return { id: r.id, kind: r.kind, name: r.name, code: r.code ?? '' }
+}
+
+/**
+ * A delegate as one dropdown value — `employee:12` / `user:3` — and back. The
+ * kind rides along because an employee id and a user id can be the same number.
+ */
+export const delegateValue = (kind: AssigneeKind, id: number): string => `${kind}:${id}`
+
+export function parseDelegateValue(value: string): { kind: AssigneeKind; id: number } | null {
+  const [kind, raw] = value.split(':')
+  const id = Number(raw)
+  if ((kind !== 'employee' && kind !== 'user') || !Number.isInteger(id) || id <= 0) return null
+  return { kind, id }
 }
 
 /** Who a target's work goes to: `pick_by: role` → panel users, else employees. */

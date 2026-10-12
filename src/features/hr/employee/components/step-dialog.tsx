@@ -24,6 +24,8 @@ export function StepDialog({
   submitLabel,
   /** Widen the panel for a dialog with more than a couple of fields. */
   size = 'default',
+  /** Hold the submit back while there's nothing valid to save (a refusal, a load). */
+  submitDisabled = false,
   children,
 }: {
   open: boolean
@@ -34,6 +36,7 @@ export function StepDialog({
   isPending: boolean
   submitLabel: string
   size?: 'default' | 'wide'
+  submitDisabled?: boolean
   children: ReactNode
 }) {
   return (
@@ -49,7 +52,7 @@ export function StepDialog({
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            onSubmit()
+            if (!submitDisabled) onSubmit()
           }}
           noValidate
           className="mt-4"
@@ -58,9 +61,10 @@ export function StepDialog({
             The body scrolls rather than the dialog growing past the viewport —
             a long form otherwise pushes its own footer off the bottom of the
             screen, where the Save button can't be reached. The negative margin
-            keeps focus rings from being clipped by the scrollport.
+            keeps focus rings from being clipped by the scrollport — on every
+            side, so the last field's bottom edge survives too.
           */}
-          <div className="-mx-1 grid max-h-[65vh] grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto px-1 sm:grid-cols-2">
+          <div className="-m-1 grid max-h-[65vh] grid-cols-1 gap-x-5 gap-y-4 overflow-y-auto p-1 sm:grid-cols-2">
             {children}
           </div>
 
@@ -73,7 +77,7 @@ export function StepDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || submitDisabled}>
               {isPending ? 'Saving…' : submitLabel}
             </Button>
           </DialogFooter>

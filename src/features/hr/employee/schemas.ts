@@ -364,6 +364,12 @@ export const employeeResponseSchema = z.object({
   aadhar_number: z.string().nullish(),
 
   completed_steps: completedStepsResponseSchema.nullish(),
+  /**
+   * List rows only: `false` while the employee has a RUNNING service in the
+   * company, `true` once it's closed (relieved or transferred away) — or was
+   * never opened (step 1 incomplete). A future leaving date already counts.
+   */
+  exit: z.boolean().nullish(),
   service: employeeServiceResponseSchema.nullish(),
   /** Every face image captured for this employee — empty when none is enrolled. */
   employee_faces: z.array(employeeFaceResponseSchema).nullish(),
@@ -1744,6 +1750,89 @@ export interface EmployeeServiceEditPayload {
 export interface LeaveServicePayload {
   leaving_date: string
   leaving_reason: string
+}
+
+/* ── Step 8 — rejoin ─────────────────────────────────────────────────────── */
+
+/**
+ * GET /user/employees/:id/rejoin — whether a de-active employee may start a new
+ * spell of service, and where. `companies` is the Company dropdown (earlier
+ * companies the caller can reach, newest leaving first) and is `[]` when
+ * `can_rejoin` is false; `reason` is then a ready-to-show sentence.
+ */
+export const employeeRejoinEligibilityResponseSchema = z.object({
+  can_rejoin: z.boolean(),
+  reason: z.string().nullish(),
+  last_leaving_date: z.string().nullish(),
+  companies: z.array(
+    z.object({
+      company_id: z.number(),
+      company_name: z.string().nullish(),
+      last_leaving_date: z.string().nullish(),
+    }),
+  ),
+})
+
+export type EmployeeRejoinEligibilityResponse = z.infer<
+  typeof employeeRejoinEligibilityResponseSchema
+>
+
+/**
+ * The rejoin form — "the new posting" alone: nothing is being closed. The
+ * joining date must fall AFTER the last posting ended, so the floor is passed
+ * in from the eligibility read.
+ */
+export const employeeRejoinSchema = (lastLeavingDate: string) =>
+  z
+    .object({
+      companyId: z.string().trim().min(1, 'Please select the company'),
+      branchId: z.string(),
+      departmentId: z.string(),
+      designationId: z.string().trim().min(1, 'Please select a designation'),
+      grade: z.string().trim().min(1, 'Please select a grade'),
+      employmentType: z.string().trim().min(1, 'Please select an employment type'),
+      contractPeriod: z.string(),
+      contractPeriodType: z.string(),
+      joiningDate: z.string().trim().min(1, 'Please select the joining date'),
+      confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+      renewalDate: z.string(),
+    })
+    .refine((v) => !lastLeavingDate || !v.joiningDate || v.joiningDate > lastLeavingDate, {
+      path: ['joiningDate'],
+      message: 'The joining date must be after the previous posting ended',
+    })
+    .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
+      path: ['confirmationDate'],
+      message: 'Confirmation date cannot be before the joining date',
+    })
+    .refine(
+      (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
+      { path: ['contractPeriod'], message: 'Please enter the contract period' },
+    )
+    .refine(
+      (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
+      { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+    )
+    .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
+      path: ['renewalDate'],
+      message: 'Renewal date cannot be before the joining date',
+    })
+
+export type EmployeeRejoinFormValues = z.infer<ReturnType<typeof employeeRejoinSchema>>
+
+/** POST /user/employees/:id/rejoin — the contract pair only on a contractual posting. */
+export interface EmployeeRejoinPayload {
+  company_id: number
+  branch_id: number | null
+  department_id: number | null
+  designation_id: number
+  grade: string
+  employment_type: string
+  contract_period?: number | null
+  contract_period_type?: string
+  joining_date: string
+  confirmation_date: string
+  renewal_date: string | null
 }
 
 /* ── Step 9 — shift & roster ─────────────────────────────────────────────── */

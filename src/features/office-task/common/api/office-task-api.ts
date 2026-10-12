@@ -4,9 +4,13 @@ import { uploadFile } from '@/lib/uploads'
 import type { PageParams, Paginated } from '@/lib/pagination'
 import type { DropzoneFile } from '@/components/common/file-dropzone'
 import { PROOF_CONTENT_TYPES } from '../constants'
-import { officeTaskEmployeesResponseSchema, type ProofPayload } from '../schemas'
-import { toOfficeTaskEmployee } from '../lib/office-task-mappers'
-import type { OfficeTaskEmployee, PickBy } from '../types'
+import {
+  officeTaskDelegatesResponseSchema,
+  officeTaskEmployeesResponseSchema,
+  type ProofPayload,
+} from '../schemas'
+import { toOfficeTaskDelegate, toOfficeTaskEmployee } from '../lib/office-task-mappers'
+import type { OfficeTaskDelegate, OfficeTaskEmployee, PickBy } from '../types'
 import { pageQuery, requireCompany, toOfficeTaskError } from './office-task-request'
 
 /** Who the shared picker lists: one designation OR one role, plus an optional group. */
@@ -39,6 +43,25 @@ export async function fetchOfficeTaskEmployees(
     return { items: items.map(toOfficeTaskEmployee), total }
   } catch (error) {
     throw toOfficeTaskError(error, "Couldn't load the employees.")
+  }
+}
+
+/**
+ * GET /user/office-task/delegates — everyone who may be named delegate in the
+ * ACTIVE company, by name: employees with a current posting and the panel users
+ * who reach it. `search` matches the name or an employee's code. Same grant as
+ * the employee picker.
+ */
+export async function fetchOfficeTaskDelegates(
+  params: PageParams,
+): Promise<Paginated<OfficeTaskDelegate>> {
+  try {
+    requireCompany()
+    const raw = await http.get<unknown>(endpoints.OFFICE_TASK.DELEGATES, { params: pageQuery(params) })
+    const { items, total } = officeTaskDelegatesResponseSchema.parse(raw)
+    return { items: items.map(toOfficeTaskDelegate), total }
+  } catch (error) {
+    throw toOfficeTaskError(error, "Couldn't load the people who can update it.")
   }
 }
 

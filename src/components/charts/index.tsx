@@ -21,6 +21,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Hint } from '@/components/common/hint'
+import { ScrollableChart } from './scrollable-chart'
 import { cn } from '@/lib/utils'
 import {
   CHART_COLORS,
@@ -77,25 +78,46 @@ export function TrendAreaChart({ data, xKey, series, height = 280 }: SeriesChart
   )
 }
 
-export function ComparisonBarChart({ data, xKey, series, height = 280 }: SeriesChartProps) {
-  return (
+export function ComparisonBarChart({
+  data,
+  xKey,
+  series,
+  height = 280,
+  minPerItem,
+}: SeriesChartProps & {
+  /**
+   * The narrowest a category may get. Set it and a long list scrolls sideways
+   * (see `ScrollableChart`) instead of squeezing every bar to a hairline.
+   */
+  minPerItem?: number
+}) {
+  const chart = (
+    <BarChart data={data} margin={{ left: -12, right: 8, top: 8 }}>
+      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+      <XAxis dataKey={xKey} {...axisProps} interval={minPerItem ? 0 : undefined} />
+      <YAxis {...axisProps} />
+      <Tooltip {...tooltipStyle} cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }} />
+      <Legend wrapperStyle={{ fontSize: 12 }} />
+      {series.map((s, i) => (
+        <Bar
+          key={s.key}
+          dataKey={s.key}
+          name={s.label ?? s.key}
+          fill={CHART_COLORS[i % CHART_COLORS.length]}
+          radius={[4, 4, 0, 0]}
+          // A handful of categories would otherwise stretch each bar across the card.
+          maxBarSize={40}
+        />
+      ))}
+    </BarChart>
+  )
+  return minPerItem ? (
+    <ScrollableChart count={data.length} minPerItem={minPerItem} height={height}>
+      {chart}
+    </ScrollableChart>
+  ) : (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ left: -12, right: 8, top: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-        <XAxis dataKey={xKey} {...axisProps} />
-        <YAxis {...axisProps} />
-        <Tooltip {...tooltipStyle} cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
-        {series.map((s, i) => (
-          <Bar
-            key={s.key}
-            dataKey={s.key}
-            name={s.label ?? s.key}
-            fill={CHART_COLORS[i % CHART_COLORS.length]}
-            radius={[4, 4, 0, 0]}
-          />
-        ))}
-      </BarChart>
+      {chart}
     </ResponsiveContainer>
   )
 }

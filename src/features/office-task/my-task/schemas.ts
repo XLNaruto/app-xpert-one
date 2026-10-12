@@ -6,10 +6,21 @@ import {
   proofResponseSchema,
   sopRunResponseSchema,
   taskStatusSchema,
+  taskSubmissionModeSchema,
+  updateFrequencySchema,
   verdictResponseSchema,
 } from '@/features/office-task/common'
 
 // ── Responses ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /my-tasks/settings — the ACTIVE company's submission modes, i.e. which
+ * buttons the board offers. Gated on the board's own right, not `settings:read`.
+ */
+export const myTaskSettingsResponseSchema = z.object({
+  sop_task_submission: taskSubmissionModeSchema,
+  project_task_submission: taskSubmissionModeSchema,
+})
 
 /** GET /my-tasks/sop — unpaged; reading it materialises today. */
 export const mySopTasksResponseSchema = z.object({ items: z.array(sopRunResponseSchema) })
@@ -26,7 +37,18 @@ export const myProjectTasksResponseSchema = z.object({
       start_date: z.string(),
       deadline: z.string(),
       updates_per_day: z.number(),
+      update_frequency: updateFrequencySchema.nullish(),
       updates_today: z.number(),
+      /** Notes in the task's current period — what `updates_per_day` is measured against. */
+      updates_this_period: z.number().nullish(),
+      /** Set when the row is here because this user is the delegate of an "other". */
+      on_behalf_of: z
+        .object({
+          task_other_id: z.number(),
+          full_name: z.string(),
+          mobile_number: z.string().nullish(),
+        })
+        .nullish(),
       photo_required: z.boolean(),
       needs_verification: z.boolean(),
       status: taskStatusSchema,

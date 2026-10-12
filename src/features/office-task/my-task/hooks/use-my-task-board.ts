@@ -10,6 +10,7 @@ import {
 import {
   useMyProjectTasks,
   useMySopTasks,
+  useMyTaskSettings,
   usePauseSopTask,
   useStartProjectWork,
   useStartSopTask,
@@ -42,6 +43,16 @@ export function useMyTaskBoard() {
 
   const sop = useMySopTasks(date, companyId !== null)
   const project = useMyProjectTasks(date, companyId !== null)
+  const settings = useMyTaskSettings(companyId !== null)
+
+  /**
+   * The company's submission mode per kind of task. Until it has answered, the
+   * board offers the timed flow — every company's default and today's behaviour;
+   * the server refuses a Start the mode doesn't allow anyway (409), and that 409
+   * re-reads the settings.
+   */
+  const sopDirect = settings.data?.sop === 'DIRECT'
+  const projectDirect = settings.data?.project === 'DIRECT'
 
   const start = useStartSopTask()
   const pause = usePauseSopTask()
@@ -54,9 +65,23 @@ export function useMyTaskBoard() {
   const sopRows = useMemo(() => sop.data ?? [], [sop.data])
   const projectRows = useMemo(() => project.data ?? [], [project.data])
 
-  // One clock at a time, across both queues.
+  // Any clock going keeps the board ticking.
   const anyRunning = sopRows.some((r) => r.runningSince) || projectRows.some((r) => r.runningSince)
   const now = useNow(anyRunning)
+
+  /**
+   * One clock at a time PER PERSON. The user's own SOP runs and project shares
+   * share one clock; a delegated row runs its other's clock, so only that
+   * other's running work blocks it — and it never blocks the user's own.
+   */
+  const ownRunning =
+    sopRows.some((r) => r.runningSince) || projectRows.some((r) => !r.onBehalfOf && r.runningSince)
+  const startLocked = (row: MySopRow | MyProjectRow): boolean => {
+    if (row.runningSince) return false
+    const other = 'onBehalfOf' in row ? row.onBehalfOf : null
+    if (!other) return ownRunning
+    return projectRows.some((r) => r.runningSince && r.onBehalfOf?.taskOtherId === other.taskOtherId)
+  }
 
   /**
    * Seconds from stretches already over. The two queues count differently: an
@@ -84,6 +109,10 @@ export function useMyTaskBoard() {
   return {
     companyId,
     canAct,
+    /** SOP runs are handed in without Start / Stop — Complete only. */
+    sopDirect,
+    /** Project shares are handed in without Start / Stop — Progress / Complete. */
+    projectDirect,
     isError: active.isError,
     error: active.error,
     date,
@@ -96,6 +125,7 @@ export function useMyTaskBoard() {
     refresh: () => {
       void sop.refetch()
       void project.refetch()
+      void settings.refetch()
     },
     tab,
     // Both queues stay mounted, so a tab switch re-reads the one being opened.
@@ -114,7 +144,8 @@ export function useMyTaskBoard() {
     isLoading: active.isLoading,
     bankedSeconds,
     workedSeconds,
-    /** One clock at a time — while a run is going, every other Start/Resume waits. */
+    /** Whether Start/Resume on this row waits for another running clock — see above. */
+    startLocked,
     anyRunning,
     busyId: start.isPending ? start.variables : pause.isPending ? pause.variables : undefined,
     busyProjectId: startProject.isPending ? startProject.variables : undefined,

@@ -15,7 +15,16 @@ export const taskStatusSchema = z.enum([
 export const verdictSchema = z.enum(['approved', 'rejected'])
 export const prioritySchema = z.enum(['high', 'medium', 'low'])
 export const pickBySchema = z.enum(['designation', 'role'])
+export const updateFrequencySchema = z.enum(['daily', 'weekly', 'monthly'])
 export const assignmentStatusSchema = z.enum(['active', 'stopped'])
+
+/**
+ * How a company's employees hand work in — set per company, separately for SOP
+ * and project tasks, on Administration → Settings. `START_STOP` is the timed
+ * flow (Start, then Stop / Pause, then hand in); `DIRECT` refuses Start and takes
+ * a hand-in on a task nobody started, so no time is recorded.
+ */
+export const taskSubmissionModeSchema = z.enum(['START_STOP', 'DIRECT'])
 
 /**
  * The platform-standard audit block. `created_by` / `updated_by` are raw actor
@@ -119,6 +128,21 @@ export const officeTaskEmployeesResponseSchema = z.object({
   total: z.number(),
 })
 
+/** A delegate picker row — an employee with a current posting, or a panel user. */
+export const officeTaskDelegateResponseSchema = z.object({
+  kind: z.enum(['employee', 'user']),
+  id: z.number(),
+  employee_id: z.number().nullish(),
+  user_id: z.number().nullish(),
+  name: z.string(),
+  code: z.string().nullish(),
+})
+
+export const officeTaskDelegatesResponseSchema = z.object({
+  items: z.array(officeTaskDelegateResponseSchema),
+  total: z.number(),
+})
+
 /** `{ key, name }` — what a write sends for each proof file. */
 export interface ProofPayload {
   key: string
@@ -133,3 +157,4 @@ export type SopRunResponse = z.infer<typeof sopRunResponseSchema>
 export type ProgressNoteResponse = z.infer<typeof progressNoteResponseSchema>
 export type WorkSessionResponse = z.infer<typeof workSessionResponseSchema>
 export type OfficeTaskEmployeeResponse = z.infer<typeof officeTaskEmployeeResponseSchema>
+export type OfficeTaskDelegateResponse = z.infer<typeof officeTaskDelegateResponseSchema>

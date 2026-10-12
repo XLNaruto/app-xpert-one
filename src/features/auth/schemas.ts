@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { COMPANY_CODE_PATTERN } from './lib/company-code'
 
 /** Email + password sign-in (mirrors the login request body). */
 export const loginSchema = z
@@ -18,10 +19,7 @@ export const loginSchema = z
      */
     isOwner: z.boolean(),
     /** The company's code, as shown on the company screen. Users only. */
-    companyCode: z
-      .string()
-      .trim()
-      .max(50, 'Company code must be 50 characters or less'),
+    companyCode: z.string().trim(),
     remember: z.boolean(),
   })
   .superRefine((v, ctx) => {
@@ -30,6 +28,12 @@ export const loginSchema = z
         code: z.ZodIssueCode.custom,
         path: ['companyCode'],
         message: 'Company code is required',
+      })
+    } else if (!v.isOwner && !COMPANY_CODE_PATTERN.test(v.companyCode)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['companyCode'],
+        message: 'Enter a code like XTEC-0001',
       })
     }
   })
