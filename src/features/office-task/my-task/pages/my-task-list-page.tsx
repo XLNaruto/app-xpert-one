@@ -193,7 +193,6 @@ export function MyTaskListPage() {
             workedSeconds={board.workedSeconds(row.original)}
             onStart={() => board.startProject(row.original)}
             onStop={() => board.openProgress(row.original)}
-            onProgress={() => board.openProgress(row.original)}
             onComplete={() => board.openComplete({ kind: 'project', row: row.original })}
             onView={() => board.openView({ kind: 'project', row: row.original })}
             readOnly={!board.canAct}
@@ -219,7 +218,7 @@ export function MyTaskListPage() {
                 by={row.original.verdictBy}
               />
             </p>
-            <UpdatesThisPeriod row={row.original} />
+            {!board.projectDirect && <UpdatesThisPeriod row={row.original} />}
             <OnBehalfBadge row={row.original} />
           </button>
         ),

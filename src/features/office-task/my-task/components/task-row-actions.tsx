@@ -1,4 +1,4 @@
-import { Check, Eye, Play, Send, Square, TrendingUp } from 'lucide-react'
+import { Check, Eye, Play, Send, Square } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -18,7 +18,6 @@ const tone = {
   complete: `${compact} border-success/60 bg-success/10 text-success hover:bg-success/20 hover:text-success`,
   submit:
     `${compact} border-violet-500/60 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-400`,
-  neutral: `${compact} border-border bg-muted/50 text-foreground hover:bg-muted`,
 }
 
 /** Handed in or done — nothing left to act on, so the row offers a look instead. */
@@ -184,9 +183,9 @@ export function SopRowActions({
  * no separate Progress button. The clock only runs from today's board;
  * "Stop" pauses it — the work stays in progress until it's handed in.
  *
- * Under DIRECT submission there's no clock: Progress records a note without a
- * Stop toggle, and Complete hands in a share nobody started. A clock already
- * running from before the switch keeps its Stop, which saves progress with it.
+ * Under DIRECT submission there's no clock and no progress notes — just
+ * Complete (or Submit) for a share nobody started. A clock already running
+ * from before the switch keeps its Stop, which saves progress with it.
  */
 export function ProjectRowActions({
   row,
@@ -199,17 +198,14 @@ export function ProjectRowActions({
   onStop,
   onComplete,
   onView,
-  onProgress,
   readOnly = false,
   direct = false,
 }: {
   row: MyProjectRow
   /** Without `my-tasks:update` the board is look-only. */
   readOnly?: boolean
-  /** The company hands project shares in DIRECTLY — Progress / Complete, no clock. */
+  /** The company hands project shares in DIRECTLY — just Complete, no clock. */
   direct?: boolean
-  /** Opens Record Progress without stopping anything (DIRECT only). */
-  onProgress: () => void
   /** The share's start date has come — before it, the API refuses any action. */
   canStart: boolean
   isToday: boolean
@@ -230,15 +226,9 @@ export function ProjectRowActions({
     return (
       <div className="flex items-center gap-1.5">
         <HandInButton needsApproval={row.needsVerification} busy={busy} onClick={onComplete} />
-        {isToday &&
-          (row.runningSince ? (
-            <StopWithClock busy={busy} onStop={onStop} workedSeconds={workedSeconds} />
-          ) : (
-            <Button size="sm" variant="outline" className={tone.neutral} onClick={onProgress} disabled={busy}>
-              <TrendingUp className="size-3" />
-              Progress
-            </Button>
-          ))}
+        {isToday && row.runningSince && (
+          <StopWithClock busy={busy} onStop={onStop} workedSeconds={workedSeconds} />
+        )}
       </div>
     )
   }
