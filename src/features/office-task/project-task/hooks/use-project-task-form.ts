@@ -16,6 +16,7 @@ import { emptyProjectTaskForm } from '../constants'
 import { projectTaskSchema, type ProjectPickBy, type ProjectTaskFormValues } from '../schemas'
 import { useCreateProjectTask, useProjectTask, useUpdateProjectTask } from '../api/use-project-tasks'
 import { projectTaskToFormValues } from '../lib/project-task-mappers'
+import { projectTaskSaveNotice } from '../lib/project-task-notify'
 
 /**
  * The API field each drawer input writes — what `locked_fields` names (the
@@ -208,8 +209,18 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
     else update.mutate({ id, values }, options)
   })
 
+  const saveNotice = useMemo(
+    () =>
+      projectTaskSaveNotice(
+        { pickBy, employeeIds, delegate },
+        task ? projectTaskToFormValues(task) : undefined,
+      ),
+    [pickBy, employeeIds, delegate, task],
+  )
+
   return {
     form,
+    saveNotice,
     pickBy,
     picked,
     startDate,

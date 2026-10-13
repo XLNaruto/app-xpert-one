@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BellRing } from 'lucide-react'
 import { Field } from '@/components/common/form-field'
 import { Button } from '@/components/ui/button'
 import {
@@ -13,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatDate } from '@/lib/utils'
 import { ProofStrip } from '@/features/office-task/common'
 import { useVerdictForm } from '../hooks/use-verdict-form'
+import { verdictNotice } from '../lib/verdict-notify'
 import type { VerdictRequest } from '../types'
 
 const SHOWN = 4
@@ -23,6 +25,7 @@ function VerdictForm({ request, onClose, onDone }: { request: VerdictRequest; on
   const approve = request.verdict === 'approved'
   const n = request.rows.length
   const rows = showAll ? request.rows : request.rows.slice(0, SHOWN)
+  const notice = verdictNotice(request)
 
   return (
     <form onSubmit={onSubmit} noValidate>
@@ -73,6 +76,21 @@ function VerdictForm({ request, onClose, onDone }: { request: VerdictRequest; on
           {...form.register('remarks')}
         />
       </Field>
+
+      {notice && (
+        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+          <p className="flex items-start gap-2">
+            <BellRing className="mt-0.5 size-3.5 shrink-0" />
+            {notice.text}
+          </p>
+          {notice.unreachable > 0 && (
+            <p className="pl-5.5 text-amber-700 dark:text-amber-400">
+              {notice.unreachable === n ? (n === 1 ? 'This is' : 'These are') : `${notice.unreachable} of these ${notice.unreachable === 1 ? 'is' : 'are'}`}{' '}
+              for an outside person with no delegate — nobody can be notified.
+            </p>
+          )}
+        </div>
+      )}
 
       <DialogFooter className="mt-6 gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>

@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form'
 import { parseISO } from 'date-fns'
-import { CalendarRange, ClipboardList, Lock, ShieldCheck, UserRound, Users } from 'lucide-react'
+import { BellRing, CalendarRange, ClipboardList, Lock, ShieldCheck, UserRound, Users } from 'lucide-react'
 import { FormSection } from '@/components/common/form-section'
 import { Field } from '@/components/common/form-field'
 import { DateField } from '@/components/common/date-field'
@@ -267,7 +267,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
               label="Progress Updates"
               required
               error={errors.updatesPerDay?.message}
-              hint="How many progress updates each assignee records per period — 2 + Weekly means twice a week (Monday to Sunday)."
+              hint="How many progress updates each assignee records per period — 2 + Weekly means twice a week (Monday to Sunday). Updates are spread over 09:00–19:00 IST: the assignee is reminded when one is due, and the assignee, delegate and you are alerted if it is missed."
               className="col-span-full"
             >
               {/* One control, two inputs: the count and its period share an
@@ -346,6 +346,18 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                 />
               )}
             />
+            {f.canSave && f.saveNotice && (
+              <p
+                className={
+                  f.saveNotice.tone === 'warn'
+                    ? 'col-span-full flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400'
+                    : 'col-span-full flex items-start gap-2 text-xs text-muted-foreground'
+                }
+              >
+                <BellRing className="mt-0.5 size-3.5 shrink-0" />
+                {f.saveNotice.text}
+              </p>
+            )}
           </form>
         )}
       </SheetBody>
