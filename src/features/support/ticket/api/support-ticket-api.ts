@@ -3,19 +3,25 @@ import { endpoints } from '@/lib/endpoints'
 import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { SUPPORT_TICKET_DEFAULT_SORT } from '../constants'
-import { supportTicketResponseSchema, supportTicketsResponseSchema } from '../schemas'
+import {
+  supportSubCategoriesResponseSchema,
+  supportTicketResponseSchema,
+  supportTicketsResponseSchema,
+} from '../schemas'
 import {
   supportTicketToPayload,
   supportTicketToUpdatePayload,
+  toSupportSubCategory,
   toSupportTicket,
 } from '../lib/support-ticket-mappers'
 import type {
   SupportReopenPayload,
   SupportTicketFormValues,
   SupportTicketPayload,
+  SupportTicketTypeValue,
   SupportTicketUpdatePayload,
 } from '../schemas'
-import type { SupportTicket, SupportTicketFilters } from '../types'
+import type { SupportSubCategory, SupportTicket, SupportTicketFilters } from '../types'
 
 /**
  * Help & Support — `/user/support/tickets`. Offset-paginated (`?limit=&offset=`,
@@ -198,5 +204,47 @@ export async function closeSupportTicket(id: number): Promise<SupportTicket> {
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
     throw toApiError(error, "Couldn't close the ticket.")
+  }
+}
+
+/**
+ * GET /user/support-sub-categories?ticket_type= — one desk's sub-categories,
+ * A-Z by name. The platform maintains the list; deleted ones are never returned.
+ *
+ * Needs `support:create` (the same right that raises a ticket), so only the
+ * Raise Ticket form reads it. `ALL_ROWS` walks the pages for a dropdown.
+ */
+export async function fetchSupportSubCategories(
+  ticketType: SupportTicketTypeValue,
+  params: PageParams = ALL_ROWS,
+): Promise<Paginated<SupportSubCategory>> {
+  try {
+    const search = params.search?.trim()
+    const query = { ticket_type: ticketType, ...(search ? { search } : {}) }
+
+    if (params.limit > 0) {
+      const raw = await http.get<unknown>(endpoints.SUPPORT_SUB_CATEGORIES.LIST, {
+        params: { limit: Math.min(params.limit, MAX_LIMIT), offset: params.offset, ...query },
+      })
+      const { items, total } = supportSubCategoriesResponseSchema.parse(raw)
+      return { items: items.map(toSupportSubCategory), total }
+    }
+
+    const collected: SupportSubCategory[] = []
+    let total = 0
+
+    for (let page = 0; page < MAX_PAGES; page += 1) {
+      const raw = await http.get<unknown>(endpoints.SUPPORT_SUB_CATEGORIES.LIST, {
+        params: { limit: MAX_LIMIT, offset: params.offset + page * MAX_LIMIT, ...query },
+      })
+      const parsed = supportSubCategoriesResponseSchema.parse(raw)
+      total = parsed.total
+      collected.push(...parsed.items.map(toSupportSubCategory))
+      if (parsed.items.length === 0 || collected.length >= total) break
+    }
+
+    return { items: collected, total }
+  } catch (error) {
+    throw toApiError(error, "Couldn't load the sub-categories.")
   }
 }

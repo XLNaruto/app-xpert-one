@@ -13,7 +13,11 @@ export { SupportTicketListPage } from './pages/support-ticket-list-page'
 export { SupportTicketCreatePage } from './pages/support-ticket-create-page'
 export { SupportTicketDetailPage } from './pages/support-ticket-detail-page'
 
-export { useSupportTickets, useSupportTicket } from './api/use-support-tickets'
+export {
+  useSupportTickets,
+  useSupportTicket,
+  useSupportSubCategories,
+} from './api/use-support-tickets'
 export {
   useCreateSupportTicket,
   useUpdateSupportTicket,
@@ -25,6 +29,7 @@ export {
   canClose,
   canEditWording,
   canReopen,
+  deskLabel,
   dueLabel,
   priorityLabel,
   slaLabel,
@@ -33,7 +38,7 @@ export {
 } from './lib/support-ticket-mappers'
 export { SUPPORT_TICKET_SORT, SUPPORT_TICKET_DEFAULT_SORT } from './constants'
 
-export type { SupportTicket, SupportTicketFilters } from './types'
+export type { SupportSubCategory, SupportTicket, SupportTicketFilters } from './types'
 export type {
   SupportPriorityValue,
   SupportStatusValue,

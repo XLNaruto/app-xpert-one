@@ -1,8 +1,13 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { ALL_ROWS, type PageParams } from '@/lib/pagination'
-import { fetchSupportTicket, fetchSupportTickets } from './support-ticket-api'
+import {
+  fetchSupportSubCategories,
+  fetchSupportTicket,
+  fetchSupportTickets,
+} from './support-ticket-api'
 import type { SupportTicketFilters } from '../types'
+import type { SupportTicketTypeValue } from '../schemas'
 
 /**
  * GET /user/support/tickets — the organization's tickets, newest first.
@@ -38,5 +43,22 @@ export function useSupportTicket(id: number) {
     queryKey: queryKeys.supportTicket.detail(id),
     queryFn: () => fetchSupportTicket(id),
     enabled: Number.isFinite(id),
+  })
+}
+
+/**
+ * GET /user/support-sub-categories?ticket_type= — one desk's sub-categories.
+ * Call with no params for the whole list (the Raise Ticket dropdown). `enabled`
+ * lets the form skip it where it can't be picked — an edit, where it's fixed.
+ */
+export function useSupportSubCategories(
+  ticketType: SupportTicketTypeValue,
+  params: PageParams = ALL_ROWS,
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.supportSubCategory.list(ticketType, params),
+    queryFn: () => fetchSupportSubCategories(ticketType, params),
+    enabled: options.enabled ?? true,
   })
 }

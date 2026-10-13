@@ -794,6 +794,18 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.supportTicket.all, 'detail', id] as const,
   },
   /**
+   * Each desk's sub-categories, for the Raise Ticket dropdown. A platform-wide
+   * master, so neither the account nor a company rides in the key — only the
+   * desk, since each one has its own list.
+   */
+  supportSubCategory: {
+    all: ['support-sub-category'] as const,
+    list: (ticketType?: string, params?: PageParams) =>
+      params
+        ? ([...queryKeys.supportSubCategory.all, 'list', ticketType ?? '', params] as const)
+        : ([...queryKeys.supportSubCategory.all, 'list', ticketType ?? ''] as const),
+  },
+  /**
    * The employee help desk — what this account's employees raised
    * (`features/support/employee-ticket`).
    *

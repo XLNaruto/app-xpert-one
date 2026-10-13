@@ -6,10 +6,11 @@ import {
 import type {
   SupportTicketFormValues,
   SupportTicketPayload,
+  SupportSubCategoryResponse,
   SupportTicketResponse,
   SupportTicketUpdatePayload,
 } from '../schemas'
-import type { SupportTicket } from '../types'
+import type { SupportSubCategory, SupportTicket } from '../types'
 
 /** One ticket, snake_case → camelCase. Every deadline field is already derived. */
 export function toSupportTicket(response: SupportTicketResponse): SupportTicket {
@@ -19,6 +20,8 @@ export function toSupportTicket(response: SupportTicketResponse): SupportTicket 
     subject: response.subject,
     description: response.description,
     ticketType: response.ticket_type,
+    subCategoryId: response.sub_category_id ?? null,
+    subCategoryName: response.sub_category_name ?? null,
     status: response.status,
     priority: response.priority,
     raisedPriority: response.raised_priority,
@@ -39,14 +42,30 @@ export function toSupportTicket(response: SupportTicketResponse): SupportTicket 
   }
 }
 
-/** Validated form values → the create body. All four fields are required. */
+/** One sub-category, snake_case → camelCase. */
+export function toSupportSubCategory(
+  response: SupportSubCategoryResponse,
+): SupportSubCategory {
+  return { id: response.id, name: response.name, createdAt: response.created_at }
+}
+
+/**
+ * Validated form values → the create body.
+ *
+ * The sub-category is sent only when one was picked; the API checks it belongs
+ * to the chosen desk.
+ */
 export function supportTicketToPayload(
   values: SupportTicketFormValues,
 ): SupportTicketPayload {
+  const subCategoryId = Number(values.subCategoryId)
   return {
     subject: values.subject.trim(),
     description: values.description.trim(),
     ticket_type: values.ticketType,
+    ...(values.subCategoryId && Number.isFinite(subCategoryId)
+      ? { sub_category_id: subCategoryId }
+      : {}),
     priority: values.priority,
   }
 }
@@ -75,6 +94,7 @@ export function supportTicketToFormValues(
     subject: ticket.subject,
     description: ticket.description,
     ticketType: ticket.ticketType,
+    subCategoryId: ticket.subCategoryId === null ? '' : String(ticket.subCategoryId),
     priority: ticket.priority,
   }
 }
@@ -107,6 +127,14 @@ export function canClose(ticket: SupportTicket): boolean {
 
 export const ticketTypeLabel = (value: string) =>
   SUPPORT_TICKET_TYPE_LABELS[value] ?? value
+
+/** The desk with its sub-category when it has one — "Technical - Payroll". */
+export function deskLabel(
+  ticket: Pick<SupportTicket, 'ticketType' | 'subCategoryName'>,
+): string {
+  const desk = ticketTypeLabel(ticket.ticketType)
+  return ticket.subCategoryName ? `${desk} - ${ticket.subCategoryName}` : desk
+}
 
 export const priorityLabel = (value: string) => SUPPORT_PRIORITY_LABELS[value] ?? value
 

@@ -90,5 +90,6 @@ export const EMPTY_SUPPORT_TICKET_FORM: SupportTicketFormValues = {
   subject: '',
   description: '',
   ticketType: 'technical',
+  subCategoryId: '',
   priority: 'normal',
 }

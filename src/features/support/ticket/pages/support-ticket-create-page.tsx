@@ -100,46 +100,76 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                   className="mt-0"
                 />
 
-                <Field
-                  label="Help Desk"
-                  required
-                  hint="Technical is the product itself; Billing is your subscription and invoices."
-                  error={form.errors.ticketType?.message}
-                >
-                  {/* Locked on edit: this half of the SLA lookup is spent. Shown
-                      as a read-only box rather than a dropdown that would only
-                      have its pick rejected. */}
-                  {form.isTypeLocked ? (
-                    <Input readOnly value={ticketTypeLabel(form.ticketType)} />
-                  ) : (
-                    <Combobox
-                      options={SUPPORT_TICKET_TYPE_OPTIONS}
-                      value={form.ticketType}
-                      onChange={form.setTicketType}
-                      searchable={false}
-                      placeholder="Pick a desk"
-                    />
-                  )}
-                </Field>
+                {/* Desk, sub-category and priority share one row on a three-column grid. */}
+                <div className="col-span-full grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
+                  <Field
+                    label="Help Desk"
+                    required
+                    hint="Technical is the product itself; Billing is your subscription and invoices."
+                    error={form.errors.ticketType?.message}
+                  >
+                    {/* Locked on edit: this half of the SLA lookup is spent. Shown
+                        as a read-only box rather than a dropdown that would only
+                        have its pick rejected. */}
+                    {form.isTypeLocked ? (
+                      <Input readOnly value={ticketTypeLabel(form.ticketType)} />
+                    ) : (
+                      <Combobox
+                        options={SUPPORT_TICKET_TYPE_OPTIONS}
+                        value={form.ticketType}
+                        onChange={form.setTicketType}
+                        searchable={false}
+                        placeholder="Pick a desk"
+                      />
+                    )}
+                  </Field>
 
-                <Field
-                  label="Priority"
-                  required
-                  hint="How badly it hurts. This is kept forever as the severity you raised the ticket with, even if the desk re-grades it later."
-                  error={form.errors.priority?.message}
-                >
-                  {form.isTypeLocked ? (
-                    <Input readOnly value={priorityLabel(form.priority)} />
-                  ) : (
-                    <Combobox
-                      options={SUPPORT_PRIORITY_OPTIONS}
-                      value={form.priority}
-                      onChange={form.setPriority}
-                      searchable={false}
-                      placeholder="Pick a priority"
-                    />
-                  )}
-                </Field>
+                  {/* Drawn from the chosen desk's own list — switching desk clears
+                      it. Fixed on edit like the desk, so shown by name. */}
+                  <Field
+                    label="Sub-Category"
+                    hint="Optional. Narrows down what the query is about — each desk has its own list."
+                    error={
+                      form.errors.subCategoryId?.message ??
+                      (form.subCategoriesError instanceof Error
+                        ? form.subCategoriesError.message
+                        : undefined)
+                    }
+                  >
+                    {form.isTypeLocked ? (
+                      <Input readOnly value={form.ticket?.subCategoryName ?? 'None'} />
+                    ) : (
+                      <Combobox
+                        options={form.subCategoryOptions}
+                        value={form.subCategoryId}
+                        onChange={form.setSubCategoryId}
+                        loading={form.isSubCategoriesLoading}
+                        clearable
+                        placeholder="Pick a sub-category"
+                        searchPlaceholder="Search sub-categories…"
+                      />
+                    )}
+                  </Field>
+
+                  <Field
+                    label="Priority"
+                    required
+                    hint="How badly it hurts. This is kept forever as the severity you raised the ticket with, even if the desk re-grades it later."
+                    error={form.errors.priority?.message}
+                  >
+                    {form.isTypeLocked ? (
+                      <Input readOnly value={priorityLabel(form.priority)} />
+                    ) : (
+                      <Combobox
+                        options={SUPPORT_PRIORITY_OPTIONS}
+                        value={form.priority}
+                        onChange={form.setPriority}
+                        searchable={false}
+                        placeholder="Pick a priority"
+                      />
+                    )}
+                  </Field>
+                </div>
 
                 {form.isTypeLocked && (
                   <p className="col-span-full flex items-start gap-2 text-xs text-muted-foreground">

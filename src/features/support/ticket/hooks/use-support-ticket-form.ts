@@ -1,12 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { ApiError, getApiErrorMessage } from '@/lib/api-error'
+import type { ComboboxOption } from '@/components/ui/combobox'
 import { supportTicketSchema, type SupportTicketFormValues } from '../schemas'
 import { EMPTY_SUPPORT_TICKET_FORM } from '../constants'
-import { useSupportTicket } from '../api/use-support-tickets'
+import { useSupportSubCategories, useSupportTicket } from '../api/use-support-tickets'
 import {
   useCreateSupportTicket,
   useUpdateSupportTicket,
@@ -25,6 +26,10 @@ import {
  * at any point, so on edit both controls are locked and only the wording moves —
  * a ticket filed against the wrong desk is replaced, not amended.
  *
+ * Each desk takes an optional sub-category from its own list on the platform;
+ * switching desk clears it. It doesn't touch the deadline — that is still
+ * desk + severity alone.
+ *
  * The edit window itself closes when the desk first picks the ticket up (409
  * after that), so an edit that arrives too late is caught here as a message
  * rather than shown as a form that can't save.
@@ -42,21 +47,41 @@ export function useSupportTicketForm(id?: number) {
     resolver: zodResolver(supportTicketSchema),
     defaultValues: EMPTY_SUPPORT_TICKET_FORM,
   })
-  const { control, reset, handleSubmit, setValue } = form
+  const { control, reset, handleSubmit, setValue, setError } = form
+
+  const ticketType = useWatch({ control, name: 'ticketType' }) ?? 'technical'
+  const priority = useWatch({ control, name: 'priority' }) ?? 'normal'
+
+  // Each desk has its own list, so it's read for the desk picked. Only while
+  // raising — on an edit the pick is fixed and shown by name from the ticket.
+  const subCategories = useSupportSubCategories(ticketType, undefined, { enabled: !isEdit })
+  const subCategoryOptions = useMemo<ComboboxOption[]>(
+    () =>
+      (subCategories.data?.items ?? []).map((item) => ({
+        label: item.name,
+        value: String(item.id),
+      })),
+    [subCategories.data],
+  )
 
   // Seed the form once the record loads (edit mode only).
   useEffect(() => {
     if (detail.data) reset(supportTicketToFormValues(detail.data))
   }, [detail.data, reset])
 
-  const ticketType = useWatch({ control, name: 'ticketType' }) ?? 'technical'
-  const priority = useWatch({ control, name: 'priority' }) ?? 'normal'
+  const subCategoryId = useWatch({ control, name: 'subCategoryId' }) ?? ''
 
-  const setTicketType = (value: string) =>
-    setValue('ticketType', value === 'billing' ? 'billing' : 'technical', {
-      shouldValidate: true,
-      shouldDirty: true,
-    })
+  const setTicketType = (value: string) => {
+    const next = value === 'billing' ? 'billing' : 'technical'
+    if (next === ticketType) return
+    setValue('ticketType', next, { shouldValidate: true, shouldDirty: true })
+    // A sub-category belongs to one desk's list — the old pick means nothing
+    // on the new desk.
+    setValue('subCategoryId', '', { shouldDirty: true })
+  }
+
+  const setSubCategoryId = (value: string) =>
+    setValue('subCategoryId', value, { shouldValidate: true, shouldDirty: true })
 
   const setPriority = (value: string) =>
     setValue(
@@ -99,7 +124,21 @@ export function useSupportTicketForm(id?: number) {
         }
         goToList()
       },
-      onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't raise the ticket.")),
+      onError: (err) => {
+        const message = getApiErrorMessage(err, "Couldn't raise the ticket.")
+        // A stale pick — the platform deleted that sub-category (or moved it
+        // to the other desk) after the dropdown loaded. Reload the list and put the complaint on the field.
+        if (
+          err instanceof ApiError &&
+          err.status === 400 &&
+          /sub-category/i.test(message)
+        ) {
+          setValue('subCategoryId', '')
+          setError('subCategoryId', { message })
+          void subCategories.refetch()
+        }
+        toast.error(message)
+      },
     })
   })
 
@@ -122,6 +161,11 @@ export function useSupportTicketForm(id?: number) {
 
     ticketType,
     setTicketType,
+    subCategoryId,
+    setSubCategoryId,
+    subCategoryOptions,
+    isSubCategoriesLoading: subCategories.isLoading,
+    subCategoriesError: subCategories.error,
     priority,
     setPriority,
 

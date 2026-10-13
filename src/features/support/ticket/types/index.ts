@@ -25,6 +25,10 @@ export interface SupportTicket {
   description: string
   /** Which desk answers — also half of what priced the deadline. */
   ticketType: SupportTicketTypeValue
+  /** Narrows the desk. Null for tickets raised without one. */
+  subCategoryId: number | null
+  /** The sub-category's current name; survives its deletion on old tickets. */
+  subCategoryName: string | null
   status: SupportStatusValue
   /**
    * The severity in force. Normally what it was raised with; the desk may
@@ -58,6 +62,13 @@ export interface SupportTicket {
   closedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+/** One desk sub-category. The platform maintains the list; we only pick from it. */
+export interface SupportSubCategory {
+  id: number
+  name: string
+  createdAt: string
 }
 
 /** The list screen's server-side filters, as the hook holds them. */

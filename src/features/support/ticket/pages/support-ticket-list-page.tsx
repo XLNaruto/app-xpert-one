@@ -142,7 +142,7 @@ export function SupportTicketListPage() {
         accessorKey: 'ticketType',
         header: 'Desk',
         enableSorting: false,
-        cell: ({ row }) => <SupportTypeBadge ticketType={row.original.ticketType} />,
+        cell: ({ row }) => <SupportTypeBadge ticket={row.original} />,
       },
       {
         // Sortable columns are keyed by the API's own field name, so a header
@@ -185,6 +185,8 @@ export function SupportTicketListPage() {
         accessorKey: 'raisedByName',
         header: 'Raised By',
         enableSorting: false,
+        // A name is short enough to keep on one line; wrapping it read as two people.
+        meta: { className: 'min-w-36 whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {row.original.raisedByName || '—'}

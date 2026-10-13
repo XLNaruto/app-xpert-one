@@ -1,6 +1,7 @@
 import { AlertTriangle, Clock } from 'lucide-react'
 import { Badge, type BadgeProps } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { priorityLabel, statusLabel, ticketTypeLabel } from '../lib/support-ticket-mappers'
 import type { SupportTicket } from '../types'
 
@@ -43,9 +44,41 @@ export function SupportPriorityBadge({
   )
 }
 
-/** Which desk answers. Neutral by design — it's a routing fact, not a severity. */
-export function SupportTypeBadge({ ticketType }: { ticketType: string }) {
-  return <Badge variant="outline">{ticketTypeLabel(ticketType)}</Badge>
+/**
+ * Which desk answers, and its sub-category when one was picked — one split pill,
+ * `Technical │ Payroll`. Neutral by design — it's a routing fact, not a severity.
+ * A long sub-category is truncated and read in full from the tooltip.
+ */
+export function SupportTypeBadge({
+  ticket,
+}: {
+  ticket: Pick<SupportTicket, 'ticketType' | 'subCategoryName'>
+}) {
+  const desk = ticketTypeLabel(ticket.ticketType)
+
+  if (!ticket.subCategoryName) {
+    return (
+      <Badge variant="outline" className="whitespace-nowrap">
+        {desk}
+      </Badge>
+    )
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex max-w-56 cursor-default items-center overflow-hidden rounded-full border text-xs">
+          <span className="shrink-0 px-2.5 py-0.5 font-semibold">{desk}</span>
+          <span className="truncate border-l bg-muted/60 px-2.5 py-0.5 text-muted-foreground">
+            {ticket.subCategoryName}
+          </span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {desk} - {ticket.subCategoryName}
+      </TooltipContent>
+    </Tooltip>
+  )
 }
 
 /**

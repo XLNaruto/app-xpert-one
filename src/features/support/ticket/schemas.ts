@@ -33,11 +33,15 @@ export const supportSlaUnitSchema = z.enum(['hours', 'days'])
 /**
  * The Raise / Edit Ticket form.
  *
- * All four fields are declared here, but only two of them ever travel on an
- * edit: `ticket_type` and `priority` selected the SLA cell that became this
- * ticket's deadline, so the API refuses to change either at any point. The edit
- * screen shows them read-only rather than dropping them — what desk was asked,
- * and at what severity, is the context the wording is being corrected under.
+ * Every field is declared here, but only two of them ever travel on an edit:
+ * `ticket_type` and `priority` selected the SLA cell that became this ticket's
+ * deadline, so the API refuses to change either at any point — and the
+ * sub-category is fixed alongside them. The edit screen shows them read-only
+ * rather than dropping them — what desk was asked, and at what severity, is the
+ * context the wording is being corrected under.
+ *
+ * `subCategoryId` is the dropdown's string value, `''` for none. Optional, and
+ * drawn from the chosen desk's own list.
  */
 export const supportTicketSchema = z.object({
   subject: z
@@ -51,6 +55,7 @@ export const supportTicketSchema = z.object({
     .min(1, 'Please describe the problem')
     .max(MAX_SUPPORT_DESCRIPTION, `Cannot exceed ${MAX_SUPPORT_DESCRIPTION} characters`),
   ticketType: supportTicketTypeSchema,
+  subCategoryId: z.string(),
   priority: supportPrioritySchema,
 })
 
@@ -88,6 +93,10 @@ export const supportTicketResponseSchema = z.object({
   subject: z.string(),
   description: z.string(),
   ticket_type: supportTicketTypeSchema,
+  /** Null when none was chosen, and for tickets raised before sub-categories. */
+  sub_category_id: z.number().nullish(),
+  /** The CURRENT name — a rename shows through, a delete keeps the last one. */
+  sub_category_name: z.string().nullish(),
   status: supportStatusSchema,
   /** The severity in force — the desk may re-grade it, which never moves the deadline. */
   priority: supportPrioritySchema,
@@ -121,6 +130,19 @@ export const supportTicketsResponseSchema = z.object({
   total: z.number(),
 })
 
+/** One desk sub-category, as `/user/support-sub-categories` lists it. */
+export const supportSubCategoryResponseSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  created_at: z.string(),
+})
+export type SupportSubCategoryResponse = z.infer<typeof supportSubCategoryResponseSchema>
+
+export const supportSubCategoriesResponseSchema = z.object({
+  items: z.array(supportSubCategoryResponseSchema),
+  total: z.number(),
+})
+
 /* ── Request bodies ────────────────────────────────────────────────────────── */
 
 /**
@@ -131,6 +153,8 @@ export interface SupportTicketPayload {
   subject: string
   description: string
   ticket_type: SupportTicketTypeValue
+  /** Must belong to `ticket_type`'s list — the API answers 400 otherwise. */
+  sub_category_id?: number | null
   priority: SupportPriorityValue
 }
 

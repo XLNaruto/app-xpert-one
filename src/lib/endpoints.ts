@@ -122,6 +122,10 @@ export const endpoints = {
     REOPEN: (id: number) => `/user/support/tickets/${id}/reopen`,
     CLOSE: (id: number) => `/user/support/tickets/${id}/close`,
   },
+  /** Each desk's sub-categories (`?ticket_type=`) — read-only here, the platform owns the list. */
+  SUPPORT_SUB_CATEGORIES: {
+    LIST: '/user/support-sub-categories',
+  },
   EMPLOYEE_SUPPORT_TICKETS: {
     LIST: '/user/employee-support-tickets',
     SUMMARY: '/user/employee-support-tickets/summary',

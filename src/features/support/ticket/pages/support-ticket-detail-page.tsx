@@ -26,10 +26,10 @@ import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { useSupportTicketDetail } from '../hooks/use-support-ticket-detail'
 import {
+  deskLabel,
   dueLabel,
   priorityLabel,
   slaLabel,
-  ticketTypeLabel,
 } from '../lib/support-ticket-mappers'
 import {
   SupportDueBadge,
@@ -144,7 +144,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
               <DetailItem
                 icon={CreditCard}
                 label="Help Desk"
-                value={ticketTypeLabel(ticket.ticketType)}
+                value={deskLabel(ticket)}
               />
 
               <div className="col-span-full">
