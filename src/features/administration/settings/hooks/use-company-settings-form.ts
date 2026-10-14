@@ -87,11 +87,13 @@ export function useCompanySettingsForm() {
     values.effectiveDate && values.effectiveTime
       ? fromIstFields(values.effectiveDate, values.effectiveTime)
       : null
-  // Checked live so the field says why before Save is pressed.
+  // Checked live so the field says why before Save is pressed. An untouched
+  // default IS the minimum — it's re-seeded in an effect after `earliest` moves,
+  // so checking it would flash the error for that one render.
   const effectiveError =
     form.formState.errors.effectiveDate?.message ??
     form.formState.errors.effectiveTime?.message ??
-    (effectiveFrom && earliest && isBeforeMinute(effectiveFrom, earliest)
+    (pickedOwnTime && effectiveFrom && earliest && isBeforeMinute(effectiveFrom, earliest)
       ? tooEarlyMessage(earliest)
       : undefined)
 
