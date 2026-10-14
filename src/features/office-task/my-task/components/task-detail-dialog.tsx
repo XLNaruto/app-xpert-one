@@ -37,10 +37,13 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export function TaskDetailDialog({
   target,
   workedSeconds,
+  direct = false,
   onClose,
 }: {
   target: CompleteTarget | null
   workedSeconds?: number
+  /** Project shares are handed in DIRECTLY — no progress target, no empty timeline. */
+  direct?: boolean
   onClose: () => void
 }) {
   return (
@@ -81,7 +84,11 @@ export function TaskDetailDialog({
                     <DetailItem
                       label="Remaining"
                       value={target.row.status === 'completed' ? 'Done' : deadlineInfo(target.row.deadline).label}
-                      hint={`Progress updates: ${frequencyLabel(target.row.updatesPerDay, target.row.updateFrequency)}`}
+                      hint={
+                        direct
+                          ? undefined
+                          : `Progress updates: ${frequencyLabel(target.row.updatesPerDay, target.row.updateFrequency)}`
+                      }
                     />
                   </>
                 )}
@@ -126,7 +133,8 @@ export function TaskDetailDialog({
                 </Section>
               )}
 
-              {target.kind === 'project' && (
+              {/* Under DIRECT, notes recorded before the switch still show; an empty timeline doesn't. */}
+              {target.kind === 'project' && !(direct && target.row.progress.length === 0) && (
                 <Section title="Progress">
                   <div className="pl-2">
                     <ProgressTimeline notes={target.row.progress} />

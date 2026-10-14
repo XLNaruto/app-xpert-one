@@ -428,7 +428,12 @@ export function MyTaskListPage() {
 
       <CompleteTaskDialog target={board.completing} workedSeconds={completingSeconds} onClose={board.closeComplete} />
       <ProgressDialog row={board.recording} onClose={board.closeProgress} />
-      <TaskDetailDialog target={board.viewing} workedSeconds={viewingSeconds} onClose={board.closeView} />
+      <TaskDetailDialog
+        target={board.viewing}
+        workedSeconds={viewingSeconds}
+        direct={board.projectDirect}
+        onClose={board.closeView}
+      />
     </div>
   )
 }

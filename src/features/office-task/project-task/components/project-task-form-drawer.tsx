@@ -33,7 +33,7 @@ function RuleSwitch({
   onChange,
   disabled,
 }: {
-  label: string
+  label: string 
   hint: string
   checked: boolean
   onChange: (v: boolean) => void
