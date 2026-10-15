@@ -7,6 +7,7 @@ import { uploadFile, IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { EMPLOYEE_DEFAULT_SORT, type EmployeeStatusFilter } from '../constants'
 import {
   deleteFaceResponseSchema,
+  employeeGeoFenceResponseSchema,
   employeePickerListResponseSchema,
   employeeResponseSchema,
   employeesResponseSchema,
@@ -221,6 +222,27 @@ export async function deleteEmployeeFace(id: number): Promise<number> {
     return deleteFaceResponseSchema.parse(raw).deleted_images
   } catch (error) {
     throw toApiError(error, "Couldn't delete the registered face.")
+  }
+}
+
+/**
+ * PUT /user/employees/:id/geo-fence — flip the employee's geo-fence switch on
+ * its own, without sending step 1. Answers the value the server now holds, which
+ * is what the switch shows — not what was asked for.
+ *
+ * The flag only says whether the fence is enforced; the fence itself belongs to
+ * the company/department (`GEO_FENCE`), and with none drawn it has no effect. The
+ * employee app picks the change up the next time it is opened or resumed.
+ */
+export async function setEmployeeGeoFence(id: number, enabled: boolean): Promise<boolean> {
+  try {
+    const raw = await http.put<unknown, { is_geo_fence_enabled: boolean }>(
+      endpoints.EMPLOYEES.GEO_FENCE(id),
+      { is_geo_fence_enabled: enabled },
+    )
+    return employeeGeoFenceResponseSchema.parse(raw).is_geo_fence_enabled
+  } catch (error) {
+    throw toApiError(error, "Couldn't update the geo-fence setting.")
   }
 }
 

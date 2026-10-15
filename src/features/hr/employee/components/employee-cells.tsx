@@ -2,6 +2,7 @@ import {
   CalendarDays,
   Eye,
   History,
+  Loader2,
   Mail,
   Pencil,
   ScanFace,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import type { Employee } from '../types'
@@ -141,4 +143,35 @@ export function EmployeeRowActions({
     })
 
   return <RowActionsMenu actions={actions} />
+}
+
+/**
+ * The row's "Geo-fence" switch. `pending` is the value being saved — shown in
+ * place of the stored one, disabled, with a loader beside it until the server
+ * answers. Without `onChange` it is read-only (no `employees:update`, or an
+ * exited employee, who can't punch anyway).
+ */
+export function EmployeeGeoFenceCell({
+  employee,
+  pending,
+  onChange,
+}: {
+  employee: Employee
+  pending?: boolean
+  onChange?: (enabled: boolean) => void
+}) {
+  const isSaving = pending !== undefined
+  const checked = isSaving ? pending : employee.isGeoFenceEnabled
+
+  return (
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
+        disabled={!onChange || isSaving}
+        aria-label={`Geo-fence for ${employee.name || 'this employee'}`}
+      />
+      {isSaving && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+    </div>
+  )
 }

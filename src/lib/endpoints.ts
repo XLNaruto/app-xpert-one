@@ -331,6 +331,12 @@ export const endpoints = {
     /** Soft delete — frees the plan seat, primary mobile and code; 204. */
     DELETE: (id: number) => `/user/employees/${id}`,
     DELETE_FACE: (id: number) => `/user/employees/${id}/face`,
+    /**
+     * The per-employee "Geo-fence" switch — whether the employee app makes them
+     * punch inside their company/department's fence. `PUT` flips it alone
+     * (`employees:update`); it doesn't draw the fence, which is `GEO_FENCE`.
+     */
+    GEO_FENCE: (id: number) => `/user/employees/${id}/geo-fence`,
     KYC: (id: number) => `/user/employees/${id}/kyc`,
     WAGE_STRUCTURE: (id: number) => `/user/employees/${id}/wage-structure`,
     /**

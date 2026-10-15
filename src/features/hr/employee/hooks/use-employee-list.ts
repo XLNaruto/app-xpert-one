@@ -8,7 +8,7 @@ import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { EMPLOYEE_DEFAULT_SORT, type EmployeeStatusFilter } from '../constants'
 import { useEmployees } from '../api/use-employees'
-import { useDeleteEmployee } from '../api/use-employee-mutations'
+import { useDeleteEmployee, useSetEmployeeGeoFence } from '../api/use-employee-mutations'
 import type { Employee } from '../types'
 
 /**
@@ -70,6 +70,50 @@ export function useEmployeeList() {
     })
   }
 
+  /* ── Geo-fence switch ── */
+  // Rows whose save is in flight, holding the value asked for: the switch shows
+  // it, disabled with a loader, until the server's answer replaces it — or, on a
+  // failure, the entry is dropped and the row falls back to its old value.
+  const setGeoFence = useSetEmployeeGeoFence()
+  const [geoFencePending, setGeoFencePending] = useState<ReadonlyMap<number, boolean>>(
+    () => new Map(),
+  )
+
+  const settleGeoFence = (id: number) =>
+    setGeoFencePending((current) => {
+      const next = new Map(current)
+      next.delete(id)
+      return next
+    })
+
+  const toggleGeoFence = (employee: Employee, enabled: boolean) => {
+    const { id, name } = employee
+    if (geoFencePending.has(id)) return
+    setGeoFencePending((current) => new Map(current).set(id, enabled))
+    setGeoFence.mutate(
+      { id, enabled },
+      {
+        onSuccess: (saved) =>
+          toast.success(`Geo-fence turned ${saved ? 'on' : 'off'} for ${name || 'the employee'}`),
+        onError: (err) =>
+          toast.error(getApiErrorMessage(err, "Couldn't update the geo-fence setting.")),
+        onSettled: () => settleGeoFence(id),
+      },
+    )
+  }
+
+  // A click on the switch only asks; the save runs once the dialog is confirmed.
+  const [geoFenceConfirm, setGeoFenceConfirm] = useState<{
+    employee: Employee
+    enabled: boolean
+  } | null>(null)
+
+  const confirmGeoFence = () => {
+    if (!geoFenceConfirm) return
+    toggleGeoFence(geoFenceConfirm.employee, geoFenceConfirm.enabled)
+    setGeoFenceConfirm(null)
+  }
+
   /**
    * Open the wizard on one employee. The id travels encrypted in `?data=`
    * alongside the tab to open, so nothing about the record shows in the address
@@ -121,6 +165,13 @@ export function useEmployeeList() {
     cancelDelete: () => setPendingDelete(null),
     confirmDelete,
     isDeleting: deleteEmployee.isPending,
+    /** Row id → the value being saved, for rows whose switch is mid-save. */
+    geoFencePending,
+    geoFenceConfirm,
+    askToggleGeoFence: (employee: Employee, enabled: boolean) =>
+      setGeoFenceConfirm({ employee, enabled }),
+    cancelToggleGeoFence: () => setGeoFenceConfirm(null),
+    confirmGeoFence,
     /**
      * `bank_id` → bank name, empty until the master has loaded. Memoised, so the
      * column definitions can list it as a dependency and rebuild when it fills.

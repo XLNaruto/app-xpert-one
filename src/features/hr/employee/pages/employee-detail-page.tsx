@@ -485,6 +485,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                       label="Stamp Agreement"
                       value={employee.isStampAgreement}
                     />
+                    <BoolChip label="Geo-fence" value={employee.isGeoFenceEnabled} />
                   </div>
 
                   {service.leavingDate && (

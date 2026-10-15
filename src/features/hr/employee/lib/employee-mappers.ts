@@ -134,6 +134,7 @@ export function toEmployee(response: EmployeeResponse): Employee {
     remarks: response.remarks ?? '',
     isPoliceVerified: response.is_police_verified ?? false,
     isStampAgreement: response.is_stamp_agreement ?? false,
+    isGeoFenceEnabled: response.is_geo_fence_enabled ?? false,
 
     completedSteps: toCompletedSteps(response.completed_steps),
     exit: response.exit ?? false,
@@ -232,6 +233,7 @@ export function employeeBasicToPayload(
     renewal_date: toApiDate(values.renewalDate),
     is_police_verified: values.isPoliceVerified,
     is_stamp_agreement: values.isStampAgreement,
+    is_geo_fence_enabled: values.isGeoFenceEnabled,
     leaving_date: toApiDate(values.leavingDate),
     leaving_reason: orNull(values.leavingReason),
   }
@@ -315,6 +317,7 @@ export function employeeToBasicFormValues(
     renewalDate: toFormDate(service?.renewalDate),
     isPoliceVerified: employee.isPoliceVerified,
     isStampAgreement: employee.isStampAgreement,
+    isGeoFenceEnabled: employee.isGeoFenceEnabled,
     leavingDate: toFormDate(service?.leavingDate),
     leavingReason: service?.leavingReason ?? '',
   }

@@ -1,10 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
+import type { Paginated } from '@/lib/pagination'
 import type { EmployeeBasicFormValues } from '../schemas'
+import type { Employee } from '../types'
 import {
   createEmployee,
   deleteEmployee,
   deleteEmployeeFace,
+  setEmployeeGeoFence,
   updateEmployee,
   uploadEmployeePhoto,
 } from './employee-api'
@@ -81,4 +84,34 @@ export function useDeleteEmployeeFace() {
  */
 export function useUploadEmployeePhoto() {
   return useMutation({ mutationFn: (file: File) => uploadEmployeePhoto(file) })
+}
+
+/**
+ * PUT /user/employees/:id/geo-fence — the list's per-row switch.
+ *
+ * The answered value is written straight into every cached page and the detail
+ * entry, so the row settles on what the server holds without a refetch of the
+ * whole page. A failure (a 404 for an employee gone or out of scope) refetches
+ * the employee scope instead, so a stale row doesn't linger.
+ */
+export function useSetEmployeeGeoFence() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
+      setEmployeeGeoFence(id, enabled),
+    onSuccess: (isGeoFenceEnabled, { id }) => {
+      const patch = (employee: Employee) =>
+        employee.id === id ? { ...employee, isGeoFenceEnabled } : employee
+      queryClient.setQueriesData<Paginated<Employee>>(
+        { queryKey: queryKeys.employee.list() },
+        (page) => (page ? { ...page, items: page.items.map(patch) } : page),
+      )
+      queryClient.setQueryData<Employee>(queryKeys.employee.detail(id), (employee) =>
+        employee ? patch(employee) : employee,
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.employee.all })
+    },
+  })
 }

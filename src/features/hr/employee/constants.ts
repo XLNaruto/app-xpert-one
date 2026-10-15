@@ -233,6 +233,14 @@ export const DOCUMENT_ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp'
 /** What the photo picker advertises — the three types the presign signs for. */
 export const PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp'
 
+/**
+ * The one line that explains the per-employee Geo-fence switch — the list column
+ * and step 1 share it, so the toggle reads the same everywhere. It enforces the
+ * fence drawn for the company/department; it doesn't draw one.
+ */
+export const GEO_FENCE_HINT =
+  "When ON, this employee can mark attendance only inside the site's geo-fence."
+
 /* ── Blank forms ─────────────────────────────────────────────────────────── */
 
 /**
@@ -296,6 +304,7 @@ export const EMPTY_EMPLOYEE_BASIC_FORM: EmployeeBasicFormValues = {
   renewalDate: '',
   isPoliceVerified: false,
   isStampAgreement: false,
+  isGeoFenceEnabled: false,
   leavingDate: '',
   leavingReason: '',
 }

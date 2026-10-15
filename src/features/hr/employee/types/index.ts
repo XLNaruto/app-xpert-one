@@ -131,6 +131,8 @@ export interface Employee extends AuditFields {
 
   isPoliceVerified: boolean
   isStampAgreement: boolean
+  /** The employee app makes them punch inside the site's geo-fence. */
+  isGeoFenceEnabled: boolean
 
   completedSteps: EmployeeCompletedSteps
   /** The service in the company is closed (relieved / transferred away) — the list's "Exited" badge. */

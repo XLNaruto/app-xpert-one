@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   BLOOD_GROUP_OPTIONS,
   GENDER_OPTIONS,
+  GEO_FENCE_HINT,
   HEIGHT_UNIT_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   MINIMUM_EMPLOYEE_AGE,
@@ -457,6 +458,22 @@ export function BasicDetailTab({
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     aria-label="Stamped agreement is on file"
+                  />
+                </div>
+              )}
+            />
+          </Field>
+
+          <Field label="Enforce Geo-fence" hint={GEO_FENCE_HINT}>
+            <Controller
+              control={control}
+              name="isGeoFenceEnabled"
+              render={({ field }) => (
+                <div className="flex h-10 items-center">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    aria-label="Enforce geo-fence for attendance"
                   />
                 </div>
               )}

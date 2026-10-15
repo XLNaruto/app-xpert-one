@@ -1,17 +1,22 @@
 import { useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Plus, Trash2, UsersRound } from 'lucide-react'
+import { Info, MapPin, Plus, ShieldAlert, Trash2, UsersRound } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { auditColumns, DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
-import { Forbidden } from '@/features/error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { formatDate } from '@/lib/utils'
 import { ScopedDataError } from '@/features/company'
-import { EMPLOYEE_SORT, EMPLOYEE_STATUS_FILTER, type EmployeeStatusFilter } from '../constants'
+import {
+  EMPLOYEE_SORT,
+  EMPLOYEE_STATUS_FILTER,
+  GEO_FENCE_HINT,
+  type EmployeeStatusFilter,
+} from '../constants'
 import { useEmployeeList } from '../hooks/use-employee-list'
 import { useEmployeeFaces } from '../hooks/use-employee-faces'
 import { EmployeeFacesDialog } from '../components/employee-faces-dialog'
@@ -19,7 +24,11 @@ import { EmployeeExitDialog } from '../components/employee-exit-dialog'
 import { useEmployeeExit } from '../hooks/use-employee-exit'
 import { useEmployeeRejoin } from '../hooks/use-employee-rejoin'
 import { EmployeeRejoinDialog } from '../components/employee-rejoin-dialog'
-import { EmployeeIdentityCell, EmployeeRowActions } from '../components/employee-cells'
+import {
+  EmployeeGeoFenceCell,
+  EmployeeIdentityCell,
+  EmployeeRowActions,
+} from '../components/employee-cells'
 import type { Employee } from '../types'
 
 /**
@@ -61,6 +70,11 @@ export function EmployeeListPage() {
     cancelDelete,
     confirmDelete,
     isDeleting,
+    geoFencePending,
+    geoFenceConfirm,
+    askToggleGeoFence,
+    cancelToggleGeoFence,
+    confirmGeoFence,
     bankNames,
   } = useEmployeeList()
 
@@ -143,6 +157,51 @@ export function EmployeeListPage() {
         meta: { className: 'min-w-56' },
         cell: ({ row }) => <EmployeeIdentityCell employee={row.original} />,
       },
+      // Whether the employee app makes this person punch inside the site's fence.
+      // Seen with `employees:read`, switched with `employees:update` — never the
+      // geo-fence codes, which are for drawing the fence. Not sortable or
+      // filterable: the API offers neither for it.
+      ...(canView || canUpdate
+        ? [
+            {
+              id: 'geoFence',
+              header: () => (
+                <span className="inline-flex items-center gap-1">
+                  Geo-fence
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label="Geo-fence — more information"
+                        className="inline-flex cursor-help text-muted-foreground/70 transition-colors hover:text-primary"
+                      >
+                        <Info className="size-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-64 text-pretty font-normal normal-case">
+                      {GEO_FENCE_HINT}
+                    </TooltipContent>
+                  </Tooltip>
+                </span>
+              ),
+              enableSorting: false,
+              meta: { className: 'w-px whitespace-nowrap' },
+              cell: ({ row }) => (
+                <EmployeeGeoFenceCell
+                  employee={row.original}
+                  pending={geoFencePending.get(row.original.id)}
+                  // An exited employee can't punch, so their switch is read-only.
+                  onChange={
+                    canUpdate && !row.original.exit
+                      ? (enabled) => askToggleGeoFence(row.original, enabled)
+                      : undefined
+                  }
+                />
+              ),
+            } satisfies ColumnDef<Employee>,
+          ]
+        : []),
       {
         id: 'mobile',
         accessorKey: 'mobileNumber1',
@@ -234,11 +293,8 @@ export function EmployeeListPage() {
     // `bankNames` arrives after the first render, so the Bank Name column has to
     // be rebuilt when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bankNames, canView, canCreate, canUpdate, canDelete],
+    [bankNames, geoFencePending, canView, canCreate, canUpdate, canDelete],
   )
-
-  // Reading the list was refused — show the 403 screen, not a broken table.
-  if (isForbidden) return <Forbidden description={forbiddenMessage} />
 
   return (
     <div>
@@ -271,7 +327,16 @@ export function EmployeeListPage() {
         </TabsList>
       </Tabs>
 
-      {isError ? (
+      {/* Reading the list was refused — a role can hold employees:read/update (a
+          supervisor's toggle) without employees:list. Say so in place of the
+          table rather than hiding the screen or showing an empty register. */}
+      {isForbidden ? (
+        <EmptyState
+          icon={ShieldAlert}
+          title="No access to the employee list"
+          description={forbiddenMessage}
+        />
+      ) : isError ? (
         <ScopedDataError
           error={error}
           fallback="Couldn't load employees."
@@ -344,6 +409,24 @@ export function EmployeeListPage() {
         loading={isDeletingFaces}
         keepOpenOnConfirm
         onConfirm={confirmDeleteFaces}
+      />
+
+      {/* The geo-fence switch asks before saving; the row then shows its loader
+          until the server answers. */}
+      <ConfirmDialog
+        open={geoFenceConfirm !== null}
+        onOpenChange={(open) => !open && cancelToggleGeoFence()}
+        icon={MapPin}
+        title={geoFenceConfirm?.enabled ? 'Turn on geo-fence?' : 'Turn off geo-fence?'}
+        description={
+          geoFenceConfirm
+            ? geoFenceConfirm.enabled
+              ? `${geoFenceConfirm.employee.name || 'This employee'} will be able to mark attendance only inside the site's geo-fence. If no fence is drawn for the site yet, this has no effect.`
+              : `${geoFenceConfirm.employee.name || 'This employee'} will be able to mark attendance from anywhere.`
+            : undefined
+        }
+        confirmLabel={geoFenceConfirm?.enabled ? 'Turn on' : 'Turn off'}
+        onConfirm={confirmGeoFence}
       />
 
       {/* A soft delete: the seat, primary mobile and code are freed, the employee

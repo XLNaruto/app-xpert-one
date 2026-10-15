@@ -162,6 +162,8 @@ const employeeBasicFields = z.object({
     renewalDate: z.string(),
     isPoliceVerified: z.boolean(),
     isStampAgreement: z.boolean(),
+    /** Punch only inside the site's geo-fence — off by default. */
+    isGeoFenceEnabled: z.boolean(),
 
     /** Leaving is recorded here for a correction; a real exit goes through step 8. */
     leavingDate: z.string(),
@@ -349,6 +351,11 @@ export const employeeResponseSchema = z.object({
   remarks: z.string().nullish(),
   is_police_verified: z.boolean().nullish(),
   is_stamp_agreement: z.boolean().nullish(),
+  /**
+   * The employee app makes this person punch inside their company/department's
+   * geo-fence. On every list row and the detail read; `false` when absent.
+   */
+  is_geo_fence_enabled: z.boolean().nullish(),
 
   /**
    * KYC columns. They live on the employee table, so they ride on every read —
@@ -415,6 +422,13 @@ export const deleteFaceResponseSchema = z.object({
   deleted_images: z.number(),
 })
 
+/** What `GET` / `PUT /user/employees/:id/geo-fence` answer. */
+export const employeeGeoFenceResponseSchema = z.object({
+  employee_id: z.number(),
+  is_geo_fence_enabled: z.boolean(),
+})
+export type EmployeeGeoFenceResponse = z.infer<typeof employeeGeoFenceResponseSchema>
+
 /**
  * The create body. `company_id` is the only field the API insists on; everything
  * else is optional and an omitted key is simply not stored.
@@ -475,6 +489,7 @@ export interface EmployeeBasicPayload {
   renewal_date: string | null
   is_police_verified: boolean
   is_stamp_agreement: boolean
+  is_geo_fence_enabled: boolean
   leaving_date: string | null
   leaving_reason: string | null
 }
