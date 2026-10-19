@@ -40,6 +40,12 @@ export function usePlanSwitchFlow({
   const [isYearly, setIsYearly] = useState(false)
   const [extendType, setExtendType] = useState<ExtendType>('immediately')
   const [note, setNote] = useState('')
+  /**
+   * The choice the owner ticked "I accept losing these screens" for. Held as a
+   * key, not a boolean, so changing plan, term or timing un-ticks it — consent
+   * to one plan's losses isn't consent to another's.
+   */
+  const [acknowledgedKey, setAcknowledgedKey] = useState<string | null>(null)
 
   /** A trial counts as running — anything the API returned is a running term. */
   const hasRunningPlan = subscription !== null
@@ -54,6 +60,7 @@ export function usePlanSwitchFlow({
       // next_renewal is refused for an open-ended or cancelling term.
       setExtendType('immediately')
       setNote('')
+      setAcknowledgedKey(null)
     },
     [],
   )
@@ -84,6 +91,16 @@ export function usePlanSwitchFlow({
   // the new one loads, but never confirmed.
   const summary = preview.isPlaceholderData ? null : (preview.data ?? null)
 
+  const choiceKey = choice ? JSON.stringify(choice) : null
+  /** The target plan drops screens the account has today. */
+  const isAccessReduced = summary?.accessChange?.isReduced ?? false
+  const accessReductionAcknowledged =
+    choiceKey !== null && acknowledgedKey === choiceKey
+  const setAccessReductionAcknowledged = useCallback(
+    (acknowledged: boolean) => setAcknowledgedKey(acknowledged ? choiceKey : null),
+    [choiceKey],
+  )
+
   const isSubmitting = switchPlan.isPending || sendRequest.isPending
   const noteTooLong = note.trim().length > SWITCH_REQUEST_NOTE_MAX
 
@@ -93,6 +110,7 @@ export function usePlanSwitchFlow({
     summary.capacity.ok &&
     !preview.isFetching &&
     !isSubmitting &&
+    !(isAccessReduced && !accessReductionAcknowledged) &&
     !(kind === 'request' && noteTooLong)
 
   const confirm = useCallback(async () => {
@@ -103,7 +121,10 @@ export function usePlanSwitchFlow({
         await sendRequest.mutateAsync({ ...choice, note })
         toastsuccessmsg('Request sent — waiting for approval.', 3000)
       } else {
-        const result = await switchPlan.mutateAsync(choice)
+        const result = await switchPlan.mutateAsync({
+          ...choice,
+          confirmAccessReduction: isAccessReduced && accessReductionAcknowledged,
+        })
         const name = result.summary.target.planName ?? plan.name
         const startsAt = result.subscription.scheduledSwitch?.startsAt
         toastsuccessmsg(
@@ -125,7 +146,17 @@ export function usePlanSwitchFlow({
       )
       preview.refetch()
     }
-  }, [choice, kind, note, plan, preview, sendRequest, switchPlan])
+  }, [
+    accessReductionAcknowledged,
+    choice,
+    isAccessReduced,
+    kind,
+    note,
+    plan,
+    preview,
+    sendRequest,
+    switchPlan,
+  ])
 
   return {
     plan,
@@ -155,6 +186,9 @@ export function usePlanSwitchFlow({
     isPreviewLoading: preview.isLoading,
     isPreviewFetching: preview.isFetching,
     previewError: preview.isError ? preview.error : null,
+    isAccessReduced,
+    accessReductionAcknowledged,
+    setAccessReductionAcknowledged,
     canConfirm,
     confirm,
     isSubmitting,

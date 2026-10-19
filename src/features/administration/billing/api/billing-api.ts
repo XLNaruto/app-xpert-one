@@ -6,6 +6,7 @@ import { DEFAULT_PAGE_SIZE, type PageParams, type Paginated } from '@/lib/pagina
 import { PURCHASE_HISTORY_MAX_LIMIT } from '../constants'
 import {
   accountOverviewResponseSchema,
+  applySwitchPayloadSchema,
   createSubscriptionResponseSchema,
   creditsResponseSchema,
   plansResponseSchema,
@@ -20,6 +21,7 @@ import {
   switchSummarySchema,
 } from '../schemas'
 import type {
+  ApplySwitchPayload,
   PurchasePlanPayload,
   SwitchPlanPayload,
   SwitchRequestPayload,
@@ -37,6 +39,7 @@ import {
 } from '../lib/billing-mappers'
 import type {
   AccountOverview,
+  ApplySwitchInput,
   CreditLedger,
   Plan,
   PlanPurchase,
@@ -208,13 +211,18 @@ export async function previewPlanSwitch(choice: SwitchChoice): Promise<SwitchSum
 
 /**
  * POST /user/subscriptions/switch — apply the switch. There is no payment step
- * yet: `immediately`/`direct` go live at once, `next_renewal` is booked.
+ * yet: `immediately`/`direct` go live at once, `next_renewal` is booked. A
+ * switch that drops permissions needs `confirm_access_reduction`.
  */
-export async function switchPlan(choice: SwitchChoice): Promise<SwitchResult> {
+export async function switchPlan(input: ApplySwitchInput): Promise<SwitchResult> {
   try {
-    const raw = await http.post<unknown, SwitchPlanPayload>(
+    const raw = await http.post<unknown, ApplySwitchPayload>(
       endpoints.BILLING.SWITCH,
-      toSwitchBody(choice),
+      applySwitchPayloadSchema.parse({
+        ...toSwitchBody(input),
+        // Sent only when ticked — the API refuses a reducing switch without it.
+        ...(input.confirmAccessReduction ? { confirm_access_reduction: true } : {}),
+      }),
     )
     return toSwitchResult(switchResultSchema.parse(raw))
   } catch (error) {

@@ -25,6 +25,8 @@ import type {
   SwitchSummaryResponse,
 } from '../schemas'
 import type {
+  AccessChangeItem,
+  AccessChangeModule,
   AccountOverview,
   CreditLedger,
   PaymentOrder,
@@ -453,6 +455,13 @@ export function toSwitchSummary(response: SwitchSummaryResponse): SwitchSummary 
     creditBalanceUsed: paiseToRupees(response.credit_balance_used_paise),
     amountDue: paiseToRupees(response.amount_due_paise),
     capacity: response.capacity,
+    accessChange: response.access_change
+      ? {
+          isReduced: response.access_change.is_reduced,
+          removed: response.access_change.removed,
+          added: response.access_change.added,
+        }
+      : null,
   }
 }
 
@@ -513,4 +522,31 @@ export function secondsToDays(seconds: number): number {
  */
 export function canBookNextRenewal(subscription: Subscription | null): boolean {
   return Boolean(subscription?.currentPeriodEnd) && !subscription?.isCancel
+}
+
+/** The separator the API puts between the levels of a permission's `menu`. */
+const MENU_SEPARATOR = ' › '
+
+/**
+ * Access-change rows → one group per top-level module, then one entry per
+ * screen below it with its actions. `Human Resource (HR) › Salary › Bulk Wage
+ * Update` lands under `Human Resource (HR)` as `Salary › Bulk Wage Update`; a
+ * row whose menu IS the module (or has none) is the module's own access.
+ */
+export function groupAccessChangeByModule(items: AccessChangeItem[]): AccessChangeModule[] {
+  const modules = new Map<string, Map<string | null, string[]>>()
+
+  for (const item of items) {
+    const [module = 'Other', ...rest] = (item.menu ?? '').split(MENU_SEPARATOR).filter(Boolean)
+    const screen = rest.length ? rest.join(MENU_SEPARATOR) : null
+    const screens = modules.get(module) ?? new Map<string | null, string[]>()
+    screens.set(screen, [...(screens.get(screen) ?? []), item.label])
+    modules.set(module, screens)
+  }
+
+  return [...modules].map(([module, screens]) => ({
+    module,
+    count: [...screens.values()].reduce((sum, actions) => sum + actions.length, 0),
+    screens: [...screens].map(([name, actions]) => ({ name, actions })),
+  }))
 }

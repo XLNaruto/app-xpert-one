@@ -12,7 +12,7 @@ import {
   switchPlan,
   withdrawSwitchRequest,
 } from './billing-api'
-import type { SwitchChoice, SwitchRequest, SwitchResult } from '../types'
+import type { ApplySwitchInput, SwitchChoice, SwitchRequest, SwitchResult } from '../types'
 
 /**
  * POST /user/subscriptions/switch/preview — the priced summary for one choice.
@@ -47,9 +47,9 @@ export function useSwitchPreview(choice: SwitchChoice | null) {
 export function useSwitchPlan() {
   const queryClient = useQueryClient()
 
-  return useMutation<SwitchResult, Error, SwitchChoice>({
-    mutationFn: async (choice) => {
-      const result = await switchPlan(choice)
+  return useMutation<SwitchResult, Error, ApplySwitchInput>({
+    mutationFn: async (input) => {
+      const result = await switchPlan(input)
       if (result.refreshRequired) {
         await refreshAccessToken().catch(() => undefined)
       }

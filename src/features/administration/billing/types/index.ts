@@ -180,6 +180,34 @@ export interface SwitchChoice {
   extendType: ExtendType | null
 }
 
+/** What confirming a switch sends — the choice plus the owner's consent. */
+export interface ApplySwitchInput extends SwitchChoice {
+  /** Ticked when the preview said access is reduced. */
+  confirmAccessReduction: boolean
+}
+
+/** One permission a switch removes or adds; `menu` is its sidebar path. */
+export interface AccessChangeItem {
+  code: string
+  label: string
+  menu: string | null
+}
+
+/** One screen inside a module, with the actions on it a switch touches. */
+export interface AccessChangeScreen {
+  /** The path below the module (`Salary › Bulk Wage Update`); null = the module itself. */
+  name: string | null
+  actions: string[]
+}
+
+/** Access changes for one top-level module, screens in the API's order. */
+export interface AccessChangeModule {
+  module: string
+  /** Total actions across its screens. */
+  count: number
+  screens: AccessChangeScreen[]
+}
+
 /**
  * The priced summary of a switch. Money is in RUPEES (converted in the mapper);
  * `time` is the CURRENT term's, and is null when nothing is running.
@@ -226,6 +254,12 @@ export interface SwitchSummary {
     employees: { current: number; max: number }
     violations: string[]
   }
+  /** Null when the target plan keeps every screen the current one has. */
+  accessChange: {
+    isReduced: boolean
+    removed: AccessChangeItem[]
+    added: AccessChangeItem[]
+  } | null
 }
 
 /** What confirming a switch answers with. */

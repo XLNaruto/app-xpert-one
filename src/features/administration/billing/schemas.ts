@@ -266,6 +266,16 @@ export const switchPlanSchema = z.object({
 
 export type SwitchPlanPayload = z.infer<typeof switchPlanSchema>
 
+/**
+ * The switch itself adds `confirm_access_reduction` — the owner's tick that
+ * they accept losing the screens the preview's `access_change.removed` lists.
+ */
+export const applySwitchPayloadSchema = switchPlanSchema.extend({
+  confirm_access_reduction: z.literal(true).optional(),
+})
+
+export type ApplySwitchPayload = z.infer<typeof applySwitchPayloadSchema>
+
 /** A switch request adds the tenant's optional note for the super admin. */
 export const switchRequestPayloadSchema = switchPlanSchema.extend({
   note: z
@@ -276,6 +286,13 @@ export const switchRequestPayloadSchema = switchPlanSchema.extend({
 })
 
 export type SwitchRequestPayload = z.infer<typeof switchRequestPayloadSchema>
+
+/** One permission a switch removes or adds — `menu` is its breadcrumb. */
+const accessChangeItemSchema = z.object({
+  code: z.string(),
+  label: z.string(),
+  menu: z.string().nullable(),
+})
 
 /**
  * The priced summary of a switch — returned by preview and by the switch
@@ -332,6 +349,17 @@ export const switchSummarySchema = z.object({
     employees: z.object({ current: z.number(), max: z.number() }),
     violations: z.array(z.string()),
   }),
+  /**
+   * Which permissions the target plan drops or adds. Null (or absent) means
+   * nothing changes; `is_reduced` means the owner must confirm the loss.
+   */
+  access_change: z
+    .object({
+      is_reduced: z.boolean(),
+      removed: z.array(accessChangeItemSchema),
+      added: z.array(accessChangeItemSchema),
+    })
+    .nullish(),
 })
 
 export type SwitchSummaryResponse = z.infer<typeof switchSummarySchema>
