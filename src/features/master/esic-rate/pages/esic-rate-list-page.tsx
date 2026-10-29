@@ -171,7 +171,7 @@ export function EsicRateListPage() {
           emptyState={
             <EmptyState
               icon={HeartPulse}
-              title={search ? 'No matching ESIC rates' : 'No ESIC rates yet'}
+              title={search ? 'No Matching ESIC Rates' : 'No ESIC Rates Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -197,7 +197,7 @@ export function EsicRateListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={HeartPulse}
-        title="Delete ESIC rate?"
+        title="Delete ESIC Rate?"
         description={
           pendingDelete
             ? `The slab effective ${formatEffectiveDate(pendingDelete.wef)} will be permanently removed.`

@@ -136,7 +136,7 @@ export function ContractExpiryListPage() {
     },
     {
       key: 'within_days',
-      label: 'Look ahead',
+      label: 'Look Ahead',
       value: String(list.filters.withinDays),
       onChange: (value) => list.setWithinDays(Number(value) || 0),
       options: WITHIN_DAYS_OPTIONS,
@@ -253,7 +253,7 @@ export function ContractExpiryListPage() {
           emptyState={
             <EmptyState
               icon={FileClock}
-              title="No matching contracts"
+              title="No Matching Contracts"
               description="No contract in this population matches the filters you have applied."
             />
           }

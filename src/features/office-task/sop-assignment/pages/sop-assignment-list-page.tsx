@@ -198,7 +198,7 @@ export function SopAssignmentListPage({ data }: { data?: string }) {
         emptyState={
           <EmptyState
             icon={UserCheck}
-            title="No assignments found"
+            title="No Assignments Found"
             description="Assign an SOP group to employees from SOP Tasks to start their daily tasks."
           />
         }

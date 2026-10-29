@@ -93,17 +93,17 @@ export function AttendanceEmployeeRow({
               </span>
             </span>
           )}
-          <Punch icon={LogIn} label="Check in" value={formatClockTime(employee.checkIn)} />
+          <Punch icon={LogIn} label="Check In" value={formatClockTime(employee.checkIn)} />
           <Punch
             icon={LogOut}
-            label="Check out"
+            label="Check Out"
             value={formatClockTime(employee.checkOut)}
           />
           {/* `totalHour` is a duration, not a clock time — it never goes
               through `formatClockTime`. */}
           {/* The stored rollup counts CLOSED sessions only, so it reads low
               while somebody is still checked in — say so on hover. */}
-          <Punch icon={Clock} label="Hours on closed sessions" value={employee.totalHour} />
+          <Punch icon={Clock} label="Hours on Closed Sessions" value={employee.totalHour} />
         </p>
       </div>
 

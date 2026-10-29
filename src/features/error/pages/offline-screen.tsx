@@ -15,7 +15,7 @@ interface OfflineScreenProps {
  * once the connection is restored (see `useOnlineStatus`).
  */
 export function OfflineScreen({
-  title = 'Connection lost',
+  title = 'Connection Lost',
   description = "You're offline. Check your internet connection — this page will refresh automatically once you're back online.",
 }: OfflineScreenProps) {
   return (

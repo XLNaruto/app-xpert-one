@@ -37,10 +37,10 @@ export type EmployeeTab = (typeof EMPLOYEE_TABS)[number]
 
 /** Tab labels, as the nav and the page headings show them. */
 export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
-  basic: 'Basic Detail',
-  kyc: 'KYC Detail',
+  basic: 'Basic Details',
+  kyc: 'KYC Details',
   wage: 'Wage Structure',
-  family: 'Family Detail',
+  family: 'Family Details',
   education: 'Education / Experience',
   documents: 'Documents',
   assets: 'Assets',
@@ -55,7 +55,7 @@ export const EMPLOYEE_TAB_LABELS: Record<EmployeeTab, string> = {
  * to END an assignment, so it's an option here rather than a missing selection.
  */
 export const ASSIGNMENT_MODE_OPTIONS: ComboboxOption[] = [
-  { label: 'A single shift', value: 'shift' },
+  { label: 'A Single Shift', value: 'shift' },
   { label: 'Back to the default (ends the assignment)', value: 'default' },
 ]
 
@@ -342,8 +342,8 @@ export const EMPTY_EMPLOYEE_FAMILY_FORM: EmployeeFamilyFormValues = {
  * entered before the column existed don't say, and a guess would be a claim.
  */
 export const EXPERIENCE_CTC_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Per month', value: 'MONTHLY' },
-  { label: 'Per year', value: 'YEARLY' },
+  { label: 'Per Month', value: 'MONTHLY' },
+  { label: 'Per Year', value: 'YEARLY' },
 ]
 
 export const EMPTY_EMPLOYEE_EDUCATION_FORM: EmployeeEducationFormValues = {

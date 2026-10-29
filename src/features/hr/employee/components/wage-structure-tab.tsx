@@ -94,7 +94,7 @@ export function WageStructureTab({
     return (
       <EmptyState
         icon={Wallet}
-        title="No wage to show"
+        title="No Wage to Show"
         description="Couldn't read what this employee is paid. Check they have a current posting, then try again."
       />
     )
@@ -118,7 +118,7 @@ export function WageStructureTab({
       ) : (
         <EmptyState
           icon={Wallet}
-          title="Nothing prices this employee yet"
+          title="Nothing Prices This Employee Yet"
           description="Neither this employee nor their designation has a wage structure in force. Set one on the designation, or give this employee their own below."
         />
       )}
@@ -263,7 +263,7 @@ export function WageStructureTab({
         open={form.pendingRemoval !== null}
         onOpenChange={(open) => !open && form.setPendingRemoval(null)}
         variant="destructive"
-        title="Withdraw this wage version?"
+        title="Withdraw This Wage Version?"
         description={
           form.pendingRemoval
             ? savedCount === 1
@@ -599,7 +599,7 @@ function ComponentTable({
               <TableRow>
                 <TableHead>Head</TableHead>
                 <TableHead className="whitespace-nowrap">Value</TableHead>
-                <TableHead className="whitespace-nowrap">Counts toward</TableHead>
+                <TableHead className="whitespace-nowrap">Counts Toward</TableHead>
                 <TableHead className="whitespace-nowrap">Payout</TableHead>
               </TableRow>
             </TableHeader>

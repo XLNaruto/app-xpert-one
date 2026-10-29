@@ -40,8 +40,8 @@ import type { SupportTicket } from '../types'
 
 /** The "Open only" facet — a shortcut for the three unfinished statuses at once. */
 const OPEN_ONLY_OPTIONS = [
-  { label: 'All tickets', value: '' },
-  { label: 'Unfinished only', value: 'true' },
+  { label: 'All Tickets', value: '' },
+  { label: 'Unfinished Only', value: 'true' },
 ]
 
 /**
@@ -263,7 +263,7 @@ export function SupportTicketListPage() {
                   value: list.filters.status,
                   onChange: list.changeStatus,
                   options: [
-                    { label: 'All statuses', value: ALL_FILTER },
+                    { label: 'All Statuses', value: ALL_FILTER },
                     ...SUPPORT_STATUS_OPTIONS,
                   ],
                   clearValue: ALL_FILTER,
@@ -287,7 +287,7 @@ export function SupportTicketListPage() {
                   value: list.filters.ticketType,
                   onChange: (value) => list.setFilter('ticketType', value),
                   options: [
-                    { label: 'Both desks', value: ALL_FILTER },
+                    { label: 'Both Desks', value: ALL_FILTER },
                     ...SUPPORT_TICKET_TYPE_OPTIONS,
                   ],
                   clearValue: ALL_FILTER,
@@ -300,7 +300,7 @@ export function SupportTicketListPage() {
                   value: list.filters.priority,
                   onChange: (value) => list.setFilter('priority', value),
                   options: [
-                    { label: 'Any priority', value: ALL_FILTER },
+                    { label: 'Any Priority', value: ALL_FILTER },
                     ...SUPPORT_PRIORITY_OPTIONS,
                   ],
                   clearValue: ALL_FILTER,
@@ -352,13 +352,13 @@ export function SupportTicketListPage() {
         open={list.pendingClose !== null}
         onOpenChange={(open) => !open && list.setPendingClose(null)}
         icon={CheckCheck}
-        title="Close this ticket?"
+        title="Close This Ticket?"
         description={
           list.pendingClose
             ? `Closing ${list.pendingClose.code} accepts the desk's resolution and files it away. Nothing is deleted, and you can still reopen it later if the fix does not hold.`
             : undefined
         }
-        confirmLabel="Close ticket"
+        confirmLabel="Close Ticket"
         cancelLabel="Cancel"
         loading={list.isClosing}
         keepOpenOnConfirm

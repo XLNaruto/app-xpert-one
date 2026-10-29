@@ -79,7 +79,7 @@ export function DocumentTypeCreatePage({ data }: DocumentTypeCreatePageProps) {
             >
               <FormSection
                 icon={FileType2}
-                title="Document Type Detail"
+                title="Document Type Details"
                 description="The category documents are filed under"
                 className="mt-0"
               />

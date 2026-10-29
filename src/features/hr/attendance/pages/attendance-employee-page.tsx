@@ -33,7 +33,7 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
   if (!employee.hasEmployee) {
     return (
       <NotFound
-        title="Employee not found"
+        title="Employee Not Found"
         description="That attendance link is missing or no longer readable. Open the employee again from Attendance Management."
       />
     )

@@ -1,6 +1,6 @@
 import { Toaster as SonnerToaster } from 'sonner'
 import { CheckCircle2, Info, Loader2, TriangleAlert, XCircle } from 'lucide-react'
-import { useUiStore } from '@/stores/ui-store'
+import { useResolvedTheme } from '@/hooks/use-resolved-theme'
 
 /**
  * App-wide toast host.
@@ -10,7 +10,7 @@ import { useUiStore } from '@/stores/ui-store'
  * Follows the current theme.
  */
 export function Toaster() {
-  const theme = useUiStore((s) => s.theme)
+  const theme = useResolvedTheme()
 
   return (
     <SonnerToaster

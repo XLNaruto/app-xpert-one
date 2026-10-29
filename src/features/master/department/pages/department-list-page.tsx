@@ -152,7 +152,7 @@ export function DepartmentListPage() {
           emptyState={
             <EmptyState
               icon={Building}
-              title={search ? 'No matching departments' : 'No departments yet'}
+              title={search ? 'No Matching Departments' : 'No Departments Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -178,7 +178,7 @@ export function DepartmentListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Building}
-        title="Delete department?"
+        title="Delete Department?"
         description={
           pendingDelete
             ? `"${pendingDelete.departmentName}" will be permanently removed.`

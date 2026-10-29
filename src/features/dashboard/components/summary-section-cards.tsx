@@ -87,12 +87,12 @@ export function SummarySectionCards({
       >
         <Stat label="Headcount" value={formatCount(workforce.headcount)} />
         <Stat
-          label="Opening headcount"
+          label="Opening Headcount"
           value={formatCount(workforce.openingHeadcount)}
           hint="when the window opened"
         />
         <Stat
-          label="Net movement"
+          label="Net Movement"
           value={formatSigned(workforce.net)}
           valueClassName={cn(
             workforce.net > 0 && 'text-success',
@@ -151,13 +151,13 @@ export function SummarySectionCards({
           value={formatRatio(attendance.punctualityRate)}
           hint="higher is better"
         />
-        <Stat label="Present days" value={formatCount(attendance.presentDays)} />
-        <Stat label="Half days" value={formatCount(attendance.halfDays)} />
-        <Stat label="Late arrivals" value={formatCount(attendance.lateArrivals)} />
-        <Stat label="Early exits" value={formatCount(attendance.earlyExits)} />
-        <Stat label="Worked hours" value={formatHours(attendance.workedHours)} />
+        <Stat label="Present Days" value={formatCount(attendance.presentDays)} />
+        <Stat label="Half Days" value={formatCount(attendance.halfDays)} />
+        <Stat label="Late Arrivals" value={formatCount(attendance.lateArrivals)} />
+        <Stat label="Early Exits" value={formatCount(attendance.earlyExits)} />
+        <Stat label="Worked Hours" value={formatHours(attendance.workedHours)} />
         <Stat
-          label="Avg hours / present day"
+          label="Avg Hours / Present Day"
           value={formatHours(attendance.averageWorkedHours)}
         />
         <div className="col-span-2">
@@ -175,19 +175,19 @@ export function SummarySectionCards({
       >
         <Stat label="Applications" value={formatCount(leave.applications)} />
         <Stat
-          label="Approval rate"
+          label="Approval Rate"
           value={formatRatio(leave.approvalRate)}
           hint="of decided only"
         />
         <Stat label="Pending" value={formatCount(leave.pending)} />
         <Stat label="Rejected" value={formatCount(leave.rejected)} />
         <Stat
-          label="Approved days"
+          label="Approved Days"
           value={formatDays(leave.approvedDays)}
           hint="calendar days"
         />
         <Stat
-          label="Avg decision time"
+          label="Avg Decision Time"
           value={formatHours(leave.averageDecisionHours)}
         />
         {/*
@@ -196,8 +196,8 @@ export function SummarySectionCards({
           this same response, so the split is drawn from a payload already held
           rather than requested again.
         */}
-        <Stat label="Paid days" value={formatDays(leave.paidDays)} />
-        <Stat label="Unpaid days" value={formatDays(leave.unpaidDays)} />
+        <Stat label="Paid Days" value={formatDays(leave.paidDays)} />
+        <Stat label="Unpaid Days" value={formatDays(leave.unpaidDays)} />
 
         {/* The most actionable number in the block — and a POSITION, so it does
             not move when the window changes. */}
@@ -217,15 +217,15 @@ export function SummarySectionCards({
         title="Payroll"
         caption="Filed on each sheet's own month, so a window across two months covers both in full."
       >
-        <Stat label="Net pay" value={formatMoney(payroll.netPay)} />
-        <Stat label="Gross pay" value={formatMoney(payroll.grossPay)} />
+        <Stat label="Net Pay" value={formatMoney(payroll.netPay)} />
+        <Stat label="Gross Pay" value={formatMoney(payroll.grossPay)} />
         <Stat label="Deductions" value={formatMoney(payroll.totalDeduction)} />
         <Stat label="Allowances" value={formatMoney(payroll.totalAllowance)} />
         <Stat
-          label="Employees processed"
+          label="Employees Processed"
           value={formatCount(payroll.employeesProcessed)}
         />
-        <Stat label="Avg net pay" value={formatMoney(payroll.averageNetPay)} />
+        <Stat label="Avg Net Pay" value={formatMoney(payroll.averageNetPay)} />
 
         <div className="col-span-2 mt-1 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -290,13 +290,13 @@ export function SummarySectionCards({
       </SectionCard>
 
       <SectionCard
-        title="Help desk"
+        title="Help Desk"
         caption="Raised is demand, resolved is throughput. A resolution rate above 100% is a backlog clearing."
       >
         <Stat label="Raised" value={formatCount(helpdesk.raised)} />
         <Stat label="Resolved" value={formatCount(helpdesk.resolved)} />
         <Stat
-          label="Resolution rate"
+          label="Resolution Rate"
           value={formatRatio(helpdesk.resolutionRate)}
           hint={
             helpdesk.resolutionRate != null && helpdesk.resolutionRate > 1
@@ -304,18 +304,18 @@ export function SummarySectionCards({
               : undefined
           }
         />
-        <Stat label="Open now" value={formatCount(helpdesk.open)} hint="as of now" />
+        <Stat label="Open Now" value={formatCount(helpdesk.open)} hint="as of now" />
         <Stat
           label="Unassigned"
           value={formatCount(helpdesk.unassigned)}
           hint="as of now"
         />
         <Stat
-          label="Avg resolution"
+          label="Avg Resolution"
           value={formatHours(helpdesk.averageResolutionHours)}
         />
         <Stat
-          label="Avg first response"
+          label="Avg First Response"
           value={formatHours(helpdesk.averageFirstResponseHours)}
         />
         <div className="col-span-2">

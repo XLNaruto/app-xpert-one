@@ -197,7 +197,7 @@ export function BulkWagePage() {
         onOpenChange={form.setSaveConfirmOpen}
         onConfirm={form.confirmSaveAll}
         icon={Save}
-        title="Save the wage grid?"
+        title="Save the Wage Grid?"
         description={saveAllConfirmation(
           changedCount,
           form.saveCount,
@@ -217,7 +217,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
   if (form.companyId === null) {
     return (
       <EmptyState
-        title="No company selected"
+        title="No Company Selected"
         description="Select a company for this session to load its designations and their wage structures."
       />
     )
@@ -241,7 +241,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
   if (form.designations.length === 0) {
     return (
       <EmptyState
-        title="No designations yet"
+        title="No Designations Yet"
         description="This company has no designations to configure. Add them under Master → Designation first."
       />
     )

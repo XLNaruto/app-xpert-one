@@ -58,7 +58,7 @@ export const CONTRACT_STATUS_ORDER: ContractStatus[] = ['expired', 'due', 'upcom
 export const ANY_STATUS = ''
 
 export const CONTRACT_STATUS_OPTIONS: ComboboxOption[] = [
-  { label: 'All statuses', value: ANY_STATUS },
+  { label: 'All Statuses', value: ANY_STATUS },
   ...CONTRACT_STATUS_ORDER.map((value) => ({
     label: CONTRACT_STATUS_SPECS[value].label,
     value,
@@ -71,10 +71,10 @@ export const CONTRACT_STATUS_OPTIONS: ComboboxOption[] = [
  * that many days, which arrive as `upcoming`.
  */
 export const WITHIN_DAYS_OPTIONS: ComboboxOption[] = [
-  { label: 'Needs action now', value: '0' },
-  { label: 'Next 30 days', value: '30' },
-  { label: 'Next 60 days', value: '60' },
-  { label: 'Next 90 days', value: '90' },
+  { label: 'Needs Action Now', value: '0' },
+  { label: 'Next 30 Days', value: '30' },
+  { label: 'Next 60 Days', value: '60' },
+  { label: 'Next 90 Days', value: '90' },
 ]
 
 export const CONTRACT_PERIOD_TYPE_OPTIONS: ComboboxOption[] = [

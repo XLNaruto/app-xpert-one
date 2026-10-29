@@ -52,7 +52,7 @@ export function CompanyDetailPage({ data }: { data?: string }) {
   return (
     <div>
       <PageHeader
-        title="Company Detail"
+        title="Company Details"
         description="Company information at a glance"
         actions={
           <div className="flex items-center gap-2">

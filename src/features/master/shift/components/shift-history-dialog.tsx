@@ -71,7 +71,7 @@ export function ShiftHistoryDialog({
           ) : (history.data ?? []).length === 0 ? (
             <EmptyState
               icon={History}
-              title="No versions yet"
+              title="No Versions Yet"
               description="This shift has no dated rule set on record."
             />
           ) : (

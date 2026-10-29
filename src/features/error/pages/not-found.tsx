@@ -12,7 +12,7 @@ interface NotFoundProps {
 
 /** Theme-aware 404 screen shown for any unmatched route. */
 export function NotFound({
-  title = 'Page not found',
+  title = 'Page Not Found',
   description = "The page you're looking for doesn't exist, was moved, or the link is broken.",
 }: NotFoundProps) {
   const router = useRouter()

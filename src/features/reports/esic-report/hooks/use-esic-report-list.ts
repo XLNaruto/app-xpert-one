@@ -31,9 +31,9 @@ export function useEsicReportList() {
 
   const basisItems: ReportBasisItem[] = header
     ? [
-        { label: 'ESIC code', value: header.esicCode || null },
+        { label: 'ESIC Code', value: header.esicCode || null },
         {
-          label: 'Wage ceiling',
+          label: 'Wage Ceiling',
           value: header.wageCeilingLimit === null ? null : formatAmount(header.wageCeilingLimit),
         },
         {

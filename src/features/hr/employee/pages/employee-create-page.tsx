@@ -61,7 +61,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
   // Reading this employee was refused — show the 403 screen, not a broken wizard.
   if (wizard.isForbidden) return <Forbidden description={wizard.forbiddenMessage} />
   if (wizard.isNotFound) {
-    return <NotFound title="Employee not found" description={wizard.notFoundMessage} />
+    return <NotFound title="Employee Not Found" description={wizard.notFoundMessage} />
   }
 
   const employee = wizard.employee

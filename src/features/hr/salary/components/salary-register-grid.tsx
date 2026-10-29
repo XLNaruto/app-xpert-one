@@ -777,7 +777,7 @@ function RowCell({
           </div>
           {/* The cell holds a sum — punched days, holidays and paid leave — and
               may have been typed over since. This opens what it is made of. */}
-          <CellTooltip label="Attendance breakdown">
+          <CellTooltip label="Attendance Breakdown">
             <button
               type="button"
               onClick={() => onShowBreakdown(row, values?.presentDays ?? '')}

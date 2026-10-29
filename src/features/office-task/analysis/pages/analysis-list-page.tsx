@@ -361,7 +361,7 @@ export function AnalysisListPage() {
           icon: Building2,
           value: list.filters.departmentId,
           onChange: (v) => list.changeFilter({ departmentId: v }),
-          options: [{ label: 'All departments', value: '' }, ...list.departmentSelect.options],
+          options: [{ label: 'All Departments', value: '' }, ...list.departmentSelect.options],
           onScrollEnd: list.departmentSelect.onScrollEnd,
           onSearchChange: list.departmentSelect.onSearchChange,
           loading: list.departmentSelect.loading,
@@ -373,7 +373,7 @@ export function AnalysisListPage() {
           icon: UserRound,
           value: list.filters.employeeId,
           onChange: (v) => list.changeFilter({ employeeId: v }),
-          options: [{ label: 'All employees', value: '' }, ...list.employeeSelect.options],
+          options: [{ label: 'All Employees', value: '' }, ...list.employeeSelect.options],
           onScrollEnd: list.employeeSelect.onScrollEnd,
           onSearchChange: list.employeeSelect.onSearchChange,
           loading: list.employeeSelect.loading,
@@ -397,7 +397,7 @@ export function AnalysisListPage() {
     sorting: list.sorting,
     onSortingChange: list.onSortingChange,
     emptyState: (
-      <EmptyState icon={BarChart3} title="No employees found" description="Try a wider date range or other filters." />
+      <EmptyState icon={BarChart3} title="No Employees Found" description="Try a wider date range or other filters." />
     ),
   }
 

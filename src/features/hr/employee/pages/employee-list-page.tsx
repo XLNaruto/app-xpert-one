@@ -333,7 +333,7 @@ export function EmployeeListPage() {
       {isForbidden ? (
         <EmptyState
           icon={ShieldAlert}
-          title="No access to the employee list"
+          title="No Access to the Employee List"
           description={forbiddenMessage}
         />
       ) : isError ? (
@@ -363,7 +363,7 @@ export function EmployeeListPage() {
           emptyState={
             <EmptyState
               icon={UsersRound}
-              title="No employees yet"
+              title="No Employees Yet"
               description="Add your first employee to start building the register."
               action={
                 canCreate ? (
@@ -397,7 +397,7 @@ export function EmployeeListPage() {
         onOpenChange={(open) => !open && cancelClearFaces()}
         variant="destructive"
         icon={Trash2}
-        title="Delete registered faces?"
+        title="Delete Registered Faces?"
         description={
           clearEmployee
             ? `All ${clearEmployee.faces.length} face image${
@@ -405,7 +405,7 @@ export function EmployeeListPage() {
               } for ${clearEmployee.name} will be removed and their face de-registered. They will need to register their face again in the mobile app.`
             : undefined
         }
-        confirmLabel="Delete faces"
+        confirmLabel="Delete Faces"
         loading={isDeletingFaces}
         keepOpenOnConfirm
         onConfirm={confirmDeleteFaces}
@@ -417,7 +417,7 @@ export function EmployeeListPage() {
         open={geoFenceConfirm !== null}
         onOpenChange={(open) => !open && cancelToggleGeoFence()}
         icon={MapPin}
-        title={geoFenceConfirm?.enabled ? 'Turn on geo-fence?' : 'Turn off geo-fence?'}
+        title={geoFenceConfirm?.enabled ? 'Turn On Geo-fence?' : 'Turn Off Geo-fence?'}
         description={
           geoFenceConfirm
             ? geoFenceConfirm.enabled
@@ -436,13 +436,13 @@ export function EmployeeListPage() {
         onOpenChange={(open) => !open && cancelDelete()}
         variant="destructive"
         icon={Trash2}
-        title="Delete employee?"
+        title="Delete Employee?"
         description={
           pendingDelete
             ? `${pendingDelete.name || 'This employee'}${pendingDelete.code ? ` (${pendingDelete.code})` : ''} will be removed. Their plan seat, primary mobile number and employee code are freed, they are signed out of the app, and attendance devices drop them. To record an exit instead, close their posting from Service History.`
             : undefined
         }
-        confirmLabel="Delete employee"
+        confirmLabel="Delete Employee"
         loading={isDeleting}
         keepOpenOnConfirm
         onConfirm={confirmDelete}

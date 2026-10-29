@@ -180,7 +180,7 @@ export function VerifyOtpPage() {
                   : 'cursor-not-allowed text-muted-foreground/70',
               )}
             >
-              {isResending ? 'Sending…' : 'Resend code'}
+              {isResending ? 'Sending…' : 'Resend Code'}
             </button>
           </div>
         </div>

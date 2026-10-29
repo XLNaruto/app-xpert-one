@@ -1026,7 +1026,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.overtimeApplicable`}
-          label="Overtime applicable"
+          label="Overtime Applicable"
         />
       )
     case 'otRate':
@@ -1037,7 +1037,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.pfActApplicable`}
-          label="PF act applicable"
+          label="PF Act Applicable"
         />
       )
     case 'empWl':
@@ -1066,7 +1066,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.esicActApplicable`}
-          label="ESIC act applicable"
+          label="ESIC Act Applicable"
         />
       )
     case 'esicDedOn':
@@ -1077,7 +1077,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.ptActApplicable`}
-          label="PT act applicable"
+          label="PT Act Applicable"
         />
       )
     case 'ptType':
@@ -1107,7 +1107,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.tdsActApplicable`}
-          label="TDS act applicable"
+          label="TDS Act Applicable"
         />
       )
     case 'tdsPct':
@@ -1120,7 +1120,7 @@ function DraftCell({
         <ActSwitch
           control={control}
           name={`rows.${index}.lwfActApplicable`}
-          label="LWF act applicable"
+          label="LWF Act Applicable"
         />
       )
     case 'lwfType':
@@ -1152,7 +1152,7 @@ function DraftCell({
      */
     case 'action':
       return props.isCorrection ? (
-        <CellTooltip label="Close without saving this correction">
+        <CellTooltip label="Close Without Saving This Correction">
           <button
             type="button"
             onClick={() => props.onRemove(index)}
@@ -1163,7 +1163,7 @@ function DraftCell({
           </button>
         </CellTooltip>
       ) : (
-        <CellTooltip label="Remove this row">
+        <CellTooltip label="Remove This Row">
           <button
             type="button"
             onClick={() => props.onRemove(index)}
@@ -1944,7 +1944,7 @@ function SavedCell({
        */
       return (
         <div className="flex items-center justify-center gap-1">
-          <CellTooltip label="Correct this version in place">
+          <CellTooltip label="Correct This Version in Place">
             <button
               type="button"
               onClick={() => onEdit(row)}
@@ -1955,7 +1955,7 @@ function SavedCell({
             </button>
           </CellTooltip>
           {onDelete && (
-            <CellTooltip label="Withdraw this version">
+            <CellTooltip label="Withdraw This Version">
               <button
                 type="button"
                 onClick={() => onDelete(row)}

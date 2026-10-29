@@ -256,7 +256,7 @@ export function StockHistoryDialog({
               emptyState={
                 <EmptyState
                   icon={History}
-                  title="No stock movements yet"
+                  title="No Stock Movements Yet"
                   description="Refills, write-offs and handouts all land here."
                 />
               }

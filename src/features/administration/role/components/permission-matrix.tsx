@@ -36,7 +36,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
     return (
       <EmptyState
         icon={ShieldOff}
-        title="No permissions available"
+        title="No Permissions Available"
         description="This account has no permissions to assign yet. A serving subscription unlocks the catalog a role can be built from."
       />
     )
@@ -74,7 +74,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
             disabled={disabled}
             onClick={form.selectAll}
           >
-            Select all
+            Select All
           </Button>
           <Button
             type="button"

@@ -76,7 +76,7 @@ export function LeaveTypeCreatePage({ data }: LeaveTypeCreatePageProps) {
             >
               <FormSection
                 icon={CalendarDays}
-                title="Leave Type Detail"
+                title="Leave Type Details"
                 description="Name, short code and pay treatment"
                 className="mt-0"
               />

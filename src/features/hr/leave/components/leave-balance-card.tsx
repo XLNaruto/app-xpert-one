@@ -72,7 +72,7 @@ export function LeaveBalanceCard({
           <Figure label="Allowed" value={formatDays(balance.paid.total)} />
           <Figure label="Used" value={formatDays(balance.paid.used)} />
           <Figure
-            label="Awaiting a decision"
+            label="Awaiting a Decision"
             value={formatDays(balance.paid.pending)}
             hint="Pending days already reduce what's free — they're spoken for until the leave is decided."
           />
@@ -122,9 +122,9 @@ export function LeaveBalanceCard({
                 <TableHead className="text-right">Pending</TableHead>
                 <TableHead className="text-right">Available</TableHead>
                 <TableHead className="w-36 whitespace-nowrap text-right">
-                  Unpaid so far
+                  Unpaid So Far
                 </TableHead>
-                <TableHead>Allowance from</TableHead>
+                <TableHead>Allowance From</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -240,7 +240,7 @@ function QuotaSourceBadge({ item }: { item: LeaveBalanceItem }) {
           <span className="inline-flex cursor-help">
             <Badge variant="destructive">
               <Info className="mr-1 size-3" />
-              No paid days
+              No Paid Days
             </Badge>
           </span>
         </TooltipTrigger>

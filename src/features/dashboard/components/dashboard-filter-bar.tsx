@@ -85,7 +85,7 @@ export function DashboardFilterBar({
   const facets: FilterFacet[] = [
     {
       key: 'employment_type',
-      label: 'Employment type',
+      label: 'Employment Type',
       value: filters.employmentType,
       onChange: (value) =>
         state.setFilter('employmentType', value as EmploymentTypeFilter | ''),

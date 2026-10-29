@@ -48,7 +48,7 @@ function CompleteTaskForm({
             An approver marks it complete after reviewing your work.
           </p>
         )}
-        <Field label="What did you do?" required={rules.noteRequired} error={errors.note?.message}>
+        <Field label="What Did You Do?" required={rules.noteRequired} error={errors.note?.message}>
           <Textarea rows={3} placeholder="Describe the work done" {...register('note')} />
         </Field>
         <Field label="Proof" required={rules.proofRequired} error={errors.proof?.message}>

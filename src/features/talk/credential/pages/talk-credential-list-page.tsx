@@ -93,7 +93,7 @@ export function TalkCredentialListPage() {
         // click travels to `?sort=` untranslated.
         id: TALK_CREDENTIAL_SORT.email,
         accessorKey: 'email',
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Talk login" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Talk Login" />,
         cell: ({ row }) => (
           <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <Mail className="size-3.5 shrink-0" />
@@ -211,7 +211,7 @@ export function TalkCredentialListPage() {
           emptyState={
             <EmptyState
               icon={KeyRound}
-              title={list.search ? 'No matching credentials' : 'No Talk credentials yet'}
+              title={list.search ? 'No Matching Credentials' : 'No Talk Credentials Yet'}
               description={
                 list.search
                   ? 'Try a different login address.'
@@ -237,7 +237,7 @@ export function TalkCredentialListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={UserRound}
-        title="Delete Talk credential?"
+        title="Delete Talk Credential?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.email}" will stop working and its grants are removed. The address is RELEASED, so the same employee can be issued a new credential under it — to suspend the login instead and keep it recoverable, edit it and set the status to Inactive.`

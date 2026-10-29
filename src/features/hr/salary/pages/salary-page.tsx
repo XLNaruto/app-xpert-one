@@ -253,7 +253,7 @@ export function SalaryPage() {
         onOpenChange={form.setSaveConfirmOpen}
         onConfirm={form.confirmSave}
         icon={Save}
-        title="Process the salary?"
+        title="Process the Salary?"
         description={`${form.saveCount} ${
           form.saveCount === 1 ? 'employee' : 'employees'
         } will be processed for ${formatMonth(
@@ -270,7 +270,7 @@ export function SalaryPage() {
         onConfirm={form.confirmDiscard}
         icon={Trash2}
         variant="destructive"
-        title="Discard the processed salary?"
+        title="Discard the Processed Salary?"
         description={`${form.discardCount} processed ${
           form.discardCount === 1 ? 'salary' : 'salaries'
         } for ${formatMonth(
@@ -290,7 +290,7 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
   if (form.companyId === null) {
     return (
       <EmptyState
-        title="No company selected"
+        title="No Company Selected"
         description="Select a company for this session to run its payroll."
       />
     )
@@ -298,7 +298,7 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
   if (form.designationId === null) {
     return (
       <EmptyState
-        title="Pick a designation"
+        title="Pick a Designation"
         description="The register is read one designation at a time — its wage structure and its allowance / deduction heads are what the columns are built from."
       />
     )
@@ -322,12 +322,12 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
   if (form.rows.length === 0) {
     return form.status === 'pending' ? (
       <EmptyState
-        title="Nothing left to process"
+        title="Nothing Left to Process"
         description="No posting of this designation is open in the period without a salary for it. The processed tab has the month that was run."
       />
     ) : (
       <EmptyState
-        title="Nothing processed yet"
+        title="Nothing Processed Yet"
         description="This designation's month hasn't been run. Switch to “To Process” to run it."
       />
     )

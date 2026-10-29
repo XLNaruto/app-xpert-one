@@ -82,7 +82,7 @@ export function DesignationSalarySection({
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <FormSection
         icon={Briefcase}
-        title="Designation Detail"
+        title="Designation Details"
         description="The designation this configuration applies to, company-wide"
         className="mt-0"
       />

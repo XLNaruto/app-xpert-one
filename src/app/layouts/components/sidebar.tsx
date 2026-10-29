@@ -147,7 +147,7 @@ export function Sidebar() {
             </button>
           </SidebarTooltip>
           {/* Mobile close button */}
-          <SidebarTooltip label="Close menu">
+          <SidebarTooltip label="Close Menu">
             <button
               onClick={closeMobile}
               aria-label="Close menu"

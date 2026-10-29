@@ -165,7 +165,7 @@ export function LoginPage() {
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                {showPassword ? 'Hide password' : 'Show password'}
+                {showPassword ? 'Hide Password' : 'Show Password'}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -227,7 +227,7 @@ export function LoginPage() {
             htmlFor="remember"
             className="cursor-pointer select-none font-normal text-muted-foreground"
           >
-            Remember me
+            Remember Me
           </Label>
         </div>
 
@@ -237,7 +237,7 @@ export function LoginPage() {
           className="h-12 w-full bg-linear-to-r from-primary to-primary-hover text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:opacity-95"
           disabled={isPending}
         >
-          {isPending ? 'Signing in…' : 'Sign in'}
+          {isPending ? 'Signing In…' : 'Sign In'}
         </Button>
       </form>
     </div>

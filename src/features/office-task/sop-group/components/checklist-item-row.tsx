@@ -69,8 +69,8 @@ export function ChecklistItemRow({
           {index + 1}
         </span>
         <div className="flex items-center gap-1">
-          <IconButton label="Move up" icon={ArrowUp} disabled={index === 0} onClick={() => onMove(index, index - 1)} />
-          <IconButton label="Move down" icon={ArrowDown} disabled={index === count - 1} onClick={() => onMove(index, index + 1)} />
+          <IconButton label="Move Up" icon={ArrowUp} disabled={index === 0} onClick={() => onMove(index, index - 1)} />
+          <IconButton label="Move Down" icon={ArrowDown} disabled={index === count - 1} onClick={() => onMove(index, index + 1)} />
           <IconButton label="Duplicate" icon={Copy} onClick={onDuplicate} />
           <IconButton label="Remove" icon={Trash2} danger disabled={count === 1} onClick={onRemove} />
         </div>

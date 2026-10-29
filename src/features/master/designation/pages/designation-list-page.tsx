@@ -131,7 +131,7 @@ export function DesignationListPage() {
           emptyState={
             <EmptyState
               icon={Briefcase}
-              title="No designations yet"
+              title="No Designations Yet"
               description="Create your first designation to get started."
               action={
                 canCreate && (
@@ -151,7 +151,7 @@ export function DesignationListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Briefcase}
-        title="Delete designation?"
+        title="Delete Designation?"
         description={
           pendingDelete
             ? `"${pendingDelete.designationName}" will be permanently removed.`

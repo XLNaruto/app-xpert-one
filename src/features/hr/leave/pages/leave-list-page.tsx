@@ -269,7 +269,7 @@ export function LeaveListPage() {
                   <span className="inline-flex cursor-help">
                     <Badge variant="destructive">
                       <AlertTriangle className="mr-1 size-3" />
-                      No approver
+                      No Approver
                     </Badge>
                   </span>
                 </TooltipTrigger>
@@ -288,7 +288,7 @@ export function LeaveListPage() {
                   <span className="inline-flex cursor-help">
                     <Badge variant="warning">
                       <Crown className="mr-1 size-3" />
-                      Account owner
+                      Account Owner
                     </Badge>
                   </span>
                 </TooltipTrigger>
@@ -416,7 +416,7 @@ export function LeaveListPage() {
               facets={[
                 {
                   key: 'payType',
-                  label: 'Paid / unpaid',
+                  label: 'Paid / Unpaid',
                   icon: Wallet,
                   value: leave.payTypeFilter,
                   onChange: leave.changePayTypeFilter,
@@ -479,7 +479,7 @@ export function LeaveListPage() {
         onOpenChange={(open) => !open && leave.setPendingDelete(null)}
         variant="destructive"
         icon={CalendarDays}
-        title="Remove this leave record?"
+        title="Remove This Leave Record?"
         // A delete removes the WHOLE application, both halves of a split — so the
         // warning names every day it takes with it, not just the row that was
         // clicked.

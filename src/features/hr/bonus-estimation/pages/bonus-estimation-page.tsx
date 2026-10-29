@@ -369,13 +369,13 @@ export function BonusEstimationPage() {
 
       {scope.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to estimate its bonus."
         />
       ) : !scope.hasLoaded ? (
         <EmptyState
           icon={Filter}
-          title="Choose a range"
+          title="Choose a Range"
           description="Pick the months the bonus covers above, then press Load. Everything is read off months already processed, so a month the register hasn't priced shows nothing here."
         />
       ) : view.isError ? (
@@ -428,7 +428,7 @@ export function BonusEstimationPage() {
           emptyState={
             <EmptyState
               icon={CalendarRange}
-              title={estimate.search ? 'No matching employees' : 'Nothing to estimate'}
+              title={estimate.search ? 'No Matching Employees' : 'Nothing to Estimate'}
               description={
                 estimate.search
                   ? 'Try a different name, employee code or mobile number.'
@@ -456,7 +456,7 @@ export function BonusEstimationPage() {
           emptyState={
             <EmptyState
               icon={Gift}
-              title={saved.search ? 'No matching employees' : 'No bonus saved yet'}
+              title={saved.search ? 'No Matching Employees' : 'No Bonus Saved Yet'}
               description={
                 saved.search
                   ? 'Try a different name, employee code or mobile number.'
@@ -477,7 +477,7 @@ export function BonusEstimationPage() {
         keepOpenOnConfirm
         loading={estimate.isSaving}
         icon={Save}
-        title="Save this bonus?"
+        title="Save This Bonus?"
         confirmLabel={estimate.isSaving ? 'Saving…' : 'Save Bonus'}
         description={
           <>

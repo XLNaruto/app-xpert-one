@@ -246,7 +246,7 @@ export function AssetVariantTable({
           emptyState={
             <EmptyState
               icon={Layers}
-              title={search ? 'No matching variants' : 'No variants yet'}
+              title={search ? 'No Matching Variants' : 'No Variants Yet'}
               description={
                 search
                   ? 'Try a different search term.'

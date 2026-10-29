@@ -82,7 +82,7 @@ export function ShiftRosterTab({
         // hence the wording here and the warning in the confirm dialog.
         cell: ({ row }) => (
           <IconAction
-            label="Remove entry (typed by mistake)"
+            label="Remove Entry (Typed by Mistake)"
             icon={Trash2}
             onClick={() => tab.setPendingAssignmentDelete(row.original)}
             className="bg-destructive/10 text-destructive hover:bg-destructive/20"
@@ -162,7 +162,7 @@ export function ShiftRosterTab({
         meta: { className: 'w-px whitespace-nowrap' },
         cell: ({ row }) => (
           <IconAction
-            label="Drop this override"
+            label="Drop This Override"
             icon={Trash2}
             onClick={() => tab.setPendingRosterDelete(row.original)}
             className="bg-destructive/10 text-destructive hover:bg-destructive/20"
@@ -331,14 +331,14 @@ export function ShiftRosterTab({
                   tab.resolved.isWeekOff && (
                     <Badge variant="warning">
                       <CalendarOff className="mr-1 size-3" />
-                      Week off
+                      Week Off
                     </Badge>
                   )
                 )}
                 {tab.resolved.shift?.isNightShift && (
                   <Badge variant="secondary">
                     <Moon className="mr-1 size-3" />
-                    Night shift
+                    Night Shift
                   </Badge>
                 )}
                 {!tab.resolved.shift && (
@@ -379,7 +379,7 @@ export function ShiftRosterTab({
               emptyState={
                 <EmptyState
                   icon={Clock}
-                  title="On the default shift"
+                  title="On the Default Shift"
                   description="An empty timeline is the normal state — this employee follows their department's or company's default shift. Add an entry only if they work something else."
                 />
               }
@@ -428,7 +428,7 @@ export function ShiftRosterTab({
                   variant="ghost"
                   onClick={tab.goToThisMonth}
                 >
-                  This month
+                  This Month
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Back to this month</TooltipContent>
@@ -463,7 +463,7 @@ export function ShiftRosterTab({
               emptyState={
                 <EmptyState
                   icon={CalendarClock}
-                  title="No overrides this month"
+                  title="No Overrides This Month"
                   description="Ordinary days aren't rows here — they resolve from the assignment or a default. Override a date only for a one-off."
                 />
               }
@@ -599,7 +599,7 @@ export function ShiftRosterTab({
         onOpenChange={(open) => !open && tab.setPendingAssignmentDelete(null)}
         variant="destructive"
         icon={Clock}
-        title="Remove this timeline entry?"
+        title="Remove This Timeline Entry?"
         description={
           tab.pendingAssignmentDelete
             ? `Only do this if the entry was typed by mistake. Removing the entry effective ${formatDate(tab.pendingAssignmentDelete.effectiveDate)} rewrites which shift the employee was judged against on days that are already closed — to END an assignment, add an entry naming no shift instead.`
@@ -617,7 +617,7 @@ export function ShiftRosterTab({
         onOpenChange={(open) => !open && tab.setPendingRosterDelete(null)}
         variant="destructive"
         icon={CalendarClock}
-        title="Drop this date override?"
+        title="Drop This Date Override?"
         description={
           tab.pendingRosterDelete
             ? `${formatDate(tab.pendingRosterDelete.workDate)} goes back to resolving from the assignment or a default. Nothing about history changes.`

@@ -16,7 +16,7 @@ export function ShiftScheduleGenerateDialog({ state }: { state: ShiftScheduleGen
       open={state.isOpen}
       onOpenChange={(open) => !open && state.close()}
       icon={CalendarCog}
-      title="Generate the schedule?"
+      title="Generate the Schedule?"
       description={
         state.canRun
           ? `This will fill ${formatDate(state.from)} – ${formatDate(state.to)} from the week-off policy for everyone the filters match. Dates you changed by hand are kept.`
@@ -37,7 +37,7 @@ export function ShiftScheduleGenerateDialog({ state }: { state: ShiftScheduleGen
             </p>
           )}
           <Field
-            label="Only these employees"
+            label="Only These Employees"
             hint="Leave it clear to generate for everyone the filters match."
           >
             <Combobox

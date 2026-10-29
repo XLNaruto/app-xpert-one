@@ -374,13 +374,13 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
         open={detail.isCloseOpen}
         onOpenChange={detail.setIsCloseOpen}
         icon={CheckCheck}
-        title="Close this ticket?"
+        title="Close This Ticket?"
         description={
           ticket
             ? `${ticket.code} is filed away. The resolution and its author stay intact, and the employee is not notified again — they were told when it was resolved. Nothing is deleted.`
             : undefined
         }
-        confirmLabel="Close ticket"
+        confirmLabel="Close Ticket"
         cancelLabel="Cancel"
         loading={detail.isTransitioning}
         keepOpenOnConfirm

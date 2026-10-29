@@ -133,7 +133,7 @@ export function DocumentTypeListPage() {
           emptyState={
             <EmptyState
               icon={FileType2}
-              title="No document types yet"
+              title="No Document Types Yet"
               description="Create your first document type to get started."
               action={
                 canCreate && (
@@ -153,7 +153,7 @@ export function DocumentTypeListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={FileType2}
-        title="Delete document type?"
+        title="Delete Document Type?"
         description={
           pendingDelete
             ? `"${pendingDelete.typeName}" will be permanently removed.`

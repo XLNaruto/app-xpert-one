@@ -258,7 +258,7 @@ export function ProjectTaskListPage() {
         emptyState={
           <EmptyState
             icon={FolderKanban}
-            title="No project tasks found"
+            title="No Project Tasks Found"
             description="Add a task and assign it by designation, by role, or to an outside person."
             action={addButton}
           />
@@ -278,7 +278,7 @@ export function ProjectTaskListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={FolderKanban}
-        title="Delete project task?"
+        title="Delete Project Task?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.task}" and its assignees' empty work records will be removed. Nobody has started it yet.`

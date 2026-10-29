@@ -30,7 +30,7 @@ export function useHolidayList() {
   /** `2026-27`, or `''` for every year. Opens on the year we're in. */
   const [accountingYear, setAccountingYear] = useState(() => accountingYearOf(new Date()))
   const yearOptions = [
-    { value: ALL_ACCOUNTING_YEARS, label: 'All years' },
+    { value: ALL_ACCOUNTING_YEARS, label: 'All Years' },
     ...accountingYearOptions().map((year) => ({ value: year, label: `FY ${year}` })),
   ]
 

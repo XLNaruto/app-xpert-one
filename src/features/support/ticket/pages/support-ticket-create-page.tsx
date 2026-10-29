@@ -95,7 +95,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
                 <FormSection
                   icon={LifeBuoy}
-                  title="Which desk, and how urgent"
+                  title="Which Desk, and How Urgent"
                   description="These two together select the response time your subscription promises. They are fixed once the ticket is raised, so pick honestly — a severity marked up buys a shorter deadline and a poor record."
                   className="mt-0"
                 />
@@ -184,7 +184,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
 
                 <FormSection
                   icon={MessageSquareText}
-                  title="The query"
+                  title="The Query"
                   description="A ticket names no company, so say which one it is about if that matters."
                 />
 

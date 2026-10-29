@@ -289,7 +289,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             hint="Filled in from the start plus the full day hours — pick your own instead and the hours follow. An end earlier than the start makes this a night shift, worked out for you."
           />
           <Field
-            label="Break (minutes)"
+            label="Break (Minutes)"
             error={form.errors.breakMinutes?.message}
             hint="Unpaid break inside the shift. Leave blank for none."
           >
@@ -302,7 +302,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             />
           </Field>
           <Field
-            label="Concession (minutes)"
+            label="Concession (Minutes)"
             error={form.errors.concessionMinutes?.message}
             hint="Grace after the start time in which a check-in still counts as on time. With 09:00 and 15, arriving at 09:20 is 5 minutes late, not 20."
           >
@@ -543,7 +543,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             emptyState={
               <EmptyState
                 icon={Clock}
-                title={list.search ? 'No matching shifts' : 'No shifts yet'}
+                title={list.search ? 'No Matching Shifts' : 'No Shifts Yet'}
                 description={
                   list.search
                     ? 'Try a different search term.'
@@ -565,7 +565,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={Clock}
-        title="Delete shift?"
+        title="Delete Shift?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.shiftName}" will be removed. A shift still set as a default, or used by an assignment or roster, can't be deleted.`

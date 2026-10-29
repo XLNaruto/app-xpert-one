@@ -244,7 +244,7 @@ export function AssetListPage({ data }: { data?: string }) {
           emptyState={
             <EmptyState
               icon={Boxes}
-              title={search ? 'No matching assets' : 'No assets yet'}
+              title={search ? 'No Matching Assets' : 'No Assets Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -285,7 +285,7 @@ export function AssetListPage({ data }: { data?: string }) {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Boxes}
-        title="Delete asset?"
+        title="Delete Asset?"
         description={
           pendingDelete
             ? // The delete is refused while an employee still holds one, and now

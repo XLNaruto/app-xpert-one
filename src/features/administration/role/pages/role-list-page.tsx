@@ -138,7 +138,7 @@ export function RoleListPage() {
           emptyState={
             <EmptyState
               icon={ShieldCheck}
-              title={list.search ? 'No matching roles' : 'No roles yet'}
+              title={list.search ? 'No Matching Roles' : 'No Roles Yet'}
               description={
                 list.search
                   ? 'Try a different search term.'
@@ -164,7 +164,7 @@ export function RoleListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={ShieldCheck}
-        title="Delete role?"
+        title="Delete Role?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.name}" will be removed. Users still on this role have to be moved to another one first.`

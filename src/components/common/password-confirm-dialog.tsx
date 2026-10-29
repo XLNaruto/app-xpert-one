@@ -66,7 +66,7 @@ export function PasswordConfirmDialog({
   error = null,
   attemptsRemaining = null,
   locked = false,
-  title = 'Confirm your password',
+  title = 'Confirm Your Password',
   description = 'For your security, enter your password to continue.',
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',

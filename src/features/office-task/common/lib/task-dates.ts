@@ -96,7 +96,7 @@ export function deadlineInfo(deadline: string): {
     const n = -daysLeft
     return { label: `${n} day${n === 1 ? '' : 's'} overdue`, tone: 'danger', daysLeft }
   }
-  if (daysLeft === 0) return { label: 'Due today', tone: 'warning', daysLeft }
+  if (daysLeft === 0) return { label: 'Due Today', tone: 'warning', daysLeft }
   return {
     label: `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`,
     tone: daysLeft <= 2 ? 'warning' : 'normal',

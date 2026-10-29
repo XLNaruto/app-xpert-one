@@ -123,7 +123,7 @@ export function MonitoringThreadPane({
         <ThreadState>
           <EmptyState
             icon={MessageSquareOff}
-            title="Nothing to read"
+            title="Nothing to Read"
             description="This conversation has no messages yet."
           />
         </ThreadState>

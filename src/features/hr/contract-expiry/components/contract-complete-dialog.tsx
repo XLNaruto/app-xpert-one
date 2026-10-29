@@ -49,7 +49,7 @@ export function ContractCompleteDialog({
     <Dialog open={row !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Complete service?</DialogTitle>
+          <DialogTitle>Complete Service?</DialogTitle>
           <DialogDescription>
             {row ? (
               <>
@@ -71,7 +71,7 @@ export function ContractCompleteDialog({
           className="mt-4 space-y-4"
         >
           <Field
-            label="Leaving date"
+            label="Leaving Date"
             hint="Defaults to the end of the contract. The API refuses a date earlier than the joining date."
             error={errors.leavingDate?.message}
           >

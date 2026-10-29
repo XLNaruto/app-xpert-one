@@ -14,7 +14,7 @@ export const PF_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   description: 'Manage the EPFO regional and sub-regional offices branches register with.',
   shortLabel: 'PF Address',
   recordsLabel: 'PF addresses',
-  emptyTitle: 'No PF office addresses yet',
+  emptyTitle: 'No PF Office Addresses Yet',
   emptyDescription: 'Add your first EPFO office to get started.',
   icon: Building2,
   hasOfficeType: true,

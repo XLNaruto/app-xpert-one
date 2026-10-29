@@ -90,13 +90,13 @@ export function PfReportPage() {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to read its PF sheets."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
-          title="Choose a sheet and a period"
+          title="Choose a Sheet and a Period"
           description="Pick a type and a month above, then press “Filter Data” to load the sheet."
         />
       ) : view.isError ? (

@@ -36,31 +36,31 @@ const SIGNATURES: Signature[] = [
   {
     mime: 'image/png',
     extensions: ['png'],
-    label: 'PNG image',
+    label: 'PNG Image',
     test: (b) => startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   },
   {
     mime: 'image/jpeg',
     extensions: ['jpg', 'jpeg'],
-    label: 'JPEG image',
+    label: 'JPEG Image',
     test: (b) => startsWith(b, [0xff, 0xd8, 0xff]),
   },
   {
     mime: 'image/webp',
     extensions: ['webp'],
-    label: 'WebP image',
+    label: 'WebP Image',
     test: (b) => ascii(b, 0, 4) === 'RIFF' && ascii(b, 8, 4) === 'WEBP',
   },
   {
     mime: 'image/gif',
     extensions: ['gif'],
-    label: 'GIF image',
+    label: 'GIF Image',
     test: (b) => ascii(b, 0, 6) === 'GIF87a' || ascii(b, 0, 6) === 'GIF89a',
   },
   {
     mime: 'application/pdf',
     extensions: ['pdf'],
-    label: 'PDF document',
+    label: 'PDF Document',
     test: (b) => ascii(b, 0, 5) === '%PDF-',
   },
   {
@@ -68,13 +68,13 @@ const SIGNATURES: Signature[] = [
     // alone can take us — enough to catch a renamed image or executable.
     mime: 'application/zip',
     extensions: ['xlsx', 'docx', 'zip'],
-    label: 'ZIP archive',
+    label: 'ZIP Archive',
     test: (b) => startsWith(b, [0x50, 0x4b]) && (b[2] === 0x03 || b[2] === 0x05 || b[2] === 0x07),
   },
   {
     mime: 'image/bmp',
     extensions: ['bmp'],
-    label: 'BMP image',
+    label: 'BMP Image',
     test: (b) => ascii(b, 0, 2) === 'BM',
   },
 ]

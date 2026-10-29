@@ -134,7 +134,7 @@ export function PtRateListPage() {
           emptyState={
             <EmptyState
               icon={Landmark}
-              title={search ? 'No matching PT rates' : 'No PT rates yet'}
+              title={search ? 'No Matching PT Rates' : 'No PT Rates Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -160,7 +160,7 @@ export function PtRateListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Landmark}
-        title="Delete PT rate?"
+        title="Delete PT Rate?"
         description={
           pendingDelete
             ? `The ${pendingDelete.stateName} slabs effective ${formatEffectiveDate(pendingDelete.wef)} will be permanently removed.`

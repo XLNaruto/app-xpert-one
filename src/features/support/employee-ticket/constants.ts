@@ -113,8 +113,8 @@ export const EMPTY_EMPLOYEE_TICKET_FILTERS: EmployeeTicketFilters = {
  * It's the queue's real starting point.
  */
 export const UNASSIGNED_ONLY_OPTIONS = [
-  { label: 'Anyone or nobody', value: ALL_FILTER },
-  { label: 'Unassigned only', value: 'true' },
+  { label: 'Anyone or Nobody', value: ALL_FILTER },
+  { label: 'Unassigned Only', value: 'true' },
 ]
 
 /** The assignee facet's "nobody in particular" row. */

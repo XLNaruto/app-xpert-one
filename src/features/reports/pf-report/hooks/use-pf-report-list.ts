@@ -35,15 +35,15 @@ export function usePfReportList() {
     !basis || data?.type === 'new-joining'
       ? []
       : [
-          { label: 'Wage ceiling', value: rupees(basis.wageCeilingLimit) },
+          { label: 'Wage Ceiling', value: rupees(basis.wageCeilingLimit) },
           ...(data?.type === 'ecr'
-            ? [{ label: 'EDLI ceiling', value: rupees(basis.edliWageCeilingLimit) }]
+            ? [{ label: 'EDLI Ceiling', value: rupees(basis.edliWageCeilingLimit) }]
             : []),
           { label: 'Employee PF', value: percent(basis.employeePfPercentage) },
           { label: 'Employer PF', value: percent(basis.employerPfContribution) },
-          { label: 'Pension rate', value: percent(basis.pensionRate) },
+          { label: 'Pension Rate', value: percent(basis.pensionRate) },
           {
-            label: 'Pension age limit',
+            label: 'Pension Age Limit',
             value: basis.pensionFundAgeLimit === null ? null : String(basis.pensionFundAgeLimit),
           },
         ]

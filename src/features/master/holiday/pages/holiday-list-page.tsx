@@ -215,7 +215,7 @@ export function HolidayListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={CalendarHeart}
-        title="Delete holiday?"
+        title="Delete Holiday?"
         description={
           pendingDelete
             ? `"${pendingDelete.holidayName}" will be permanently removed.`

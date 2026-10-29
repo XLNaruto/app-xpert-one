@@ -259,7 +259,7 @@ export function BasicDetailTab({
             The API stores both address sets, so this switch copies real values
             rather than setting a flag — see the mirror in `useEmployeeBasicForm`.
           */}
-          <Field label="Same as current address" className="col-span-full">
+          <Field label="Same as Current Address" className="col-span-full">
             <Controller
               control={control}
               name="sameAsCurrent"

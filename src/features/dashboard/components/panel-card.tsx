@@ -54,7 +54,7 @@ export function PanelCard({
   isFetching = false,
   error,
   isEmpty = false,
-  emptyTitle = 'No data yet',
+  emptyTitle = 'No Data Yet',
   emptyDescription,
   skeletonHeight = 280,
   className,

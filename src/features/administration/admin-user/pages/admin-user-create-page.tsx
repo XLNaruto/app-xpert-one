@@ -56,7 +56,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
             {form.isOwner && (
               <Badge variant="default" className="gap-1.5">
                 <Crown className="size-3.5" />
-                Account owner
+                Account Owner
               </Badge>
             )}
             <Button variant="outline" onClick={form.goToList}>

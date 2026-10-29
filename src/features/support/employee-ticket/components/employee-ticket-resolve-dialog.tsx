@@ -41,7 +41,7 @@ export function EmployeeTicketResolveDialog({
       open={open}
       onOpenChange={onOpenChange}
       icon={CircleCheck}
-      title="Resolve this ticket?"
+      title="Resolve This Ticket?"
       description={
         code
           ? `${code} is marked answered and the note below is pushed to the employee's device. They then either accept it or reopen the ticket.`

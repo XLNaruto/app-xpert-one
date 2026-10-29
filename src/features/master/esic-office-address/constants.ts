@@ -14,7 +14,7 @@ export const ESIC_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   description: 'Manage the ESIC regional and branch offices establishments register with.',
   shortLabel: 'ESIC Address',
   recordsLabel: 'ESIC addresses',
-  emptyTitle: 'No ESIC office addresses yet',
+  emptyTitle: 'No ESIC Office Addresses Yet',
   emptyDescription: 'Add your first ESIC office to get started.',
   icon: Building2,
 }

@@ -178,7 +178,7 @@ export function CompanyListPage() {
           emptyState={
             <EmptyState
               icon={Building2}
-              title="No companies yet"
+              title="No Companies Yet"
               description="Create your first company to get started."
               action={
                 canCreate && (
@@ -198,7 +198,7 @@ export function CompanyListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Building2}
-        title="Delete company?"
+        title="Delete Company?"
         description={
           pendingDelete
             ? `"${pendingDelete.companyName}" will be permanently removed.`

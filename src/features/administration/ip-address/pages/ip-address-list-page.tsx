@@ -196,7 +196,7 @@ export function IpAddressListPage() {
           emptyState={
             <EmptyState
               icon={Network}
-              title="No IP addresses yet"
+              title="No IP Addresses Yet"
               description="Add an address or a CIDR range to start controlling who can reach the panel."
               action={
                 canCreate && (
@@ -222,7 +222,7 @@ export function IpAddressListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Network}
-        title="Remove IP address?"
+        title="Remove IP Address?"
         description={
           pendingDelete
             ? `"${pendingDelete.ipAddresses}" will be removed from the ${ipAddressTypeLabel(

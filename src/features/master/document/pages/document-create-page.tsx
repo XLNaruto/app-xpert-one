@@ -86,7 +86,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
             >
               <FormSection
                 icon={FileText}
-                title="Document Detail"
+                title="Document Details"
                 description="Document type, name and whether it is mandatory"
                 className="mt-0"
               />

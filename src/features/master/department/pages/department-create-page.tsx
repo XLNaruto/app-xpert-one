@@ -127,7 +127,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
               >
                 <FormSection
                   icon={Building}
-                  title="Department Detail"
+                  title="Department Details"
                   description="Branch and department identity"
                   className="mt-0"
                 />

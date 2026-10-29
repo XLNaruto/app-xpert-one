@@ -316,7 +316,7 @@ export function BillingDetailPage() {
             </>
           ))
         }
-        confirmLabel="Continue to payment"
+        confirmLabel="Continue to Payment"
       />
 
       <PlanSwitchDialog flow={switchFlow} />
@@ -329,14 +329,14 @@ export function BillingDetailPage() {
         loading={changeStatus.isCancelling}
         variant="destructive"
         icon={CalendarX}
-        title="Cancel the booked plan change?"
+        title="Cancel the Booked Plan Change?"
         description={
           subscription?.scheduledSwitch
             ? `${subscription.scheduledSwitch.planName ?? 'The new plan'} won't start at renewal, and your current plan's limits apply again.`
             : undefined
         }
-        confirmLabel="Cancel change"
-        cancelLabel="Keep it"
+        confirmLabel="Cancel Change"
+        cancelLabel="Keep It"
       />
 
       <ConfirmDialog
@@ -347,10 +347,10 @@ export function BillingDetailPage() {
         loading={changeStatus.isWithdrawing}
         variant="destructive"
         icon={Undo2}
-        title="Withdraw your request?"
+        title="Withdraw Your Request?"
         description="Our team won't act on it. You can send a new request any time."
         confirmLabel="Withdraw"
-        cancelLabel="Keep it"
+        cancelLabel="Keep It"
       />
     </div>
   )

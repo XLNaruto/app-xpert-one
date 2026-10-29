@@ -127,7 +127,7 @@ export function useEmployeeTicketList() {
    */
   const companyOptions = useMemo(
     () => [
-      { label: 'All companies', value: ALL_FILTER },
+      { label: 'All Companies', value: ALL_FILTER },
       ...companies.map((company) => ({ label: company.name, value: String(company.id) })),
     ],
     [companies],

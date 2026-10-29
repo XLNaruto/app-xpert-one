@@ -173,7 +173,7 @@ export function ShiftScheduleListPage() {
                 emptyState={
                   <EmptyState
                     icon={CalendarCheck}
-                    title={list.search ? 'No matching employees' : 'No employees to schedule'}
+                    title={list.search ? 'No Matching Employees' : 'No Employees to Schedule'}
                     description={
                       list.search
                         ? 'Try a different name or code.'

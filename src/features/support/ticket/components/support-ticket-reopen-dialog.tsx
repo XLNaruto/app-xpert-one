@@ -36,7 +36,7 @@ export function SupportTicketReopenDialog({
       open={open}
       onOpenChange={onOpenChange}
       icon={RotateCcw}
-      title="Reopen this ticket?"
+      title="Reopen This Ticket?"
       description={
         ticket
           ? `${ticket.code} goes back to the desk. The existing resolution is cleared, and the original deadline stays exactly where it was — reopening does not re-buy the clock.`

@@ -185,7 +185,7 @@ export function DocumentListPage() {
           emptyState={
             <EmptyState
               icon={FileText}
-              title="No documents yet"
+              title="No Documents Yet"
               description="Create your first document to get started."
               action={
                 canCreate && (
@@ -205,7 +205,7 @@ export function DocumentListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={FileText}
-        title="Delete document?"
+        title="Delete Document?"
         description={
           pendingDelete
             ? `"${pendingDelete.documentName}" will be permanently removed.`

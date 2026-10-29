@@ -177,7 +177,7 @@ export function BranchListPage() {
           emptyState={
             <EmptyState
               icon={Building}
-              title="No branches yet"
+              title="No Branches Yet"
               description="Create your first branch to get started."
               action={
                 canCreate && (
@@ -197,7 +197,7 @@ export function BranchListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Building}
-        title="Delete branch?"
+        title="Delete Branch?"
         description={
           pendingDelete
             ? `"${pendingDelete.branchName}" will be permanently removed.`

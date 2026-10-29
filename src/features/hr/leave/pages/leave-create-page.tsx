@@ -445,13 +445,13 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
         open={pendingOverflow !== null}
         onOpenChange={(open) => !open && cancelOverflow()}
         icon={AlertTriangle}
-        title="Part of this leave will be unpaid"
+        title="Part of This Leave Will Be Unpaid"
         description={
           projection
             ? `${balanceItem?.leaveType || 'This leave type'} has ${formatDays(balanceItem?.available ?? 0)} of paid allowance left, and this request is ${requestedDaysLabel}. It will be recorded as ${formatSplit({ paidDays: projection.paid, unpaidDays: projection.unpaid })} — the unpaid days are still granted, they just won't be paid for. Record it?`
             : undefined
         }
-        confirmLabel="Record it"
+        confirmLabel="Record It"
         loading={isPending}
         keepOpenOnConfirm
         onConfirm={confirmOverflow}

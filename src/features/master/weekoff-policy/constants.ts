@@ -44,7 +44,7 @@ export const WEEK_DAY_OPTIONS: ComboboxOption[] = WEEK_DAYS.map((day) => ({
  * the whole month.
  */
 export const WEEK_NUMBER_OPTIONS: ComboboxOption[] = [
-  { label: 'Every occurrence', value: '' },
+  { label: 'Every Occurrence', value: '' },
   { label: '1st of the month', value: '1' },
   { label: '2nd of the month', value: '2' },
   { label: '3rd of the month', value: '3' },
@@ -73,7 +73,7 @@ export const WEEKOFF_PRESETS: {
   apply: Pick<WeekoffPolicyFormValues, 'everyWeekDays' | 'rules'>
 }[] = [
   {
-    label: 'Sunday only',
+    label: 'Sunday Only',
     description: 'Every Sunday off',
     apply: { everyWeekDays: [0], rules: [] },
   },
@@ -83,7 +83,7 @@ export const WEEKOFF_PRESETS: {
     apply: { everyWeekDays: [0, 6], rules: [] },
   },
   {
-    label: 'Sunday + alternate Saturdays',
+    label: 'Sunday + Alternate Saturdays',
     description: 'Sundays, plus the 2nd and 4th Saturday',
     apply: {
       everyWeekDays: [0],
@@ -107,12 +107,12 @@ export const WEEKOFF_OFF_TYPE_OPTIONS: {
 }[] = [
   {
     value: 'FIXED',
-    label: 'Fixed days',
+    label: 'Fixed Days',
     description: 'Name the weekdays that are off — the same every week.',
   },
   {
     value: 'FLEXIBLE',
-    label: 'Any days',
+    label: 'Any Days',
     description: 'Name how many days a week are off and let the rota pick them.',
   },
 ]
@@ -129,6 +129,6 @@ export const EMPTY_WEEKOFF_POLICY_FORM: WeekoffPolicyFormValues = {
 
 /** Which level a default is being pinned at. */
 export const WEEKOFF_DEFAULT_SCOPES: ComboboxOption[] = [
-  { label: 'Whole company', value: 'company' },
-  { label: 'One department', value: 'department' },
+  { label: 'Whole Company', value: 'company' },
+  { label: 'One Department', value: 'department' },
 ]

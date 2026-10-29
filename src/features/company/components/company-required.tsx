@@ -39,7 +39,7 @@ export function CompanyRequired({ what }: CompanyRequiredProps) {
         <Building2 className="size-7" />
       </div>
 
-      <h3 className="font-heading text-lg font-semibold">Select a company</h3>
+      <h3 className="font-heading text-lg font-semibold">Select a Company</h3>
       <p className="mt-1.5 max-w-sm text-balance text-sm leading-relaxed text-muted-foreground">
         {hasCompanies
           ? `${what.charAt(0).toUpperCase()}${what.slice(1)} are scoped to a single company. Choose the one you want to work in — you can switch any time from the top bar.`

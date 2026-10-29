@@ -331,7 +331,7 @@ export function ApprovalListPage() {
           icon: Building2,
           value: list.filters.departmentId,
           onChange: (v) => list.changeFilter({ departmentId: v }),
-          options: [{ label: 'All departments', value: '' }, ...list.departmentSelect.options],
+          options: [{ label: 'All Departments', value: '' }, ...list.departmentSelect.options],
           onScrollEnd: list.departmentSelect.onScrollEnd,
           onSearchChange: list.departmentSelect.onSearchChange,
           loading: list.departmentSelect.loading,
@@ -343,7 +343,7 @@ export function ApprovalListPage() {
           icon: UserRound,
           value: list.filters.employeeId,
           onChange: (v) => list.changeFilter({ employeeId: v }),
-          options: [{ label: 'All employees', value: '' }, ...list.employeeSelect.options],
+          options: [{ label: 'All Employees', value: '' }, ...list.employeeSelect.options],
           onScrollEnd: list.employeeSelect.onScrollEnd,
           onSearchChange: list.employeeSelect.onSearchChange,
           loading: list.employeeSelect.loading,
@@ -356,7 +356,7 @@ export function ApprovalListPage() {
           icon: UserCog,
           value: list.filters.userId,
           onChange: (v) => list.changeFilter({ userId: v }),
-          options: [{ label: 'All panel users', value: '' }, ...list.userSelect.options],
+          options: [{ label: 'All Panel Users', value: '' }, ...list.userSelect.options],
           onScrollEnd: list.userSelect.onScrollEnd,
           onSearchChange: list.userSelect.onSearchChange,
           loading: list.userSelect.loading,
@@ -383,7 +383,7 @@ export function ApprovalListPage() {
     emptyState: (
       <EmptyState
         icon={ShieldCheck}
-        title={list.filters.tab === 'awaiting' ? 'Nothing waiting for you' : 'No tasks found'}
+        title={list.filters.tab === 'awaiting' ? 'Nothing Waiting for You' : 'No Tasks Found'}
         description="Try a wider date range or another tab."
       />
     ),

@@ -166,7 +166,7 @@ export function LwfRateListPage() {
           emptyState={
             <EmptyState
               icon={HandCoins}
-              title={search ? 'No matching LWF rates' : 'No LWF rates yet'}
+              title={search ? 'No Matching LWF Rates' : 'No LWF Rates Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -192,7 +192,7 @@ export function LwfRateListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={HandCoins}
-        title="Delete LWF rate?"
+        title="Delete LWF Rate?"
         description={
           pendingDelete
             ? `The ${pendingDelete.stateName} rate effective ${formatEffectiveDate(pendingDelete.wef)} will be permanently removed.`

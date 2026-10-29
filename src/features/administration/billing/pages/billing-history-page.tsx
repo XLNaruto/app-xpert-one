@@ -198,7 +198,7 @@ export function BillingHistoryPage() {
           emptyState={
             <EmptyState
               icon={ReceiptText}
-              title="No purchases yet"
+              title="No Purchases Yet"
               description="Plans you buy will appear here, with an invoice for each paid term."
             />
           }

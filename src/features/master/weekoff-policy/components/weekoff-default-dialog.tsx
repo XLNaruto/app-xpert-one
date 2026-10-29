@@ -38,7 +38,7 @@ export function WeekoffDefaultDialog({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Set as default week-off pattern</DialogTitle>
+          <DialogTitle>Set as Default Week-Off Pattern</DialogTitle>
           <DialogDescription>
             {policy
               ? `"${policy.name}" becomes the pattern every shift falls back to at the level you pick.`
@@ -48,7 +48,7 @@ export function WeekoffDefaultDialog({
 
         <div className="mt-4 space-y-4">
           <Field
-            label="Apply to"
+            label="Apply To"
             required
             hint="A department's default wins over its company's, so a department pick only affects that department's staff."
           >

@@ -124,7 +124,7 @@ export function AssigneeTaskGroup({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge className="border-transparent bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                    Older checklist
+                    Older Checklist
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-64">
@@ -282,7 +282,7 @@ export function AssigneeTaskGroup({
               <td className={cn(cell, 'w-12')}>
                 {removable && (
                   <IconButton
-                    label="Remove custom task"
+                    label="Remove Custom Task"
                     onClick={() => {
                       if (!f.askRemoveCustomTask(index, ti)) t.removeTask(ti)
                     }}

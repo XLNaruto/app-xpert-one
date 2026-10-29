@@ -78,7 +78,7 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
             >
               <FormSection
                 icon={CalendarHeart}
-                title="Holiday Detail"
+                title="Holiday Details"
                 description="Name and the dates it spans"
                 className="mt-0"
               />

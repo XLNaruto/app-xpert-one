@@ -306,14 +306,14 @@ function ZoomControls({
   return (
     <>
       <LightboxButton
-        label="Zoom out"
+        label="Zoom Out"
         onClick={zoom.zoomOut}
         disabled={zoom.zoom <= zoom.minZoom}
       >
         <Minus className="size-5" />
       </LightboxButton>
       <LightboxButton
-        label="Reset zoom"
+        label="Reset Zoom"
         onClick={() => zoom.changeZoom(zoom.minZoom)}
         disabled={zoom.zoom <= zoom.minZoom}
         className="xl-lightbox__zoom"
@@ -322,7 +322,7 @@ function ZoomControls({
         {Math.round(zoom.zoom * 100)}%
       </LightboxButton>
       <LightboxButton
-        label="Zoom in"
+        label="Zoom In"
         onClick={zoom.zoomIn}
         disabled={zoom.zoom >= zoom.maxZoom}
       >
@@ -346,7 +346,7 @@ function SlideActions() {
 
   return (
     <>
-      <LightboxButton label="Open in a new tab" href={href}>
+      <LightboxButton label="Open in a New Tab" href={href}>
         <ExternalLink className="size-5" />
       </LightboxButton>
       <LightboxButton

@@ -150,7 +150,7 @@ export function AllowanceDeductionListPage() {
           emptyState={
             <EmptyState
               icon={Wallet}
-              title={search ? 'No matching records' : 'No records yet'}
+              title={search ? 'No Matching Records' : 'No Records Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -176,7 +176,7 @@ export function AllowanceDeductionListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Wallet}
-        title="Delete record?"
+        title="Delete Record?"
         description={
           pendingDelete
             ? `"${pendingDelete.name}" will be permanently removed.`

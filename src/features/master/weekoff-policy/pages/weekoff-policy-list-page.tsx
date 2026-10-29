@@ -183,7 +183,7 @@ export function WeekoffPolicyListPage() {
           emptyState={
             <EmptyState
               icon={CalendarOff}
-              title={list.search ? 'No matching policies' : 'No week-off policies yet'}
+              title={list.search ? 'No Matching Policies' : 'No Week-Off Policies Yet'}
               description={
                 list.search
                   ? 'Try a different search term.'
@@ -211,7 +211,7 @@ export function WeekoffPolicyListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={CalendarOff}
-        title="Delete week-off policy?"
+        title="Delete Week-Off Policy?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.name}" will be removed. A policy still set as a default, or named by a shift, can't be deleted.`

@@ -102,14 +102,14 @@ export function EmployeeAppointmentLetterPage({ data }: { data?: string }) {
                 renewal whose dates are written in by hand. */}
             <LetterToggle
               icon={FileSignature}
-              label="Letter type"
+              label="Letter Type"
               value={variant}
               options={APPOINTMENT_VARIANTS}
               onChange={setVariant}
             />
             <LetterToggle
               icon={Languages}
-              label="Letter language"
+              label="Letter Language"
               value={lang}
               options={LANGUAGE_OPTIONS}
               onChange={setLang}

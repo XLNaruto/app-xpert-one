@@ -47,7 +47,7 @@ export function ShiftScheduleDayDialog({ state, canDelete }: ShiftScheduleDayDia
           </DialogHeader>
 
           <div className="space-y-4">
-            <Field label="This day is" required>
+            <Field label="This Day Is" required>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: true, label: 'Off' },

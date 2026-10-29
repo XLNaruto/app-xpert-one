@@ -13,14 +13,14 @@ export const PROJECT_TASK_DEFAULT_SORT = { id: PROJECT_TASK_SORT.deadline, desc:
 
 /** The overall statuses a task can roll up to — the list's Status filter. */
 export const PROJECT_STATUS_FILTER: ComboboxOption[] = [
-  { label: 'All statuses', value: 'all' },
+  { label: 'All Statuses', value: 'all' },
   { label: 'Pending', value: 'pending' },
   { label: 'In Progress', value: 'in_progress' },
   { label: 'Completed', value: 'completed' },
 ]
 
 export const PROJECT_PRIORITY_FILTER: ComboboxOption[] = [
-  { label: 'All priorities', value: 'all' },
+  { label: 'All Priorities', value: 'all' },
   { label: 'High', value: 'high' },
   { label: 'Medium', value: 'medium' },
   { label: 'Low', value: 'low' },

@@ -205,7 +205,7 @@ function LocationDialog({ initial, onCancel, onSave }: LocationDialogProps) {
     <Dialog open onOpenChange={(o) => !o && onCancel()}>
       <DialogContent showClose onClose={onCancel} className="flex max-w-5xl flex-col gap-0 p-0">
         <div className="border-b border-border px-6 py-4 pr-12">
-          <DialogTitle>Choose location</DialogTitle>
+          <DialogTitle>Choose Location</DialogTitle>
           <DialogDescription>
             Search an address, click the map, drag the pin, or use your current location.
           </DialogDescription>

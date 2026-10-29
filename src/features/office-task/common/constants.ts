@@ -14,7 +14,7 @@ export const TASK_STATUS_META: Record<
 }
 
 export const TASK_STATUS_OPTIONS: ComboboxOption[] = [
-  { label: 'All statuses', value: 'all' },
+  { label: 'All Statuses', value: 'all' },
   ...(Object.keys(TASK_STATUS_META) as TaskStatus[]).map((s) => ({
     label: TASK_STATUS_META[s].label,
     value: s,
@@ -81,7 +81,7 @@ export const TASK_SUBMISSION_MODE_META: Record<
   { label: string; hint: string }
 > = {
   START_STOP: {
-    label: 'Start / Stop, then submit',
+    label: 'Start / Stop, Then Submit',
     hint: 'Employees start the task, stop or pause it, then hand it in. Time worked is recorded.',
   },
   DIRECT: {

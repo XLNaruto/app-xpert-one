@@ -59,13 +59,13 @@ export function SalaryViewPager({
 
       <div className="flex items-center gap-1">
         <PageButton
-          label="First page"
+          label="First Page"
           icon={ChevronsLeft}
           disabled={page <= 1}
           onClick={() => onPaginationChange({ limit, offset: 0 })}
         />
         <PageButton
-          label="Previous page"
+          label="Previous Page"
           icon={ChevronLeft}
           disabled={page <= 1}
           onClick={() =>
@@ -76,13 +76,13 @@ export function SalaryViewPager({
           Page {page} of {pageCount}
         </span>
         <PageButton
-          label="Next page"
+          label="Next Page"
           icon={ChevronRight}
           disabled={page >= pageCount}
           onClick={() => onPaginationChange({ limit, offset: offset + limit })}
         />
         <PageButton
-          label="Last page"
+          label="Last Page"
           icon={ChevronsRight}
           disabled={page >= pageCount}
           onClick={() => onPaginationChange({ limit, offset: lastOffset })}

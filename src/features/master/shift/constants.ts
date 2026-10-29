@@ -26,8 +26,8 @@ export const SHIFT_PAGE_SIZE = 5
 
 /** How a late day is charged — the two ways the API accepts. */
 export const LATE_CHECK_IN_PENALTY_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'Percentage of the day', value: 'PERCENTAGE' },
-  { label: 'Fixed amount', value: 'FIXED' },
+  { label: 'Percentage of the Day', value: 'PERCENTAGE' },
+  { label: 'Fixed Amount', value: 'FIXED' },
 ]
 
 /** Short display label for a configured penalty type. */

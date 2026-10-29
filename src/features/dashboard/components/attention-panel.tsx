@@ -157,7 +157,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-3 pb-3">
         <div className="min-w-0">
           <h3 className="font-heading text-base font-semibold leading-tight">
-            Needs attention
+            Needs Attention
           </h3>
           {/* The worklist's size, not the workforce's — and deliberately no
               date range, because none of these signals is window-bounded. */}
@@ -240,7 +240,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             isFetchingMore={list.isFetchingMore}
             emptyState={
               <EmptyState
-                title="No matching records"
+                title="No Matching Records"
                 description="No record in this population trips the selected signal."
               />
             }

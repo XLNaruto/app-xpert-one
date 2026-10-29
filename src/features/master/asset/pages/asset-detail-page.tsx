@@ -53,7 +53,7 @@ export function AssetDetailPage({ data }: { data?: string }) {
   return (
     <div>
       <PageHeader
-        title={asset?.assetName ?? 'Asset Detail'}
+        title={asset?.assetName ?? 'Asset Details'}
         description="The asset, its stock, and the variants counted under it."
         actions={
           <div className="flex items-center gap-2">

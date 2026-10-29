@@ -36,7 +36,7 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
   if (!detail.hasGroup) {
     return (
       <NotFound
-        title="Group not found"
+        title="Group Not Found"
         description="That attendance link is missing or no longer readable. Open the group again from Attendance Management."
       />
     )
@@ -163,7 +163,7 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
         <Card className="p-6">
           <EmptyState
             icon={Users}
-            title="Nobody to show"
+            title="Nobody to Show"
             description={
               detail.search.trim()
                 ? 'No employee in this group matches that search.'

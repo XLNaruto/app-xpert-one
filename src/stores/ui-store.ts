@@ -2,7 +2,10 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createIdbStorage } from '@/lib/idb-storage'
 
-type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark' | 'system'
+
+/** Order the theme toggle steps through. */
+const THEME_CYCLE: Record<Theme, Theme> = { light: 'dark', dark: 'system', system: 'light' }
 
 interface UiState {
   /** Desktop rail collapse (persisted). */
@@ -30,7 +33,7 @@ export const useUiStore = create<UiState>()(
       setMobileSidebar: (open) => set({ sidebarMobileOpen: open }),
       toggleMobileSidebar: () => set((s) => ({ sidebarMobileOpen: !s.sidebarMobileOpen })),
       setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
+      toggleTheme: () => set((s) => ({ theme: THEME_CYCLE[s.theme] })),
     }),
     {
       name: 'xpertone-ui',

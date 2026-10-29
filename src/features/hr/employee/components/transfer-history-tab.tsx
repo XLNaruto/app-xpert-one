@@ -94,7 +94,7 @@ export function TransferHistoryTab({
             {/* Only the latest posting is editable — the API refuses a closed one. */}
             {row.original.isLatest && (
               <RowAction
-                label="Edit posting"
+                label="Edit Posting"
                 icon={Pencil}
                 onClick={() => tab.startEdit(row.original)}
                 className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
@@ -260,7 +260,7 @@ export function TransferHistoryTab({
             emptyState={
               <EmptyState
                 icon={ArrowRightLeft}
-                title="No postings yet"
+                title="No Postings Yet"
                 description="The first posting is created together with the employee in Basic Detail."
               />
             }
@@ -289,7 +289,7 @@ export function TransferHistoryTab({
           <div className="sm:col-span-2">
             <FormSection
               icon={LogOut}
-              title="Close the current posting"
+              title="Close the Current Posting"
               description="The leaving details recorded against the posting being left"
               className="mt-0"
             />
@@ -323,7 +323,7 @@ export function TransferHistoryTab({
           <div className="sm:col-span-2">
             <FormSection
               icon={Building2}
-              title="The new posting"
+              title="The New Posting"
               description="Where the employee goes next, and on what terms"
             />
           </div>
@@ -510,7 +510,7 @@ function PostingDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl" onClose={() => onOpenChange(false)}>
         <DialogHeader className="pr-10">
-          <DialogTitle>Posting Detail</DialogTitle>
+          <DialogTitle>Posting Details</DialogTitle>
           <DialogDescription>
             {detail
               ? `${detail.serviceDetail.companyName || 'Company'} · ${detail.serviceDetail.designationName || 'No designation'}`

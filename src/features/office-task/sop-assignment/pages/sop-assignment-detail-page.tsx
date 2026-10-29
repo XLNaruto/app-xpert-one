@@ -174,7 +174,7 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
         {error ? (
           <ScopedDataError error={error} fallback="Assignment not found." what="SOP assignments" />
         ) : (
-          <EmptyState title="Assignment not found" description="It may have been deleted." />
+          <EmptyState title="Assignment Not Found" description="It may have been deleted." />
         )}
       </div>
     )
@@ -266,7 +266,7 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
           emptyState={
             <EmptyState
               icon={ClipboardList}
-              title="No tasks in this range"
+              title="No Tasks in This Range"
               description="Tasks are created from the effective date — pick other dates."
             />
           }

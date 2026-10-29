@@ -192,7 +192,7 @@ export function SopGroupListPage() {
         emptyState={
           <EmptyState
             icon={ListChecks}
-            title={list.search ? 'No matching SOP groups' : 'No SOP groups yet'}
+            title={list.search ? 'No Matching SOP Groups' : 'No SOP Groups Yet'}
             description={
               list.search ? 'Try a different search term.' : 'Create a checklist and assign it to employees.'
             }
@@ -209,7 +209,7 @@ export function SopGroupListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={ListChecks}
-        title="Delete SOP group?"
+        title="Delete SOP Group?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.name}", its checklist and all ${list.pendingDelete.activeAssignees} of its assignment(s) will be removed. Nobody has started work on it yet, so no history is lost.`

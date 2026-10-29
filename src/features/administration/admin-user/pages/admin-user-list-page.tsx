@@ -126,7 +126,7 @@ export function AdminUserListPage() {
           row.original.isOwner ? (
             <Badge variant="default" className="gap-1">
               <Crown className="size-3" />
-              Account owner
+              Account Owner
             </Badge>
           ) : (
             <span className="text-sm text-foreground">{roleLabel(row.original)}</span>
@@ -260,7 +260,7 @@ export function AdminUserListPage() {
           emptyState={
             <EmptyState
               icon={UsersRound}
-              title={list.search ? 'No matching users' : 'No users yet'}
+              title={list.search ? 'No Matching Users' : 'No Users Yet'}
               description={
                 list.search
                   ? 'Try a different search term.'
@@ -286,7 +286,7 @@ export function AdminUserListPage() {
         onOpenChange={(open) => !open && list.setPendingDelete(null)}
         variant="destructive"
         icon={UsersRound}
-        title="Delete user?"
+        title="Delete User?"
         description={
           list.pendingDelete
             ? `"${list.pendingDelete.name}" will be removed and signed out immediately. Their email address stays reserved, so the same person cannot be added again under it.`

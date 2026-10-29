@@ -138,7 +138,7 @@ export function LeaveTypeListPage() {
           emptyState={
             <EmptyState
               icon={CalendarDays}
-              title={search ? 'No matching leave types' : 'No leave types yet'}
+              title={search ? 'No Matching Leave Types' : 'No Leave Types Yet'}
               description={
                 search
                   ? 'Try a different search term.'
@@ -164,7 +164,7 @@ export function LeaveTypeListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={CalendarDays}
-        title="Delete leave type?"
+        title="Delete Leave Type?"
         description={
           pendingDelete
             ? `"${pendingDelete.leaveName}" will be permanently removed.`

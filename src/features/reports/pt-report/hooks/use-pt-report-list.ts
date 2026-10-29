@@ -28,8 +28,8 @@ export function usePtReportList() {
   const basisItems: ReportBasisItem[] = header
     ? [
         { label: 'Corporation', value: header.ptCorporationName || null },
-        { label: 'EC number', value: header.ptEcNumber || null },
-        { label: 'RC number', value: header.ptRcNumber || null },
+        { label: 'EC Number', value: header.ptEcNumber || null },
+        { label: 'RC Number', value: header.ptRcNumber || null },
       ]
     : []
 

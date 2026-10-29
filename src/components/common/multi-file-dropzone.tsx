@@ -58,7 +58,7 @@ export function MultiFileDropzone({
   accept = 'image/*',
   maxSizeMB,
   maxFiles,
-  label = 'Add files',
+  label = 'Add Files',
   hint,
   className,
 }: MultiFileDropzoneProps) {

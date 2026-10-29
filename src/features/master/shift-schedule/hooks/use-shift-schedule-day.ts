@@ -43,7 +43,7 @@ export function useShiftScheduleDay() {
   })
 
   const shiftOptions = useMemo<ComboboxOption[]>(
-    () => [{ label: 'Normal shift', value: NORMAL_SHIFT_VALUE }, ...shifts.options],
+    () => [{ label: 'Normal Shift', value: NORMAL_SHIFT_VALUE }, ...shifts.options],
     [shifts.options],
   )
 

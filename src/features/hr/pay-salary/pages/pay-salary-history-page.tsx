@@ -86,7 +86,7 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to read its payment history."
         />
       ) : view.isError ? (
@@ -126,7 +126,7 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
           ) : view.batches.length === 0 ? (
             <EmptyState
               icon={History}
-              title="Nothing paid yet"
+              title="Nothing Paid Yet"
               description={`No payment batch has been recorded for ${periodLabel}${
                 view.departmentId ? ' in this department' : ''
               }. Record one from Pay Salary.`}

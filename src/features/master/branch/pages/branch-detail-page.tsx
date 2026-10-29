@@ -67,7 +67,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
   return (
     <div>
       <PageHeader
-        title="Branch Detail"
+        title="Branch Details"
         description="Branch information at a glance"
         actions={
           <div className="flex items-center gap-2">

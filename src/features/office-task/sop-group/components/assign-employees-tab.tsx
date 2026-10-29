@@ -119,13 +119,13 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
                 {(
                   [
                     {
-                      label: 'Expand all',
+                      label: 'Expand All',
                       icon: ChevronsUpDown,
                       active: collapsed.size === 0,
                       onClick: () => setCollapsed(new Set()),
                     },
                     {
-                      label: 'Collapse all',
+                      label: 'Collapse All',
                       icon: ChevronsDownUp,
                       active: collapsed.size === f.assignees.fields.length,
                       onClick: () => setCollapsed(new Set(f.assignees.fields.map((x) => x.id))),

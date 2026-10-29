@@ -253,7 +253,7 @@ export function SalaryViewListPage() {
   const emptyState = (
     <EmptyState
       icon={Wallet}
-      title={view.search ? 'No matching salaries' : 'Nothing processed for this month'}
+      title={view.search ? 'No Matching Salaries' : 'Nothing Processed for This Month'}
       description={
         view.search
           ? 'Try a different name or employee code.'
@@ -305,7 +305,7 @@ export function SalaryViewListPage() {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to read its payroll."
         />
       ) : view.isError ? (
@@ -377,7 +377,7 @@ export function SalaryViewListPage() {
         onOpenChange={view.setDiscardOpen}
         variant="destructive"
         icon={Trash2}
-        title="Discard the processed salary?"
+        title="Discard the Processed Salary?"
         description={`${view.selectedCount} processed ${
           view.selectedCount === 1 ? 'salary' : 'salaries'
         } for ${salaryMonthName(view.month)} ${

@@ -57,7 +57,7 @@ export function ContractRenewDialog({
     <Dialog open={row !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Update contract</DialogTitle>
+          <DialogTitle>Update Contract</DialogTitle>
           <DialogDescription>
             {row ? (
               <>
@@ -114,7 +114,7 @@ export function ContractRenewDialog({
             */}
             {showEffectiveFrom ? (
               <Field
-                label="New term starts"
+                label="New Term Starts"
                 hint="This contract has already lapsed. Leave it on the old end date to renew continuously, or move it to today if the new term really starts now."
                 error={errors.effectiveFrom?.message}
                 className="sm:col-span-2"

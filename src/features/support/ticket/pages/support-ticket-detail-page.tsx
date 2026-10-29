@@ -67,7 +67,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
   return (
     <div>
       <PageHeader
-        title={ticket ? `Ticket ${ticket.code}` : 'Ticket Detail'}
+        title={ticket ? `Ticket ${ticket.code}` : 'Ticket Details'}
         description="Your query to the XpertOne help desk, and the response time your plan promised for it."
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -297,13 +297,13 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
         open={detail.isCloseOpen}
         onOpenChange={detail.setIsCloseOpen}
         icon={CheckCheck}
-        title="Close this ticket?"
+        title="Close This Ticket?"
         description={
           ticket
             ? `Closing ${ticket.code} accepts the desk's resolution and files it away. Nothing is deleted, and you can still reopen it later if the fix does not hold.`
             : undefined
         }
-        confirmLabel="Close ticket"
+        confirmLabel="Close Ticket"
         cancelLabel="Cancel"
         loading={detail.isClosing}
         keepOpenOnConfirm

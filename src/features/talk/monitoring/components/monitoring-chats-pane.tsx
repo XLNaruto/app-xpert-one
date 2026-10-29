@@ -125,7 +125,7 @@ export function MonitoringChatsPane({
         ) : chats.length === 0 ? (
           <EmptyState
             icon={MessageSquareOff}
-            title="No conversations"
+            title="No Conversations"
             description={
               chatSearch.trim()
                 ? 'No chat title matches that search.'
@@ -228,7 +228,7 @@ function ChatRow({
  */
 function ParticipantFlags({ chat }: { chat: MonitoringChat }) {
   const flags = [
-    chat.participant?.hasLeft && { icon: LogOut, label: 'They left this group' },
+    chat.participant?.hasLeft && { icon: LogOut, label: 'They Left This Group' },
     chat.participant?.hasBeenRemoved && {
       icon: UserMinus,
       label: 'They were removed from this group',

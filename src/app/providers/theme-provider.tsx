@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from 'react'
-import { useUiStore } from '@/stores/ui-store'
+import { useResolvedTheme } from '@/hooks/use-resolved-theme'
 
 /** Applies the current theme to <html> as a `.dark` class. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useUiStore((s) => s.theme)
+  const theme = useResolvedTheme()
 
   useEffect(() => {
     const root = document.documentElement

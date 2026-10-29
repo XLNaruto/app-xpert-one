@@ -14,7 +14,7 @@ export const EMPLOYMENT_EXCHANGE_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   description: 'Manage the employment exchange offices establishments file their returns with.',
   shortLabel: 'Employment Exchange Address',
   recordsLabel: 'employment exchange addresses',
-  emptyTitle: 'No employment exchange office addresses yet',
+  emptyTitle: 'No Employment Exchange Office Addresses Yet',
   emptyDescription: 'Add your first employment exchange office to get started.',
   icon: Building2,
 }

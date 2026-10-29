@@ -37,7 +37,7 @@ export function workActivity(work: WorkTimelineInput): WorkEvent[] {
     events.push({ at: n.at, kind: 'progress', title: `Progress · ${n.percent}%`, detail: n.note || undefined })
   }
   if (work.submittedAt) {
-    events.push({ at: work.submittedAt, kind: 'submitted', title: 'Handed in', detail: work.note || undefined })
+    events.push({ at: work.submittedAt, kind: 'submitted', title: 'Handed In', detail: work.note || undefined })
   }
   if (work.verdict && work.verdictAt) {
     events.push({
@@ -96,7 +96,7 @@ export function deadlineStanding(
   const days = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000)
   if (done) {
     const late = days(deadline, done)
-    return late > 0 ? { label: `${late} day${late === 1 ? '' : 's'} late`, late: true } : { label: 'On time', late: false }
+    return late > 0 ? { label: `${late} day${late === 1 ? '' : 's'} late`, late: true } : { label: 'On Time', late: false }
   }
   const over = days(deadline, today)
   return over > 0 ? { label: `${over} day${over === 1 ? '' : 's'} overdue`, late: true } : null

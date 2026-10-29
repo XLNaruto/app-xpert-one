@@ -127,7 +127,7 @@ export function LeaveApprovalChainListPage() {
                 ) : chain.order.length === 0 ? (
                   <EmptyState
                     icon={Plus}
-                    title="Leave routing is off"
+                    title="Leave Routing Is Off"
                     description="With no chain configured, anyone who may decide leave can decide any leave — exactly as before this screen existed. Add a level to start routing."
                   />
                 ) : (

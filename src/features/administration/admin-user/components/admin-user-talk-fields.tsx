@@ -256,7 +256,7 @@ export function AdminUserTalkFields({ form, disabled = false }: AdminUserTalkFie
                   onClick={form.addTalkGrant}
                 >
                   <Plus className="size-4" />
-                  Add grant
+                  Add Grant
                 </Button>
               </span>
             </TooltipTrigger>

@@ -44,7 +44,7 @@ export function useTalkCredentialList() {
   const { companies } = useMyCompanies()
   const companyOptions = useMemo(
     () => [
-      { label: 'All companies', value: ALL_COMPANIES },
+      { label: 'All Companies', value: ALL_COMPANIES },
       ...companies.map((company) => ({ label: company.name, value: String(company.id) })),
     ],
     [companies],

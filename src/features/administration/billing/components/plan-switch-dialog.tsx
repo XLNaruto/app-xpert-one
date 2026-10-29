@@ -199,11 +199,11 @@ function SwitchSummaryView({ summary }: { summary: SwitchSummary }) {
       </div>
 
       <div className="space-y-2 rounded-xl border border-border p-3">
-        <MoneyRow label="New plan price" value={summary.price} />
+        <MoneyRow label="New Plan Price" value={summary.price} />
         {summary.prorationUsed > 0 && (
-          <MoneyRow label="Credit from current plan" value={summary.prorationUsed} sign="−" />
+          <MoneyRow label="Credit from Current Plan" value={summary.prorationUsed} sign="−" />
         )}
-        <MoneyRow label="Actual amount" value={summary.amountBeforeDiscount} strong />
+        <MoneyRow label="Actual Amount" value={summary.amountBeforeDiscount} strong />
         {summary.discount > 0 && (
           <MoneyRow label="Discount" value={summary.discount} sign="−" />
         )}
@@ -214,10 +214,10 @@ function SwitchSummaryView({ summary }: { summary: SwitchSummary }) {
             sign="−"
           />
         )}
-        <MoneyRow label="Amount to pay" value={summary.amountDue} strong />
+        <MoneyRow label="Amount to Pay" value={summary.amountDue} strong />
         {summary.creditSurplus > 0 && (
           <MoneyRow
-            label="Credit saved for later"
+            label="Credit Saved for Later"
             value={summary.creditSurplus}
             sign="+"
             tone="success"
@@ -449,20 +449,20 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
 
         <div className="mt-5 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Label>Billing cycle</Label>
+            <Label>Billing Cycle</Label>
             <BillingCycleToggle yearly={isYearly} onChange={setIsYearly} savingsPercent={null} />
           </div>
 
           {/* With no running plan there's nothing to time against — it starts now. */}
           {hasRunningPlan && (
             <div className="space-y-2">
-              <Label>When should it start?</Label>
+              <Label>When Should It Start?</Label>
               <div role="radiogroup" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <TimingOption
                   value="immediately"
                   selected={extendType === 'immediately'}
                   icon={Zap}
-                  title="Switch now"
+                  title="Switch Now"
                   description="Starts a fresh term today. Unused time on your current plan is credited."
                   onSelect={setExtendType}
                 />
@@ -471,7 +471,7 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
                   selected={extendType === 'next_renewal'}
                   disabled={!nextRenewalAllowed}
                   icon={CalendarClock}
-                  title="At next renewal"
+                  title="At Next Renewal"
                   description={
                     nextRenewalAllowed
                       ? 'Your current plan runs to its end, then the new one starts at full price.'

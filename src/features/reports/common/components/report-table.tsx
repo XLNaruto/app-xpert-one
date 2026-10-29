@@ -75,7 +75,7 @@ export function ReportTable<TRow>({
       emptyState={
         <EmptyState
           icon={FileSpreadsheet}
-          title={searchValue ? 'No matching records' : 'Nothing to report'}
+          title={searchValue ? 'No Matching Records' : 'Nothing to Report'}
           description={
             searchValue
               ? 'Try a different name, code or number.'

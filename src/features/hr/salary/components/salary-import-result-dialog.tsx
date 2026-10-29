@@ -183,7 +183,7 @@ export function SalaryImportResultDialog({
             Total: <span className="font-semibold text-foreground">{rows.length}</span>
           </p>
           <Button type="button" size="sm" onClick={close}>
-            Got it
+            Got It
           </Button>
         </div>
       </DialogContent>

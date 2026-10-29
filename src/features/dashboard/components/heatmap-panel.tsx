@@ -64,7 +64,7 @@ export function HeatmapPanel({ panel, ignoredFilters = [] }: HeatmapPanelProps) 
 
   return (
     <PanelCard
-      title={shape === 'calendar' ? 'Activity calendar' : 'Punch pattern'}
+      title={shape === 'calendar' ? 'Activity Calendar' : 'Punch Pattern'}
       description={
         shape === 'calendar'
           ? 'One cell per day, weeks across and weekdays down.'

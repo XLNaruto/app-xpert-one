@@ -55,7 +55,7 @@ export function EmployeeTicketPickupBadge({ needsPickup }: { needsPickup: boolea
   if (!needsPickup) return null
   return (
     <Badge variant="warning" className="text-[10px] uppercase">
-      Needs pickup
+      Needs Pickup
     </Badge>
   )
 }

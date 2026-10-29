@@ -36,7 +36,7 @@ export function useLogin() {
     defaultValues: {
       email: '',
       password: '',
-      isOwner: true,
+      isOwner: false,
       companyCode: '',
       remember: false,
     },

@@ -135,7 +135,7 @@ export function BonusEstimateControls({
               className="h-6 gap-1 px-2 text-xs"
             >
               <Wand2 className="size-3.5" />
-              Apply to all
+              Apply to All
             </Button>
             <span className="h-4 w-px bg-border" aria-hidden />
             <Button
@@ -147,7 +147,7 @@ export function BonusEstimateControls({
               className="h-6 gap-1 px-2 text-xs"
             >
               <Wand2 className="size-3.5" />
-              Apply to selected
+              Apply to Selected
             </Button>
           </div>
 

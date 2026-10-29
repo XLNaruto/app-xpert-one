@@ -26,7 +26,7 @@ interface RestrictedIpProps {
  * network they're on — which is what the copy here points at.
  */
 export function RestrictedIp({
-  title = 'Network blocked',
+  title = 'Network Blocked',
   description = 'Requests from this IP address are blocked.',
 }: RestrictedIpProps) {
   const logout = useAuthStore((s) => s.logout)

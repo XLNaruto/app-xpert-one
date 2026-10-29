@@ -81,7 +81,7 @@ export function ApprovalChainLevelRow({
               <span className="inline-flex cursor-help">
                 <Badge variant="warning">
                   <AlertTriangle className="mr-1 size-3" />
-                  No users
+                  No Users
                 </Badge>
               </span>
             </TooltipTrigger>
@@ -122,20 +122,20 @@ export function ApprovalChainLevelRow({
       {canUpdate && (
         <div className="flex items-center gap-1">
           <IconButton
-            label="Move up"
+            label="Move Up"
             disabled={index === 0}
             onClick={() => onMove(index, index - 1)}
           >
             <ChevronUp className="size-4" />
           </IconButton>
           <IconButton
-            label="Move down"
+            label="Move Down"
             disabled={index === total - 1}
             onClick={() => onMove(index, index + 1)}
           >
             <ChevronDown className="size-4" />
           </IconButton>
-          <IconButton label="Remove level" onClick={onRemove} destructive>
+          <IconButton label="Remove Level" onClick={onRemove} destructive>
             <Trash2 className="size-4" />
           </IconButton>
         </div>

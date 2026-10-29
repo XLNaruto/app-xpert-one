@@ -49,7 +49,7 @@ export function useSopAssignmentList(initialGroupId?: number) {
       changeFilter({ groupId: '', status: 'all' })
     },
     groupOptions: [
-      { label: 'All SOP groups', value: '' },
+      { label: 'All SOP Groups', value: '' },
       ...(groups.data ?? []).map((g) => ({ label: g.name, value: String(g.id) })),
     ],
     actions,

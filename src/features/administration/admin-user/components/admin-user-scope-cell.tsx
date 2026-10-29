@@ -30,7 +30,7 @@ export function AdminUserScopeCell({ user }: AdminUserScopeCellProps) {
     return (
       <Badge variant="default" className="gap-1">
         <Globe2 className="size-3" />
-        All companies
+        All Companies
       </Badge>
     )
 

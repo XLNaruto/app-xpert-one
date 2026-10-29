@@ -35,7 +35,7 @@ export function SupportTicketRowActions({
       )}
       {onClose && (
         <IconAction
-          label="Close ticket"
+          label="Close Ticket"
           icon={CheckCheck}
           onClick={onClose}
           className="bg-success/12 text-success hover:bg-success/20"

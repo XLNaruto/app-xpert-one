@@ -1,5 +1,5 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router'
-import { ArrowLeft, Moon, Sun } from 'lucide-react'
+import { ArrowLeft, Monitor, Moon, Sun } from 'lucide-react'
 import { pageIconForPath, pageNameForPath } from '@/config/navigation'
 import { BrandLogo } from '@/components/common/brand-logo'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -32,6 +32,13 @@ import { cn } from '@/lib/utils'
  * switch one would imply it filters what's below, and blocking on a selection
  * would be waiting on an answer nothing uses.
  */
+// Each mode shows its own icon; the hint names the mode a click moves to.
+const THEME_OPTIONS = {
+  light: { Icon: Sun, next: 'Switch to Dark' },
+  dark: { Icon: Moon, next: 'Switch to System' },
+  system: { Icon: Monitor, next: 'Switch to Light' },
+} as const
+
 export function WorkspaceLayout() {
   useAppConfig()
   usePermissions()
@@ -39,6 +46,7 @@ export function WorkspaceLayout() {
 
   const theme = useUiStore((s) => s.theme)
   const toggleTheme = useUiStore((s) => s.toggleTheme)
+  const ThemeIcon = THEME_OPTIONS[theme].Icon
 
   /*
     The screen's own title, resolved from the sidebar config rather than passed
@@ -101,17 +109,15 @@ export function WorkspaceLayout() {
             <button
               type="button"
               onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={THEME_OPTIONS[theme].next}
               className={cn(
                 'inline-flex size-9 items-center justify-center rounded-full border transition-colors hover:bg-muted',
               )}
             >
-              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+              <ThemeIcon className="size-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>
-            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-          </TooltipContent>
+          <TooltipContent>{THEME_OPTIONS[theme].next}</TooltipContent>
         </Tooltip>
       </header>
 

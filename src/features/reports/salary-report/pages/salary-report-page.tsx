@@ -95,13 +95,13 @@ export function SalaryReportPage() {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to read its payroll reports."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
-          title="Choose what to report on"
+          title="Choose What to Report On"
           description="Pick a type and a period above, then press “Filter Data” to load the report."
         />
       ) : view.isError ? (

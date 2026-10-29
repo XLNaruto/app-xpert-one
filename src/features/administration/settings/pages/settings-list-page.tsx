@@ -96,7 +96,7 @@ export function SettingsListPage() {
                   <section>
                     <FormSection
                       icon={CalendarClock}
-                      title="When it takes effect"
+                      title="When It Takes Effect"
                       description="Nothing changes until this date and time"
                       className="mt-0"
                     />
@@ -118,7 +118,7 @@ export function SettingsListPage() {
                 <section>
                   <FormSection
                     icon={ClipboardCheck}
-                    title="SOP task submission"
+                    title="SOP Task Submission"
                     description="How employees hand in their daily SOP tasks"
                     // First in the card when the effective-from section is hidden.
                     className={settings.canUpdate ? undefined : 'mt-0'}
@@ -159,7 +159,7 @@ export function SettingsListPage() {
                 <section>
                   <FormSection
                     icon={FolderKanban}
-                    title="Project task submission"
+                    title="Project Task Submission"
                     description="How employees record progress and hand in project tasks"
                   />
                   <div className="mt-4">
@@ -238,7 +238,7 @@ export function SettingsListPage() {
         onOpenChange={(open) => !open && withdraw.cancel()}
         variant="destructive"
         icon={CalendarClock}
-        title="Withdraw scheduled change?"
+        title="Withdraw Scheduled Change?"
         description={
           withdraw.pending
             ? `${SETTING_KEY_LABELS[withdraw.pending.settingKey]} will stay ${submissionModeLabel(
@@ -423,7 +423,7 @@ function SettingsHistoryTab({
       emptyState={
         <EmptyState
           icon={History}
-          title="No changes yet"
+          title="No Changes Yet"
           description="Every change you schedule is listed here, with what became of it."
         />
       }

@@ -126,7 +126,7 @@ export function DashboardPage() {
   if (screen.isForbidden || !screen.access.canView) {
     return (
       <Forbidden
-        title="Dashboard unavailable"
+        title="Dashboard Unavailable"
         description="You do not have access to the dashboard. Every panel on this screen is gated on one permission, so there is nothing here to show without it — contact your administrator to request access."
       />
     )
@@ -188,20 +188,20 @@ export function DashboardPage() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <SeriesPanel
-          title="Headcount & movement"
+          title="Headcount & Movement"
           description="The standing headcount is a stock and can fall; joins and exits are posting events, so a rehire is a second join and a transfer is both."
           panel={movement}
         />
 
         <BreakdownPanel
-          title="Workforce mix"
+          title="Workforce Mix"
           panel={mix}
           allowMeasureChoice={false}
           showComparisons={screen.showComparisons}
         />
 
         <SeriesPanel
-          title="Attendance trend"
+          title="Attendance Trend"
           description="Present and leave days beside late arrivals. Different units never share an axis, so this draws as one chart per unit."
           panel={attendanceTrend}
           allowMetricChoice
@@ -212,19 +212,19 @@ export function DashboardPage() {
         <HeatmapPanel panel={heatmap} ignoredFilters={ignoredByPunchGrid(appliedFilters)} />
 
         <BreakdownPanel
-          title="Leave by department"
+          title="Leave by Department"
           panel={leaveMix}
           showComparisons={screen.showComparisons}
         />
 
         <SeriesPanel
-          title="Payroll by month"
+          title="Payroll by Month"
           description="Filed on each sheet's own month — a sheet computed in April for March is March's payroll."
           panel={payroll}
         />
 
         <BreakdownPanel
-          title="Cost by department"
+          title="Cost by Department"
           panel={cost}
           showComparisons={screen.showComparisons}
         />

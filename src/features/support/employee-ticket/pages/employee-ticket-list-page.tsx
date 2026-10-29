@@ -49,8 +49,8 @@ import type { EmployeeTicket } from '../types'
 
 /** The "unfinished only" facet — a shortcut spanning three of the tabs. */
 const OPEN_ONLY_OPTIONS = [
-  { label: 'All tickets', value: '' },
-  { label: 'Unfinished only', value: 'true' },
+  { label: 'All Tickets', value: '' },
+  { label: 'Unfinished Only', value: 'true' },
 ]
 
 /**
@@ -378,7 +378,7 @@ export function EmployeeTicketListPage() {
                   value: list.filters.category,
                   onChange: (value) => list.setFilter('category', value),
                   options: [
-                    { label: 'All categories', value: ALL_FILTER },
+                    { label: 'All Categories', value: ALL_FILTER },
                     ...EMPLOYEE_TICKET_CATEGORY_OPTIONS,
                   ],
                   clearValue: ALL_FILTER,
@@ -391,7 +391,7 @@ export function EmployeeTicketListPage() {
                   value: list.filters.priority,
                   onChange: (value) => list.setFilter('priority', value),
                   options: [
-                    { label: 'Any priority', value: ALL_FILTER },
+                    { label: 'Any Priority', value: ALL_FILTER },
                     ...EMPLOYEE_TICKET_PRIORITY_OPTIONS,
                   ],
                   clearValue: ALL_FILTER,
@@ -399,7 +399,7 @@ export function EmployeeTicketListPage() {
                 },
                 {
                   key: 'assignee',
-                  label: 'Handled by',
+                  label: 'Handled By',
                   icon: UserRoundCog,
                   value: list.filters.assignedToUserId,
                   onChange: list.changeAssignee,

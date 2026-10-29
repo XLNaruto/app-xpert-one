@@ -78,7 +78,7 @@ export function MonitoringPeoplePane({
         ) : people.length === 0 ? (
           <EmptyState
             icon={UsersRound}
-            title="No one to show"
+            title="No One to Show"
             description={
               personSearch.trim()
                 ? // The endpoint matches the NAME alone — saying "or login"

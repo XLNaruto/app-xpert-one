@@ -5,6 +5,7 @@ import {
   Cloud,
   CreditCard,
   HardHat,
+  Monitor,
   Moon,
   ShieldCheck,
   Sun,
@@ -58,34 +59,36 @@ const MODULES = [
 
 /** Trust badges under the module grid. */
 const HIGHLIGHTS = [
-  { Icon: ShieldCheck, title: 'Enterprise Security', body: 'Your data is safe with us.' },
-  { Icon: Zap, title: 'High Performance', body: 'Fast, reliable and always available.' },
-  { Icon: Cloud, title: 'Cloud Ready', body: 'Access your workspace from anywhere.' },
-  { Icon: Users, title: 'Role Based Access', body: 'Right access for the right people.' },
+  { Icon: ShieldCheck, title: 'Enterprise Security', body: 'Your Data Is Safe with Us.' },
+  { Icon: Zap, title: 'High Performance', body: 'Fast, Reliable and Always Available.' },
+  { Icon: Cloud, title: 'Cloud Ready', body: 'Access Your Workspace from Anywhere.' },
+  { Icon: Users, title: 'Role Based Access', body: 'Right Access for the Right People.' },
 ]
+
+// Each mode shows its own icon; the hint names the mode a click moves to.
+const THEME_OPTIONS = {
+  light: { Icon: Sun, next: 'Switch to Dark' },
+  dark: { Icon: Moon, next: 'Switch to System' },
+  system: { Icon: Monitor, next: 'Switch to Light' },
+} as const
 
 function ThemeToggle() {
   const theme = useUiStore((s) => s.theme)
   const toggleTheme = useUiStore((s) => s.toggleTheme)
+  const { Icon, next } = THEME_OPTIONS[theme]
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           onClick={toggleTheme}
-          aria-label={theme === 'light' ? 'Switch to dark' : 'Switch to light'}
+          aria-label={next}
           className="grid size-10 cursor-pointer place-items-center rounded-full border border-border bg-card text-primary shadow-sm transition-colors hover:bg-accent"
         >
-          {theme === 'light' ? (
-            <Sun className="size-5" />
-          ) : (
-            <Moon className="size-5" />
-          )}
+          <Icon className="size-5" />
         </button>
       </TooltipTrigger>
-      <TooltipContent>
-        {theme === 'light' ? 'Switch to dark' : 'Switch to light'}
-      </TooltipContent>
+      <TooltipContent>{next}</TooltipContent>
     </Tooltip>
   )
 }

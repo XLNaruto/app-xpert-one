@@ -31,7 +31,7 @@ export const queryClient = new QueryClient({
         duration: 8000,
         description: 'Cancel the booked change on the billing page to lift the limit.',
         action: {
-          label: 'Open billing',
+          label: 'Open Billing',
           // Lazy: the router is built with this client, so a static import
           // would be circular.
           onClick: () => {

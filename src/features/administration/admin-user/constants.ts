@@ -56,12 +56,12 @@ export const EMPTY_ADMIN_USER_FORM: AdminUserFormValues = {
 export const ACCESS_LEVEL_OPTIONS = [
   {
     value: 'COMPANY' as const,
-    label: 'Selected companies',
+    label: 'Selected Companies',
     description: 'Only the companies ticked below.',
   },
   {
     value: 'GLOBAL' as const,
-    label: 'All companies',
+    label: 'All Companies',
     description: 'Every company of the account, including ones added later.',
   },
 ]

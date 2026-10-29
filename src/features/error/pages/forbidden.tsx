@@ -20,7 +20,7 @@ interface ForbiddenProps {
  * the two read as one family.
  */
 export function Forbidden({
-  title = 'Access denied',
+  title = 'Access Denied',
   description = "You don't have permission to view this page. If you think this is a mistake, contact your administrator to request access.",
 }: ForbiddenProps) {
   const router = useRouter()

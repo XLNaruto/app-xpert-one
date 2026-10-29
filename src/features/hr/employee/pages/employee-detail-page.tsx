@@ -170,7 +170,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
   if (!employee) {
     return (
       <NotFound
-        title="Employee not found"
+        title="Employee Not Found"
         description={
           detail.error
             ? getApiErrorMessage(detail.error, "We couldn't find that employee.")
@@ -194,7 +194,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
   return (
     <div>
       <PageHeader
-        title="Employee Detail"
+        title="Employee Details"
         description="Everything on record, read-only"
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -848,7 +848,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               badge={<CountBadge count={familyRows.length} />}
             >
               {familyRows.length === 0 ? (
-                <EmptyState icon={Users} title="No family members recorded." />
+                <EmptyState icon={Users} title="No Family Members Recorded" />
               ) : (
                 <div className="divide-y divide-border">
                   {familyRows.map((member) => (
@@ -977,7 +977,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               badge={<CountBadge count={documentRows.length} />}
             >
               {documentRows.length === 0 ? (
-                <EmptyState icon={FileStack} title="No documents attached." />
+                <EmptyState icon={FileStack} title="No Documents Attached" />
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {documentRows.map((document) => {
@@ -1070,7 +1070,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               badge={<CountBadge count={assetRows.length} />}
             >
               {assetRows.length === 0 ? (
-                <EmptyState icon={Boxes} title="No assets issued." />
+                <EmptyState icon={Boxes} title="No Assets Issued" />
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {assetRows.map((asset) => (
@@ -1090,7 +1090,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               {transferRows.length === 0 ? (
                 <EmptyState
                   icon={ArrowRightLeft}
-                  title="No postings recorded."
+                  title="No Postings Recorded"
                 />
               ) : (
                 <div className="divide-y divide-border">
@@ -1129,7 +1129,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
           badge={<CountBadge count={faces.length} />}
         >
           {faces.length === 0 ? (
-            <EmptyState icon={ScanFace} title="No face images registered." />
+            <EmptyState icon={ScanFace} title="No Face Images Registered" />
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {faces.map((face, index) => (
@@ -1178,7 +1178,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
               />
 
               {leaveRows.length === 0 ? (
-                <EmptyState icon={CalendarDays} title="No leave recorded." />
+                <EmptyState icon={CalendarDays} title="No Leave Recorded" />
               ) : (
                 <div className="divide-y divide-border">
                   {/*
@@ -1595,7 +1595,7 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
           value={onDate(asset.assignedDate) ?? "Not recorded"}
         />
         <AssetFact
-          label="Due back"
+          label="Due Back"
           value={onDate(asset.validTill) ?? "No return date"}
           tone={overdue ? "danger" : undefined}
         />

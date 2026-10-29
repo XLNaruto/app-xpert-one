@@ -14,7 +14,7 @@ export const FACTORY_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   description: 'Manage the factory inspectorate offices plants are registered with.',
   shortLabel: 'Factory Address',
   recordsLabel: 'factory addresses',
-  emptyTitle: 'No factory office addresses yet',
+  emptyTitle: 'No Factory Office Addresses Yet',
   emptyDescription: 'Add your first factory office to get started.',
   icon: Building2,
 }

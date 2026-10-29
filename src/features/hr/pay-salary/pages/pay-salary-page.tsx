@@ -248,7 +248,7 @@ export function PaySalaryPage() {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to settle its payroll."
         />
       ) : view.isError ? (

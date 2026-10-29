@@ -55,7 +55,7 @@ export function EmployeeTicketAssignDialog({
       open={open}
       onOpenChange={onOpenChange}
       icon={UserRoundCog}
-      title={isRelease ? 'Release this ticket?' : 'Hand this ticket over?'}
+      title={isRelease ? 'Release This Ticket?' : 'Hand This Ticket Over?'}
       description={
         code
           ? isRelease

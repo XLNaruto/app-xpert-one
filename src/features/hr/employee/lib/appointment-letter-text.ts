@@ -112,7 +112,7 @@ export const APPOINTMENT_CLAUSES_EN: string[] = [
   "You will be paid as per as per minimum wages decided by government, any kind of salary increase will be entitled. In case of increase of minimum wages, Contract Company will pass on to you. Your salary will be paid after salary bill is passed from Department. No argument shall be attained regarding this matter.",
   "At the time of joining the duty, you are supposed to prepare 3 copies of joining report and deposit one copy at our office.",
   "At the end of every month, you have to submit the attendance sheet duly authenticated by your supervisior.",
-  "You will have to intimate in written to your supervisor /contract office one month prior to leaving the job. If you fail to do so, one month salary will be debited to your account.",
+  "You will have to intimate in written to your supervisor /contract office one month prior to leaving the job. If you fail to do so, one month's salary will be debited to your account.",
   "You expected to perform your duty honestly, loyally and timely.",
   "You will be abided to follow any of the changes in rules and regulations done by the Company in future.",
   "You will adhere the organization anti-bribery and anti-corruption policy.",

@@ -68,8 +68,8 @@ export function RuleIcons({ photo, approval }: { photo: boolean; approval: boole
   }
   return (
     <div className="flex items-center gap-1">
-      {photo && <RuleIcon icon={Camera} label="Photo proof required" />}
-      {approval && <RuleIcon icon={ShieldCheck} label="Needs approval" />}
+      {photo && <RuleIcon icon={Camera} label="Photo Proof Required" />}
+      {approval && <RuleIcon icon={ShieldCheck} label="Needs Approval" />}
     </div>
   )
 }

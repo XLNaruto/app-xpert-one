@@ -8,9 +8,9 @@ import { MessageSquareText, ScrollText, UserSearch } from 'lucide-react'
  * saying "nothing selected".
  */
 const STEPS = [
-  { icon: UserSearch, step: 'Step 1', label: 'Pick a person' },
-  { icon: MessageSquareText, step: 'Step 2', label: 'Open a chat' },
-  { icon: ScrollText, step: 'Step 3', label: 'Read history' },
+  { icon: UserSearch, step: 'Step 1', label: 'Pick a Person' },
+  { icon: MessageSquareText, step: 'Step 2', label: 'Open a Chat' },
+  { icon: ScrollText, step: 'Step 3', label: 'Read History' },
 ] as const
 
 export function MonitoringIntro({ hasPerson }: { hasPerson: boolean }) {

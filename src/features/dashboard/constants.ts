@@ -68,15 +68,15 @@ export const DATE_PRESET_OPTIONS: ComboboxOption[] = (
 export const ANY_VALUE = ''
 
 export const EMPLOYMENT_TYPE_OPTIONS: ComboboxOption[] = [
-  { label: 'All employment types', value: ANY_VALUE },
+  { label: 'All Employment Types', value: ANY_VALUE },
   { label: 'Permanent', value: 'PERMANENT' },
   { label: 'Contractual', value: 'CONTRACTUAL' },
 ]
 
 export const GRADE_OPTIONS: ComboboxOption[] = [
-  { label: 'All grades', value: ANY_VALUE },
+  { label: 'All Grades', value: ANY_VALUE },
   { label: 'Skilled', value: 'SKILLED' },
-  { label: 'Highly skilled', value: 'HIGH-SKILLED' },
+  { label: 'Highly Skilled', value: 'HIGH-SKILLED' },
   { label: 'Semi-skilled', value: 'SEMI-SKILLED' },
   { label: 'Unskilled', value: 'UN-SKILLED' },
 ]
@@ -384,42 +384,42 @@ export interface SignalSpec {
 
 export const SIGNAL_SPECS: Record<AttentionSignal, SignalSpec> = {
   leave_pending: {
-    label: 'Leave pending',
+    label: 'Leave Pending',
     description: 'A leave application has been sitting for more than 3 days.',
     to: '/hr/leave',
   },
   missing_checkout: {
-    label: 'Missing check-out',
+    label: 'Missing Check-Out',
     description: 'A past day has a check-in and no check-out.',
     to: '/hr/attendance',
   },
   contract_expiring: {
-    label: 'Contract expiring',
+    label: 'Contract Expiring',
     description: 'The posting comes up for renewal within 30 days.',
     to: '/hr/employee',
   },
   document_expiring: {
-    label: 'Document expiring',
+    label: 'Document Expiring',
     description: 'A passport or licence expires within 30 days.',
     to: '/hr/employee',
   },
   no_wage: {
-    label: 'No wage',
+    label: 'No Wage',
     description: 'No wage row — payroll skips this employee entirely.',
     to: '/hr/employee',
   },
   probation_due: {
-    label: 'Probation due',
+    label: 'Probation Due',
     description: 'Joined more than 6 months ago and still unconfirmed.',
     to: '/hr/employee',
   },
   ticket_overdue: {
-    label: 'Ticket overdue',
+    label: 'Ticket Overdue',
     description: 'An open help-desk ticket is more than 7 days old.',
     to: '/support/employee-ticket',
   },
   no_posting: {
-    label: 'No posting',
+    label: 'No Posting',
     description:
       'Employed by nobody — excluded from every headcount on this screen.',
     to: '/hr/employee',
@@ -435,7 +435,7 @@ export const SIGNAL_SPECS: Record<AttentionSignal, SignalSpec> = {
 export const SIGNAL_ORDER = Object.keys(SIGNAL_SPECS) as AttentionSignal[]
 
 export const SIGNAL_OPTIONS: ComboboxOption[] = [
-  { label: 'All signals', value: ANY_VALUE },
+  { label: 'All Signals', value: ANY_VALUE },
   ...SIGNAL_ORDER.map((value) => ({ label: SIGNAL_SPECS[value].label, value })),
 ]
 

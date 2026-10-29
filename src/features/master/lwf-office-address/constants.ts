@@ -14,7 +14,7 @@ export const LWF_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   description: 'Manage the Labour Welfare Board offices establishments file contributions with.',
   shortLabel: 'LWF Address',
   recordsLabel: 'LWF addresses',
-  emptyTitle: 'No LWF office addresses yet',
+  emptyTitle: 'No LWF Office Addresses Yet',
   emptyDescription: 'Add your first LWF office to get started.',
   icon: Building2,
 }

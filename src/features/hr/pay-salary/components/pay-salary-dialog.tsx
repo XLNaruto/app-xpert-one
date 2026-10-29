@@ -198,7 +198,7 @@ export function PaySalaryDialog({
                     onChange={field.onChange}
                     accept={PAYMENT_DOCUMENT_ACCEPT}
                     maxFiles={MAX_PAYMENT_DOCUMENTS}
-                    label="Add payment documents"
+                    label="Add Payment Documents"
                     hint={`PDF, JPG, PNG or WebP — ${
                       MAX_PAYMENT_DOCUMENTS - field.value.length
                     } of ${MAX_PAYMENT_DOCUMENTS} remaining`}

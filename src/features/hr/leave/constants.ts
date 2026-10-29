@@ -31,8 +31,8 @@ export const LEAVE_DURATION_OPTIONS: ComboboxOption[] = [
  * only length the API accepts.
  */
 export const HALF_DAY_PRESETS = [
-  { label: 'First half', fromTime: '09:00', toTime: '13:00' },
-  { label: 'Second half', fromTime: '14:00', toTime: '18:00' },
+  { label: 'First Half', fromTime: '09:00', toTime: '13:00' },
+  { label: 'Second Half', fromTime: '14:00', toTime: '18:00' },
 ] as const
 
 /**
@@ -41,9 +41,9 @@ export const HALF_DAY_PRESETS = [
  * spends the type's allowance and the rest falls through as unpaid.
  */
 export const LEAVE_PAY_TYPE_FILTER_OPTIONS: ComboboxOption[] = [
-  { label: 'Paid & unpaid', value: '' },
-  { label: 'Paid only', value: 'PAID' },
-  { label: 'Unpaid only', value: 'UNPAID' },
+  { label: 'Paid & Unpaid', value: '' },
+  { label: 'Paid Only', value: 'PAID' },
+  { label: 'Unpaid Only', value: 'UNPAID' },
 ]
 
 /**
@@ -59,7 +59,7 @@ export const LEAVE_RECORD_STATUS_OPTIONS: ComboboxOption[] = [
 
 /** Status filter on the leave register — `''` is every status. */
 export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
-  { label: 'All statuses', value: '' },
+  { label: 'All Statuses', value: '' },
   { label: 'Pending', value: 'PENDING' },
   { label: 'Approved', value: 'APPROVED' },
   { label: 'Rejected', value: 'REJECTED' },
@@ -74,8 +74,8 @@ export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
  * company's rows whether or not any hierarchy user can.
  */
 export const LEAVE_TABS = [
-  { value: '', label: 'All statuses' },
-  { value: 'MINE', label: 'Pending with me' },
+  { value: '', label: 'All Statuses' },
+  { value: 'MINE', label: 'Pending with Me' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'APPROVED', label: 'Approved' },
   { value: 'REJECTED', label: 'Rejected' },

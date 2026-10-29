@@ -108,9 +108,9 @@ const salaryRowFields = z.object({
    */
   presentDays: z.string(),
   /** The month's working days — read-only on the grid, sent with the snapshot. */
-  workingDays: gridNumber({ min: 1, max: 31, blank: 'auto', label: 'Working days' }),
+  workingDays: gridNumber({ min: 1, max: 31, blank: 'auto', label: 'Working Days' }),
   /** Overtime hours; blank is none. Only asked when OT applies to the row. */
-  otHours: gridNumber({ min: 0, max: 400, blank: 'auto', label: 'OT hours' }),
+  otHours: gridNumber({ min: 0, max: 400, blank: 'auto', label: 'OT Hours' }),
   /** Aligned with the grid's head columns, so a column index is a cell index. */
   allowances: z.array(salaryHeadCellSchema),
   deductions: z.array(salaryHeadCellSchema),

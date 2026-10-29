@@ -314,7 +314,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
         {detail.error ? (
           <ScopedDataError error={detail.error} fallback="Couldn't load this employee's analysis." what="task analysis" />
         ) : (
-          <EmptyState title="Not found" description="This employee may have no tasks in the window." />
+          <EmptyState title="Not Found" description="This employee may have no tasks in the window." />
         )}
       </div>
     )
@@ -408,7 +408,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.checklists.offset}
               total={detail.checklists.total}
               onPaginationChange={detail.checklists.onPaginationChange}
-              emptyState={<EmptyState icon={ClipboardList} title="No checklists in the window" />}
+              emptyState={<EmptyState icon={ClipboardList} title="No Checklists in the Window" />}
             />
           </Panel>
           <Panel title="SOP Tasks" description="Every checklist run in the window, newest first.">
@@ -424,7 +424,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.runs.offset}
               total={detail.runs.total}
               onPaginationChange={detail.runs.onPaginationChange}
-              emptyState={<EmptyState icon={ClipboardList} title="No tasks in this tab" />}
+              emptyState={<EmptyState icon={ClipboardList} title="No Tasks in This Tab" />}
             />
           </Panel>
         </>
@@ -459,7 +459,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.tasks.offset}
               total={detail.tasks.total}
               onPaginationChange={detail.tasks.onPaginationChange}
-              emptyState={<EmptyState icon={FolderKanban} title="No tasks in this tab" />}
+              emptyState={<EmptyState icon={FolderKanban} title="No Tasks in This Tab" />}
             />
           </Panel>
         </>

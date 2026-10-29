@@ -78,7 +78,7 @@ export function AllowanceDeductionCreatePage({
             >
               <FormSection
                 icon={Wallet}
-                title="Allowance / Deduction Detail"
+                title="Allowance / Deduction Details"
                 description="Whether it adds to or subtracts from pay, and its identity"
                 className="mt-0"
               />

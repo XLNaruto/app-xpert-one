@@ -707,7 +707,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.overtimeApplicable`}
-          label="Overtime applicable"
+          label="Overtime Applicable"
         />
       )
     case 'otRate':
@@ -718,7 +718,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.pfActApplicable`}
-          label="PF act applicable"
+          label="PF Act Applicable"
         />
       )
     case 'empWl':
@@ -747,7 +747,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.esicActApplicable`}
-          label="ESIC act applicable"
+          label="ESIC Act Applicable"
         />
       )
     case 'esicDedOn':
@@ -758,7 +758,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.ptActApplicable`}
-          label="PT act applicable"
+          label="PT Act Applicable"
         />
       )
     case 'ptType':
@@ -788,7 +788,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.tdsActApplicable`}
-          label="TDS act applicable"
+          label="TDS Act Applicable"
         />
       )
     case 'tdsPct':
@@ -801,7 +801,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
         <ActSwitch
           control={control}
           name={`rows.${index}.lwfActApplicable`}
-          label="LWF act applicable"
+          label="LWF Act Applicable"
         />
       )
     case 'lwfType':

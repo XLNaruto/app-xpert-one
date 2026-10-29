@@ -180,7 +180,7 @@ export function PfRateListPage() {
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Percent}
-        title="Delete PF rate?"
+        title="Delete PF Rate?"
         description={
           pendingDelete
             ? `The slab effective ${formatEffectiveDate(pendingDelete.wef)} will be permanently removed.`

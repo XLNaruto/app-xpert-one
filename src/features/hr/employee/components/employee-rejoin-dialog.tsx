@@ -53,7 +53,7 @@ export function EmployeeRejoinDialog({ rejoin }: { rejoin: EmployeeRejoin }) {
             <div className="sm:col-span-2">
               <FormSection
                 icon={Building2}
-                title="The new posting"
+                title="The New Posting"
                 description={
                   rejoin.lastLeavingDate
                     ? `Their last posting ended on ${formatDate(rejoin.lastLeavingDate)} — the new one starts after it.`

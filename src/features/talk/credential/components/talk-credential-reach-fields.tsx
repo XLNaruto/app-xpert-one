@@ -181,7 +181,7 @@ export function TalkCredentialReachFields({
     <>
       <div className="col-span-full">
         <Field
-          label="Whole companies"
+          label="Whole Companies"
           hint="Every department in each, including any the company adds later."
           error={companyError}
         >
@@ -238,7 +238,7 @@ export function TalkCredentialReachFields({
 
       <div className="col-span-full space-y-2">
         <Field
-          label="Individual departments"
+          label="Individual Departments"
           hint="For reach narrower than a whole company. A department can be granted on its own — its company doesn't have to be ticked above."
           error={grantsError}
         >
@@ -287,7 +287,7 @@ export function TalkCredentialReachFields({
                     onClick={form.addDepartmentGrant}
                   >
                     <Plus className="size-4" />
-                    Add departments
+                    Add Departments
                   </Button>
                 </span>
               </TooltipTrigger>

@@ -192,7 +192,7 @@ export function DashboardKpiStrip({
 
       <KpiTile
         className={SPAN_THIRD}
-        label="Net payroll"
+        label="Net Payroll"
         value={formatMoney(payroll.netPay)}
         icon={IndianRupee}
         hint={`${formatCount(payroll.sheets)} sheets`}
@@ -206,7 +206,7 @@ export function DashboardKpiStrip({
       />
 
       <KpiTile
-        label="Open tickets"
+        label="Open Tickets"
         value={formatCount(helpdesk.open)}
         icon={LifeBuoy}
         hint="as of now"

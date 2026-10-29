@@ -63,7 +63,7 @@ export function FileDropzone({
   onChange,
   accept = 'image/*',
   maxSizeMB,
-  label = 'Upload file',
+  label = 'Upload File',
   hint,
   className,
 }: FileDropzoneProps) {

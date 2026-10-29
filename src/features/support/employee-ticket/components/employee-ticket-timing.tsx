@@ -99,10 +99,10 @@ export function EmployeeTicketTiming({
         {/* EFFORT — the only one here that isn't calendar time. */}
         <TimeMetric
           icon={Timer}
-          label="Time spent working"
+          label="Time Spent Working"
           hint={TIME_SPENT_HINT}
           seconds={ticket.activeWorkSeconds}
-          emptyLabel="Not started"
+          emptyLabel="Not Started"
           accent
         >
           <EmployeeTicketWorkingBadge isBeingWorked={ticket.isBeingWorked} />
@@ -130,18 +130,18 @@ export function EmployeeTicketTiming({
 
         <TimeMetric
           icon={MessageSquareReply}
-          label="Time to first reply"
+          label="Time to First Reply"
           hint="raised until the office first wrote to the employee"
           seconds={ticket.timeToFirstResponseSeconds}
-          emptyLabel="Not answered yet"
+          emptyLabel="Not Answered Yet"
         />
 
         <TimeMetric
           icon={PlayCircle}
-          label="Time to start"
+          label="Time to Start"
           hint="raised until somebody first picked it up"
           seconds={ticket.timeToStartSeconds}
-          emptyLabel="Not started yet"
+          emptyLabel="Not Started Yet"
         />
       </div>
 

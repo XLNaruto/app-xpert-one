@@ -29,7 +29,7 @@ export function AdminUserScopeFields({ form, disabled = false }: AdminUserScopeF
   return (
     <>
       <div className="col-span-full">
-        <Field label="Access level" required>
+        <Field label="Access Level" required>
           <Controller
             control={form.form.control}
             name="accessLevel"

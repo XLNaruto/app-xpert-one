@@ -173,7 +173,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
         {error ? (
           <ScopedDataError error={error} fallback="Project task not found." what="project tasks" />
         ) : (
-          <EmptyState title="Project task not found" description="It may have been deleted." />
+          <EmptyState title="Project Task Not Found" description="It may have been deleted." />
         )}
       </div>
     )

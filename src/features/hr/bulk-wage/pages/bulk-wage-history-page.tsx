@@ -82,7 +82,7 @@ function HistoryBody({ list }: { list: ReturnType<typeof useBulkWageHistoryList>
   if (list.companyId === null) {
     return (
       <EmptyState
-        title="No company selected"
+        title="No Company Selected"
         description="Select a company for this session to read its wage structure history."
       />
     )
@@ -106,7 +106,7 @@ function HistoryBody({ list }: { list: ReturnType<typeof useBulkWageHistoryList>
   if (list.designations.length === 0) {
     return (
       <EmptyState
-        title="No designations yet"
+        title="No Designations Yet"
         description="This company has no designations, so there is no wage history to show. Add them under Master → Designation first."
       />
     )

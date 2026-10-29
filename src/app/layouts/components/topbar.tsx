@@ -13,6 +13,7 @@ import {
   DropdownSeparator,
 } from '@/components/ui/dropdown-menu'
 import { useUiStore } from '@/stores/ui-store'
+import { useResolvedTheme } from '@/hooks/use-resolved-theme'
 import { useAuthStore } from '@/stores/auth-store'
 import { useLogout } from '@/features/auth'
 import { useMyProfile, isAccountItself } from '@/features/profile'
@@ -20,8 +21,9 @@ import { CompanySwitcher } from '@/features/company'
 import { cn } from '@/lib/utils'
 
 export function Topbar() {
-  const theme = useUiStore((s) => s.theme)
-  const toggleTheme = useUiStore((s) => s.toggleTheme)
+  // The switch reflects what's on screen; flipping it pins an explicit mode.
+  const theme = useResolvedTheme()
+  const setTheme = useUiStore((s) => s.setTheme)
   const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar)
   const user = useAuthStore((s) => s.user)
   const { data: profile } = useMyProfile()
@@ -124,7 +126,7 @@ export function Topbar() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                toggleTheme()
+                setTheme(theme === 'dark' ? 'light' : 'dark')
               }}
               className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
             >
@@ -161,9 +163,9 @@ export function Topbar() {
         onOpenChange={setConfirmOpen}
         variant="destructive"
         icon={LogOut}
-        title="Sign out?"
+        title="Sign Out?"
         description="You'll need to log in again to access your dashboard."
-        confirmLabel="Sign out"
+        confirmLabel="Sign Out"
         onConfirm={handleLogout}
       />
     </header>

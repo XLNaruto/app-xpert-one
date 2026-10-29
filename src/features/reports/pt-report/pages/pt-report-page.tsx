@@ -124,13 +124,13 @@ export function PtReportPage() {
 
       {view.companyId === null ? (
         <EmptyState
-          title="No company selected"
+          title="No Company Selected"
           description="Select a company for this session to read its PT statement."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
-          title="Choose a period"
+          title="Choose a Period"
           description="Pick a month above, then press “Filter Data” to load the statement."
         />
       ) : view.isError ? (
