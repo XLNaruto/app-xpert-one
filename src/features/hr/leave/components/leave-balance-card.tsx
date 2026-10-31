@@ -74,12 +74,12 @@ export function LeaveBalanceCard({
           <Figure
             label="Awaiting a Decision"
             value={formatDays(balance.paid.pending)}
-            hint="Pending days already reduce what's free — they're spoken for until the leave is decided."
+            hint="Pending Days Already Reduce What's Free — They're Spoken for Until the Leave Is Decided."
           />
           <Figure
             label="Remaining"
             value={formatDays(balance.paid.available)}
-            hint="A SUM of each type's own remainder. It doesn't mean any particular type has that much room — read the lines below."
+            hint="A SUM of Each Type's Own Remainder. It Doesn't Mean Any Particular Type Has That Much Room — Read the Lines Below."
           />
         </div>
 

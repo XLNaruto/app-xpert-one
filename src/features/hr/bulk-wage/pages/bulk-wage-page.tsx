@@ -36,7 +36,7 @@ import { BulkWageToolbar } from '../components/bulk-wage-toolbar'
 function saveAllHint(changedCount: number): string {
   return changedCount > 0
     ? `Save the ${changedCount} changed ${changedCount === 1 ? 'row' : 'rows'} at the month above`
-    : 'Nothing edited — saves every configured row at the month above, re-dating it'
+    : 'Nothing Edited — Saves Every Configured Row at the Month Above, Re-dating It'
 }
 
 /**
@@ -70,7 +70,7 @@ export function BulkWagePage() {
     <>
       <PageHeader
         title="Bulk Update Wage"
-        description="Set the wage structure for every designation of a company against one effective month."
+        description="Set the Wage Structure for Every Designation of a Company Against One Effective Month."
         actions={
           <>
             {/*
@@ -218,7 +218,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
     return (
       <EmptyState
         title="No Company Selected"
-        description="Select a company for this session to load its designations and their wage structures."
+        description="Select a Company for This Session to Load Its Designations and Their Wage Structures."
       />
     )
   }
@@ -234,7 +234,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
       <p className="px-4 py-10 text-center text-xs text-destructive">
         {form.error instanceof Error
           ? form.error.message
-          : "Couldn't load the wage grid."}
+          : "Couldn't Load the Wage Grid."}
       </p>
     )
   }
@@ -242,7 +242,7 @@ function GridBody({ form }: { form: ReturnType<typeof useBulkWageForm> }) {
     return (
       <EmptyState
         title="No Designations Yet"
-        description="This company has no designations to configure. Add them under Master → Designation first."
+        description="This Company Has No Designations to Configure. Add Them Under Master → Designation First."
       />
     )
   }

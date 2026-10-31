@@ -40,9 +40,12 @@ export function useMyTaskBoard() {
   const [date, setDate] = useState(todayIso())
   const [tab, setTab] = useState<MyTaskTab>('sop')
   const [filter, setFilter] = useState<MyTaskFilter>('all')
+  /** The search box's text. The box debounces it; the server does the matching. */
+  const [search, setSearch] = useState('')
+  const term = search.trim()
 
-  const sop = useMySopTasks(date, companyId !== null)
-  const project = useMyProjectTasks(date, companyId !== null)
+  const sop = useMySopTasks(date, term, companyId !== null)
+  const project = useMyProjectTasks(date, term, companyId !== null)
   const settings = useMyTaskSettings(companyId !== null)
 
   /**
@@ -136,6 +139,8 @@ export function useMyTaskBoard() {
     },
     filter,
     setFilter,
+    search,
+    setSearch,
     counts,
     openSop: sopRows.filter((r) => isOpen(r.status)).length,
     openProject: projectRows.filter((r) => isOpen(r.status)).length,

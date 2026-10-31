@@ -202,7 +202,7 @@ export function ComponentScheduleField({
                   {/* Only offered once there is something to undo, and only where
                       the panel can write at all. */}
                   {!readOnly && customised && (
-                    <CellTooltip label="Back to a plain monthly payout, in the calculation">
+                    <CellTooltip label="Back to a Plain Monthly Payout, in the Calculation">
                       <button
                         type="button"
                         onClick={() => onChange({ ...DEFAULT_COMPONENT_SCHEDULE })}
@@ -296,7 +296,7 @@ export function ComponentScheduleField({
               {needsStartMonth(schedule.payoutFrequency) && (
                 <Setting
                   label="Start Month"
-                  hint="The month the cycle is anchored on. Every payout month follows from it."
+                  hint="The Month the Cycle Is Anchored On. Every Payout Month Follows from It."
                   error={error}
                 >
                   <Combobox
@@ -551,7 +551,7 @@ export function ComponentScheduleInline({
 
       <InlineSetting
         label="Payout Frequency"
-        hint="How often the head is actually paid out. Anything but monthly needs a start month to anchor the cycle on."
+        hint="How Often the Head Is Actually Paid Out. Anything but Monthly Needs a Start Month to Anchor the Cycle On."
       >
         <PillGroup>
           {PAYOUT_FREQUENCY_OPTIONS.map((option) => (
@@ -578,7 +578,7 @@ export function ComponentScheduleInline({
       {needsStartMonth(schedule.payoutFrequency) && (
         <InlineSetting
           label="Start Month"
-          hint="The month the cycle is anchored on — every payout month follows from it."
+          hint="The Month the Cycle Is Anchored on — Every Payout Month Follows from It."
           error={error}
         >
           <Combobox
@@ -597,7 +597,7 @@ export function ComponentScheduleInline({
         label="Amount Mode"
         hint={
           supportsAccrual(schedule.payoutFrequency)
-            ? 'Per Payout uses the figure as entered in each payout month. Accrued treats it as a monthly accrual and releases the whole period in one payout.'
+            ? 'Per Payout Uses the Figure as Entered in Each Payout Month. Accrued Treats It as a Monthly Accrual and Releases the Whole Period in One Payout.'
             : ACCRUED_ON_MONTHLY_HINT
         }
       >
@@ -786,12 +786,12 @@ export function ComponentScheduleSummary({
     },
     schedule.amountMode === 'ACCRUED' && {
       label: 'ACCR',
-      hint: 'Accrued — the whole period is released in one payout',
+      hint: 'Accrued — The Whole Period Is Released in One Payout',
       tone: 'bg-sky-500/15 text-sky-700 dark:text-sky-400',
     },
     schedule.payrollCalculation === 'EXCLUDE' && {
       label: 'EXCL',
-      hint: 'Excluded from every base the other heads calculate on',
+      hint: 'Excluded from Every Base the Other Heads Calculate On',
       tone: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
     },
     side === 'deduction' &&

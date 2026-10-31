@@ -68,7 +68,7 @@ export async function fetchDashboardSummary(
     )
     return toSummary(summaryResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the dashboard summary.")
+    throw toApiError(error, "Couldn't Load the Dashboard Summary.")
   }
 }
 
@@ -91,7 +91,7 @@ export async function fetchDashboardSeries(
     )
     return toSeries(seriesResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the trend.")
+    throw toApiError(error, "Couldn't Load the Trend.")
   }
 }
 
@@ -114,7 +114,7 @@ export async function fetchDashboardBreakdown(
     )
     return toBreakdown(breakdownResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the breakdown.")
+    throw toApiError(error, "Couldn't Load the Breakdown.")
   }
 }
 
@@ -130,7 +130,7 @@ export async function fetchDashboardRadar(
     )
     return toRadar(radarResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the scorecard.")
+    throw toApiError(error, "Couldn't Load the Scorecard.")
   }
 }
 
@@ -146,7 +146,7 @@ export async function fetchDashboardHeatmap(
     )
     return toHeatmap(heatmapResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the heatmap.")
+    throw toApiError(error, "Couldn't Load the Heatmap.")
   }
 }
 
@@ -168,6 +168,6 @@ export async function fetchDashboardAttention(
     )
     return toAttention(attentionResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the worklist.")
+    throw toApiError(error, "Couldn't Load the Worklist.")
   }
 }

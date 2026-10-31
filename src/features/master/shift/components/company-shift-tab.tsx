@@ -93,7 +93,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                   <History className="size-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Update history</TooltipContent>
+              <TooltipContent>Update History</TooltipContent>
             </Tooltip>
           </div>
         ),
@@ -248,7 +248,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <FormSection
             icon={Clock}
             title={form.isEdit ? 'Edit Shift' : 'Add Shift'}
-            description="A named window of the clock, and the tolerances attendance is judged against"
+            description="A Named Window of the Clock, and the Tolerances Attendance Is Judged Against"
             className="mt-0"
           />
 
@@ -269,7 +269,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             error={form.errors.effectiveDate?.message}
             hint={
               form.isEdit
-                ? "A new dated version is written from this day. Earlier days keep being judged by the timings that were in force when they happened — this is what stops an edit changing last month's attendance. Change only the name or status and no version is written at all."
+                ? "A New Dated Version Is Written from This Day. Earlier Days Keep Being Judged by the Timings That Were in Force When They Happened — This Is What Stops an Edit Changing Last Month's Attendance. Change Only the Name or Status and No Version Is Written at All."
                 : 'The day these timings start applying. It opens the shift\'s timeline.'
             }
           />
@@ -286,12 +286,12 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
             label="End Time"
             required
             error={form.errors.endTime?.message}
-            hint="Filled in from the start plus the full day hours — pick your own instead and the hours follow. An end earlier than the start makes this a night shift, worked out for you."
+            hint="Filled in from the Start Plus the Full Day Hours — Pick Your Own Instead and the Hours Follow. An End Earlier Than the Start Makes This a Night Shift, Worked out for You."
           />
           <Field
             label="Break (Minutes)"
             error={form.errors.breakMinutes?.message}
-            hint="Unpaid break inside the shift. Leave blank for none."
+            hint="Unpaid Break Inside the Shift. Leave Blank for None."
           >
             <Input
               type="number"
@@ -304,7 +304,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field
             label="Concession (Minutes)"
             error={form.errors.concessionMinutes?.message}
-            hint="Grace after the start time in which a check-in still counts as on time. With 09:00 and 15, arriving at 09:20 is 5 minutes late, not 20."
+            hint="Grace After the Start Time in Which a Check-In Still Counts as on Time. With 09:00 and 15, Arriving at 09:20 Is 5 Minutes Late, Not 20."
           >
             <Input
               type="number"
@@ -317,7 +317,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field
             label="Full Day Hours"
             error={form.errors.minFullDayHours?.message}
-            hint="Worked hours at or above this count as a full day. Filled in from the shift window, and typing a number here moves the end time to match. The break isn't taken off — it's charged by its own penalty."
+            hint="Worked Hours at or Above This Count as a Full Day. Filled in from the Shift Window, and Typing a Number Here Moves the End Time to Match. The Break Isn't Taken off — It's Charged by Its Own Penalty."
           >
             <Input
               type="number"
@@ -331,7 +331,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           <Field
             label="Half Day Hours"
             error={form.errors.minHalfDayHours?.message}
-            hint="Worked hours at or above this, but under a full day, count as a half day. Filled in as half the full day — type over it and your number stands, so 3 against a full day of 8 is fine."
+            hint="Worked Hours at or Above This, but Under a Full Day, Count as a Half Day. Filled in as Half the Full Day — Type over It and Your Number Stands, So 3 Against a Full Day of 8 Is Fine."
           >
             <Input
               type="number"
@@ -351,7 +351,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         */}
           <Field
             label="Week-Off Policy"
-            hint="Leave blank to follow the department's or company's default pattern. Set one only for a shift whose off days differ from everyone else's."
+            hint="Leave Blank to Follow the Department's or Company's Default Pattern. Set One Only for a Shift Whose off Days Differ from Everyone Else's."
           >
             <Controller
               control={form.control}
@@ -364,8 +364,8 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                   {...form.weekoffPolicySelect}
                   clearable
                   panelMinWidth={340}
-                  placeholder="Follows default"
-                  searchPlaceholder="Search policy"
+                  placeholder="Follows Default"
+                  searchPlaceholder="Search Policy"
                 />
               )}
             />
@@ -373,7 +373,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
 
           <Field
             label="Late Check-In Penalty"
-            hint="Deduct pay when a check-in falls outside the concession above — the whole day charged once, shown on the payslip as the penalty. Off reports the lateness without charging it."
+            hint="Deduct Pay When a Check-In Falls Outside the Concession Above — The Whole Day Charged Once, Shown on the Payslip as the Penalty. Off Reports the Lateness Without Charging It."
           >
             <div className="flex h-9 items-center gap-2">
               <Controller
@@ -387,7 +387,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                       aria-label="Late check-in penalty"
                     />
                     <span className="text-xs text-muted-foreground">
-                      {field.value ? 'Deducted' : 'Not deducted'}
+                      {field.value ? 'Deducted' : 'Not Deducted'}
                     </span>
                   </>
                 )}
@@ -406,7 +406,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                 label="Penalty Type"
                 required
                 error={form.errors.lateCheckInPenaltyType?.message}
-                hint="A share of that day's wage, or a flat amount."
+                hint="A Share of That Day's Wage, or a Flat Amount."
               >
                 <Controller
                   control={form.control}
@@ -418,7 +418,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                       onChange={field.onChange}
                       options={LATE_CHECK_IN_PENALTY_TYPE_OPTIONS}
                       placeholder="Select"
-                      searchPlaceholder="Search type"
+                      searchPlaceholder="Search Type"
                     />
                   )}
                 />
@@ -432,7 +432,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                 }
                 required
                 error={form.errors.lateCheckInPenaltyValue?.message}
-                hint="What one late day costs — 5 minutes late and 50 minutes late cost the same, since the minutes only decide whether the day is late."
+                hint="What One Late Day Costs — 5 Minutes Late and 50 Minutes Late Cost the Same, Since the Minutes Only Decide Whether the Day Is Late."
               >
                 <Input
                   type="number"
@@ -447,7 +447,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
           )}
           <Field
             label="Break Penalty"
-            hint="Deduct pay for break time taken beyond the break above — the extra minutes only, at the daily wage's per-minute rate, shown on the payslip as the lunch deduction. Off reports the extra time without charging it."
+            hint="Deduct Pay for Break Time Taken Beyond the Break Above — The Extra Minutes Only, at the Daily Wage's Per-Minute Rate, Shown on the Payslip as the Lunch Deduction. Off Reports the Extra Time Without Charging It."
           >
             <div className="flex h-9 items-center gap-2">
               <Controller
@@ -461,7 +461,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                       aria-label="Break penalty"
                     />
                     <span className="text-xs text-muted-foreground">
-                      {field.value ? 'Deducted' : 'Not deducted'}
+                      {field.value ? 'Deducted' : 'Not Deducted'}
                     </span>
                   </>
                 )}
@@ -471,7 +471,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
 
           <Field
             label="Status"
-            hint="An inactive shift stays on record but shouldn't be rostered against going forward."
+            hint="An Inactive Shift Stays on Record but Shouldn't Be Rostered Against Going Forward."
           >
             <div className="flex h-9 items-center gap-2">
               <Controller
@@ -516,18 +516,18 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
       <div className="mt-8">
         {list.isForbidden ? (
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {list.forbiddenMessage ?? "You don't have access to this company's shifts."}
+            {list.forbiddenMessage ?? "You Don't Have Access to This Company's Shifts."}
           </p>
         ) : list.isError ? (
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {list.error instanceof Error ? list.error.message : "Couldn't load shifts."}
+            {list.error instanceof Error ? list.error.message : "Couldn't Load Shifts."}
           </p>
         ) : (
           <DataTable
             columns={columns}
             data={list.rows}
             isLoading={list.isLoading}
-            searchPlaceholder="Search shifts…"
+            searchPlaceholder="Search Shifts…"
             itemName="shifts"
             pageSizeOptions={[5, 10, 25, 50]}
             serverPagination
@@ -546,8 +546,8 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
                 title={list.search ? 'No Matching Shifts' : 'No Shifts Yet'}
                 description={
                   list.search
-                    ? 'Try a different search term.'
-                    : 'Add the first shift using the form above.'
+                    ? 'Try a Different Search Term.'
+                    : 'Add the First Shift Using the Form Above.'
                 }
               />
             }

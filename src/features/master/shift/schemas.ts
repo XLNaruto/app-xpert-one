@@ -24,7 +24,7 @@ const optionalHours = z
   .trim()
   .refine(
     (v) => v === '' || (Number(v) >= 0.5 && Number(v) <= 24),
-    'Enter hours between 0.5 and 24',
+    'Enter Hours Between 0.5 and 24',
   )
 
 /** `YYYY-MM-DD` — the only date format the endpoint accepts. */
@@ -50,20 +50,20 @@ export const shiftSchema = z
     effectiveDate: z
       .string()
       .trim()
-      .min(1, 'Effective date is required')
-      .regex(DATE_PATTERN, 'Enter a date as YYYY-MM-DD'),
+      .min(1, 'Effective Date Is Required')
+      .regex(DATE_PATTERN, 'Enter a Date as YYYY-MM-DD'),
     startTime: z
       .string()
       .trim()
-      .min(1, 'Start time is required')
-      .regex(TIME_PATTERN, 'Enter a time as HH:MM'),
+      .min(1, 'Start Time Is Required')
+      .regex(TIME_PATTERN, 'Enter a Time as HH:MM'),
     endTime: z
       .string()
       .trim()
-      .min(1, 'End time is required')
-      .regex(TIME_PATTERN, 'Enter a time as HH:MM'),
+      .min(1, 'End Time Is Required')
+      .regex(TIME_PATTERN, 'Enter a Time as HH:MM'),
     /** Unpaid break inside the shift. */
-    breakMinutes: optionalInt(1440, 'Enter whole minutes, up to 1440'),
+    breakMinutes: optionalInt(1440, 'Enter Whole Minutes, up to 1440'),
     /**
      * Dock pay for break time taken beyond `breakMinutes`?
      *
@@ -74,7 +74,7 @@ export const shiftSchema = z
      */
     isLateBreakPenaltyApplicable: z.boolean(),
     /** Grace after `startTime` in which a check-in still counts as on time. */
-    concessionMinutes: optionalInt(720, 'Enter whole minutes, up to 720'),
+    concessionMinutes: optionalInt(720, 'Enter Whole Minutes, up to 720'),
     /**
      * Dock pay for a check-in past `concessionMinutes`?
      *
@@ -97,7 +97,7 @@ export const shiftSchema = z
       .trim()
       .refine(
         (v) => v === '' || (/^\d+(\.\d{1,2})?$/.test(v) && Number(v) <= 1000000),
-        'Enter an amount up to 10,00,000',
+        'Enter an Amount up to 10,00,000',
       ),
     /** Worked hours at or above this are a full day. */
     minFullDayHours: optionalHours,
@@ -127,7 +127,7 @@ export const shiftSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['minHalfDayHours'],
-        message: 'Half-day hours must be less than full-day hours',
+        message: 'Half-Day Hours Must Be Less Than Full-Day Hours',
       })
     }
 
@@ -139,7 +139,7 @@ export const shiftSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['lateCheckInPenaltyType'],
-          message: 'Pick how a late day is charged',
+          message: 'Pick How a Late Day Is Charged',
         })
       }
 
@@ -147,7 +147,7 @@ export const shiftSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['lateCheckInPenaltyValue'],
-          message: 'Enter an amount greater than zero',
+          message: 'Enter an Amount Greater Than Zero',
         })
       }
     }
@@ -161,7 +161,7 @@ export const shiftSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['lateCheckInPenaltyValue'],
-        message: 'A percentage can be at most 100',
+        message: 'A Percentage Can Be at Most 100',
       })
     }
 
@@ -170,7 +170,7 @@ export const shiftSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['endTime'],
-        message: 'End time must differ from the start time',
+        message: 'End Time Must Differ from the Start Time',
       })
     }
   })

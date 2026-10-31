@@ -127,7 +127,7 @@ export function DashboardPage() {
     return (
       <Forbidden
         title="Dashboard Unavailable"
-        description="You do not have access to the dashboard. Every panel on this screen is gated on one permission, so there is nothing here to show without it — contact your administrator to request access."
+        description="You Do Not Have Access to the Dashboard. Every Panel on This Screen Is Gated on One Permission, So There Is Nothing Here to Show Without It — Contact Your Administrator to Request Access."
       />
     )
   }
@@ -136,7 +136,7 @@ export function DashboardPage() {
     <div>
       <PageHeader
         title="Dashboard"
-        description="Workforce, attendance, leave, payroll and help desk across the period and population you choose."
+        description="Workforce, Attendance, Leave, Payroll and Help Desk Across the Period and Population You Choose."
       />
 
       <DashboardFilterBar
@@ -189,7 +189,7 @@ export function DashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <SeriesPanel
           title="Headcount & Movement"
-          description="The standing headcount is a stock and can fall; joins and exits are posting events, so a rehire is a second join and a transfer is both."
+          description="The Standing Headcount Is a Stock and Can Fall; Joins and Exits Are Posting Events, So a Rehire Is a Second Join and a Transfer Is Both."
           panel={movement}
         />
 
@@ -202,7 +202,7 @@ export function DashboardPage() {
 
         <SeriesPanel
           title="Attendance Trend"
-          description="Present and leave days beside late arrivals. Different units never share an axis, so this draws as one chart per unit."
+          description="Present and Leave Days Beside Late Arrivals. Different Units Never Share an Axis, So This Draws as One Chart per Unit."
           panel={attendanceTrend}
           allowMetricChoice
         />
@@ -219,7 +219,7 @@ export function DashboardPage() {
 
         <SeriesPanel
           title="Payroll by Month"
-          description="Filed on each sheet's own month — a sheet computed in April for March is March's payroll."
+          description="Filed on Each Sheet's Own Month — A Sheet Computed in April for March Is March's Payroll."
           panel={payroll}
         />
 

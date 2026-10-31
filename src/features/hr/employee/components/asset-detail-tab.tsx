@@ -57,7 +57,7 @@ function VariantField({
       label="Variant"
       required
       error={error}
-      hint="Assigning a variant takes one unit off the shelf. A variant already on another card can't be picked twice."
+      hint="Assigning a Variant Takes One Unit off the Shelf. A Variant Already on Another Card Can't Be Picked Twice."
     >
       <Controller
         control={control}
@@ -69,7 +69,7 @@ function VariantField({
             onChange={variant.onChange}
             options={options}
             placeholder={isLoading ? 'Loading…' : 'Select Variant'}
-            searchPlaceholder="Search variant"
+            searchPlaceholder="Search Variant"
           />
         )}
       />
@@ -126,7 +126,7 @@ export function AssetDetailTab({
   if (isError) {
     return (
       <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-        {error instanceof Error ? error.message : "Couldn't load the assets."}
+        {error instanceof Error ? error.message : "Couldn't Load the Assets."}
       </p>
     )
   }
@@ -174,7 +174,7 @@ export function AssetDetailTab({
                   {/* Drive "still out" off stock_held, never off the status: a
                       consumable reads RETURNED and still holds its unit. */}
                   {row?.id !== undefined && heldById.get(row.id) ? (
-                    <RepeatCardBadge variant="warning">Holding a unit</RepeatCardBadge>
+                    <RepeatCardBadge variant="warning">Holding a Unit</RepeatCardBadge>
                   ) : null}
                 </span>
               }
@@ -199,7 +199,7 @@ export function AssetDetailTab({
                         assetsById,
                       )}
                       placeholder={isAssetsLoading ? 'Loading…' : 'Select Asset'}
-                      searchPlaceholder="Search asset"
+                      searchPlaceholder="Search Asset"
                     />
                   )}
                 />
@@ -220,7 +220,7 @@ export function AssetDetailTab({
                 <Field
                   className="min-w-0"
                   label="Stock"
-                  hint="This asset has no variants, so a handout draws on its own stock. It must have stock on the shelf before it can be issued."
+                  hint="This Asset Has No Variants, So a Handout Draws on Its Own Stock. It Must Have Stock on the Shelf Before It Can Be Issued."
                 >
                   {/* Wraps rather than runs on: the column is a quarter of the
                       card on a wide screen, and a nowrap row of pills spilled
@@ -229,7 +229,7 @@ export function AssetDetailTab({
                     {picked.quantity === 0 ? (
                       // Every asset that predates variants reads 0, so the first
                       // direct handout is refused until someone refills it.
-                      <RepeatCardBadge variant="warning">No stock</RepeatCardBadge>
+                      <RepeatCardBadge variant="warning">No Stock</RepeatCardBadge>
                     ) : (
                       <span className="text-sm text-foreground">
                         {picked.quantity} left on the shelf
@@ -255,7 +255,7 @@ export function AssetDetailTab({
                 name={`rows.${index}.validTill`}
                 label="Valid Till"
                 error={errors?.validTill?.message}
-                hint="When the asset is due back, for anything issued on loan."
+                hint="When the Asset Is Due Back, for Anything Issued on Loan."
                 minDate={
                   row?.assignedDate ? new Date(`${row.assignedDate}T00:00:00`) : undefined
                 }
@@ -272,7 +272,7 @@ export function AssetDetailTab({
                       value={status.value}
                       onChange={status.onChange}
                       options={ASSET_STATUS_OPTIONS}
-                      placeholder="Select status"
+                      placeholder="Select Status"
                     />
                   )}
                 />
@@ -283,7 +283,7 @@ export function AssetDetailTab({
                 label="Identification Title"
                 required={Boolean(row?.identificationValue?.trim())}
                 error={errors?.identificationTitle?.message}
-                hint="What tells this unit apart from others of the same asset — IMEI, Serial No, Tag No."
+                hint="What Tells This Unit Apart from Others of the Same Asset — IMEI, Serial No, Tag No."
               >
                 <Input
                   maxLength={100}
@@ -311,7 +311,7 @@ export function AssetDetailTab({
               >
                 <Textarea
                   rows={2}
-                  placeholder="Condition, accessories, anything worth noting"
+                  placeholder="Condition, Accessories, Anything Worth Noting"
                   {...form.register(`rows.${index}.remarks`)}
                 />
               </Field>
@@ -323,7 +323,7 @@ export function AssetDetailTab({
       <StepFormFooter
         onBack={onBack}
         isSaving={isSaving}
-        hint="When an asset comes back, set its status to Returned rather than removing the card — the bin is for a card entered by mistake."
+        hint="When an Asset Comes Back, Set Its Status to Returned Rather Than Removing the Card — The Bin Is for a Card Entered by Mistake."
       />
     </form>
   )

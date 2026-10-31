@@ -46,7 +46,7 @@ export const ESIC_REPORT_TYPES: readonly ReportTypeOption<EsicReportType>[] = [
     value: 'esic-challan',
     label: 'ESIC Challan',
     description:
-      'The challan sheet in the portal’s own columns. Deliberately WITHOUT the contributions: a challan declares the wage and the days, and the portal computes what is owed from them.',
+      'The Challan Sheet in the Portal’s Own Columns. Deliberately WITHOUT the Contributions: A Challan Declares the Wage and the Days, and the Portal Computes What Is Owed from Them.',
     defaultSort: { id: 'ip_name', desc: false },
     sortable: ESIC_CHALLAN_SORTABLE,
   },

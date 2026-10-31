@@ -86,7 +86,7 @@ export async function fetchEsicRates(
 
     return { items: rates, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load ESIC rates.")
+    throw toApiError(error, "Couldn't Load ESIC Rates.")
   }
 }
 
@@ -96,7 +96,7 @@ export async function fetchEsicRate(id: number): Promise<EsicRate> {
     const raw = await http.get<unknown>(endpoints.ESIC_RATES.GET(id))
     return toEsicRate(esicRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'ESIC rate not found')
+    throw toApiError(error, 'ESIC Rate Not Found')
   }
 }
 
@@ -111,7 +111,7 @@ export async function createEsicRate(
     )
     return toEsicRate(esicRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the ESIC rate.")
+    throw toApiError(error, "Couldn't Create the ESIC Rate.")
   }
 }
 
@@ -130,7 +130,7 @@ export async function updateEsicRate(
     )
     return toEsicRate(esicRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the ESIC rate.")
+    throw toApiError(error, "Couldn't Update the ESIC Rate.")
   }
 }
 
@@ -139,6 +139,6 @@ export async function deleteEsicRate(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.ESIC_RATES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the ESIC rate.")
+    throw toApiError(error, "Couldn't Delete the ESIC Rate.")
   }
 }

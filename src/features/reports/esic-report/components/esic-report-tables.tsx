@@ -76,7 +76,7 @@ export function EsicStatementTable({ rows, ...table }: TableProps<EsicStatementR
       },
       {
         id: 'no_of_days',
-        header: 'No. of Days',
+        header: 'No. Of Days',
         enableSorting: canSort('no_of_days'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.noOfDays} />,
@@ -163,7 +163,7 @@ export function EsicChallanTable({ rows, ...table }: TableProps<EsicChallanRow>)
       },
       {
         id: 'no_of_days',
-        header: 'No. of Days',
+        header: 'No. Of Days',
         enableSorting: canSort('no_of_days'),
         meta: { className: NUMERIC_CELL },
         cell: ({ row }) => <DaysCell value={row.original.noOfDays} />,

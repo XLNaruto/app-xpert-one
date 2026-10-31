@@ -33,7 +33,7 @@ export function RoleCreatePage({ data }: RoleCreatePageProps) {
     <div>
       <PageHeader
         title={form.isEdit ? 'Edit Role' : 'Create Role'}
-        description="Name the role, then pick the screens it can open and what it can do on each."
+        description="Name the Role, Then Pick the Screens It Can Open and What It Can Do on Each."
         actions={
           <>
             <Badge variant="default" className="gap-1.5">
@@ -63,7 +63,7 @@ export function RoleCreatePage({ data }: RoleCreatePageProps) {
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this role."}
+                : "Couldn't Load This Role."}
             </p>
           ) : (
             <form
@@ -74,7 +74,7 @@ export function RoleCreatePage({ data }: RoleCreatePageProps) {
               <FormSection
                 icon={ShieldCheck}
                 title="Role"
-                description="What this role is called. The name has to be unique within the company."
+                description="What This Role Is Called. The Name Has to Be Unique Within the Company."
                 className="mt-0"
               />
 
@@ -93,7 +93,7 @@ export function RoleCreatePage({ data }: RoleCreatePageProps) {
               <FormSection
                 icon={KeyRound}
                 title="Permissions"
-                description="Pick the screens this role can open, and what it can do on each."
+                description="Pick the Screens This Role Can Open, and What It Can Do on Each."
               />
 
               <div className="col-span-full">

@@ -110,8 +110,8 @@ export function ApprovalChainLevelRow({
             </TooltipTrigger>
             <TooltipContent className="max-w-64 text-pretty font-normal">
               {isPartial
-                ? "Covering fewer than every company isn't a problem — the levels below answer for the rest, and the account owner answers for whatever none of them reach."
-                : 'This level reaches every company in the account.'}
+                ? "Covering Fewer Than Every Company Isn't a Problem — The Levels Below Answer for the Rest, and the Account Owner Answers for Whatever None of Them Reach."
+                : 'This Level Reaches Every Company in the Account.'}
             </TooltipContent>
           </Tooltip>
         )}

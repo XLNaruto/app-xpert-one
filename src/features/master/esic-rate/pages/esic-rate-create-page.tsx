@@ -43,8 +43,8 @@ export function EsicRateCreatePage({ data }: EsicRateCreatePageProps) {
         title={isEdit ? 'Edit ESIC Rate' : 'Add ESIC Rate'}
         description={
           isEdit
-            ? 'Update this ESIC rate slab'
-            : 'Configure a new ESIC rate slab'
+            ? 'Update This ESIC Rate Slab'
+            : 'Configure a New ESIC Rate Slab'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -66,7 +66,7 @@ export function EsicRateCreatePage({ data }: EsicRateCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this ESIC rate."}
+                : "Couldn't Load This ESIC Rate."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>

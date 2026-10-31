@@ -90,7 +90,7 @@ export function AssetListPage({ data }: { data?: string }) {
                     <PackagePlus className="size-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Add / remove stock</TooltipContent>
+                <TooltipContent>Add / Remove Stock</TooltipContent>
               </Tooltip>
             )}
             
@@ -124,7 +124,7 @@ export function AssetListPage({ data }: { data?: string }) {
                   </button>
                 </TooltipTrigger>
                 {/* One ledger for the asset: its own lines and its variants'. */}
-                <TooltipContent>Stock history</TooltipContent>
+                <TooltipContent>Stock History</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -177,11 +177,11 @@ export function AssetListPage({ data }: { data?: string }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
-                      <Badge variant="warning">No stock recorded</Badge>
+                      <Badge variant="warning">No Stock Recorded</Badge>
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    Add some stock before handing this asset out.
+                    Add Some Stock Before Handing This Asset Out.
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -206,7 +206,7 @@ export function AssetListPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="Assets"
-        description="Manage your asset master records."
+        description="Manage Your Asset Master Records."
         actions={
           canCreate && (
             <Button onClick={openCreate}>
@@ -228,7 +228,7 @@ export function AssetListPage({ data }: { data?: string }) {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search assets…"
+          searchPlaceholder="Search Assets…"
           itemName="assets"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -247,8 +247,8 @@ export function AssetListPage({ data }: { data?: string }) {
               title={search ? 'No Matching Assets' : 'No Assets Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Add your first asset to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Add Your First Asset to Get Started.'
               }
               action={
                 search

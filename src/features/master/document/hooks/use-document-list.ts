@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useDocumentTypeSelect } from '@/features/master/document-type'
 import { DOCUMENT_DEFAULT_SORT } from '../constants'
 import { useDocuments } from '../api/use-documents'
@@ -27,7 +27,7 @@ export function useDocumentList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, DOCUMENT_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, DOCUMENT_DEFAULT_SORT)
 
   /** The type filter — '' is "every type", which the API gets as no filter. */
   const [typeFilter, setTypeFilter] = useState('')
@@ -60,7 +60,7 @@ export function useDocumentList() {
     if (!pendingDelete) return
     deleteDocument.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Document deleted')
+        toast.success('Document Deleted')
         setPendingDelete(null)
       },
       /* 409 — employees still have this document attached; the server's message
@@ -68,7 +68,7 @@ export function useDocumentList() {
       onError: (err) => {
         if (isConflictError(err)) {
           toast.error(getApiErrorMessage(err, 'This document is still in use.'), {
-            description: 'Remove it from those employees first, then delete it.',
+            description: 'Remove It from Those Employees First, Then Delete It.',
           })
           setPendingDelete(null)
           return

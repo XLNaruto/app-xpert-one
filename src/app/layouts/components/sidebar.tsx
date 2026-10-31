@@ -133,7 +133,7 @@ export function Sidebar() {
             </Link>
           )}
           {/* Desktop collapse toggle */}
-          <SidebarTooltip label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <SidebarTooltip label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}>
             <button
               onClick={toggle}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

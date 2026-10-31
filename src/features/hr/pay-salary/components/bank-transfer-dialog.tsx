@@ -102,20 +102,20 @@ export function BankTransferDialog({
               value={mode}
               onChange={(value) => setMode(value as BankTransferMode)}
               options={BANK_TRANSFER_MODE_OPTIONS}
-              placeholder="Select a mode"
+              placeholder="Select a Mode"
             />
           </Field>
 
           <Field
             label="Debit Account Number"
             required
-            hint="The company account the salaries are paid from. The bank matches the beneficiary against the name as per Aadhaar where one is on file."
+            hint="The Company Account the Salaries Are Paid From. The Bank Matches the Beneficiary Against the Name as per Aadhaar Where One Is on File."
             error={touched ? accountError : undefined}
           >
             <Input
               value={account}
               onChange={(event) => setAccount(event.target.value)}
-              placeholder="Company account number"
+              placeholder="Company Account Number"
               inputMode="numeric"
               maxLength={ACCOUNT_MAX}
               disabled={isDownloading}

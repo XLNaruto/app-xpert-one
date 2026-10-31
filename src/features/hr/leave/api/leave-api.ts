@@ -104,7 +104,7 @@ export async function fetchLeaves(
     const { items, total } = leaveListResponseSchema.parse(raw)
     return { items: items.map(toLeave), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave records.")
+    throw toApiError(error, "Couldn't Load the Leave Records.")
   }
 }
 
@@ -114,7 +114,7 @@ export async function fetchLeave(id: number): Promise<Leave> {
     const raw = await http.get<unknown>(endpoints.EMPLOYEE_LEAVES.GET(id))
     return toLeave(leaveResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave record.")
+    throw toApiError(error, "Couldn't Load the Leave Record.")
   }
 }
 
@@ -134,7 +134,7 @@ export async function createLeave(values: LeaveFormValues): Promise<LeaveApplica
     )
     return toLeaveApplication(leaveApplicationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't record the leave.")
+    throw toApiError(error, "Couldn't Record the Leave.")
   }
 }
 
@@ -164,7 +164,7 @@ export async function updateLeave(
     )
     return toLeaveApplication(leaveApplicationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the leave.")
+    throw toApiError(error, "Couldn't Update the Leave.")
   }
 }
 
@@ -176,7 +176,7 @@ export async function deleteLeave(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.EMPLOYEE_LEAVES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the leave.")
+    throw toApiError(error, "Couldn't Remove the Leave.")
   }
 }
 
@@ -199,7 +199,7 @@ export async function decideLeave(
     )
     return toLeaveApplication(leaveApplicationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't record the decision.")
+    throw toApiError(error, "Couldn't Record the Decision.")
   }
 }
 
@@ -219,7 +219,7 @@ export async function fetchLeaveBalance(
     })
     return toLeaveBalance(leaveBalanceResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave balance.")
+    throw toApiError(error, "Couldn't Load the Leave Balance.")
   }
 }
 

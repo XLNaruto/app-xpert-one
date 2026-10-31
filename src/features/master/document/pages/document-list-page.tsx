@@ -121,7 +121,7 @@ export function DocumentListPage() {
     <div>
       <PageHeader
         title="Documents"
-        description="Manage your document master records."
+        description="Manage Your Document Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -160,7 +160,7 @@ export function DocumentListPage() {
               search={{
                 value: search,
                 onChange: setSearch,
-                placeholder: 'Search document…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -171,7 +171,7 @@ export function DocumentListPage() {
                   onChange: changeTypeFilter,
                   ...typeSelect,
                   searchable: true,
-                  searchPlaceholder: 'Search document type',
+                  searchPlaceholder: 'Search Document Type',
                   // '' is "every type" — the API simply gets no filter.
                   clearValue: '',
                 },
@@ -186,7 +186,7 @@ export function DocumentListPage() {
             <EmptyState
               icon={FileText}
               title="No Documents Yet"
-              description="Create your first document to get started."
+              description="Create Your First Document to Get Started."
               action={
                 canCreate && (
                   <Button onClick={goToCreate}>

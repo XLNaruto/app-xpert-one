@@ -65,12 +65,12 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
   return (
     <PanelCard
       title={`${RADAR_GROUP_BY_LABELS[groupBy]} scorecard`}
-      description="Six rates, all as fractions and all oriented so higher is better — that is what makes the shapes comparable. A missing vertex is an unmeasured axis, not a zero."
+      description="Six Rates, All as Fractions and All Oriented So Higher Is Better — That Is What Makes the Shapes Comparable. A Missing Vertex Is an Unmeasured Axis, Not a Zero."
       isLoading={panel.isPending}
       isFetching={panel.isFetching && !panel.isPending}
       error={panel.error}
       isEmpty={allGroups.length === 0}
-      emptyDescription="No group in this population has anything to score yet. Groups with no key, and groups nobody is in, are excluded rather than drawn as a failing team."
+      emptyDescription="No Group in This Population Has Anything to Score Yet. Groups with No Key, and Groups Nobody Is In, Are Excluded Rather Than Drawn as a Failing Team."
       skeletonHeight={height}
       actions={
         <Combobox
@@ -170,7 +170,7 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
                           score == null && 'text-muted-foreground',
                         )}
                       >
-                        <Hint text={score == null ? 'No data — not measured' : undefined}>
+                        <Hint text={score == null ? 'No Data — Not Measured' : undefined}>
                           <span>{score == null ? EM_DASH : formatRatio(score)}</span>
                         </Hint>
                       </td>

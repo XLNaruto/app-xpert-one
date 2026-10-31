@@ -182,11 +182,11 @@ export function useBonusEstimateList({
     (targets: BonusEstimateRow[], value: string) => {
       const percent = parsePercent(value)
       if (percent === null) {
-        toast.info('Enter a bonus percentage between 0 and 100 first.')
+        toast.info('Enter a Bonus Percentage Between 0 and 100 First.')
         return
       }
       if (targets.length === 0) {
-        toast.info('There are no rows to apply it to.')
+        toast.info('There Are No Rows to Apply It To.')
         return
       }
       setDrafts((prev) => {
@@ -325,11 +325,11 @@ export function useBonusEstimateList({
 
   const askSave = useCallback(() => {
     if (selected.size === 0) {
-      toast.info('Tick the employees whose bonus you want to save first.')
+      toast.info('Tick the Employees Whose Bonus You Want to Save First.')
       return
     }
     if (payableEmployees.length === 0) {
-      toast.info('Enter a bonus percentage or amount for the ticked employees first.')
+      toast.info('Enter a Bonus Percentage or Amount for the Ticked Employees First.')
       return
     }
     if (tooMany) {

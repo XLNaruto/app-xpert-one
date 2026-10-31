@@ -206,7 +206,7 @@ export function SalaryViewDetailPage({ data }: { data?: string }) {
             totalLabel="Total Allowance"
             total={row.totalAllowance}
             tone="success"
-            emptyMessage="No allowance was paid on this salary."
+            emptyMessage="No Allowance Was Paid on This Salary."
           />
         </Section>
 
@@ -230,7 +230,7 @@ export function SalaryViewDetailPage({ data }: { data?: string }) {
             totalLabel="Total Deduction"
             total={row.totalDeduction}
             tone="destructive"
-            emptyMessage="Nothing was deducted from this salary."
+            emptyMessage="Nothing Was Deducted from This Salary."
           />
         </Section>
       </div>
@@ -331,7 +331,7 @@ export function SalaryViewDetailPage({ data }: { data?: string }) {
             label="TDS Charged On"
             value={tdsBaseLabel(row.tdsCalculationBase)}
             hint={
-              row.tdsCalculationBase ? undefined : 'No base recorded — nothing was deducted.'
+              row.tdsCalculationBase ? undefined : 'No Base Recorded — Nothing Was Deducted.'
             }
           />
           <DetailItem

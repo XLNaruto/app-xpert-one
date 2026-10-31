@@ -39,7 +39,7 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="Salary Payment History"
-        description="Every payment batch recorded for the period, newest first — who it paid, when, and against what proof."
+        description="Every Payment Batch Recorded for the Period, Newest First — Who It Paid, When, and Against What Proof."
         actions={
           <Button type="button" variant="outline" size="sm" onClick={view.goBack}>
             <ArrowLeft className="size-4" />
@@ -76,8 +76,8 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
               onChange={(value) => view.changeDepartment(value ? Number(value) : null)}
               {...view.departments}
               icon={Building2}
-              placeholder="Every department"
-              searchPlaceholder="Search departments…"
+              placeholder="Every Department"
+              searchPlaceholder="Search Departments…"
               clearable
             />
           </div>
@@ -87,7 +87,7 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its payment history."
+          description="Select a Company for This Session to Read Its Payment History."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">

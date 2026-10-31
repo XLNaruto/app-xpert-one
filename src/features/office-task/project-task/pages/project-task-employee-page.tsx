@@ -68,7 +68,7 @@ export function ProjectTaskEmployeePage({ data }: { data?: string }) {
         {error ? (
           <ScopedDataError error={error} fallback="This employee may no longer be on the task." what="project tasks" />
         ) : (
-          <EmptyState title="Not Found" description="This employee may no longer be on the task." />
+          <EmptyState title="Not Found" description="This Employee May No Longer Be on the Task." />
         )}
       </div>
     )

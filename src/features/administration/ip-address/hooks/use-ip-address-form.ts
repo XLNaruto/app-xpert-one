@@ -56,7 +56,7 @@ export function useIpAddressForm({ open, record, onSaved }: UseIpAddressFormArgs
 
     saved
       .then(() => {
-        toast.success(isEdit ? 'IP address updated' : 'IP address added')
+        toast.success(isEdit ? 'IP Address Updated' : 'IP Address Added')
         onSaved()
       })
       // A duplicate on the same list, or a change that would strand a

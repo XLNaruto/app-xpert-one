@@ -209,7 +209,7 @@ export async function fetchBranchActs(branchId: number): Promise<BranchActs | nu
       return toBranchActs(actRegistrationResponseSchema.parse(normalized))
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't load this branch's applicable acts.")
+    throw toApiError(error, "Couldn't Load This Branch's Applicable Acts.")
   }
 }
 
@@ -270,11 +270,11 @@ export async function createBranchActs(
         return toBranchActs(actRegistrationResponseSchema.parse(normalized))
       } catch (err2) {
         // camel->snake fallback also failed
-        throw toApiError(err2, "Couldn't save the applicable acts.")
+        throw toApiError(err2, "Couldn't Save the Applicable Acts.")
       }
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't save the applicable acts.")
+    throw toApiError(error, "Couldn't Save the Applicable Acts.")
   }
 }
 
@@ -384,10 +384,10 @@ export async function updateBranchActs(
         return toBranchActs(actRegistrationResponseSchema.parse(normalized))
       } catch (err2) {
         // camel->snake fallback also failed
-        throw toApiError(err2, "Couldn't update the applicable acts.")
+        throw toApiError(err2, "Couldn't Update the Applicable Acts.")
       }
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't update the applicable acts.")
+    throw toApiError(error, "Couldn't Update the Applicable Acts.")
   }
 }

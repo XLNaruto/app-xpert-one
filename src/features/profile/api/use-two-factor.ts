@@ -29,6 +29,6 @@ export function useSetTwoFactor() {
       )
     },
     onError: (error) =>
-      toastApiError(error, "Couldn't change two-factor authentication."),
+      toastApiError(error, "Couldn't Change Two-Factor Authentication."),
   })
 }

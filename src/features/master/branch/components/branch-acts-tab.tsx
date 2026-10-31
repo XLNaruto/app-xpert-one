@@ -104,7 +104,7 @@ export function BranchActsTab({
                 onChange={field.onChange}
                 {...pfOffice}
                 placeholder="Select PF Office"
-                searchPlaceholder="Search office"
+                searchPlaceholder="Search Office"
               />
             )}
           />
@@ -180,7 +180,7 @@ export function BranchActsTab({
                 onChange={field.onChange}
                 {...esicOffice}
                 placeholder="Select ESIC Office"
-                searchPlaceholder="Search office"
+                searchPlaceholder="Search Office"
               />
             )}
           />
@@ -241,12 +241,12 @@ export function BranchActsTab({
             render={({ field }) => <Input placeholder="Factory FIN Number" {...field} />}
           />
         </Field>
-        <Field label="No. of Employees" error={errors.noOfEmployees?.message}>
+        <Field label="No. Of Employees" error={errors.noOfEmployees?.message}>
           <Controller
             control={control}
             name="noOfEmployees"
             render={({ field }) => (
-              <Input inputMode="numeric" placeholder="No. of Employees" {...field} />
+              <Input inputMode="numeric" placeholder="No. Of Employees" {...field} />
             )}
           />
         </Field>
@@ -285,7 +285,7 @@ export function BranchActsTab({
                 onChange={field.onChange}
                 {...factoryOffice}
                 placeholder="Select Factory Office"
-                searchPlaceholder="Search office"
+                searchPlaceholder="Search Office"
               />
             )}
           />
@@ -350,7 +350,7 @@ export function BranchActsTab({
                 onChange={(value) => pt.changeState(value, field.onChange)}
                 {...pt.state}
                 placeholder="Select State"
-                searchPlaceholder="Search state"
+                searchPlaceholder="Search State"
               />
             )}
           />
@@ -365,8 +365,8 @@ export function BranchActsTab({
                 value={field.value}
                 onChange={field.onChange}
                 {...pt.district}
-                placeholder={pt.hasState ? 'Select District' : 'Select a state first'}
-                searchPlaceholder="Search district"
+                placeholder={pt.hasState ? 'Select District' : 'Select a State First'}
+                searchPlaceholder="Search District"
               />
             )}
           />
@@ -407,7 +407,7 @@ export function BranchActsTab({
                 onChange={field.onChange}
                 {...lwfOffice}
                 placeholder="Select LWF Office"
-                searchPlaceholder="Search office"
+                searchPlaceholder="Search Office"
               />
             )}
           />
@@ -467,7 +467,7 @@ export function BranchActsTab({
                 onChange={field.onChange}
                 {...exOffice}
                 placeholder="Select Office"
-                searchPlaceholder="Search office"
+                searchPlaceholder="Search Office"
               />
             )}
           />

@@ -256,7 +256,7 @@ export function SalaryViewListPage() {
       title={view.search ? 'No Matching Salaries' : 'Nothing Processed for This Month'}
       description={
         view.search
-          ? 'Try a different name or employee code.'
+          ? 'Try a Different Name or Employee Code.'
           : `No salary has been processed for ${salaryMonthName(view.month)} ${view.year}${
               view.departmentId ? ' in this department' : ''
             }. Run the month from Calculate Salary first.`
@@ -268,7 +268,7 @@ export function SalaryViewListPage() {
     <div>
       <PageHeader
         title="View Salary"
-        description="The month already processed — the pay as it was committed, per employee."
+        description="The Month Already Processed — The Pay as It Was Committed, per Employee."
         actions={<SalaryViewModeTabs mode={view.mode} onChange={view.setMode} />}
       />
 
@@ -306,13 +306,13 @@ export function SalaryViewListPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its payroll."
+          description="Select a Company for This Session to Read Its Payroll."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {view.error instanceof Error
             ? view.error.message
-            : "Couldn't load the processed salaries."}
+            : "Couldn't Load the Processed Salaries."}
         </p>
       ) : view.mode === 'short' ? (
         <DataTable

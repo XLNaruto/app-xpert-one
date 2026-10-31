@@ -163,7 +163,7 @@ export function BillingHistoryPage() {
     <div>
       <PageHeader
         title="Purchase History"
-        description="Every plan this account has bought, at the price it was charged."
+        description="Every Plan This Account Has Bought, at the Price It Was Charged."
         actions={
           <Button type="button" variant="outline" onClick={history.goBack}>
             <ArrowLeft className="size-4" />
@@ -195,12 +195,23 @@ export function BillingHistoryPage() {
           offset={history.offset}
           total={history.total}
           onPaginationChange={history.onPaginationChange}
+          searchPlaceholder="Search…"
+          searchValue={history.search}
+          onSearchChange={history.setSearch}
           emptyState={
-            <EmptyState
-              icon={ReceiptText}
-              title="No Purchases Yet"
-              description="Plans you buy will appear here, with an invoice for each paid term."
-            />
+            history.search.trim() ? (
+              <EmptyState
+                icon={ReceiptText}
+                title="No Matching Purchases"
+                description="Try a Different Search Term."
+              />
+            ) : (
+              <EmptyState
+                icon={ReceiptText}
+                title="No Purchases Yet"
+                description="Plans You Buy Will Appear Here, with an Invoice for Each Paid Term."
+              />
+            )
           }
         />
       )}

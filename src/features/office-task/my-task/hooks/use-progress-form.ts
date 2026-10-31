@@ -38,7 +38,7 @@ export function useProgressForm(row: MyProjectRow | null, onDone: () => void) {
       },
       {
         onSuccess: () => {
-          toast.success(stopping ? 'Progress saved · clock stopped' : 'Progress saved')
+          toast.success(stopping ? 'Progress Saved · Clock Stopped' : 'Progress Saved')
           onDone()
         },
         onError: (err) => toast.error(err.message),

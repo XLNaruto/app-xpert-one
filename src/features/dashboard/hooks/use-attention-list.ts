@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { ANY_VALUE, ATTENTION_PAGE_SIZE, RECONCILIATION_SIGNAL } from '../constants'
+import { ANY_VALUE, RECONCILIATION_SIGNAL } from '../constants'
 import {
   useDashboardAttention,
   useDashboardAttentionInfinite,
@@ -34,7 +34,7 @@ import type { AttentionSignal } from '../types'
 export function useAttentionList(populationQuery: DashboardQuery) {
   // No `defaultSort`: the endpoint takes no sort, and the order it applies is
   // the point of the screen.
-  const pagination = usePagination(ATTENTION_PAGE_SIZE)
+  const pagination = usePagination(ALL_PAGE_SIZE)
   const [signal, setSignal] = useState<AttentionSignal | ''>(ANY_VALUE)
 
   const { limit, offset, params } = pagination

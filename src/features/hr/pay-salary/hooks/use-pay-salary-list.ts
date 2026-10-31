@@ -257,7 +257,7 @@ export function usePaySalaryList() {
   /** Say once, in the toast, that nothing is selected — never silently no-op. */
   const openPayDialog = useCallback(() => {
     if (selected.size === 0) {
-      toast.info('Tick the employees to pay first.')
+      toast.info('Tick the Employees to Pay First.')
       return
     }
     setPayOpen(true)

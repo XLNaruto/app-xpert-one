@@ -21,7 +21,7 @@ export const PT_REPORT_TYPES: readonly ReportTypeOption<PtReportType>[] = [
     value: 'pt-report',
     label: 'PT Statement',
     description:
-      'One line per PT-liable employee: the month’s whole gross and the tax deducted. PT is assessed on the gross, which is what separates this from the ESIC statement’s per-head wage base.',
+      'One Line per PT-liable Employee: The Month’s Whole Gross and the Tax Deducted. PT Is Assessed on the Gross, Which Is What Separates This from the ESIC Statement’s Per-Head Wage Base.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PT_SORTABLE,
   },

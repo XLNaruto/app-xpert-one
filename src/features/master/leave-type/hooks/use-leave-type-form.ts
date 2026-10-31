@@ -47,7 +47,7 @@ export function useLeaveTypeForm(id?: number) {
     const mutation = isEdit ? updateLeaveType : createLeaveType
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Leave type updated' : 'Leave type created')
+        toast.success(isEdit ? 'Leave Type Updated' : 'Leave Type Created')
         goToList()
       },
       onError: (err) =>

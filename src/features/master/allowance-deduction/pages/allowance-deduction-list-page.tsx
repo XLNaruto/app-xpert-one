@@ -112,7 +112,7 @@ export function AllowanceDeductionListPage() {
     <div>
       <PageHeader
         title="Allowance & Deduction"
-        description="Manage your allowance and deduction master records."
+        description="Manage Your Allowance and Deduction Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -134,7 +134,7 @@ export function AllowanceDeductionListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search short code or name…"
+          searchPlaceholder="Search…"
           itemName="records"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -153,8 +153,8 @@ export function AllowanceDeductionListPage() {
               title={search ? 'No Matching Records' : 'No Records Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Create your first allowance or deduction to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Create Your First Allowance or Deduction to Get Started.'
               }
               action={
                 search

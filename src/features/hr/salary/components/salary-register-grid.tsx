@@ -173,35 +173,35 @@ const ACTS: Record<
     applies: (wage) => wage?.isPfActApplicable ?? false,
     of: (figures) => figures.employeePf,
     basis: 'Act',
-    hint: 'Provident fund — the PF rate in force for the period, on the wage the PF-applicable heads make up, or the designation’s own fixed amount. Follows the present days. Double-click to deduct a different amount this month.',
+    hint: 'Provident Fund — The PF Rate in Force for the Period, on the Wage the PF-applicable Heads Make Up, or the Designation’s Own Fixed Amount. Follows the Present Days. Double-Click to Deduct a Different Amount This Month.',
   },
   esic: {
     key: 'esic',
     applies: (wage) => wage?.isEsicActApplicable ?? false,
     of: (figures) => figures.employeeEsic,
     basis: 'Act',
-    hint: 'ESIC — the rate in force for the period, on whatever the designation’s deduction basis charges it: the wage ceiling, the whole gross, or nothing at all once the ceiling is passed. Double-click to deduct a different amount this month.',
+    hint: 'ESIC — The Rate in Force for the Period, on Whatever the Designation’s Deduction Basis Charges It: The Wage Ceiling, the Whole Gross, or Nothing at All Once the Ceiling Is Passed. Double-Click to Deduct a Different Amount This Month.',
   },
   pt: {
     key: 'pt',
     applies: (wage) => wage?.isPtActApplicable ?? false,
     of: (figures) => figures.employeePt,
     basis: 'Slab',
-    hint: 'Professional tax — the state’s slab for this wage and month, or the designation’s own amount where it is set manually. Double-click to deduct a different amount this month.',
+    hint: 'Professional Tax — The State’s Slab for This Wage and Month, or the Designation’s Own Amount Where It Is Set Manually. Double-Click to Deduct a Different Amount This Month.',
   },
   lwf: {
     key: 'lwf',
     applies: (wage) => wage?.isLwfActApplicable ?? false,
     of: (figures) => figures.employeeLwf,
     basis: 'Act',
-    hint: 'Labour welfare fund — the state’s contribution, and only in the months it is collected in. Zero in every other month. Double-click to deduct a different amount this month.',
+    hint: 'Labour Welfare Fund — The State’s Contribution, and Only in the Months It Is Collected In. Zero in Every Other Month. Double-Click to Deduct a Different Amount This Month.',
   },
   tds: {
     key: 'tds',
     applies: (wage) => wage?.isTdsActApplicable ?? false,
     of: (figures) => figures.employeeTds,
     basis: 'Manual',
-    hint: 'Tax deducted at source — the designation’s percentage of the gross where one is set, and nothing otherwise. Double-click to type a figure for the month.',
+    hint: 'Tax Deducted at Source — The Designation’s Percentage of the Gross Where One Is Set, and Nothing Otherwise. Double-Click to Type a Figure for the Month.',
   },
 }
 
@@ -209,22 +209,22 @@ const GROUP_META: Record<SalaryGroup, { label: string; tone: string; hint: strin
   attendance: {
     label: 'Attendance',
     tone: 'text-primary',
-    hint: 'The days the month is paid on. Present days open on the attendance’s payable days — punched days, plus company holidays that are not the weekly off, plus approved paid leave — and are the one figure here you set. Working days are read-only: they come off the wage structure, or off the attendance where the structure calculates them.',
+    hint: 'The Days the Month Is Paid On. Present Days Open on the Attendance’s Payable Days — Punched Days, Plus Company Holidays That Are Not the Weekly Off, Plus Approved Paid Leave — And Are the One Figure Here You Set. Working Days Are Read-Only: They Come Off the Wage Structure, or off the Attendance Where the Structure Calculates Them.',
   },
   allowance: {
     label: 'Allowance',
     tone: 'text-teal-600 dark:text-teal-400',
-    hint: 'The designation’s allowance heads. A head configured as a percentage earns its share of the earned basic and follows the present days; one configured flat stays put. Double-click any of them to type an amount over it for that row.',
+    hint: 'The Designation’s Allowance Heads. A Head Configured as a Percentage Earns Its Share of the Earned Basic and Follows the Present Days; One Configured Flat Stays Put. Double-Click Any of Them to Type an Amount over It for That Row.',
   },
   overtime: {
     label: 'OT (Overtime)',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'Overtime hours for the month, measured from attendance — recorded breaks excluded, against the employee’s shift — at the wage structure’s hourly rate. Editable where the structure allows overtime. A warning on a processed row means attendance changed after the month was saved: reprocess it to pick up the new hours.',
+    hint: 'Overtime Hours for the Month, Measured from Attendance — Recorded Breaks Excluded, Against the Employee’s Shift — At the Wage Structure’s Hourly Rate. Editable Where the Structure Allows Overtime. A Warning on a Processed Row Means Attendance Changed After the Month Was Saved: Reprocess It to Pick Up the New Hours.',
   },
   deduction: {
     label: 'Deduction',
     tone: 'text-rose-600 dark:text-rose-400',
-    hint: 'The designation’s deduction heads, and the statutory ones — PF, ESIC, professional tax, labour welfare fund and TDS. The statutory figures are worked out from the wage structure’s act settings and the rate masters in force for the period, so they follow the present days along with everything else. Every column here can be double-clicked and typed over, and a typed figure is then fixed for that row.',
+    hint: 'The Designation’s Deduction Heads, and the Statutory Ones — PF, ESIC, Professional Tax, Labour Welfare Fund and TDS. The Statutory Figures Are Worked out from the Wage Structure’s Act Settings and the Rate Masters in Force for the Period, So They Follow the Present Days Along with Everything Else. Every Column Here Can Be Double-Clicked and Typed Over, and a Typed Figure Is Then Fixed for That Row.',
   },
 }
 
@@ -253,7 +253,7 @@ function buildColumns(heads: {
       kind: 'employee',
       width: PINNED.employee,
       pin: PINNED.select,
-      hint: 'The person and their employee code. A posting already processed carries a badge; a paid one is frozen and cannot be re-saved or discarded.',
+      hint: 'The Person and Their Employee Code. A Posting Already Processed Carries a Badge; A Paid One Is Frozen and Cannot Be Re-saved or Discarded.',
     },
     { key: 'designation', label: 'Designation', kind: 'designation', width: 150 },
 
@@ -263,7 +263,7 @@ function buildColumns(heads: {
       kind: 'workingDays',
       group: 'attendance',
       width: 92,
-      hint: 'Working days in the month, from the wage structure — or from the attendance where the structure calculates them. Read-only: it is what pay is spread over, not something set per person.',
+      hint: 'Working Days in the Month, from the Wage Structure — Or from the Attendance Where the Structure Calculates Them. Read-Only: It Is What Pay Is Spread Over, Not Something Set per Person.',
     },
     {
       key: 'presentDays',
@@ -273,7 +273,7 @@ function buildColumns(heads: {
       /* Wider than the other day columns: the cell carries the eye that opens
          the attendance breakdown beside its input. */
       width: 132,
-      hint: 'Days this month is paid for — punched days, holidays and paid leave. The eye opens the breakdown; change the figure to pay a different number of days than the attendance shows.',
+      hint: 'Days This Month Is Paid for — Punched Days, Holidays and Paid Leave. The Eye Opens the Breakdown; Change the Figure to Pay a Different Number of Days Than the Attendance Shows.',
     },
     {
       key: 'lwp',
@@ -281,7 +281,7 @@ function buildColumns(heads: {
       kind: 'lwp',
       group: 'attendance',
       width: 74,
-      hint: 'Leave without pay — reported to explain a short month, and not paid.',
+      hint: 'Leave Without Pay — Reported to Explain a Short Month, and Not Paid.',
     },
 
     {
@@ -289,14 +289,14 @@ function buildColumns(heads: {
       label: 'Basic',
       kind: 'basic',
       width: 152,
-      hint: 'The wage structure’s basic pay, with the daily wage it works out to.',
+      hint: 'The Wage Structure’s Basic Pay, with the Daily Wage It Works out To.',
     },
     {
       key: 'earned',
       label: 'Earned',
       kind: 'earned',
       width: 136,
-      hint: 'Basic pay for the days actually paid.',
+      hint: 'Basic Pay for the Days Actually Paid.',
     },
 
     ...heads.allowances.map((head, headIndex) => ({
@@ -326,7 +326,7 @@ function buildColumns(heads: {
       label: 'Gross Pay',
       kind: 'gross',
       width: 146,
-      hint: 'Earned basic, allowances and overtime — before any deduction.',
+      hint: 'Earned Basic, Allowances and Overtime — Before Any Deduction.',
     },
 
     ...heads.deductions.map((head, headIndex) => ({
@@ -358,14 +358,14 @@ function buildColumns(heads: {
       label: 'Net Pay',
       kind: 'net',
       width: 154,
-      hint: 'Gross pay less every deduction — what is payable for the month.',
+      hint: 'Gross Pay Less Every Deduction — What Is Payable for the Month.',
     },
     {
       key: 'state',
       label: 'Status',
       kind: 'state',
       width: 118,
-      hint: 'Whether this month has been processed for the posting, and whether it has been paid.',
+      hint: 'Whether This Month Has Been Processed for the Posting, and Whether It Has Been Paid.',
     },
   ]
 }
@@ -932,7 +932,7 @@ function RowCell({
         return wageStructure ? (
           <ActOff label={column.label} />
         ) : (
-          <CellTooltip label="No wage structure is in force for this posting, so no act can be applied. Set one on the designation.">
+          <CellTooltip label="No Wage Structure Is in Force for This Posting, So No Act Can Be Applied. Set One on the Designation.">
             <span className="cursor-help text-muted-foreground">{NO_VALUE}</span>
           </CellTooltip>
         )
@@ -1009,7 +1009,7 @@ function EmployeeCell({ row }: { row: SalaryRegisterRow }) {
             a legitimate state, so neither answers the other.
           */}
           {row.salaryComponentSource === 'EMPLOYEE' && (
-            <CellTooltip label="This employee is on their own allowance / deduction heads — their designation's catalog does not price them.">
+            <CellTooltip label="This Employee Is on Their Own Allowance / Deduction Heads — Their Designation's Catalog Does Not Price Them.">
               <span className="shrink-0 rounded bg-primary/15 px-1 py-px text-[9px] font-bold uppercase leading-tight text-primary">
                 Own heads
               </span>
@@ -1183,7 +1183,7 @@ function HeadCell({
       ? {
           label: line?.nextPayoutMonth
             ? `→ ${shortMonthName(line.nextPayoutMonth)}`
-            : 'Not due',
+            : 'Not Due',
           tone: 'bg-muted text-muted-foreground',
         }
       : accrued
@@ -1209,9 +1209,9 @@ function HeadCell({
     <CellTooltip
       label={
         disabled
-          ? 'This month is paid — its figures are frozen'
+          ? 'This Month Is Paid — Its Figures Are Frozen'
           : overridden
-            ? 'Typed by hand, so it no longer follows what was deciding it. Double-click to change it, or clear it to hand it back.'
+            ? 'Typed by Hand, So It No Longer Follows What Was Deciding It. Double-Click to Change It, or Clear It to Hand It Back.'
             : dormant
               ? `Not a payout month for this head${
                   line?.nextPayoutMonth
@@ -1223,7 +1223,7 @@ function HeadCell({
                 : config
                   ? `${basisHint(config.valueType, config.value)} Double-click to set a fixed amount for this row.`
                   : (hint ??
-                    'A fixed amount from the designation. Double-click to change it for this row.')
+                    'A Fixed Amount from the Designation. Double-Click to Change It for This Row.')
       }
     >
       <button
@@ -1350,7 +1350,7 @@ function Money({
 
   // Only a stale figure has anything to explain — a settled one is just a number.
   return stale ? (
-    <CellTooltip label="Computed by the server for the days it had — it settles when this row is saved and the register reloaded">
+    <CellTooltip label="Computed by the Server for the Days It Had — It Settles When This Row Is Saved and the Register Reloaded">
       {amount}
     </CellTooltip>
   ) : (

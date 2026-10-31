@@ -5,10 +5,7 @@
 
 /**
  * The signed-in user themselves — distinct from the account they belong to.
- *
- * An owner who carries no role (`isOwner` with a null `roleId`) *is* the
- * account, so the screen shows the organization only and leaves this out; every
- * other user (a role holder, or a non-owner) gets their own details as well.
+ * Every user, the account owner included, sees and edits their own login here.
  */
 export interface ProfileUser {
   id: number
@@ -27,6 +24,8 @@ export interface ProfileUser {
   /** Set when the login is tied to an employee record. */
   employeeId: number | null
   twoFactorAuth: boolean
+  /** Storage key (not a URL) of the user's own photo; null shows initials. */
+  profilePhoto: string | null
   /** ISO date-time the user was created. */
   createdAt: string
 }

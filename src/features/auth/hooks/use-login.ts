@@ -77,7 +77,7 @@ export function useLogin() {
     login.mutate(values, {
       onSuccess: (outcome) => {
         if (outcome.status === 'authenticated') {
-          toast.success('Signed in')
+          toast.success('Signed In')
           navigate({ to: '/dashboard' })
           return
         }

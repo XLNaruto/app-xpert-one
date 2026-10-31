@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { LWF_RATE_DEFAULT_SORT } from '../constants'
 import { useLwfRates } from '../api/use-lwf-rates'
 import { useDeleteLwfRate } from '../api/use-lwf-rate-mutations'
@@ -26,7 +26,7 @@ export function useLwfRateList() {
     setSearch,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, LWF_RATE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, LWF_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useLwfRates(params)
   const deleteLwfRate = useDeleteLwfRate()
 
@@ -42,11 +42,11 @@ export function useLwfRateList() {
     if (!pendingDelete) return
     deleteLwfRate.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('LWF rate deleted')
+        toast.success('LWF Rate Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete LWF rate'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete LWF Rate'),
     })
   }
 

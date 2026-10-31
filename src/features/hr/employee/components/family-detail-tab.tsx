@@ -60,7 +60,7 @@ export function FamilyDetailTab({
   if (isError) {
     return (
       <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-        {error instanceof Error ? error.message : "Couldn't load the family detail."}
+        {error instanceof Error ? error.message : "Couldn't Load the Family Detail."}
       </p>
     )
   }
@@ -128,7 +128,7 @@ export function FamilyDetailTab({
                         onChange={relation.onChange}
                         options={RELATION_OPTIONS}
                         placeholder="Relation"
-                        searchPlaceholder="Search relation"
+                        searchPlaceholder="Search Relation"
                       />
                     )}
                   />
@@ -186,7 +186,7 @@ export function FamilyDetailTab({
       <StepFormFooter
         onBack={onBack}
         isSaving={isSaving}
-        hint="At least one member is required; extra blank cards are ignored."
+        hint="At Least One Member Is Required; Extra Blank Cards Are Ignored."
       />
     </form>
   )

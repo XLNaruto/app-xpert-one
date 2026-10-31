@@ -121,7 +121,7 @@ export const stockChangeSchema = z.object({
   direction: z.enum(['in', 'out']),
   quantity: wholeNumberField({ required: true, label: 'a quantity', max: 9 }).refine(
     (value) => Number(value) > 0,
-    'Enter a quantity greater than zero',
+    'Enter a Quantity Greater Than Zero',
   ),
   note: text(500),
 })

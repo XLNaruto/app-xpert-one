@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { useBanks } from '@/features/master/bank'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId, encryptParams } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { EMPLOYEE_DEFAULT_SORT, type EmployeeStatusFilter } from '../constants'
 import { useEmployees } from '../api/use-employees'
 import { useDeleteEmployee, useSetEmployeeGeoFence } from '../api/use-employee-mutations'
@@ -32,7 +32,7 @@ export function useEmployeeList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, EMPLOYEE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, EMPLOYEE_DEFAULT_SORT)
 
   // The Active / De-active tabs → `?status=`, opening on current staff. A new
   // tab starts back on page one.

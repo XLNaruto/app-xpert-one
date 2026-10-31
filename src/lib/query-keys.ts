@@ -925,9 +925,10 @@ export const queryKeys = {
       [...queryKeys.officeTask.all, 'project-task', 'work', id, workId] as const,
     projectWorkActivity: (id: number, workId: number) =>
       [...queryKeys.officeTask.all, 'project-task', 'activity', id, workId] as const,
-    mySopTasks: (date: string) => [...queryKeys.officeTask.all, 'my-task', 'sop', date] as const,
-    myProjectTasks: (date: string) =>
-      [...queryKeys.officeTask.all, 'my-task', 'project', date] as const,
+    mySopTasks: (date: string, search: string) =>
+      [...queryKeys.officeTask.all, 'my-task', 'sop', date, search] as const,
+    myProjectTasks: (date: string, search: string) =>
+      [...queryKeys.officeTask.all, 'my-task', 'project', date, search] as const,
     /** The active company's submission modes (START_STOP | DIRECT) for the board. */
     myTaskSettings: () => [...queryKeys.officeTask.all, 'my-task', 'settings'] as const,
     sopApprovals: (filters: QueryParams, params: PageParams) =>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { isNotFoundError } from '@/lib/api-error'
 import {
   useProjectEmployeeDetail,
@@ -28,17 +28,17 @@ export function useAnalysisDetail(params: Partial<AnalysisDetailParams> | null) 
   const active = kind === 'sop' ? sop : project
 
   const [taskTab, setTaskTab] = useState<ProjectTaskTab>('all')
-  const taskPagination = usePagination(DEFAULT_PAGE_SIZE)
+  const taskPagination = usePagination(ALL_PAGE_SIZE)
   const tasks = useProjectEmployeeTasks(params?.id, range, taskTab, taskPagination.params, kind === 'project')
   const firstTaskPage = () => taskPagination.onPaginationChange({ limit: taskPagination.limit, offset: 0 })
 
-  const checklistPagination = usePagination(DEFAULT_PAGE_SIZE)
+  const checklistPagination = usePagination(ALL_PAGE_SIZE)
   const checklists = useSopEmployeeChecklists(params?.id, range, checklistPagination.params, kind === 'sop')
   const firstChecklistPage = () =>
     checklistPagination.onPaginationChange({ limit: checklistPagination.limit, offset: 0 })
 
   const [runTab, setRunTab] = useState<SopRunTab>('all')
-  const runPagination = usePagination(DEFAULT_PAGE_SIZE)
+  const runPagination = usePagination(ALL_PAGE_SIZE)
   const runs = useSopEmployeeRuns(params?.id, range, runTab, runPagination.params, kind === 'sop')
   const firstRunPage = () => runPagination.onPaginationChange({ limit: runPagination.limit, offset: 0 })
 

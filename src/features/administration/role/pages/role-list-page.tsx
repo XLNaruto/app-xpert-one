@@ -100,7 +100,7 @@ export function RoleListPage() {
     <div>
       <PageHeader
         title="Roles & Permissions"
-        description="Create roles and control exactly which screens each one can open, and what it can do there."
+        description="Create Roles and Control Exactly Which Screens Each One Can Open, and What It Can Do There."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -122,7 +122,7 @@ export function RoleListPage() {
           columns={columns}
           data={list.rows}
           isLoading={list.isLoading}
-          searchPlaceholder="Search roles…"
+          searchPlaceholder="Search Roles…"
           itemName="roles"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -141,8 +141,8 @@ export function RoleListPage() {
               title={list.search ? 'No Matching Roles' : 'No Roles Yet'}
               description={
                 list.search
-                  ? 'Try a different search term.'
-                  : 'A role decides which screens a user can open and what they can do there. Create one to start handing out access.'
+                  ? 'Try a Different Search Term.'
+                  : 'A Role Decides Which Screens a User Can Open and What They Can Do There. Create One to Start Handing out Access.'
               }
               action={
                 list.search

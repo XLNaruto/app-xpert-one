@@ -78,7 +78,7 @@ export function EmployeeTicketThread({
         // only the first of them wears a name and an avatar.
         const startsTurn =
           newDay || !previous || previous.authorType !== message.authorType
-        const name = message.authorName || (isOffice ? 'Your office' : 'Employee')
+        const name = message.authorName || (isOffice ? 'Your Office' : 'Employee')
 
         return (
           <div key={message.id}>

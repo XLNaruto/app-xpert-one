@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { DESIGNATION_DEFAULT_SORT } from '../constants'
 import { useDesignations } from '../api/use-designations'
 import { useDeleteDesignation } from '../api/use-designation-mutations'
@@ -25,7 +25,7 @@ export function useDesignationList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, DESIGNATION_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, DESIGNATION_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useDesignations(params)
   const deleteDesignation = useDeleteDesignation()
 
@@ -41,11 +41,11 @@ export function useDesignationList() {
     if (!pendingDelete) return
     deleteDesignation.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Designation deleted')
+        toast.success('Designation Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete designation'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Designation'),
     })
   }
 

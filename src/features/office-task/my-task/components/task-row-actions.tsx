@@ -40,7 +40,7 @@ function LockedHint({ locked, children }: { locked: boolean; children: ReactNode
       <TooltipTrigger asChild>
         <span className="inline-flex cursor-not-allowed">{children}</span>
       </TooltipTrigger>
-      <TooltipContent>Stop the running task first</TooltipContent>
+      <TooltipContent>Stop the Running Task First</TooltipContent>
     </Tooltip>
   )
 }

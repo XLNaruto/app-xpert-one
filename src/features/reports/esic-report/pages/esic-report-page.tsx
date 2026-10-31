@@ -44,7 +44,7 @@ export function EsicReportPage() {
     onSearchChange: view.setSearch,
     sorting: view.sorting,
     onSortingChange: view.onSortingChange,
-    searchPlaceholder: 'Search by name, code or insurance number…',
+    searchPlaceholder: 'Search by Name, Code or Insurance Number…',
     itemName: 'insured employees',
   }
 
@@ -54,7 +54,7 @@ export function EsicReportPage() {
     <div>
       <PageHeader
         title="ESIC Report"
-        description="The month's insured employees — the contribution statement, and the challan sheet the portal takes."
+        description="The Month's Insured Employees — The Contribution Statement, and the Challan Sheet the Portal Takes."
       />
 
       <ReportFilterCard
@@ -88,17 +88,17 @@ export function EsicReportPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its ESIC sheets."
+          description="Select a Company for This Session to Read Its ESIC Sheets."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
           title="Choose a Sheet and a Period"
-          description="Pick a type and a month above, then press “Filter Data” to load the sheet."
+          description="Pick a Type and a Month Above, Then Press “Filter Data” to Load the Sheet."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {view.error instanceof Error ? view.error.message : "Couldn't load the ESIC report."}
+          {view.error instanceof Error ? view.error.message : "Couldn't Load the ESIC Report."}
         </p>
       ) : (
         <>
@@ -115,7 +115,7 @@ export function EsicReportPage() {
               items={view.basisItems}
               isRateOnFile={view.header.isRateOnFile}
               rateEffectiveDate={view.header.rateEffectiveDate}
-              missingRateMessage="No ESIC rate is configured for this period — these figures use the statutory defaults."
+              missingRateMessage="No ESIC Rate Is Configured for This Period — These Figures Use the Statutory Defaults."
             />
           )}
 

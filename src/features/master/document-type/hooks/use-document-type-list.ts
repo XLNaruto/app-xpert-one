@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { DOCUMENT_TYPE_DEFAULT_SORT } from '../constants'
 import { useDocumentTypes } from '../api/use-document-types'
 import { useDeleteDocumentType } from '../api/use-document-type-mutations'
@@ -26,7 +26,7 @@ export function useDocumentTypeList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, DOCUMENT_TYPE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, DOCUMENT_TYPE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useDocumentTypes(params)
   const deleteDocumentType = useDeleteDocumentType()
 
@@ -42,12 +42,12 @@ export function useDocumentTypeList() {
     if (!pendingDelete) return
     deleteDocumentType.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Document type deleted')
+        toast.success('Document Type Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
         toast.error(
-          err instanceof Error ? err.message : 'Failed to delete document type',
+          err instanceof Error ? err.message : 'Failed to Delete Document Type',
         ),
     })
   }

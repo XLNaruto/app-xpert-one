@@ -36,7 +36,7 @@ export async function fetchDesignationLeaveQuotas(
     const raw = await http.get<unknown>(endpoints.DESIGNATIONS.LEAVE_QUOTAS(designationId))
     return toDesignationLeaveQuotas(designationLeaveQuotasResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave allowances.")
+    throw toApiError(error, "Couldn't Load the Leave Allowances.")
   }
 }
 
@@ -52,7 +52,7 @@ export async function saveDesignationLeaveQuotas(
     )
     return toDesignationLeaveQuotas(designationLeaveQuotasResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the leave allowances.")
+    throw toApiError(error, "Couldn't Save the Leave Allowances.")
   }
 }
 
@@ -70,7 +70,7 @@ export async function fetchEmployeeLeaveQuotas(
     })
     return toEmployeeLeaveQuotas(employeeLeaveQuotasResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave allowances.")
+    throw toApiError(error, "Couldn't Load the Leave Allowances.")
   }
 }
 
@@ -93,6 +93,6 @@ export async function saveEmployeeLeaveQuotas(
     )
     return toEmployeeLeaveQuotas(employeeLeaveQuotasResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the leave allowances.")
+    throw toApiError(error, "Couldn't Save the Leave Allowances.")
   }
 }

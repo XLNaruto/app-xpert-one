@@ -84,11 +84,11 @@ export function SeriesPanel({
       isFetching={panel.isFetching && !panel.isPending}
       error={panel.error}
       isEmpty={noMetrics || (Boolean(data) && isEmptySeries(data!))}
-      emptyTitle={noMetrics ? 'No metrics selected' : 'No data yet'}
+      emptyTitle={noMetrics ? 'No Metrics Selected' : 'No Data Yet'}
       emptyDescription={
         noMetrics
-          ? 'Pick at least one metric to plot.'
-          : 'No activity was recorded in this period for the selected population.'
+          ? 'Pick at Least One Metric to Plot.'
+          : 'No Activity Was Recorded in This Period for the Selected Population.'
       }
       skeletonHeight={height}
       actions={
@@ -116,7 +116,7 @@ export function SeriesPanel({
             <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
               {/* Said out loud: a salary sheet has no day, so a payroll metric on
                   a daily axis would put each month's whole cost on the 1st. */}
-              {panel.forcedMonthly ? 'Monthly — payroll has no daily grain' : 'Monthly'}
+              {panel.forcedMonthly ? 'Monthly — Payroll Has No Daily Grain' : 'Monthly'}
             </span>
           )}
         </>

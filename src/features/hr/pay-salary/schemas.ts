@@ -158,8 +158,8 @@ export type PaymentBatchResponse = z.infer<typeof paymentBatchResponseSchema>
 export const payBatchFormSchema = z.object({
   paymentDate: z
     .string()
-    .min(1, 'Pick the date the money left')
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a valid date'),
+    .min(1, 'Pick the Date the Money Left')
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Pick a Valid Date'),
   paymentMode: z.enum(PAYMENT_MODES),
   documents: z
     .array(z.custom<DropzoneFile>())

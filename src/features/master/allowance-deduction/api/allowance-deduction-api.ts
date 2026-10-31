@@ -92,7 +92,7 @@ export async function fetchAllowanceDeductions(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load allowances and deductions.")
+    throw toApiError(error, "Couldn't Load Allowances and Deductions.")
   }
 }
 
@@ -102,7 +102,7 @@ export async function fetchAllowanceDeduction(id: number): Promise<AllowanceDedu
     const raw = await http.get<unknown>(endpoints.PAY_COMPONENTS.GET(id))
     return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Allowance / deduction not found')
+    throw toApiError(error, 'Allowance / Deduction Not Found')
   }
 }
 
@@ -120,7 +120,7 @@ export async function createAllowanceDeduction(
     )
     return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the record.")
+    throw toApiError(error, "Couldn't Create the Record.")
   }
 }
 
@@ -139,7 +139,7 @@ export async function updateAllowanceDeduction(
     )
     return toAllowanceDeduction(payComponentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the record.")
+    throw toApiError(error, "Couldn't Update the Record.")
   }
 }
 
@@ -148,6 +148,6 @@ export async function deleteAllowanceDeduction(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.PAY_COMPONENTS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the record.")
+    throw toApiError(error, "Couldn't Delete the Record.")
   }
 }

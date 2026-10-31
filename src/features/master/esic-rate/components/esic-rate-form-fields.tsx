@@ -59,7 +59,7 @@ export function EsicRateFormFields({
       <FormSection
         icon={HeartPulse}
         title="ESIC Rate Settings"
-        description="Configure the basic rate setup for ESIC"
+        description="Configure the Basic Rate Setup for ESIC"
         className="mt-0"
       />
 
@@ -89,8 +89,8 @@ export function EsicRateFormFields({
                 value={field.value}
                 onChange={field.onChange}
                 options={MONTH_OPTIONS}
-                placeholder="Select month"
-                searchPlaceholder="Search month"
+                placeholder="Select Month"
+                searchPlaceholder="Search Month"
               />
             )}
           />
@@ -112,7 +112,7 @@ export function EsicRateFormFields({
       <Field
         label="Rounding"
         required
-        hint="How both contributions are rounded. On ₹104.2275: round up bills ₹105, to the paise bills ₹104.23."
+        hint="How Both Contributions Are Rounded. On ₹104.2275: Round up Bills ₹105, to the Paise Bills ₹104.23."
         error={errors.roundingMode?.message}
       >
         <Controller
@@ -124,7 +124,7 @@ export function EsicRateFormFields({
               value={field.value}
               onChange={field.onChange}
               options={ESIC_ROUNDING_MODE_OPTIONS}
-              placeholder="Select rounding"
+              placeholder="Select Rounding"
               searchable={false}
             />
           )}

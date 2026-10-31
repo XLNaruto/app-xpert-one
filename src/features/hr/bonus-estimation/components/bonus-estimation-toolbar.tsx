@@ -124,8 +124,8 @@ export function BonusEstimationToolbar({
               onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
               {...departments}
               icon={Building2}
-              placeholder="Every department"
-              searchPlaceholder="Search departments…"
+              placeholder="Every Department"
+              searchPlaceholder="Search Departments…"
               clearable
             />
           </Field>
@@ -134,14 +134,14 @@ export function BonusEstimationToolbar({
             <Field
               label="Calculation Base"
               className="w-full sm:w-60"
-              hint="Which salary figure the bonus is a percentage of, summed over the range. All four come back with the estimate, so switching this re-fills the column without another Load — and it is recorded against every month the save writes."
+              hint="Which Salary Figure the Bonus Is a Percentage Of, Summed over the Range. All Four Come Back with the Estimate, So Switching This Re-fills the Column Without Another Load — And It Is Recorded Against Every Month the Save Writes."
             >
               <Combobox
                 value={calculationField}
                 onChange={(value) => onCalculationFieldChange(value as CalculationField)}
                 options={CALCULATION_FIELD_OPTIONS}
                 icon={Calculator}
-                placeholder="Select a base"
+                placeholder="Select a Base"
                 searchable={false}
               />
             </Field>

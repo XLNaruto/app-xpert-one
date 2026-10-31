@@ -278,7 +278,7 @@ export function PlanCard({
               onClick={() => onRequest(plan)}
             >
               <Send className="size-3.5" />
-              {requestPending ? 'Request pending' : 'Request plan extend'}
+              {requestPending ? 'Request Pending' : 'Request Plan Extend'}
             </Button>
           )}
         </div>

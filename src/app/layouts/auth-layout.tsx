@@ -141,9 +141,9 @@ export function AuthLayout() {
             className="animate-auth-rise mt-4 max-w-md text-sm leading-relaxed text-muted-foreground xl:mt-6 xl:text-base"
             style={{ animationDelay: '.1s' }}
           >
-            Manage your entire organization from one secure workspace. Connect
-            people, departments, approvals, and operations through a single
-            enterprise platform.
+            Manage Your Entire Organization from One Secure Workspace. Connect
+            People, Departments, Approvals, and Operations Through a Single
+            Enterprise Platform.
           </p>
 
           {/* Module grid */}

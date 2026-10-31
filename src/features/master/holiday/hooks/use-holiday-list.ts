@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId, encryptParams } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { ALL_ACCOUNTING_YEARS, HOLIDAY_DEFAULT_SORT } from '../constants'
 import { accountingYearOf, accountingYearOptions } from '../lib/accounting-year'
 import { useHolidays } from '../api/use-holidays'
@@ -26,7 +26,7 @@ export function useHolidayList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, HOLIDAY_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, HOLIDAY_DEFAULT_SORT)
   /** `2026-27`, or `''` for every year. Opens on the year we're in. */
   const [accountingYear, setAccountingYear] = useState(() => accountingYearOf(new Date()))
   const yearOptions = [
@@ -64,11 +64,11 @@ export function useHolidayList() {
     if (!pendingDelete) return
     deleteHoliday.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Holiday deleted')
+        toast.success('Holiday Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete holiday'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Holiday'),
     })
   }
 

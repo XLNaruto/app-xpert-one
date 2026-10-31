@@ -120,12 +120,12 @@ export interface SopGroupAssigneesPayload {
  */
 const taskSchema = z.object({
   id: z.string(),
-  task: z.string().trim().min(1, 'Task name is required').max(255, 'Keep it under 255 characters'),
-  description: z.string().trim().max(500, 'Keep it under 500 characters'),
+  task: z.string().trim().min(1, 'Task Name Is Required').max(255, 'Keep It Under 255 Characters'),
+  description: z.string().trim().max(500, 'Keep It Under 500 Characters'),
   frequency: z
     .string()
     .trim()
-    .regex(/^\d+$/, 'Whole number only')
+    .regex(/^\d+$/, 'Whole Number Only')
     .refine(
       (v) => Number(v) >= FREQUENCY_MIN && Number(v) <= FREQUENCY_MAX,
       `${FREQUENCY_MIN}–${FREQUENCY_MAX}`,
@@ -167,11 +167,11 @@ const assigneeSchema = z.object({
 export const sopGroupSchema = z
   .object({
     // Tab 1 — group details + checklist
-    name: z.string().trim().min(2, 'Group name is required').max(120, 'Keep it under 120 characters'),
+    name: z.string().trim().min(2, 'Group Name Is Required').max(120, 'Keep It Under 120 Characters'),
     pickBy: z.enum(['designation', 'role']),
     designationId: z.string(),
     roleId: z.string(),
-    items: z.array(taskSchema).min(1, 'Add at least one checklist task'),
+    items: z.array(taskSchema).min(1, 'Add at Least One Checklist Task'),
     // Tab 2 — assign employees
     assignees: z.array(assigneeSchema),
     effectiveFrom: z.string(),
@@ -179,10 +179,10 @@ export const sopGroupSchema = z
   })
   .superRefine((v, ctx) => {
     if (v.pickBy === 'designation' && !v.designationId) {
-      ctx.addIssue({ code: 'custom', path: ['designationId'], message: 'Designation is required' })
+      ctx.addIssue({ code: 'custom', path: ['designationId'], message: 'Designation Is Required' })
     }
     if (v.pickBy === 'role' && !v.roleId) {
-      ctx.addIssue({ code: 'custom', path: ['roleId'], message: 'Role is required' })
+      ctx.addIssue({ code: 'custom', path: ['roleId'], message: 'Role Is Required' })
     }
 
     const checklist = new Map<string, number>()
@@ -210,7 +210,7 @@ export const sopGroupSchema = z
           ctx.addIssue({
             code: 'custom',
             path: ['assignees', ai, 'customTasks', ti, 'task'],
-            message: 'Already in this employee’s list',
+            message: 'Already in This Employee’s List',
           })
         }
         seen.add(key)
@@ -219,10 +219,10 @@ export const sopGroupSchema = z
 
     if (v.assignees.some((a) => !a.locked)) {
       if (!v.effectiveFrom) {
-        ctx.addIssue({ code: 'custom', path: ['effectiveFrom'], message: 'Effective from is required' })
+        ctx.addIssue({ code: 'custom', path: ['effectiveFrom'], message: 'Effective from Is Required' })
       }
       if (v.effectiveFrom && v.effectiveTo && v.effectiveTo < v.effectiveFrom) {
-        ctx.addIssue({ code: 'custom', path: ['effectiveTo'], message: 'Must be on or after the start date' })
+        ctx.addIssue({ code: 'custom', path: ['effectiveTo'], message: 'Must Be on or After the Start Date' })
       }
     }
   })

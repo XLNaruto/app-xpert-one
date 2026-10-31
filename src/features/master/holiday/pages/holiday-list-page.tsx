@@ -122,7 +122,7 @@ export function HolidayListPage() {
     <div>
       <PageHeader
         title="Holidays"
-        description="Manage your holiday master records."
+        description="Manage Your Holiday Master Records."
         actions={
           // Holidays are added a year at a time; the single form is edit-only.
           canCreate && (
@@ -145,7 +145,7 @@ export function HolidayListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search holiday…"
+          searchPlaceholder="Search…"
           itemName="holidays"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -159,7 +159,7 @@ export function HolidayListPage() {
           // panel — it's the filter this screen is looked at through.
           toolbar={
             <FilterBar
-              search={{ value: search, onChange: setSearch, placeholder: 'Search holiday…' }}
+              search={{ value: search, onChange: setSearch, placeholder: 'Search…' }}
               leading={
                 <div className="w-full sm:w-44">
                   <Combobox
@@ -183,17 +183,17 @@ export function HolidayListPage() {
               icon={CalendarHeart}
               title={
                 search
-                  ? 'No matching holidays'
+                  ? 'No Matching Holidays'
                   : accountingYear
                     ? `No holidays for ${accountingYear}`
-                    : 'No holidays yet'
+                    : 'No Holidays Yet'
               }
               description={
                 search
-                  ? 'Try a different search term.'
+                  ? 'Try a Different Search Term.'
                   : accountingYear
-                    ? "Add this year's holidays in one go."
-                    : "Add a year's holidays to get started."
+                    ? "Add This Year's Holidays in One Go."
+                    : "Add a Year's Holidays to Get Started."
               }
               action={
                 search

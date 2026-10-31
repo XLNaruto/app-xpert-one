@@ -66,8 +66,8 @@ export const EMPLOYEE_TICKET_PRIORITY_LABELS: Record<string, string> = {
  * three — nothing auto-assigns on a desk with no router.
  */
 export const ASSIGNMENT_SOURCE_LABELS: Record<string, string> = {
-  self: 'Picked up',
-  user: 'Handed over',
+  self: 'Picked Up',
+  user: 'Handed Over',
 }
 
 export const EMPLOYEE_TICKET_STATUS_LABELS: Record<string, string> = {

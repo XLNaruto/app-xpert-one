@@ -98,7 +98,7 @@ export function StockChangeDialog({
           </div>
 
           <Field
-            label={isWriteOff ? 'Units to remove' : 'Units to add'}
+            label={isWriteOff ? 'Units to Remove' : 'Units to Add'}
             required
             error={errors.quantity?.message}
             hint={
@@ -115,13 +115,13 @@ export function StockChangeDialog({
             error={errors.note?.message}
             hint={
               isWriteOff
-                ? 'Say what happened to them — a write-off with no reason is hard to answer for later.'
-                : 'A PO number or supplier, so the line explains itself in the history.'
+                ? 'Say What Happened to Them — A Write-Off with No Reason Is Hard to Answer for Later.'
+                : 'A PO Number or Supplier, So the Line Explains Itself in the History.'
             }
           >
             <Textarea
               rows={2}
-              placeholder={isWriteOff ? 'Damaged in transit' : 'PO-4471, five units received'}
+              placeholder={isWriteOff ? 'Damaged in Transit' : 'PO-4471, Five Units Received'}
               {...register('note')}
             />
           </Field>

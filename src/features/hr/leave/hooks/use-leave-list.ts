@@ -3,9 +3,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isConflictError, isForbiddenError } from '@/lib/api-error'
 import { LEAVE_DEFAULT_SORT, LEAVE_TAB_MINE } from '../constants'
 import { leaveDecisionSchema, type LeaveDecisionFormValues } from '../schemas'
@@ -42,7 +42,7 @@ export function useLeaveList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, LEAVE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, LEAVE_DEFAULT_SORT)
 
   /**
    * The tab in force. `''` is every status; `MINE` is `pending_with_me=true`,
@@ -126,7 +126,7 @@ export function useLeaveList() {
         onError: (error) => {
           if (isConflictError(error)) {
             toast.error(getApiErrorMessage(error, 'This leave application was changed.'), {
-              description: 'The list has been refreshed — review it and decide again.',
+              description: 'The List Has Been Refreshed — Review It and Decide Again.',
             })
             closeDecision()
             return
@@ -142,7 +142,7 @@ export function useLeaveList() {
     // Deletes the whole application — both halves of a split.
     deleteLeave.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Leave removed')
+        toast.success('Leave Removed')
         setPendingDelete(null)
       },
       onError: (error) =>

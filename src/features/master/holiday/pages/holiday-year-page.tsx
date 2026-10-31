@@ -67,7 +67,7 @@ export function HolidayYearPage({ data }: HolidayYearPageProps) {
         description={
           companyName
             ? `Enter every holiday for an accounting year for ${companyName} and save them together.`
-            : 'Enter every holiday for an accounting year and save them together.'
+            : 'Enter Every Holiday for an Accounting Year and Save Them Together.'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -84,7 +84,7 @@ export function HolidayYearPage({ data }: HolidayYearPageProps) {
               <FormSection
                 icon={CalendarPlus}
                 title="Accounting Year"
-                description="Every holiday below must fall inside it"
+                description="Every Holiday Below Must Fall Inside It"
                 className="mt-0"
               />
 
@@ -92,7 +92,7 @@ export function HolidayYearPage({ data }: HolidayYearPageProps) {
                 label={HOLIDAY_LABELS.accountingYear}
                 required
                 error={errors.accountingYear?.message}
-                hint="Holidays already added for this year are kept — this only adds."
+                hint="Holidays Already Added for This Year Are Kept — This Only Adds."
               >
                 <Combobox
                   className="w-full"
@@ -178,7 +178,7 @@ export function HolidayYearPage({ data }: HolidayYearPageProps) {
                               <Trash2 className="size-4 text-destructive" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Remove row</TooltipContent>
+                          <TooltipContent>Remove Row</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>

@@ -47,7 +47,7 @@ export function useDocumentTypeForm(id?: number) {
     const mutation = isEdit ? updateDocumentType : createDocumentType
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Document type updated' : 'Document type created')
+        toast.success(isEdit ? 'Document Type Updated' : 'Document Type Created')
         goToList()
       },
       onError: (err) =>

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '@/features/company'
@@ -65,7 +65,7 @@ export function useEmployeeTicketList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, EMPLOYEE_TICKET_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, EMPLOYEE_TICKET_DEFAULT_SORT)
 
   const [filters, setFilters] = useState<EmployeeTicketFilters>(
     EMPTY_EMPLOYEE_TICKET_FILTERS,

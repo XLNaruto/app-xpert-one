@@ -27,7 +27,7 @@ export type TalkCredentialStatus = z.infer<typeof talkCredentialStatusSchema>
  */
 export const departmentGrantFormSchema = z.object({
   /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
-  companyId: z.string().trim().min(1, 'Pick a company'),
+  companyId: z.string().trim().min(1, 'Pick a Company'),
   /** Same, and never empty — an empty row means nothing to the flat list. */
   departmentIds: z.array(z.string()),
 })
@@ -93,7 +93,7 @@ export function talkCredentialSchema({
        */
       employeeId: isEdit
         ? z.string().trim()
-        : z.string().trim().min(1, 'Pick the employee this credential is for'),
+        : z.string().trim().min(1, 'Pick the Employee This Credential Is For'),
       /**
        * CREATE ONLY, and never sent on edit. Ticked, the API copies the login
        * from the employee named above — which is why the employee is picked
@@ -141,7 +141,7 @@ export function talkCredentialSchema({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['departmentGrants', index, 'companyId'],
-            message: 'This company already has a row — add its departments there',
+            message: 'This Company Already Has a Row — Add Its Departments There',
           })
         }
         seen.add(grant.companyId)
@@ -153,7 +153,7 @@ export function talkCredentialSchema({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['departmentGrants', index, 'departmentIds'],
-            message: 'Pick at least one department, or grant the whole company above',
+            message: 'Pick at Least One Department, or Grant the Whole Company Above',
           })
         }
       })
@@ -179,7 +179,7 @@ export function talkCredentialSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['email'],
-          message: 'Please enter the email address',
+          message: 'Please Enter the Email Address',
         })
       }
 
@@ -193,7 +193,7 @@ export function talkCredentialSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['password'],
-          message: 'Please enter a password',
+          message: 'Please Enter a Password',
         })
         return
       }
@@ -212,7 +212,7 @@ export function talkCredentialSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['confirmPassword'],
-          message: 'Passwords do not match',
+          message: 'Passwords Do Not Match',
         })
       }
     })

@@ -78,7 +78,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Company' : 'Add New Company'}
-        description={isEdit ? 'Update this company record' : 'Create a new company record'}
+        description={isEdit ? 'Update This Company Record' : 'Create a New Company Record'}
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -99,7 +99,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this company."}
+                : "Couldn't Load This Company."}
             </p>
           ) : (
             <Tabs
@@ -140,7 +140,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <FormSection
                   icon={Building2}
                   title="Company Information"
-                  description="Identity and registration details"
+                  description="Identity and Registration Details"
                   className="mt-0"
                 />
                 {/* Full-width so the square picker isn't stretched by the grid. */}
@@ -178,7 +178,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                         onChange={field.onChange}
                         options={YEAR_OPTIONS}
                         placeholder="Select Year"
-                        searchPlaceholder="Search year"
+                        searchPlaceholder="Search Year"
                       />
                     )}
                   />
@@ -211,7 +211,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <FormSection
                   icon={MapPin}
                   title="Address Details"
-                  description="Where the company is located"
+                  description="Where the Company Is Located"
                 />
                 <Field
                   label="Address Line 1"
@@ -238,7 +238,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                         onChange={(value) => changeState(value, field.onChange)}
                         {...state}
                         placeholder="Select State"
-                        searchPlaceholder="Search state"
+                        searchPlaceholder="Search State"
                       />
                     )}
                   />
@@ -253,8 +253,8 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                         value={field.value}
                         onChange={field.onChange}
                         {...district}
-                        placeholder={hasState ? 'Select District' : 'Select a state first'}
-                        searchPlaceholder="Search district"
+                        placeholder={hasState ? 'Select District' : 'Select a State First'}
+                        searchPlaceholder="Search District"
                       />
                     )}
                   />
@@ -275,7 +275,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <FormSection
                   icon={Phone}
                   title="Contact Details"
-                  description="How to reach the company"
+                  description="How to Reach the Company"
                 />
                 <Field label="Phone" error={errors.phone?.message}>
                   <Input placeholder="Phone" {...register('phone')} />
@@ -314,12 +314,12 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <FormSection
                   icon={ReceiptText}
                   title="Billing Charges"
-                  description="What the company invoices on top of statutory cost. Leave blank to invoice at cost — these are only saved when you change them."
+                  description="What the Company Invoices on Top of Statutory Cost. Leave Blank to Invoice at Cost — These Are Only Saved When You Change Them."
                 />
                 <Field
                   label="Agency Charge %"
                   error={errors.agencyChargePercentage?.message}
-                  hint="A share of the total statutory cost."
+                  hint="A Share of the Total Statutory Cost."
                 >
                   <Input
                     inputMode="decimal"
@@ -330,7 +330,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <Field
                   label="GST %"
                   error={errors.gstPercentage?.message}
-                  hint="Charged on the statutory cost plus the agency charge. Read from here — never assumed to be 18%."
+                  hint="Charged on the Statutory Cost Plus the Agency Charge. Read from Here — Never Assumed to Be 18%."
                 >
                   <Input
                     inputMode="decimal"
@@ -341,7 +341,7 @@ export function CompanyCreatePage({ data }: CompanyCreatePageProps) {
                 <Field
                   label="Rates Effective From"
                   error={errors.billingEffectiveFrom?.message}
-                  hint="Left blank, the rates take effect today. A different day keeps the earlier rates as history."
+                  hint="Left Blank, the Rates Take Effect Today. A Different Day Keeps the Earlier Rates as History."
                 >
                   <Controller
                     control={control}

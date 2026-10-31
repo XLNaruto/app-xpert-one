@@ -37,7 +37,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
       <EmptyState
         icon={ShieldOff}
         title="No Permissions Available"
-        description="This account has no permissions to assign yet. A serving subscription unlocks the catalog a role can be built from."
+        description="This Account Has No Permissions to Assign Yet. A Serving Subscription Unlocks the Catalog a Role Can Be Built From."
       />
     )
   }
@@ -161,7 +161,7 @@ export function PermissionMatrix({ form, disabled = false }: PermissionMatrixPro
                       size="sm"
                       onClick={() => form.setAllExpanded(!form.isAllExpanded)}
                     >
-                      {form.isAllExpanded ? 'Collapse all' : 'Expand all'}
+                      {form.isAllExpanded ? 'Collapse All' : 'Expand All'}
                     </Button>
                   )}
                   <Button

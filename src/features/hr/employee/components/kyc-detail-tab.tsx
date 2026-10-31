@@ -59,7 +59,7 @@ export function KycDetailTab({
       <p className="text-sm text-destructive">
         {loadError instanceof Error
           ? loadError.message
-          : "Couldn't load the KYC detail."}
+          : "Couldn't Load the KYC Detail."}
       </p>
     )
   }
@@ -73,18 +73,18 @@ export function KycDetailTab({
       <FormSection
         icon={ShieldCheck}
         title="PF & Statutory Details"
-        description="The numbers the PF and ESIC returns are filed against"
+        description="The Numbers the PF and ESIC Returns Are Filed Against"
         className="mt-0"
       />
 
       <Field label="PF Number" error={errors.pfNumber?.message}>
-        <Input placeholder="PF account number" {...register('pfNumber')} />
+        <Input placeholder="PF Account Number" {...register('pfNumber')} />
       </Field>
 
       <Field
         label="UAN Number"
         error={errors.uanNumber?.message}
-        hint="The Universal Account Number — 12 digits, and the same across employers."
+        hint="The Universal Account Number — 12 Digits, and the Same Across Employers."
       >
         <Input
           inputMode="numeric"
@@ -98,7 +98,7 @@ export function KycDetailTab({
       <Field label="ESIC Number" error={errors.esicNumber?.message}>
         <Input
           inputMode="numeric"
-          placeholder="ESIC insurance number"
+          placeholder="ESIC Insurance Number"
           aria-invalid={errors.esicNumber ? true : undefined}
           {...register('esicNumber')}
         />
@@ -107,7 +107,7 @@ export function KycDetailTab({
       <FormSection
         icon={Landmark}
         title="Bank Details"
-        description="Where the salary is credited"
+        description="Where the Salary Is Credited"
       />
 
       <Field label="Bank Name" required error={errors.bankId?.message}>
@@ -123,8 +123,8 @@ export function KycDetailTab({
               loading={bank.loading}
               onScrollEnd={bank.onScrollEnd}
               onSearchChange={bank.onSearchChange}
-              placeholder="Select bank"
-              searchPlaceholder="Search bank"
+              placeholder="Select Bank"
+              searchPlaceholder="Search Bank"
             />
           )}
         />
@@ -141,14 +141,14 @@ export function KycDetailTab({
       </Field>
 
       <Field label="Bank Branch" error={errors.bankBranchName?.message}>
-        <Input placeholder="Branch name" {...register('bankBranchName')} />
+        <Input placeholder="Branch Name" {...register('bankBranchName')} />
       </Field>
 
       <Field
         label="IFSC Code"
         required
         error={errors.ifscCode?.message}
-        hint="Four letters, a zero, then six characters — e.g. HDFC0001234."
+        hint="Four Letters, a Zero, Then Six Characters — e.g. HDFC0001234."
       >
         <Input
           maxLength={11}
@@ -162,7 +162,7 @@ export function KycDetailTab({
       <FormSection
         icon={BadgeCheck}
         title="Identity Documents"
-        description="Aadhaar, PAN and the rest of the identity file"
+        description="Aadhaar, PAN and the Rest of the Identity File"
       />
 
       <Field label="Aadhaar Number" required error={errors.aadharNumber?.message}>
@@ -179,10 +179,10 @@ export function KycDetailTab({
         label="Name as per Aadhaar"
         required
         error={errors.nameAsPerAadhar?.message}
-        hint="Recorded separately because statutory filings must match the Aadhaar spelling exactly."
+        hint="Recorded Separately Because Statutory Filings Must Match the Aadhaar Spelling Exactly."
       >
         <Input
-          placeholder="Exactly as printed"
+          placeholder="Exactly as Printed"
           aria-invalid={errors.nameAsPerAadhar ? true : undefined}
           {...register('nameAsPerAadhar')}
         />
@@ -200,21 +200,21 @@ export function KycDetailTab({
 
       <Field label="Voter ID (EPIC)" error={errors.epicNumber?.message}>
         <Input
-          placeholder="EPIC number"
+          placeholder="EPIC Number"
           className="uppercase"
           {...register('epicNumber')}
         />
       </Field>
 
       <Field label="Ration Card Number" error={errors.rationCardNumber?.message}>
-        <Input placeholder="Ration card number" {...register('rationCardNumber')} />
+        <Input placeholder="Ration Card Number" {...register('rationCardNumber')} />
       </Field>
 
       <FormSection icon={CarFront} title="Driving Licence" />
 
       <Field label="Licence Number" error={errors.drivingLicenceNumber?.message}>
         <Input
-          placeholder="Licence number"
+          placeholder="Licence Number"
           className="uppercase"
           aria-invalid={errors.drivingLicenceNumber ? true : undefined}
           {...register('drivingLicenceNumber')}

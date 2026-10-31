@@ -55,7 +55,7 @@ export function useEmployeeKycForm({
   const submit = handleSubmit((values) => {
     saveKyc.mutate(values, {
       onSuccess: () => {
-        toast.success('KYC detail saved')
+        toast.success('KYC Detail Saved')
         onSaved()
       },
       onError: (error) =>

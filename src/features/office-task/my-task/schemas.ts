@@ -85,9 +85,9 @@ export function handInSchema(rules: { noteRequired: boolean; proofRequired: bool
   const files = z.array(proofSchema).max(MAX_PROOF_FILES, `At most ${MAX_PROOF_FILES} files`)
   return z.object({
     note: rules.noteRequired
-      ? z.string().trim().min(1, 'Say what you did').max(1000, 'Keep it under 1000 characters')
-      : z.string().trim().max(1000, 'Keep it under 1000 characters'),
-    proof: rules.proofRequired ? files.min(1, 'Proof is required for this task') : files,
+      ? z.string().trim().min(1, 'Say What You Did').max(1000, 'Keep It Under 1000 Characters')
+      : z.string().trim().max(1000, 'Keep It Under 1000 Characters'),
+    proof: rules.proofRequired ? files.min(1, 'Proof Is Required for This Task') : files,
   })
 }
 
@@ -98,8 +98,8 @@ export const progressSchema = z.object({
   percent: z
     .string()
     .trim()
-    .regex(/^\d+$/, 'Whole number only')
-    .refine((v) => Number(v) <= 100, 'At most 100'),
+    .regex(/^\d+$/, 'Whole Number Only')
+    .refine((v) => Number(v) <= 100, 'At Most 100'),
 })
 
 export type ProgressFormValues = z.infer<typeof progressSchema>

@@ -63,7 +63,7 @@ export function EmployeeTicketAssignDialog({
             : `${code} moves to ${picked?.label ?? 'the person below'}. Its status doesn't move — an in-progress ticket stays in progress — and any open work stretch closes, so the outgoing handler keeps the minutes they actually spent.`
           : undefined
       }
-      confirmLabel={isRelease ? 'Release' : 'Hand over'}
+      confirmLabel={isRelease ? 'Release' : 'Hand Over'}
       cancelLabel="Cancel"
       loading={loading}
       keepOpenOnConfirm
@@ -76,8 +76,8 @@ export function EmployeeTicketAssignDialog({
           value={value}
           onChange={onChange}
           icon={UserRoundCog}
-          placeholder="Nobody — leave it in the queue"
-          searchPlaceholder="Search people"
+          placeholder="Nobody — Leave It in the Queue"
+          searchPlaceholder="Search People"
           // Clearing is a real choice here, not an empty field: it sends `null`,
           // which is the release.
           clearable
@@ -86,7 +86,7 @@ export function EmployeeTicketAssignDialog({
         <p className="text-xs text-muted-foreground">
           {currentAssignee
             ? `Currently with ${currentAssignee}. Clear the field to release it back to the queue.`
-            : 'Nobody holds this yet. Picking somebody hands it to them without waiting for them to take it.'}
+            : 'Nobody Holds This Yet. Picking Somebody Hands It to Them Without Waiting for Them to Take It.'}
           {value === ALL_FILTER ? '' : ' Inactive people are shown but cannot be given work.'}
         </p>
       </div>

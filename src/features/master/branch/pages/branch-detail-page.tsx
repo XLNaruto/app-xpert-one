@@ -68,7 +68,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="Branch Details"
-        description="Branch information at a glance"
+        description="Branch Information at a Glance"
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={goToList}>
@@ -97,7 +97,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Couldn't load this branch."}
+              {error instanceof Error ? error.message : "Couldn't Load This Branch."}
             </p>
           </CardContent>
         </Card>
@@ -245,7 +245,7 @@ export function BranchDetailPage({ data }: { data?: string }) {
             />
             <DetailItem
               icon={UserRound}
-              label="No. of Employees"
+              label="No. Of Employees"
               value={asCount(acts?.noOfEmployees)}
             />
             <DetailItem

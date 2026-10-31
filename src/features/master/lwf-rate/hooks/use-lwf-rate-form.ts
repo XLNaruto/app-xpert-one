@@ -63,7 +63,7 @@ export function useLwfRateForm(id?: number) {
     const mutation = isEdit ? updateLwfRate : createLwfRate
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'LWF rate updated' : 'LWF rate created')
+        toast.success(isEdit ? 'LWF Rate Updated' : 'LWF Rate Created')
         goToList()
       },
       onError: (err) =>

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { OFFICE_ADDRESS_DEFAULT_SORT } from '../constants'
 import { useOfficeAddresses } from '../api/use-office-addresses'
 import { useDeleteOfficeAddress } from '../api/use-office-address-mutations'
@@ -27,7 +27,7 @@ export function useOfficeAddressList(screen: OfficeAddressScreen) {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, OFFICE_ADDRESS_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, OFFICE_ADDRESS_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useOfficeAddresses(
     screen.officeFor,
     params,

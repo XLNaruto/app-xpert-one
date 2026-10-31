@@ -64,8 +64,8 @@ export function useIpAccessModeSwitch() {
         onSuccess: () => {
           toast.success(
             pendingMode === 'RESTRICTED'
-              ? 'Access restricted to the allowed list'
-              : 'Access opened to every network except the blocked list',
+              ? 'Access Restricted to the Allowed List'
+              : 'Access Opened to Every Network Except the Blocked List',
           )
           closeSwitch()
         },

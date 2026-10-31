@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import {
   ALL_FILTER,
@@ -41,7 +41,7 @@ export function useSupportTicketList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, SUPPORT_TICKET_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, SUPPORT_TICKET_DEFAULT_SORT)
 
   const [filters, setFilters] = useState<SupportTicketFilters>(
     EMPTY_SUPPORT_TICKET_FILTERS,
@@ -117,8 +117,8 @@ export function useSupportTicketList() {
       { id: pendingReopen.id, reason: reopenReason },
       {
         onSuccess: () => {
-          toast.success('Ticket reopened')
-          toast.info('The deadline is unchanged — reopening does not re-buy the clock.')
+          toast.success('Ticket Reopened')
+          toast.info('The Deadline Is Unchanged — Reopening Does Not Re-buy the Clock.')
           setPendingReopen(null)
           setReopenReason('')
         },
@@ -132,7 +132,7 @@ export function useSupportTicketList() {
     if (!pendingClose) return
     closeTicket.mutate(pendingClose.id, {
       onSuccess: () => {
-        toast.success('Ticket closed')
+        toast.success('Ticket Closed')
         setPendingClose(null)
       },
       onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't close the ticket.")),

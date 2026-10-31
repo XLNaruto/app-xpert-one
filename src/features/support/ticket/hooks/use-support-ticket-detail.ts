@@ -48,10 +48,10 @@ export function useSupportTicketDetail(id?: number) {
       { id: ticket.id, reason: reopenReason },
       {
         onSuccess: () => {
-          toast.success('Ticket reopened')
+          toast.success('Ticket Reopened')
           // The resolution is cleared and the clock is NOT re-bought — both are
           // surprising enough to state rather than leave to be discovered.
-          toast.info('The deadline is unchanged — reopening does not re-buy the clock.')
+          toast.info('The Deadline Is Unchanged — Reopening Does Not Re-buy the Clock.')
           setIsReopenOpen(false)
           setReopenReason('')
         },
@@ -65,7 +65,7 @@ export function useSupportTicketDetail(id?: number) {
     if (!ticket) return
     closeTicket.mutate(ticket.id, {
       onSuccess: () => {
-        toast.success('Ticket closed')
+        toast.success('Ticket Closed')
         setIsCloseOpen(false)
       },
       onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't close the ticket.")),

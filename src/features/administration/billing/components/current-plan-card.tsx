@@ -52,7 +52,7 @@ export function CurrentPlanCard({
           <EmptyState
             icon={Sparkles}
             title="No Active Subscription"
-            description="This account isn't on a plan yet. Compare the plans below and contact us to get started."
+            description="This Account Isn't on a Plan Yet. Compare the Plans Below and Contact Us to Get Started."
           />
         </CardContent>
       </Card>

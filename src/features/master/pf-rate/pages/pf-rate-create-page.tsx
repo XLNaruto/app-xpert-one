@@ -51,8 +51,8 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
         title={isEdit ? 'Edit PF Rate' : 'Add PF Rate'}
         description={
           isEdit
-            ? 'Update this Provident Fund rate slab'
-            : 'Configure a new Provident Fund rate slab'
+            ? 'Update This Provident Fund Rate Slab'
+            : 'Configure a New Provident Fund Rate Slab'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -74,7 +74,7 @@ export function PfRateCreatePage({ data }: PfRateCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this PF rate."}
+                : "Couldn't Load This PF Rate."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>

@@ -74,7 +74,7 @@ export function BonusEstimateControls({
           <Input
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Name, code or mobile…"
+            placeholder="Name, Code or Mobile…"
             className="h-8 pl-8 text-xs"
           />
         </div>

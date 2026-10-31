@@ -102,7 +102,7 @@ export async function fetchRoles(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load roles.")
+    throw toApiError(error, "Couldn't Load Roles.")
   }
 }
 
@@ -115,7 +115,7 @@ export async function fetchRole(id: number): Promise<Role> {
     const raw = await http.get<unknown>(endpoints.ROLES.GET(id))
     return toRole(roleResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Role not found')
+    throw toApiError(error, 'Role Not Found')
   }
 }
 
@@ -133,7 +133,7 @@ export async function fetchAssignablePermissions(): Promise<AssignablePermission
     const raw = await http.get<unknown>(endpoints.ROLES.ASSIGNABLE_PERMISSIONS)
     return toAssignablePermissions(assignablePermissionsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the permission catalog.")
+    throw toApiError(error, "Couldn't Load the Permission Catalog.")
   }
 }
 
@@ -155,7 +155,7 @@ export async function createRole(
     })
     return toRole(roleResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the role.")
+    throw toApiError(error, "Couldn't Create the Role.")
   }
 }
 
@@ -178,7 +178,7 @@ export async function updateRole(id: number, values: RoleFormValues): Promise<Ro
     )
     return toRole(roleResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the role.")
+    throw toApiError(error, "Couldn't Update the Role.")
   }
 }
 
@@ -191,6 +191,6 @@ export async function deleteRole(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.ROLES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the role.")
+    throw toApiError(error, "Couldn't Delete the Role.")
   }
 }

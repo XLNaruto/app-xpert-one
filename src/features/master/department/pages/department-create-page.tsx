@@ -66,7 +66,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
       <PageHeader
         title={isEdit ? 'Edit Department' : 'Add New Department'}
         description={
-          isEdit ? 'Update this department record' : 'Create a new department record'
+          isEdit ? 'Update This Department Record' : 'Create a New Department Record'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -88,7 +88,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this department."}
+                : "Couldn't Load This Department."}
             </p>
           ) : (
             <Tabs
@@ -128,7 +128,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                 <FormSection
                   icon={Building}
                   title="Department Details"
-                  description="Branch and department identity"
+                  description="Branch and Department Identity"
                   className="mt-0"
                 />
 
@@ -143,7 +143,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                         onChange={field.onChange}
                         {...branchSelect}
                         placeholder="Select Branch"
-                        searchPlaceholder="Search branch"
+                        searchPlaceholder="Search Branch"
                       />
                     )}
                   />
@@ -170,7 +170,7 @@ export function DepartmentCreatePage({ data }: DepartmentCreatePageProps) {
                         onChange={field.onChange}
                         options={MONTH_DAY_OPTIONS}
                         placeholder="Select Day"
-                        searchPlaceholder="Search day"
+                        searchPlaceholder="Search Day"
                       />
                     )}
                   />

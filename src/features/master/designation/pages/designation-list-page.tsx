@@ -93,7 +93,7 @@ export function DesignationListPage() {
     <div>
       <PageHeader
         title="Designation"
-        description="Manage your designation master records."
+        description="Manage Your Designation Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -115,7 +115,7 @@ export function DesignationListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search designations…"
+          searchPlaceholder="Search Designations…"
           itemName="designations"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -132,7 +132,7 @@ export function DesignationListPage() {
             <EmptyState
               icon={Briefcase}
               title="No Designations Yet"
-              description="Create your first designation to get started."
+              description="Create Your First Designation to Get Started."
               action={
                 canCreate && (
                   <Button onClick={goToCreate}>

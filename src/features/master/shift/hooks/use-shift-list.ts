@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useWeekoffPolicies } from '@/features/master/weekoff-policy'
-import { SHIFT_DEFAULT_SORT, SHIFT_PAGE_SIZE } from '../constants'
+import { SHIFT_DEFAULT_SORT } from '../constants'
 import { useShifts } from '../api/use-shifts'
 import { useDeleteShift } from '../api/use-shift-mutations'
 import type { Shift } from '../types'
@@ -30,7 +31,7 @@ export function useShiftList(companyId?: number) {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(SHIFT_PAGE_SIZE, SHIFT_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, SHIFT_DEFAULT_SORT)
 
   const { data, isLoading, isError, error } = useShifts(params, companyId)
   const deleteShift = useDeleteShift()
@@ -58,7 +59,7 @@ export function useShiftList(companyId?: number) {
     const removed = pendingDelete
     deleteShift.mutate(removed.id, {
       onSuccess: () => {
-        toast.success('Shift deleted')
+        toast.success('Shift Deleted')
         setPendingDelete(null)
         // The form was editing the row that just went — put it back to adding,
         // or Save would PATCH a record that no longer exists.

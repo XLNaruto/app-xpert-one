@@ -96,7 +96,7 @@ export async function fetchBranches(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load branches.")
+    throw toApiError(error, "Couldn't Load Branches.")
   }
 }
 
@@ -106,7 +106,7 @@ export async function fetchBranch(id: number): Promise<Branch> {
     const raw = await http.get<unknown>(endpoints.BRANCHES.GET(id))
     return toBranch(branchResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Branch not found')
+    throw toApiError(error, 'Branch Not Found')
   }
 }
 
@@ -119,7 +119,7 @@ export async function createBranch(values: BranchFormValues): Promise<Branch> {
     })
     return toBranch(branchResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the branch.")
+    throw toApiError(error, "Couldn't Create the Branch.")
   }
 }
 
@@ -138,7 +138,7 @@ export async function updateBranch(
     )
     return toBranch(branchResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the branch.")
+    throw toApiError(error, "Couldn't Update the Branch.")
   }
 }
 
@@ -147,6 +147,6 @@ export async function deleteBranch(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.BRANCHES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the branch.")
+    throw toApiError(error, "Couldn't Delete the Branch.")
   }
 }

@@ -111,7 +111,7 @@ export function PlanUsageMeters({ bars }: { bars: UsageBar[] }) {
 
               <p className="mt-2 text-xs text-muted-foreground">
                 {!hasLimit
-                  ? 'This plan states no limit.'
+                  ? 'This Plan States No Limit.'
                   : bar.tone === 'danger'
                     ? `Limit reached — no more ${bar.label.toLowerCase()} can be added on this plan.`
                     : `${remaining} ${remaining === 1 ? bar.label.toLowerCase().replace(/s$/, '') : bar.label.toLowerCase()} remaining`}

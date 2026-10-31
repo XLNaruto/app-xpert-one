@@ -19,10 +19,11 @@ import type { BonusEstimateList, SaveBonusResult, SavedBonusList } from '../type
 
 /**
  * The range is sent as the two `YYYY-MM` periods the pickers hold, because a
- * salary row carries a month and a year and no date at all. `search` matches the
- * name, code or primary mobile — the same three fields as every payroll screen —
- * and neither endpoint takes a `sort`, so no order is sent and the screen's
- * columns aren't sortable.
+ * salary row carries a month and a year and no date at all. On the estimate,
+ * `search` matches the name, code or primary mobile; on the saved list it
+ * matches the name, code or department (the columns that table shows). Neither
+ * endpoint takes a `sort`, so no order is sent and the screen's columns aren't
+ * sortable.
  */
 function toParams(
   filters: BonusEstimateFilters,
@@ -62,7 +63,7 @@ export async function fetchBonusEstimate(
     })
     return toBonusEstimateList(bonusEstimateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the bonus estimate.")
+    throw toApiError(error, "Couldn't Load the Bonus Estimate.")
   }
 }
 
@@ -82,7 +83,7 @@ export async function fetchSavedBonuses(
     })
     return toSavedBonusList(savedBonusResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the saved bonuses.")
+    throw toApiError(error, "Couldn't Load the Saved Bonuses.")
   }
 }
 
@@ -120,6 +121,6 @@ export async function saveBonuses(payload: SaveBonusPayload): Promise<SaveBonusR
     })
     return toSaveBonusResult(saveBonusResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the bonus.")
+    throw toApiError(error, "Couldn't Save the Bonus.")
   }
 }

@@ -67,7 +67,7 @@ export async function fetchShiftSchedules(
     })
     return toScheduleGrid(scheduleGridResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the off-day schedule.")
+    throw toApiError(error, "Couldn't Load the Off-Day Schedule.")
   }
 }
 
@@ -83,7 +83,7 @@ export async function fetchEmployeeSchedule(
     })
     return toScheduleEmployeeRow(scheduleEmployeeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the employee's schedule.")
+    throw toApiError(error, "Couldn't Load the Employee's Schedule.")
   }
 }
 
@@ -108,7 +108,7 @@ export async function generateShiftSchedule(
     )
     return toScheduleGenerateResult(scheduleGenerateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't generate the schedule.")
+    throw toApiError(error, "Couldn't Generate the Schedule.")
   }
 }
 
@@ -133,7 +133,7 @@ export async function setScheduleDay({
     )
     return toScheduleDay(scheduleDayResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the date.")
+    throw toApiError(error, "Couldn't Update the Date.")
   }
 }
 
@@ -145,6 +145,6 @@ export async function resetScheduleDay(employeeId: number, date: string): Promis
   try {
     await http.delete<unknown>(endpoints.SHIFT_SCHEDULES.DAY(employeeId, date))
   } catch (error) {
-    throw toApiError(error, "Couldn't reset the date.")
+    throw toApiError(error, "Couldn't Reset the Date.")
   }
 }

@@ -97,7 +97,7 @@ export function MonitoringChatsPane({
         <MonitoringSearchInput
           value={chatSearch}
           onChange={setChatSearch}
-          placeholder="Search messages..."
+          placeholder="Search Messages..."
         />
         <MonitoringSegmentedTabs
           options={CHAT_TABS.map(({ value, label }) => ({
@@ -116,7 +116,7 @@ export function MonitoringChatsPane({
         ) : chatsQuery.isError ? (
           <EmptyState
             icon={AlertCircle}
-            title="Couldn't load conversations"
+            title="Couldn't Load Conversations"
             description={getApiErrorMessage(
               chatsQuery.error,
               "Something went wrong while reading this person's chats.",
@@ -128,8 +128,8 @@ export function MonitoringChatsPane({
             title="No Conversations"
             description={
               chatSearch.trim()
-                ? 'No chat title matches that search.'
-                : 'This person has not been part of any conversation yet.'
+                ? 'No Chat Title Matches That Search.'
+                : 'This Person Has Not Been Part of Any Conversation Yet.'
             }
           />
         ) : (
@@ -231,15 +231,15 @@ function ParticipantFlags({ chat }: { chat: MonitoringChat }) {
     chat.participant?.hasLeft && { icon: LogOut, label: 'They Left This Group' },
     chat.participant?.hasBeenRemoved && {
       icon: UserMinus,
-      label: 'They were removed from this group',
+      label: 'They Were Removed from This Group',
     },
     chat.participant?.isBlocked && {
       icon: Ban,
-      label: 'Blocked here — they can read but not post',
+      label: 'Blocked Here — They Can Read but Not Post',
     },
     chat.participant?.hasCleared && {
       icon: MessageSquareOff,
-      label: 'They deleted this chat from their app — the history still stands',
+      label: 'They Deleted This Chat from Their App — The History Still Stands',
     },
     chat.type === 'group' && {
       icon: Users,

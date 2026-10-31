@@ -108,7 +108,7 @@ export async function fetchEmployees(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load employees.")
+    throw toApiError(error, "Couldn't Load Employees.")
   }
 }
 
@@ -136,7 +136,7 @@ export async function fetchEmployeePicker(
     const { items, total } = employeePickerListResponseSchema.parse(raw)
     return { items: items.map(toEmployeePickerEntry), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load employees.")
+    throw toApiError(error, "Couldn't Load Employees.")
   }
 }
 
@@ -149,7 +149,7 @@ export async function fetchEmployee(id: number): Promise<Employee> {
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.GET(id))
     return toEmployee(employeeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Employee not found')
+    throw toApiError(error, 'Employee Not Found')
   }
 }
 
@@ -168,7 +168,7 @@ export async function createEmployee(
     })
     return toEmployee(employeeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the employee.")
+    throw toApiError(error, "Couldn't Create the Employee.")
   }
 }
 
@@ -188,7 +188,7 @@ export async function updateEmployee(
     )
     return toEmployee(employeeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the employee.")
+    throw toApiError(error, "Couldn't Update the Employee.")
   }
 }
 
@@ -204,7 +204,7 @@ export async function deleteEmployee(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the employee.")
+    throw toApiError(error, "Couldn't Delete the Employee.")
   }
 }
 
@@ -221,7 +221,7 @@ export async function deleteEmployeeFace(id: number): Promise<number> {
     const raw = await http.delete<unknown>(endpoints.EMPLOYEES.DELETE_FACE(id))
     return deleteFaceResponseSchema.parse(raw).deleted_images
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the registered face.")
+    throw toApiError(error, "Couldn't Delete the Registered Face.")
   }
 }
 
@@ -242,7 +242,7 @@ export async function setEmployeeGeoFence(id: number, enabled: boolean): Promise
     )
     return employeeGeoFenceResponseSchema.parse(raw).is_geo_fence_enabled
   } catch (error) {
-    throw toApiError(error, "Couldn't update the geo-fence setting.")
+    throw toApiError(error, "Couldn't Update the Geo-fence Setting.")
   }
 }
 

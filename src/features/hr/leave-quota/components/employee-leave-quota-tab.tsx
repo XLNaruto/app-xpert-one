@@ -81,14 +81,14 @@ export function EmployeeLeaveQuotaTab({
       <FormSection
         icon={CalendarDays}
         title="Leave Allowance"
-        description="Paid days per year for this employee — an exception to the designation's policy"
+        description="Paid Days per Year for This Employee — An Exception to the Designation's Policy"
         className="mt-0"
       />
 
       <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
         <Field
           label="Year"
-          hint="Allowances are granted per calendar year. Saving here touches this year only."
+          hint="Allowances Are Granted per Calendar Year. Saving Here Touches This Year Only."
         >
           <YearPicker value={year} onChange={(next) => setYear(next || year)} />
         </Field>
@@ -103,9 +103,9 @@ export function EmployeeLeaveQuotaTab({
         <p className="mt-4 flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-warning" />
           <span>
-            This employee has no designation on an open posting, so there is no
-            policy to fall back on — any leave type left empty below has no paid
-            days at all.
+            This Employee Has No Designation on an Open Posting, So There Is No
+            Policy to Fall Back On — Any Leave Type Left Empty Below Has No Paid
+            Days at All.
           </span>
         </p>
       )}
@@ -118,7 +118,7 @@ export function EmployeeLeaveQuotaTab({
           fallbackLabel={
             quotas.data?.designationName
               ? `If empty (from ${quotas.data.designationName})`
-              : 'If empty'
+              : 'If Empty'
           }
           footerNote={
             'Leave a box empty to hand the type back to the designation. A typed 0 is different — it grants no paid days of that type for this year. Saving replaces this year\'s whole grid; other years are untouched.'

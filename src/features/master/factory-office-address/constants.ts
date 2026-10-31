@@ -11,10 +11,10 @@ export const FACTORY_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   listPath: '/master/factory-office-address',
   createPath: '/master/factory-office-address/create',
   title: 'Factory / Statutory Office Address',
-  description: 'Manage the factory inspectorate offices plants are registered with.',
+  description: 'Manage the Factory Inspectorate Offices Plants Are Registered With.',
   shortLabel: 'Factory Address',
   recordsLabel: 'factory addresses',
   emptyTitle: 'No Factory Office Addresses Yet',
-  emptyDescription: 'Add your first factory office to get started.',
+  emptyDescription: 'Add Your First Factory Office to Get Started.',
   icon: Building2,
 }

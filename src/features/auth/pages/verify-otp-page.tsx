@@ -147,7 +147,7 @@ export function VerifyOtpPage() {
           invalid={Boolean(error)}
           autoFocus
           aria-label={
-            isTwoFactor ? 'Two-factor code' : 'Email verification code'
+            isTwoFactor ? 'Two-Factor Code' : 'Email Verification Code'
           }
         />
 
@@ -206,7 +206,7 @@ export function VerifyOtpPage() {
             <span className="grid size-7 place-items-center rounded-full bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-x-0.5">
               <ArrowLeft className="size-4" strokeWidth={2.5} />
             </span>
-            Back to sign in
+            Back to Sign In
           </button>
         </div>
       </form>

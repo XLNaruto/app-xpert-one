@@ -62,7 +62,7 @@ export function RuleIcons({ photo, approval }: { photo: boolean; approval: boole
             N/A
           </span>
         </TooltipTrigger>
-        <TooltipContent>No photo proof or approval needed</TooltipContent>
+        <TooltipContent>No Photo Proof or Approval Needed</TooltipContent>
       </Tooltip>
     )
   }

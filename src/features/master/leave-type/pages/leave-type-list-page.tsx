@@ -100,7 +100,7 @@ export function LeaveTypeListPage() {
     <div>
       <PageHeader
         title="Leave Types"
-        description="Manage your leave type master records."
+        description="Manage Your Leave Type Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -122,7 +122,7 @@ export function LeaveTypeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search short code or name…"
+          searchPlaceholder="Search…"
           itemName="leave types"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -141,8 +141,8 @@ export function LeaveTypeListPage() {
               title={search ? 'No Matching Leave Types' : 'No Leave Types Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Create your first leave type to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Create Your First Leave Type to Get Started.'
               }
               action={
                 search

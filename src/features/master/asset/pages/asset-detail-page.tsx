@@ -54,7 +54,7 @@ export function AssetDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title={asset?.assetName ?? 'Asset Details'}
-        description="The asset, its stock, and the variants counted under it."
+        description="The Asset, Its Stock, and the Variants Counted Under It."
         actions={
           <div className="flex items-center gap-2">
             {canView && asset && (
@@ -90,7 +90,7 @@ export function AssetDetailPage({ data }: { data?: string }) {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Couldn't load this asset."}
+              {error instanceof Error ? error.message : "Couldn't Load This Asset."}
             </p>
           </CardContent>
         </Card>
@@ -122,7 +122,7 @@ export function AssetDetailPage({ data }: { data?: string }) {
                   ) : (
                     <>
                       {asset.quantity === 0 ? (
-                        <Badge variant="warning">No stock recorded</Badge>
+                        <Badge variant="warning">No Stock Recorded</Badge>
                       ) : (
                         <span className="text-sm font-semibold text-foreground">
                           {asset.quantity} on the shelf

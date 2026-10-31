@@ -50,7 +50,7 @@ export function DocumentTypeCreatePage({ data }: DocumentTypeCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Document Type' : 'Add Document Type'}
-        description="Configure document type details."
+        description="Configure Document Type Details."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -69,7 +69,7 @@ export function DocumentTypeCreatePage({ data }: DocumentTypeCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this document type."}
+                : "Couldn't Load This Document Type."}
             </p>
           ) : (
             <form
@@ -80,7 +80,7 @@ export function DocumentTypeCreatePage({ data }: DocumentTypeCreatePageProps) {
               <FormSection
                 icon={FileType2}
                 title="Document Type Details"
-                description="The category documents are filed under"
+                description="The Category Documents Are Filed Under"
                 className="mt-0"
               />
 

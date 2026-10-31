@@ -54,7 +54,7 @@ export function SupportTicketReopenDialog({
           htmlFor="reopen-reason"
           className="text-sm font-medium text-foreground/90"
         >
-          What is still wrong?
+          What Is Still Wrong?
           <span className="ml-0.5 text-destructive">*</span>
         </label>
         <Textarea
@@ -63,7 +63,7 @@ export function SupportTicketReopenDialog({
           maxLength={MAX_SUPPORT_REOPEN_REASON}
           value={reason}
           onChange={(event) => onReasonChange(event.target.value)}
-          placeholder="Describe what the resolution missed, or what came back."
+          placeholder="Describe What the Resolution Missed, or What Came Back."
         />
         <p className="text-xs text-muted-foreground">
           This is appended to the ticket as a fresh description.

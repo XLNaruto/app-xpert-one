@@ -39,7 +39,7 @@ export function PlanSlaDialog({
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <Headphones className="size-4" />
             </span>
-            Support response
+            Support Response
           </DialogTitle>
           <DialogDescription>
             {plan

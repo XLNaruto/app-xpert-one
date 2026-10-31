@@ -173,7 +173,7 @@ function BatchBody({ id }: { id: number }) {
       <p className="border-t border-border px-4 py-6 text-center text-sm text-destructive">
         {batch.error instanceof Error
           ? batch.error.message
-          : "Couldn't load the payment batch."}
+          : "Couldn't Load the Payment Batch."}
       </p>
     )
   }

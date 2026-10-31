@@ -100,7 +100,7 @@ export async function fetchHolidays(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load holidays.")
+    throw toApiError(error, "Couldn't Load Holidays.")
   }
 }
 
@@ -110,7 +110,7 @@ export async function fetchHoliday(id: number): Promise<Holiday> {
     const raw = await http.get<unknown>(endpoints.HOLIDAYS.GET(id))
     return toHoliday(holidayResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Holiday not found')
+    throw toApiError(error, 'Holiday Not Found')
   }
 }
 
@@ -123,7 +123,7 @@ export async function createHoliday(values: HolidayFormValues): Promise<Holiday>
     })
     return toHoliday(holidayResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the holiday.")
+    throw toApiError(error, "Couldn't Create the Holiday.")
   }
 }
 
@@ -142,7 +142,7 @@ export async function updateHoliday(
     )
     return toHoliday(holidayResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the holiday.")
+    throw toApiError(error, "Couldn't Update the Holiday.")
   }
 }
 
@@ -151,7 +151,7 @@ export async function deleteHoliday(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.HOLIDAYS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the holiday.")
+    throw toApiError(error, "Couldn't Delete the Holiday.")
   }
 }
 
@@ -179,7 +179,7 @@ export async function createHolidayYear(
     )
     return holidayYearResponseSchema.parse(raw).items.map(toHoliday)
   } catch (error) {
-    throw toApiError(error, "Couldn't save the year's holidays.")
+    throw toApiError(error, "Couldn't Save the Year's Holidays.")
   }
 }
 
@@ -199,6 +199,6 @@ export async function fetchHolidayReminder(
     })
     return toHolidayReminder(holidayReminderResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the holiday reminder.")
+    throw toApiError(error, "Couldn't Load the Holiday Reminder.")
   }
 }

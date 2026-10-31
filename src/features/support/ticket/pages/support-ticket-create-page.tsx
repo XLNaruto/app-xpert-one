@@ -49,8 +49,8 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
         title={form.isEdit ? 'Edit Ticket' : 'Raise a Ticket'}
         description={
           form.isEdit
-            ? 'Only the wording can be corrected, and only until the desk picks the ticket up. The desk and the priority set the deadline, so neither can change.'
-            : 'Tell the help desk what is wrong. The desk you pick and how urgent you mark it decide the response time your plan promises.'
+            ? 'Only the Wording Can Be Corrected, and Only Until the Desk Picks the Ticket Up. The Desk and the Priority Set the Deadline, So Neither Can Change.'
+            : 'Tell the Help Desk What Is Wrong. The Desk You Pick and How Urgent You Mark It Decide the Response Time Your Plan Promises.'
         }
         actions={
           <Button variant="outline" onClick={form.goToList}>
@@ -75,7 +75,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this ticket."}
+                : "Couldn't Load This Ticket."}
             </p>
           ) : (
             <form onSubmit={form.onSubmit} noValidate className="space-y-5">
@@ -83,11 +83,11 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                 <p className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
                   <Lock className="mt-0.5 size-4 shrink-0" />
                   <span>
-                    The desk has already picked this ticket up, so the wording is
-                    fixed. Rewriting the question under someone who has started
-                    answering it is how a resolution ends up addressing something
-                    the ticket no longer says — reply on the ticket instead, or
-                    raise a new one.
+                    The Desk Has Already Picked This Ticket Up, So the Wording Is
+                    Fixed. Rewriting the Question Under Someone Who Has Started
+                    Answering It Is How a Resolution Ends up Addressing Something
+                    the Ticket No Longer Says — Reply on the Ticket Instead, or
+                    Raise a New One.
                   </span>
                 </p>
               )}
@@ -96,7 +96,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                 <FormSection
                   icon={LifeBuoy}
                   title="Which Desk, and How Urgent"
-                  description="These two together select the response time your subscription promises. They are fixed once the ticket is raised, so pick honestly — a severity marked up buys a shorter deadline and a poor record."
+                  description="These Two Together Select the Response Time Your Subscription Promises. They Are Fixed Once the Ticket Is Raised, So Pick Honestly — A Severity Marked up Buys a Shorter Deadline and a Poor Record."
                   className="mt-0"
                 />
 
@@ -105,7 +105,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                   <Field
                     label="Help Desk"
                     required
-                    hint="Technical is the product itself; Billing is your subscription and invoices."
+                    hint="Technical Is the Product Itself; Billing Is Your Subscription and Invoices."
                     error={form.errors.ticketType?.message}
                   >
                     {/* Locked on edit: this half of the SLA lookup is spent. Shown
@@ -119,7 +119,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                         value={form.ticketType}
                         onChange={form.setTicketType}
                         searchable={false}
-                        placeholder="Pick a desk"
+                        placeholder="Pick a Desk"
                       />
                     )}
                   </Field>
@@ -128,7 +128,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                       it. Fixed on edit like the desk, so shown by name. */}
                   <Field
                     label="Sub-Category"
-                    hint="Optional. Narrows down what the query is about — each desk has its own list."
+                    hint="Optional. Narrows down What the Query Is About — Each Desk Has Its Own List."
                     error={
                       form.errors.subCategoryId?.message ??
                       (form.subCategoriesError instanceof Error
@@ -145,8 +145,8 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                         onChange={form.setSubCategoryId}
                         loading={form.isSubCategoriesLoading}
                         clearable
-                        placeholder="Pick a sub-category"
-                        searchPlaceholder="Search sub-categories…"
+                        placeholder="Pick a Sub-category"
+                        searchPlaceholder="Search Sub-categories…"
                       />
                     )}
                   </Field>
@@ -154,7 +154,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                   <Field
                     label="Priority"
                     required
-                    hint="How badly it hurts. This is kept forever as the severity you raised the ticket with, even if the desk re-grades it later."
+                    hint="How Badly It Hurts. This Is Kept Forever as the Severity You Raised the Ticket With, Even If the Desk Re-grades It Later."
                     error={form.errors.priority?.message}
                   >
                     {form.isTypeLocked ? (
@@ -165,7 +165,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                         value={form.priority}
                         onChange={form.setPriority}
                         searchable={false}
-                        placeholder="Pick a priority"
+                        placeholder="Pick a Priority"
                       />
                     )}
                   </Field>
@@ -175,9 +175,9 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                   <p className="col-span-full flex items-start gap-2 text-xs text-muted-foreground">
                     <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
                     <span>
-                      The desk and the priority priced this ticket's deadline, so
-                      they cannot be changed. If either is wrong, raise a new
-                      ticket.
+                      The Desk and the Priority Priced This Ticket's Deadline, So
+                      They Cannot Be Changed. If Either Is Wrong, Raise a New
+                      Ticket.
                     </span>
                   </p>
                 )}
@@ -185,7 +185,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                 <FormSection
                   icon={MessageSquareText}
                   title="The Query"
-                  description="A ticket names no company, so say which one it is about if that matters."
+                  description="A Ticket Names No Company, So Say Which One It Is About If That Matters."
                 />
 
                 <Field
@@ -197,7 +197,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                   <Input
                     maxLength={MAX_SUPPORT_SUBJECT}
                     readOnly={readOnly}
-                    placeholder="One line naming the problem"
+                    placeholder="One Line Naming the Problem"
                     {...form.form.register('subject')}
                   />
                 </Field>
@@ -212,7 +212,7 @@ export function SupportTicketCreatePage({ data }: SupportTicketCreatePageProps) 
                     rows={8}
                     maxLength={MAX_SUPPORT_DESCRIPTION}
                     readOnly={readOnly}
-                    placeholder="What happened, what you expected, and anything the desk needs to reproduce it."
+                    placeholder="What Happened, What You Expected, and Anything the Desk Needs to Reproduce It."
                     {...form.form.register('description')}
                   />
                 </Field>

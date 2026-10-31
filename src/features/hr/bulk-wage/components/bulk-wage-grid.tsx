@@ -92,47 +92,47 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
   workingDays: {
     label: 'Working Days Config',
     tone: 'text-primary',
-    hint: 'How the month’s paid working days are arrived at.',
+    hint: 'How the Month’s Paid Working Days Are Arrived At.',
   },
   allowances: {
     label: 'Allowances',
     tone: 'text-teal-600 dark:text-teal-400',
-    hint: 'Each head takes a percentage of basic pay or a flat amount, plus the acts it counts towards. Left blank, the head does not apply.',
+    hint: 'Each Head Takes a Percentage of Basic Pay or a Flat Amount, Plus the Acts It Counts Towards. Left Blank, the Head Does Not Apply.',
   },
   overtime: {
     label: 'Overtime',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'The hourly rate paid for overtime — entered on the row, or left blank to derive it from the wage per day at double time.',
+    hint: 'The Hourly Rate Paid for Overtime — Entered on the Row, or Left Blank to Derive It from the Wage per Day at Double Time.',
   },
   deductions: {
     label: 'Deductions',
     tone: 'text-rose-600 dark:text-rose-400',
-    hint: 'Recurring deductions applied on top of the statutory ones.',
+    hint: 'Recurring Deductions Applied on Top of the Statutory Ones.',
   },
   pf: {
     label: 'PF Act',
     tone: 'text-sky-600 dark:text-sky-400',
-    hint: 'Provident fund — the employee share and whether either contribution is capped at the statutory wage limit.',
+    hint: 'Provident Fund — The Employee Share and Whether Either Contribution Is Capped at the Statutory Wage Limit.',
   },
   esic: {
     label: 'ESIC',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'Employee state insurance, and what the contribution is worked out on.',
+    hint: 'Employee State Insurance, and What the Contribution Is Worked out On.',
   },
   pt: {
     label: 'PT',
     tone: 'text-violet-600 dark:text-violet-400',
-    hint: 'Professional tax — from the act’s slab, or a fixed amount.',
+    hint: 'Professional Tax — From the Act’s Slab, or a Fixed Amount.',
   },
   tds: {
     label: 'TDS',
     tone: 'text-rose-600 dark:text-rose-400',
-    hint: 'Tax deducted at source — no slab behind it, so the row carries the rate itself.',
+    hint: 'Tax Deducted at Source — No Slab Behind It, So the Row Carries the Rate Itself.',
   },
   lwf: {
     label: 'LWF',
     tone: 'text-amber-600 dark:text-amber-400',
-    hint: 'Labour welfare fund — from the act’s rate, or a fixed amount.',
+    hint: 'Labour Welfare Fund — From the Act’s Rate, or a Fixed Amount.',
   },
 }
 
@@ -153,7 +153,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'Designation',
       width: PINNED_WIDTHS.designation,
       pin: 0,
-      hint: 'The month underneath is what this designation is paid on today. Saving replaces it when the screen’s month matches, and supersedes it otherwise.',
+      hint: 'The Month Underneath Is What This Designation Is Paid on Today. Saving Replaces It When the Screen’s Month Matches, and Supersedes It Otherwise.',
     },
 
     {
@@ -169,32 +169,32 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'W. Days',
       group: 'workingDays',
       width: 96,
-      hint: 'Paid working days in the month — asked only when the calc type is “Fixed”.',
+      hint: 'Paid Working Days in the Month — Asked Only When the Calc Type Is “Fixed”.',
     },
 
     {
       key: 'salaryType',
       label: 'Salary Type',
       width: 118,
-      hint: 'Whether the wage is quoted per month or per day. The other figure is derived.',
+      hint: 'Whether the Wage Is Quoted per Month or per Day. The Other Figure Is Derived.',
     },
     {
       key: 'basicPay',
       label: amountLabel('Basic Pay'),
       width: 112,
-      hint: 'Captured on a monthly wage; on a daily one it is the wage per day carried over the 26 statutory paid days, and disabled.',
+      hint: 'Captured on a Monthly Wage; On a Daily One It Is the Wage per Day Carried over the 26 Statutory Paid Days, and Disabled.',
     },
     {
       key: 'wagePerDay',
       label: amountLabel('Wage/Day'),
       width: 126,
-      hint: 'Captured on a daily wage; on a monthly one it is the basic spread over the 26 statutory paid days, and disabled.',
+      hint: 'Captured on a Daily Wage; On a Monthly One It Is the Basic Spread over the 26 Statutory Paid Days, and Disabled.',
     },
     {
       key: 'extraDay',
       label: amountLabel('Extra Day Amount'),
       width: 116,
-      hint: 'Paid for each day worked beyond the row’s working days.',
+      hint: 'Paid for Each Day Worked Beyond the Row’s Working Days.',
     },
 
     ...heads.allowances.map((head, at) => ({
@@ -211,14 +211,14 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'OT',
       group: 'overtime',
       width: 62,
-      hint: 'Whether overtime is paid at all.',
+      hint: 'Whether Overtime Is Paid at All.',
     },
     {
       key: 'otRate',
       label: amountLabel('Rate/Hr'),
       group: 'overtime',
       width: 124,
-      hint: 'Left blank, the rate derived from the wage per day is what gets saved — the empty field shows that figure.',
+      hint: 'Left Blank, the Rate Derived from the Wage per Day Is What Gets Saved — The Empty Field Shows That Figure.',
     },
 
     ...heads.deductions.map((head, at) => ({
@@ -232,56 +232,56 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       head: { kind: 'deduction' as const, at },
     })),
 
-    { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF act applicable.' },
+    { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF Act Applicable.' },
     {
       key: 'empWl',
       label: 'Emp WL',
       group: 'pf',
       width: 86,
-      hint: 'Cap the employee share at the statutory wage limit.',
+      hint: 'Cap the Employee Share at the Statutory Wage Limit.',
     },
     {
       key: 'emprWl',
       label: 'Empr WL',
       group: 'pf',
       width: 90,
-      hint: 'Cap the employer share at the statutory wage limit.',
+      hint: 'Cap the Employer Share at the Statutory Wage Limit.',
     },
     {
       key: 'pfAmt',
       label: 'PF Amt',
       group: 'pf',
       width: 106,
-      hint: 'The employee share, as a percentage of EPF wages or a flat amount.',
+      hint: 'The Employee Share, as a Percentage of EPF Wages or a Flat Amount.',
     },
 
-    { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC act applicable.' },
+    { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC Act Applicable.' },
     {
       key: 'esicDedOn',
       label: 'Ded. On',
       group: 'esic',
       width: 158,
-      hint: 'What the ESIC contribution is calculated on.',
+      hint: 'What the ESIC Contribution Is Calculated On.',
     },
 
-    { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT act applicable.' },
+    { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT Act Applicable.' },
     { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
     {
       key: 'ptAmt',
       label: amountLabel('Amt'),
       group: 'pt',
       width: 94,
-      hint: 'Asked only when the type is “Manual”.',
+      hint: 'Asked Only When the Type Is “Manual”.',
     },
 
     /* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */
-    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS act applicable.' },
+    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS Act Applicable.' },
     {
       key: 'tdsPct',
       label: 'Rate %',
       group: 'tds',
       width: 94,
-      hint: 'The rate deducted — asked only while the act is on.',
+      hint: 'The Rate Deducted — Asked Only While the Act Is On.',
     },
     {
       key: 'tdsBase',
@@ -291,14 +291,14 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       hint: TDS_CALCULATION_BASE_HINT,
     },
 
-    { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
+    { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF Act Applicable.' },
     { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
     {
       key: 'lwfAmt',
       label: amountLabel('Amt'),
       group: 'lwf',
       width: 94,
-      hint: 'Asked only when the type is “Manual”.',
+      hint: 'Asked Only When the Type Is “Manual”.',
     },
   ]
 }
@@ -621,7 +621,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
               <CalendarClock className="size-2.5 shrink-0" />
               {props.inForceFrom
                 ? `In force from ${formatMonth(props.inForceFrom)}`
-                : 'Not configured yet'}
+                : 'Not Configured Yet'}
             </span>
           )}
         </div>
@@ -727,7 +727,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
           index={index}
           control={control}
           name={`rows.${index}.employeePfContributionOnWageLimit`}
-          label="Employee PF contribution on wage limit"
+          label="Employee PF Contribution on Wage Limit"
         />
       )
     case 'emprWl':
@@ -736,7 +736,7 @@ function RowCell({ column, ...props }: WageRowProps & { column: WageColumn }) {
           index={index}
           control={control}
           name={`rows.${index}.employerPfContributionOnWageLimit`}
-          label="Employer PF contribution on wage limit"
+          label="Employer PF Contribution on Wage Limit"
         />
       )
     case 'pfAmt':
@@ -1155,7 +1155,7 @@ function TdsBaseCell({ index, control }: Pick<CellProps, 'index' | 'control'>) {
           value={field.value}
           onChange={field.onChange}
           options={TDS_CALCULATION_BASE_OPTIONS}
-          placeholder="Deducts nothing"
+          placeholder="Deducts Nothing"
           disabled={!applicable}
         />
       )}

@@ -59,7 +59,7 @@ export function SalaryViewToolbar({
         <Input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search employee…"
+          placeholder="Search Employee…"
           className="pl-9"
           aria-label="Search employee"
         />
@@ -83,8 +83,8 @@ export function SalaryViewToolbar({
           onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
           {...departments}
           icon={Building2}
-          placeholder="All departments"
-          searchPlaceholder="Search departments…"
+          placeholder="All Departments"
+          searchPlaceholder="Search Departments…"
           clearable
         />
       </Field>
@@ -105,7 +105,7 @@ export function SalaryViewToolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            Discard the selected salaries so the month can be processed again
+            Discard the Selected Salaries So the Month Can Be Processed Again
           </TooltipContent>
         </Tooltip>
       )}

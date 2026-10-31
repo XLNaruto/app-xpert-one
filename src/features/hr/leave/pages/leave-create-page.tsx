@@ -91,7 +91,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Leave' : 'Add Leave'}
-        description="Record a leave against an employee — the leave type decides what's paid."
+        description="Record a Leave Against an Employee — The Leave Type Decides What's Paid."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -112,7 +112,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this leave record."}
+                : "Couldn't Load This Leave Record."}
             </p>
           ) : (
             <form
@@ -123,7 +123,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
               <FormSection
                 icon={CalendarDays}
                 title={isEdit ? 'Edit Leave' : 'Add Leave'}
-                description="Employee, dates and the leave type whose allowance the days come out of"
+                description="Employee, Dates and the Leave Type Whose Allowance the Days Come Out Of"
                 className="mt-0"
               />
 
@@ -137,7 +137,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 <p className="col-span-full flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
                   <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <span>
-                    This leave is already <strong>{decidedStatus}</strong>, so its
+                    This Leave Is Already <strong>{decidedStatus}</strong>, so its
                     type, dates and duration are fixed — changing them would mean
                     re-deciding a leave the employee has already been told about.
                     Remove it and record it again if the days have to move. The
@@ -151,7 +151,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 required
                 error={errors.employeeId?.message}
                 // A leave can't change hands: `PATCH …/:id` has no employee field.
-                hint={isEdit ? 'The employee is fixed once the leave is recorded.' : undefined}
+                hint={isEdit ? 'The Employee Is Fixed Once the Leave Is Recorded.' : undefined}
               >
                 {isEdit ? (
                   <Input readOnly value={employeeLabel} />
@@ -166,7 +166,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                         onChange={field.onChange}
                         {...employeeSelect}
                         placeholder="Search & Select Employee…"
-                        searchPlaceholder="Search employee"
+                        searchPlaceholder="Search Employee"
                       />
                     )}
                   />
@@ -177,7 +177,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 label="Leave Type"
                 required
                 error={errors.leaveTypeId?.message}
-                hint="Each type has its own yearly paid allowance. Days beyond it are unpaid — allowances never pool between types."
+                hint="Each Type Has Its Own Yearly Paid Allowance. Days Beyond It Are Unpaid — Allowances Never Pool Between Types."
               >
                 <Controller
                   control={form.control}
@@ -189,7 +189,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                       onChange={field.onChange}
                       {...leaveTypeSelect}
                       placeholder="Select Leave Type"
-                      searchPlaceholder="Search leave type"
+                      searchPlaceholder="Search Leave Type"
                       disabled={isDecided}
                     />
                   )}
@@ -204,7 +204,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 error={errors.fromDate?.message}
                 // A leave is filed ahead of the day it's taken — today and earlier
                 // answer a 400, so the picker doesn't offer them on a new record.
-                hint={isEdit ? undefined : 'A leave has to start tomorrow or later.'}
+                hint={isEdit ? undefined : 'A Leave Has to Start Tomorrow or Later.'}
                 minDate={minFromDate}
                 disabled={isDecided}
               />
@@ -217,7 +217,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                 error={errors.toDate?.message}
                 hint={
                   isHalfDay
-                    ? 'A half day may cover a range — it means half of every day in it.'
+                    ? 'A Half Day May Cover a Range — It Means Half of Every Day in It.'
                     : undefined
                 }
                 minDate={minToDate ?? minFromDate}
@@ -235,7 +235,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                       value={field.value}
                       onChange={field.onChange}
                       options={LEAVE_DURATION_OPTIONS}
-                      placeholder="Select duration"
+                      placeholder="Select Duration"
                       disabled={isDecided}
                     />
                   )}
@@ -260,7 +260,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                   label="Status"
                   required
                   error={errors.status?.message}
-                  hint="Approved or Rejected records your decision and notifies the employee. Pending files it for the approval chain."
+                  hint="Approved or Rejected Records Your Decision and Notifies the Employee. Pending Files It for the Approval Chain."
                 >
                   <Controller
                     control={form.control}
@@ -272,7 +272,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                         value={field.value}
                         onChange={field.onChange}
                         options={LEAVE_RECORD_STATUS_OPTIONS}
-                        placeholder="Select status"
+                        placeholder="Select Status"
                       />
                     )}
                   />
@@ -284,7 +284,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                   label="Remark"
                   required={status === 'REJECTED'}
                   error={errors.remark?.message}
-                  hint="What the employee reads with the decision."
+                  hint="What the Employee Reads with the Decision."
                   className="md:col-span-2"
                 >
                   <Textarea
@@ -309,7 +309,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                     name="fromTime"
                     label="From Time"
                     required
-                    hint="The same slot applies to every day in the range."
+                    hint="The Same Slot Applies to Every Day in the Range."
                     error={errors.fromTime?.message}
                     disabled={isDecided}
                   />
@@ -331,7 +331,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
                   {!isDecided && (
                     <Field
                       label="Quick Slot"
-                      hint="Fills both times with a standard half — the same slot applies to every day in the range."
+                      hint="Fills Both Times with a Standard Half — The Same Slot Applies to Every Day in the Range."
                       className="md:col-span-2"
                     >
                       <div role="group" aria-label="Quick slot" className="grid grid-cols-2 gap-2">
@@ -380,7 +380,7 @@ export function LeaveCreatePage({ data }: LeaveCreatePageProps) {
               <Field
                 label="Attachment"
                 error={errors.attachment?.message}
-                hint="A medical certificate or other proof. Uploaded straight to storage — the record keeps only a reference to it."
+                hint="A Medical Certificate or Other Proof. Uploaded Straight to Storage — The Record Keeps Only a Reference to It."
               >
                 <LeaveAttachmentField
                   value={attachment}
@@ -510,9 +510,9 @@ function AllowanceNotice({
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium text-foreground">{item.leaveType}</span>
         {unlimited ? (
-          <Badge variant="secondary">Unlimited — unpaid type</Badge>
+          <Badge variant="secondary">Unlimited — Unpaid Type</Badge>
         ) : item.quotaSource === 'NONE' ? (
-          <Badge variant="destructive">No paid days configured</Badge>
+          <Badge variant="destructive">No Paid Days Configured</Badge>
         ) : (
           <Badge variant={item.available === 0 ? 'warning' : 'success'}>
             {formatDays(item.available ?? 0)} paid left of {formatDays(item.total)}
@@ -536,7 +536,7 @@ function AllowanceNotice({
         <p className="mt-1.5 flex items-start gap-1.5 text-xs text-foreground">
           <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" />
           <span>
-            The allowance runs out inside this range — expect{' '}
+            The Allowance Runs out Inside This Range — Expect{' '}
             <strong>
               {formatSplit({ paidDays: projection.paid, unpaidDays: projection.unpaid })}
             </strong>

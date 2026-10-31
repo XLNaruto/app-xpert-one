@@ -38,7 +38,7 @@ export function AdminUserScopeCell({ user }: AdminUserScopeCellProps) {
 
   const companies = needsDetail ? (detail.data?.companies ?? []) : user.companies
   if (companies.length === 0)
-    return <Badge variant="secondary">Selected companies</Badge>
+    return <Badge variant="secondary">Selected Companies</Badge>
 
   const visible = companies.slice(0, VISIBLE_COMPANIES)
   const hidden = companies.slice(VISIBLE_COMPANIES)

@@ -151,7 +151,7 @@ export function PaySalaryDialog({
                   <Field
                     label="Payment Date"
                     required
-                    hint="The day the money LEFT, not the day it is being recorded — a NEFT sent on Friday and entered on Monday is filed as Friday's."
+                    hint="The Day the Money LEFT, Not the Day It Is Being Recorded — A NEFT Sent on Friday and Entered on Monday Is Filed as Friday's."
                     error={errors.paymentDate?.message}
                   >
                     <DatePicker
@@ -177,7 +177,7 @@ export function PaySalaryDialog({
                       value={field.value}
                       onChange={field.onChange}
                       options={PAYMENT_MODE_OPTIONS}
-                      placeholder="Select a mode"
+                      placeholder="Select a Mode"
                     />
                   </Field>
                 )}
@@ -190,7 +190,7 @@ export function PaySalaryDialog({
               render={({ field }) => (
                 <Field
                   label="Payment Documents"
-                  hint="The proof this batch went out — a bank advice, a cheque scan, a UPI receipt. PDF or image, up to ten."
+                  hint="The Proof This Batch Went out — A Bank Advice, a Cheque Scan, a UPI Receipt. PDF or Image, up to Ten."
                   error={errors.documents?.message}
                 >
                   <MultiFileDropzone

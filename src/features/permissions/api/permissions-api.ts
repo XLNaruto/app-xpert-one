@@ -19,6 +19,6 @@ export async function fetchMyRole(): Promise<MyRole> {
     const raw = await http.get<unknown>(endpoints.ME.MY_ROLE)
     return toMyRole(myRoleResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Failed to load your permissions.')
+    throw toApiError(error, 'Failed to Load Your Permissions.')
   }
 }

@@ -17,7 +17,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { MonthPicker } from '@/components/ui/month-picker'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { DataTable } from '@/components/data-table'
+import { ALL_PAGE_SIZE, DataTable } from '@/components/data-table'
 import { DetailItem } from '@/components/common/detail-item'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
@@ -113,7 +113,7 @@ export function ShiftRosterTab({
                   Shift
                 </Badge>
               ) : (
-                <Badge variant="warning">Ends assignment</Badge>
+                <Badge variant="warning">Ends Assignment</Badge>
               )}
               <span
                 className={
@@ -225,7 +225,7 @@ export function ShiftRosterTab({
         <FormSection
           icon={CalendarClock}
           title="Shift & Roster"
-          description="Which shift this employee works — and, when they deviate from the default, why"
+          description="Which Shift This Employee Works — And, When They Deviate from the Default, Why"
           className="mt-0 flex-1"
         />
         <div className="flex flex-wrap items-center gap-2">
@@ -287,7 +287,7 @@ export function ShiftRosterTab({
             <p className="text-sm text-destructive">
               {tab.resolveError instanceof Error
                 ? tab.resolveError.message
-                : "Couldn't work out the shift for that date."}
+                : "Couldn't Work out the Shift for That Date."}
             </p>
           ) : !tab.resolved ? (
             <p className="text-sm text-muted-foreground">Pick a date to resolve.</p>
@@ -359,14 +359,14 @@ export function ShiftRosterTab({
         <FormSection
           icon={Clock}
           title="Assignment Timeline"
-          description="Only needed when the employee deviates from the default — newest first"
+          description="Only Needed When the Employee Deviates from the Default — Newest First"
         />
         <div className="mt-4">
           {tab.isTimelineError ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {tab.timelineError instanceof Error
                 ? tab.timelineError.message
-                : "Couldn't load the assignment timeline."}
+                : "Couldn't Load the Assignment Timeline."}
             </p>
           ) : (
             <DataTable
@@ -374,13 +374,13 @@ export function ShiftRosterTab({
               data={tab.timelineRows}
               isLoading={tab.isTimelineLoading}
               itemName="assignments"
-              pageSize={5}
+              pageSize={ALL_PAGE_SIZE}
               pageSizeOptions={[5, 10, 25]}
               emptyState={
                 <EmptyState
                   icon={Clock}
                   title="On the Default Shift"
-                  description="An empty timeline is the normal state — this employee follows their department's or company's default shift. Add an entry only if they work something else."
+                  description="An Empty Timeline Is the Normal State — This Employee Follows Their Department's or Company's Default Shift. Add an Entry Only If They Work Something Else."
                 />
               }
             />
@@ -395,7 +395,7 @@ export function ShiftRosterTab({
           <FormSection
             icon={CalendarClock}
             title="Date Overrides"
-            description="The dates somebody rostered by hand — they outrank the assignment and every default"
+            description="The Dates Somebody Rostered by Hand — They Outrank the Assignment and Every Default"
             className="flex-1"
           />
           {/*
@@ -431,7 +431,7 @@ export function ShiftRosterTab({
                   This Month
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Back to this month</TooltipContent>
+              <TooltipContent>Back to This Month</TooltipContent>
             </Tooltip>
             <Button
               type="button"
@@ -450,7 +450,7 @@ export function ShiftRosterTab({
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {tab.rosterError instanceof Error
                 ? tab.rosterError.message
-                : "Couldn't load the roster."}
+                : "Couldn't Load the Roster."}
             </p>
           ) : (
             <DataTable
@@ -458,13 +458,13 @@ export function ShiftRosterTab({
               data={tab.rosterRows}
               isLoading={tab.isRosterLoading}
               itemName="overrides"
-              pageSize={5}
+              pageSize={ALL_PAGE_SIZE}
               pageSizeOptions={[5, 10, 25]}
               emptyState={
                 <EmptyState
                   icon={CalendarClock}
                   title="No Overrides This Month"
-                  description="Ordinary days aren't rows here — they resolve from the assignment or a default. Override a date only for a one-off."
+                  description="Ordinary Days Aren't Rows Here — They Resolve from the Assignment or a Default. Override a Date Only for a One-Off."
                 />
               }
             />
@@ -473,8 +473,8 @@ export function ShiftRosterTab({
       </div>
 
       <StepNavFooter onContinue={onContinue} onBack={onBack} continueLabel="Finish">
-        Ending an assignment is an entry naming no shift — never a deletion, which
-        would rewrite closed days.
+        Ending an Assignment Is an Entry Naming No Shift — Never a Deletion, Which
+        Would Rewrite Closed Days.
       </StepNavFooter>
 
       {/* ── Assign a shift ──────────────────────────────────────────────── */}
@@ -483,7 +483,7 @@ export function ShiftRosterTab({
         open={tab.dialog === 'assign'}
         onOpenChange={(open) => !open && tab.closeDialog()}
         title="Assign Shift"
-        description="Effective-dated and append-only: the entry says what the employee works from this date on."
+        description="Effective-Dated and Append-Only: The Entry Says What the Employee Works from This Date On."
         onSubmit={tab.onSubmitAssignment}
         isPending={tab.isAssigning}
         submitLabel="Save Assignment"
@@ -511,7 +511,7 @@ export function ShiftRosterTab({
           label="Effective From"
           required
           error={assignErrors.effectiveDate?.message}
-          hint="The date this takes effect."
+          hint="The Date This Takes Effect."
         />
 
         {mode === 'shift' && (
@@ -531,8 +531,8 @@ export function ShiftRosterTab({
                   value={field.value}
                   onChange={field.onChange}
                   {...tab.assignShiftSelect}
-                  placeholder="Select shift"
-                  searchPlaceholder="Search shift"
+                  placeholder="Select Shift"
+                  searchPlaceholder="Search Shift"
                 />
               )}
             />
@@ -559,7 +559,7 @@ export function ShiftRosterTab({
         open={tab.dialog === 'roster'}
         onOpenChange={(open) => !open && tab.closeDialog()}
         title="Override a Date"
-        description="The most specific statement there is — it outranks the assignment and every default for this one date."
+        description="The Most Specific Statement There Is — It Outranks the Assignment and Every Default for This One Date."
         onSubmit={tab.onSubmitRoster}
         isPending={tab.isRostering}
         submitLabel="Save Override"
@@ -570,7 +570,7 @@ export function ShiftRosterTab({
           label="Date"
           required
           error={rosterErrors.workDate?.message}
-          hint="Rostering a date that already has an override replaces it — changing your mind is an ordinary correction."
+          hint="Rostering a Date That Already Has an Override Replaces It — Changing Your Mind Is an Ordinary Correction."
         />
 
         <Field label="Shift" required error={rosterErrors.shiftId?.message}>
@@ -584,8 +584,8 @@ export function ShiftRosterTab({
                 value={field.value}
                 onChange={field.onChange}
                 {...tab.rosterShiftSelect}
-                placeholder="Select shift"
-                searchPlaceholder="Search shift"
+                placeholder="Select Shift"
+                searchPlaceholder="Search Shift"
               />
             )}
           />

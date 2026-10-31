@@ -102,7 +102,7 @@ export async function fetchPtRates(
 
     return { items: rates, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load PT rates.")
+    throw toApiError(error, "Couldn't Load PT Rates.")
   }
 }
 
@@ -114,7 +114,7 @@ export async function fetchPtRate(id: number): Promise<PtRate> {
     const names = await stateNamesById()
     return toPtRate(response, names.get(response.state_id ?? 0))
   } catch (error) {
-    throw toApiError(error, 'PT rate not found')
+    throw toApiError(error, 'PT Rate Not Found')
   }
 }
 
@@ -127,7 +127,7 @@ export async function createPtRate(values: PtRateFormValues): Promise<PtRate> {
     )
     return toPtRate(ptRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the PT rate.")
+    throw toApiError(error, "Couldn't Create the PT Rate.")
   }
 }
 
@@ -148,7 +148,7 @@ export async function updatePtRate(
     )
     return toPtRate(ptRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the PT rate.")
+    throw toApiError(error, "Couldn't Update the PT Rate.")
   }
 }
 
@@ -157,6 +157,6 @@ export async function deletePtRate(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.PT_RATES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the PT rate.")
+    throw toApiError(error, "Couldn't Delete the PT Rate.")
   }
 }

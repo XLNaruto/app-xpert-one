@@ -7,10 +7,10 @@ export const loginSchema = z
     email: z
       .string()
       .trim()
-      .min(1, 'Email is required')
+      .min(1, 'Email Is Required')
       .max(255)
-      .email('Enter a valid email address'),
-    password: z.string().min(1, 'Password is required'),
+      .email('Enter a Valid Email Address'),
+    password: z.string().min(1, 'Password Is Required'),
     /**
      * Which of the API's two login forms this is, sent as `is_owner`. The
      * account owner signs in with email + password alone; an admin user the
@@ -27,13 +27,13 @@ export const loginSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['companyCode'],
-        message: 'Company code is required',
+        message: 'Company Code Is Required',
       })
     } else if (!v.isOwner && !COMPANY_CODE_PATTERN.test(v.companyCode)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['companyCode'],
-        message: 'Enter a code like XTEC-0001',
+        message: 'Enter a Code Like XTEC-0001',
       })
     }
   })
@@ -67,7 +67,7 @@ export const otpSchema = z.object({
   otpCode: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, 'Enter the 6-digit code'),
+    .regex(/^\d{6}$/, 'Enter the 6-Digit Code'),
 })
 
 export type OtpValues = z.infer<typeof otpSchema>

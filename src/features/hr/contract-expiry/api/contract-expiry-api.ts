@@ -44,7 +44,7 @@ export async function fetchExpiringContracts(
     const { items, total } = expiringContractsResponseSchema.parse(raw)
     return { items: items.map(toExpiringContract), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load expiring contracts.")
+    throw toApiError(error, "Couldn't Load Expiring Contracts.")
   }
 }
 
@@ -68,7 +68,7 @@ export async function renewEmployeeContract(
     )
     return toContractPosting(contractPostingResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't renew the contract.")
+    throw toApiError(error, "Couldn't Renew the Contract.")
   }
 }
 
@@ -93,6 +93,6 @@ export async function completeEmployeeContract(
     )
     return toContractPosting(contractPostingResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't complete the service.")
+    throw toApiError(error, "Couldn't Complete the Service.")
   }
 }

@@ -187,8 +187,8 @@ export function useEmployeeShiftTab(employeeId: number) {
       onSuccess: () => {
         toast.success(
           values.mode === 'default'
-            ? 'Assignment ended — the employee follows the default again'
-            : 'Shift assignment saved',
+            ? 'Assignment Ended — The Employee Follows the Default Again'
+            : 'Shift Assignment Saved',
         )
         closeDialog()
       },
@@ -200,7 +200,7 @@ export function useEmployeeShiftTab(employeeId: number) {
   const onSubmitRoster = rosterForm.handleSubmit((values) => {
     createRosterEntry.mutate(values, {
       onSuccess: () => {
-        toast.success('Shift overridden for that date')
+        toast.success('Shift Overridden for That Date')
         closeDialog()
       },
       onError: (error) =>
@@ -212,7 +212,7 @@ export function useEmployeeShiftTab(employeeId: number) {
     if (!pendingAssignmentDelete) return
     deleteAssignment.mutate(pendingAssignmentDelete.id, {
       onSuccess: () => {
-        toast.success('Timeline entry removed')
+        toast.success('Timeline Entry Removed')
         setPendingAssignmentDelete(null)
       },
       onError: (error) =>
@@ -224,7 +224,7 @@ export function useEmployeeShiftTab(employeeId: number) {
     if (!pendingRosterDelete) return
     deleteRosterEntry.mutate(pendingRosterDelete.id, {
       onSuccess: () => {
-        toast.success('Date override dropped')
+        toast.success('Date Override Dropped')
         setPendingRosterDelete(null)
       },
       onError: (error) =>

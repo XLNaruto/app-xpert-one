@@ -334,6 +334,9 @@ export function FilterBar({
 /** Debounce delay (ms) before a typed search term is propagated upward. */
 const SEARCH_DEBOUNCE = 300
 
+/** The list endpoints reject a longer `search` with a 400. */
+const SEARCH_MAX_LENGTH = 200
+
 /**
  * Search input with a local, instantly-responsive value that only calls
  * `search.onChange` after the user pauses typing — so list queries and table
@@ -365,6 +368,7 @@ function SearchBox({ search }: { search: FilterSearch }) {
       <Input
         placeholder={search.placeholder ?? 'Search…'}
         value={local}
+        maxLength={SEARCH_MAX_LENGTH}
         onChange={(e) => setLocal(e.target.value)}
         className="h-10 truncate border-border/50 pl-9 pr-9"
       />

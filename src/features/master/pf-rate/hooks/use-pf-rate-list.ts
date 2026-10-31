@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { PF_RATE_DEFAULT_SORT } from '../constants'
 import { usePfRates } from '../api/use-pf-rates'
 import { useDeletePfRate } from '../api/use-pf-rate-mutations'
@@ -26,7 +26,7 @@ export function usePfRateList() {
     setSearch,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, PF_RATE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, PF_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = usePfRates(params)
   const deletePfRate = useDeletePfRate()
 
@@ -42,11 +42,11 @@ export function usePfRateList() {
     if (!pendingDelete) return
     deletePfRate.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('PF rate deleted')
+        toast.success('PF Rate Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete PF rate'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete PF Rate'),
     })
   }
 

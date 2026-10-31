@@ -83,7 +83,7 @@ export function SummarySectionCards({
     >
       <SectionCard
         title="Workforce"
-        caption="Positions count people; flows count posting events — the two don't add up to each other."
+        caption="Positions Count People; Flows Count Posting Events — The Two Don't Add up to Each Other."
       >
         <Stat label="Headcount" value={formatCount(workforce.headcount)} />
         <Stat
@@ -139,7 +139,7 @@ export function SummarySectionCards({
 
       <SectionCard
         title="Attendance"
-        caption="Presence only. An absence is the lack of a row, so there is no absent figure to show."
+        caption="Presence Only. An Absence Is the Lack of a Row, So There Is No Absent Figure to Show."
       >
         <Stat
           label="Attendance"
@@ -171,7 +171,7 @@ export function SummarySectionCards({
 
       <SectionCard
         title="Leave"
-        caption="Counts leave starting in this period, filed on its from-date — not applications typed in it."
+        caption="Counts Leave Starting in This Period, Filed on Its From-Date — Not Applications Typed in It."
       >
         <Stat label="Applications" value={formatCount(leave.applications)} />
         <Stat
@@ -215,7 +215,7 @@ export function SummarySectionCards({
 
       <SectionCard
         title="Payroll"
-        caption="Filed on each sheet's own month, so a window across two months covers both in full."
+        caption="Filed on Each Sheet's Own Month, So a Window Across Two Months Covers Both in Full."
       >
         <Stat label="Net Pay" value={formatMoney(payroll.netPay)} />
         <Stat label="Gross Pay" value={formatMoney(payroll.grossPay)} />
@@ -229,7 +229,7 @@ export function SummarySectionCards({
 
         <div className="col-span-2 mt-1 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Net vs deductions</span>
+            <span>Net vs Deductions</span>
             <span>
               paid {formatRatio(payroll.paidRate)}{' '}
               {payroll.paidRate == null ? '' : 'of rows'}
@@ -291,7 +291,7 @@ export function SummarySectionCards({
 
       <SectionCard
         title="Help Desk"
-        caption="Raised is demand, resolved is throughput. A resolution rate above 100% is a backlog clearing."
+        caption="Raised Is Demand, Resolved Is Throughput. A Resolution Rate Above 100% Is a Backlog Clearing."
       >
         <Stat label="Raised" value={formatCount(helpdesk.raised)} />
         <Stat label="Resolved" value={formatCount(helpdesk.resolved)} />
@@ -368,7 +368,7 @@ function Stat({
   return (
     <div className="min-w-0">
       <p className="truncate text-xs text-muted-foreground">{label}</p>
-      <Hint text={unmeasured ? 'Not measured in this period' : undefined}>
+      <Hint text={unmeasured ? 'Not Measured in This Period' : undefined}>
         <p
           className={cn(
             'font-heading text-sm font-semibold',

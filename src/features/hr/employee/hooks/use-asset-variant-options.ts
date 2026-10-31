@@ -43,9 +43,9 @@ export function useAssetVariantOptions(
         label: variant.variantName,
         value,
         hint: isTaken
-          ? 'Already on this employee'
+          ? 'Already on This Employee'
           : variant.quantity === 0
-            ? 'Out of stock'
+            ? 'Out of Stock'
             : `${variant.quantity} left`,
         disabled: isTaken || (variant.quantity === 0 && value !== keepValue),
       }

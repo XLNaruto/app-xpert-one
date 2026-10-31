@@ -1,4 +1,8 @@
-import type { MyProfileResponse } from '../schemas'
+import type {
+  MyProfileResponse,
+  ProfileEditFormValues,
+  UpdateMyProfileBody,
+} from '../schemas'
 import type { MyProfile, ProfileUser } from '../types'
 import { ACCOUNT_STATUS_TONES, SUBSCRIPTION_STATUS_TONES } from '../constants'
 import type { StatusTone } from '../constants'
@@ -19,6 +23,7 @@ export function toMyProfile(response: MyProfileResponse): MyProfile {
       companyId: user.company_id,
       employeeId: user.employee_id,
       twoFactorAuth: user.two_factor_auth,
+      profilePhoto: user.profile_photo ?? null,
       createdAt: user.created_at,
     },
     account: {
@@ -72,18 +77,6 @@ export function isAccountItself(user: ProfileUser): boolean {
   return user.isOwner && user.roleName === null && user.roleId === null
 }
 
-/**
- * Whether the screen should show the user's own details alongside the
- * organization's.
- *
- * The account itself would only repeat its name, email and status under the
- * organization's, so it sees the organization only. Anyone else is a separate
- * person from the account and gets their own block.
- */
-export function shouldShowUserDetails(user: ProfileUser): boolean {
-  return !isAccountItself(user)
-}
-
 /** `past_due` → "Past Due". The wire is snake_case, the screen isn't. */
 export function statusLabel(status: string): string {
   return status
@@ -128,4 +121,73 @@ export function initialsOf(name: string): string {
 export function usagePercent(count: number, limit: number): number {
   if (limit <= 0) return 0
   return Math.min(100, Math.round((count / limit) * 100))
+}
+
+/**
+ * A mobile number as the API takes it — digits only. The spaces, dashes and
+ * `+91` / leading `0` people type are stripped, so `+91 98765 43210` and
+ * `098765-43210` both become `9876543210`.
+ */
+export function normalizeMobile(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2)
+  if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1)
+  return digits
+}
+
+/** The signed-in user → the edit form, prefilled. */
+export function toProfileEditFormValues(user: ProfileUser): ProfileEditFormValues {
+  return {
+    name: user.name,
+    email: user.email,
+    mobileNumber: user.mobileNumber ? normalizeMobile(user.mobileNumber) : '',
+  }
+}
+
+/**
+ * The `PATCH /user/me` body — only what differs from the stored user, since a
+ * field left out stays as it is. Empty when nothing changed. The email is the
+ * login and is stored lower-case, so it's compared that way too.
+ */
+export function toUpdateMyProfileBody(
+  values: ProfileEditFormValues,
+  user: ProfileUser,
+): UpdateMyProfileBody {
+  const body: UpdateMyProfileBody = {}
+  const name = values.name.trim()
+  const email = values.email.trim().toLowerCase()
+  const mobile = values.mobileNumber ? normalizeMobile(values.mobileNumber) : null
+  const storedMobile = user.mobileNumber ? normalizeMobile(user.mobileNumber) : null
+
+  if (name !== user.name) body.name = name
+  if (email !== user.email.toLowerCase()) body.email = email
+  if (mobile !== storedMobile) body.mobile_number = mobile
+  return body
+}
+
+/** Which form field a failed `PATCH /user/me` is about, when it can be told. */
+export type ProfileEditField = keyof ProfileEditFormValues
+
+const BODY_FIELD_TO_FORM: Record<keyof UpdateMyProfileBody, ProfileEditField> = {
+  name: 'name',
+  email: 'email',
+  mobile_number: 'mobileNumber',
+}
+
+/**
+ * Pin a `PATCH /user/me` failure on the field it concerns, so it shows inline
+ * rather than as a toast. The server's message names the field (a 409 says
+ * whether the email or the mobile is taken; a 400's flattened validation line
+ * starts with the field's label); failing that, a request that only sent one
+ * field can only be about that one. `null` when it can't be told.
+ */
+export function profileErrorField(
+  message: string,
+  body: UpdateMyProfileBody,
+): ProfileEditField | null {
+  if (/mobile/i.test(message)) return 'mobileNumber'
+  if (/e-?mail/i.test(message)) return 'email'
+  if (/^name\b/i.test(message)) return 'name'
+  const sent = Object.keys(body) as (keyof UpdateMyProfileBody)[]
+  return sent.length === 1 ? BODY_FIELD_TO_FORM[sent[0]] : null
 }

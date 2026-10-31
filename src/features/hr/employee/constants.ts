@@ -462,6 +462,6 @@ export const APPOINTMENT_VARIANTS: {
   {
     value: 'renewal',
     label: 'Re-appointment',
-    hint: 'Renewal order with blank dates to be filled in by hand',
+    hint: 'Renewal Order with Blank Dates to Be Filled in by Hand',
   },
 ]

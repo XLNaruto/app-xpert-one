@@ -75,7 +75,7 @@ export async function fetchBanks(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load banks.")
+    throw toApiError(error, "Couldn't Load Banks.")
   }
 }
 
@@ -88,6 +88,6 @@ export async function fetchBank(id: number): Promise<BankRecord> {
     const raw = await http.get<unknown>(endpoints.BANKS.GET(id))
     return toBank(bankResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Bank not found')
+    throw toApiError(error, 'Bank Not Found')
   }
 }

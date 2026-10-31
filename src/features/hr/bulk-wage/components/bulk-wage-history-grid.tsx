@@ -68,47 +68,47 @@ const GROUP_META: Record<WageGroup, { label: string; tone: string; hint: string 
   workingDays: {
     label: 'Working Days Config',
     tone: 'text-primary',
-    hint: 'How the month’s paid working days were arrived at.',
+    hint: 'How the Month’s Paid Working Days Were Arrived At.',
   },
   allowances: {
     label: 'Allowances',
     tone: 'text-teal-600 dark:text-teal-400',
-    hint: 'Each head as that version valued it — a percentage of basic pay or a flat amount, plus the acts it counted towards. Blank means the head did not apply.',
+    hint: 'Each Head as That Version Valued It — A Percentage of Basic Pay or a Flat Amount, Plus the Acts It Counted Towards. Blank Means the Head Did Not Apply.',
   },
   overtime: {
     label: 'Overtime',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'The hourly rate paid for overtime, as stored on the version.',
+    hint: 'The Hourly Rate Paid for Overtime, as Stored on the Version.',
   },
   deductions: {
     label: 'Deductions',
     tone: 'text-rose-600 dark:text-rose-400',
-    hint: 'Recurring deductions applied on top of the statutory ones.',
+    hint: 'Recurring Deductions Applied on Top of the Statutory Ones.',
   },
   pf: {
     label: 'PF Act',
     tone: 'text-sky-600 dark:text-sky-400',
-    hint: 'Provident fund — the employee share and whether either contribution was capped at the statutory wage limit.',
+    hint: 'Provident Fund — The Employee Share and Whether Either Contribution Was Capped at the Statutory Wage Limit.',
   },
   esic: {
     label: 'ESIC',
     tone: 'text-emerald-600 dark:text-emerald-400',
-    hint: 'Employee state insurance, and what the contribution was worked out on.',
+    hint: 'Employee State Insurance, and What the Contribution Was Worked out On.',
   },
   pt: {
     label: 'PT',
     tone: 'text-violet-600 dark:text-violet-400',
-    hint: 'Professional tax — from the act’s slab, or a fixed amount.',
+    hint: 'Professional Tax — From the Act’s Slab, or a Fixed Amount.',
   },
   tds: {
     label: 'TDS',
     tone: 'text-rose-600 dark:text-rose-400',
-    hint: 'Tax deducted at source — no slab behind it, so the version carries the rate itself.',
+    hint: 'Tax Deducted at Source — No Slab Behind It, So the Version Carries the Rate Itself.',
   },
   lwf: {
     label: 'LWF',
     tone: 'text-amber-600 dark:text-amber-400',
-    hint: 'Labour welfare fund — from the act’s rate, or a fixed amount.',
+    hint: 'Labour Welfare Fund — From the Act’s Rate, or a Fixed Amount.',
   },
 }
 
@@ -129,7 +129,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'Effective From',
       width: PINNED_WIDTHS.effectiveFrom,
       pin: 0,
-      hint: 'The month this version took effect from. It applied from that month onward until the version above it superseded it.',
+      hint: 'The Month This Version Took Effect From. It Applied from That Month Onward Until the Version Above It Superseded It.',
     },
 
     {
@@ -145,14 +145,14 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'W. Days',
       group: 'workingDays',
       width: 96,
-      hint: 'Paid working days in the month — recorded only when the calc type was “Fixed”.',
+      hint: 'Paid Working Days in the Month — Recorded Only When the Calc Type Was “Fixed”.',
     },
 
     {
       key: 'salaryType',
       label: 'Salary Type',
       width: 118,
-      hint: 'Whether the wage was quoted per month or per day.',
+      hint: 'Whether the Wage Was Quoted per Month or per Day.',
     },
     { key: 'basicPay', label: amountLabel('Basic Pay'), width: 122 },
     { key: 'wagePerDay', label: amountLabel('Wage/Day'), width: 126 },
@@ -160,7 +160,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       key: 'extraDay',
       label: amountLabel('Extra Day Amount'),
       width: 126,
-      hint: 'Paid for each day worked beyond the version’s working days.',
+      hint: 'Paid for Each Day Worked Beyond the Version’s Working Days.',
     },
 
     ...heads.allowances.map((head, at) => ({
@@ -177,7 +177,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       label: 'OT',
       group: 'overtime',
       width: 62,
-      hint: 'Whether overtime was paid at all.',
+      hint: 'Whether Overtime Was Paid at All.',
     },
     { key: 'otRate', label: amountLabel('Rate/Hr'), group: 'overtime', width: 118 },
 
@@ -190,48 +190,48 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       head: { kind: 'deduction' as const, id: head.id, at },
     })),
 
-    { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF act applicable.' },
+    { key: 'pf', label: 'PF', group: 'pf', width: 62, hint: 'PF Act Applicable.' },
     {
       key: 'empWl',
       label: 'Emp WL',
       group: 'pf',
       width: 86,
-      hint: 'Employee share capped at the statutory wage limit.',
+      hint: 'Employee Share Capped at the Statutory Wage Limit.',
     },
     {
       key: 'emprWl',
       label: 'Empr WL',
       group: 'pf',
       width: 90,
-      hint: 'Employer share capped at the statutory wage limit.',
+      hint: 'Employer Share Capped at the Statutory Wage Limit.',
     },
     {
       key: 'pfAmt',
       label: 'PF Amt',
       group: 'pf',
       width: 106,
-      hint: 'The employee share, as a percentage of EPF wages or a flat amount.',
+      hint: 'The Employee Share, as a Percentage of EPF Wages or a Flat Amount.',
     },
 
-    { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC act applicable.' },
+    { key: 'esic', label: 'ESIC', group: 'esic', width: 66, hint: 'ESIC Act Applicable.' },
     {
       key: 'esicDedOn',
       label: 'Ded. On',
       group: 'esic',
       width: 148,
-      hint: 'What the ESIC contribution was calculated on.',
+      hint: 'What the ESIC Contribution Was Calculated On.',
     },
 
-    { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT act applicable.' },
+    { key: 'pt', label: 'PT', group: 'pt', width: 62, hint: 'PT Act Applicable.' },
     { key: 'ptType', label: 'Type', group: 'pt', width: 92 },
     { key: 'ptAmt', label: amountLabel('Amt'), group: 'pt', width: 94 },
 
     /* PF · ESIC · PT · TDS · LWF — the order payroll reads the acts in. */
-    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS act applicable.' },
+    { key: 'tds', label: 'TDS', group: 'tds', width: 66, hint: 'TDS Act Applicable.' },
     { key: 'tdsPct', label: 'Rate %', group: 'tds', width: 94 },
     { key: 'tdsBase', label: 'On', group: 'tds', width: 158 },
 
-    { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF act applicable.' },
+    { key: 'lwf', label: 'LWF', group: 'lwf', width: 66, hint: 'LWF Act Applicable.' },
     { key: 'lwfType', label: 'Type', group: 'lwf', width: 92 },
     { key: 'lwfAmt', label: amountLabel('Amt'), group: 'lwf', width: 94 },
 
@@ -239,7 +239,7 @@ function buildColumns(heads: WageHeads): WageColumn[] {
       key: 'changedBy',
       label: 'Changed By',
       width: 168,
-      hint: 'Who last wrote this version, and when. A corrected version shows the correction rather than the original entry.',
+      hint: 'Who Last Wrote This Version, and When. A Corrected Version Shows the Correction Rather Than the Original Entry.',
     },
   ]
 }
@@ -459,7 +459,7 @@ const DesignationBlock = memo(function DesignationBlock({
             </span>
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
               {count === 0
-                ? 'No wage structure'
+                ? 'No Wage Structure'
                 : `${count} ${count === 1 ? 'version' : 'versions'}`}
             </span>
           </div>
@@ -582,7 +582,7 @@ function VersionCell({
             )}
           >
             <History className="size-2.5 shrink-0" />
-            {isCurrent ? 'In force' : 'Superseded'}
+            {isCurrent ? 'In Force' : 'Superseded'}
           </span>
         </div>
       )

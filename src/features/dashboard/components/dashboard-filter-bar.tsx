@@ -190,7 +190,7 @@ export function DashboardFilterBar({
               options={options.companies}
               value={filters.companyIds}
               onChange={(value) => state.setFilter('companyIds', value)}
-              placeholder="All companies"
+              placeholder="All Companies"
               loading={options.isLoading}
             />
           </PanelField>
@@ -200,7 +200,7 @@ export function DashboardFilterBar({
               {...options.branches}
               value={filters.branchIds}
               onChange={(value) => state.setFilter('branchIds', value)}
-              placeholder="All branches"
+              placeholder="All Branches"
             />
           </PanelField>
 
@@ -215,7 +215,7 @@ export function DashboardFilterBar({
               {...options.departments}
               value={filters.departmentIds}
               onChange={(value) => state.setFilter('departmentIds', value)}
-              placeholder="All departments"
+              placeholder="All Departments"
             />
           </PanelField>
 
@@ -224,7 +224,7 @@ export function DashboardFilterBar({
               {...options.designations}
               value={filters.designationIds}
               onChange={(value) => state.setFilter('designationIds', value)}
-              placeholder="All designations"
+              placeholder="All Designations"
             />
           </PanelField>
         </>
@@ -236,10 +236,10 @@ export function DashboardFilterBar({
             {allTime
               ? resolvedWindow
                 ? `All time — ${formatWindow(resolvedWindow.from, resolvedWindow.to)}`
-                : 'All time'
+                : 'All Time'
               : resolvedWindow
                 ? formatWindow(resolvedWindow.from, resolvedWindow.to)
-                : 'Resolving period…'}
+                : 'Resolving Period…'}
           </span>
           <span aria-hidden>·</span>
           <span>{filters.timezone}</span>
@@ -259,7 +259,7 @@ export function DashboardFilterBar({
             <>
               <span aria-hidden>·</span>
               {/* Said out loud, because every delta badge on the page vanishes. */}
-              <span>Comparisons unavailable over all time</span>
+              <span>Comparisons Unavailable over All Time</span>
             </>
           ) : null}
           {isDebouncing ? (

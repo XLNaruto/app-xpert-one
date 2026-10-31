@@ -78,7 +78,7 @@ export function ReportTable<TRow>({
           title={searchValue ? 'No Matching Records' : 'Nothing to Report'}
           description={
             searchValue
-              ? 'Try a different name, code or number.'
+              ? 'Try a Different Name, Code or Number.'
               : `No ${itemName} matched these filters. The report reads only months already processed — run the month from Calculate Salary first.`
           }
         />

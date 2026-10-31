@@ -141,7 +141,7 @@ export async function loginRequest({
     })
     return toLoginOutcome(raw, email)
   } catch (error) {
-    throw toApiError(error, 'Sign-in failed. Please check your credentials.')
+    throw toApiError(error, 'Sign-In Failed. Please Check Your Credentials.')
   }
 }
 
@@ -223,7 +223,7 @@ export async function resendEmailOtpRequest(
       challengeToken: data.challenge_token ?? '',
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't send a new code. Please try again.")
+    throw toApiError(error, "Couldn't Send a New Code. Please Try Again.")
   }
 }
 

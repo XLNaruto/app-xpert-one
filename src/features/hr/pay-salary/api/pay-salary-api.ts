@@ -58,7 +58,7 @@ export async function fetchSalaryPayments(
     })
     return toPaySalaryList(salaryPaymentsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the salary payments.")
+    throw toApiError(error, "Couldn't Load the Salary Payments.")
   }
 }
 
@@ -109,7 +109,7 @@ export async function createSalaryPayment(
     })
     return toPayBatchResult(payBatchResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't record the payment.")
+    throw toApiError(error, "Couldn't Record the Payment.")
   }
 }
 
@@ -134,7 +134,7 @@ export async function fetchPaymentHistory(
     })
     return toPaymentHistory(paymentHistoryResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the payment history.")
+    throw toApiError(error, "Couldn't Load the Payment History.")
   }
 }
 
@@ -153,7 +153,7 @@ export async function fetchPaymentBatch(
     })
     return toPaymentBatchDetail(paymentBatchResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the payment batch.")
+    throw toApiError(error, "Couldn't Load the Payment Batch.")
   }
 }
 
@@ -186,6 +186,6 @@ export async function downloadBankTransferSheet({
       debit_account_number: debitAccountNumber.trim(),
     },
     fallbackName: `bank-transfer-${year}-${String(month).padStart(2, '0')}-${paymentMode}.xlsx`,
-    errorMessage: "Couldn't download the bank transfer sheet.",
+    errorMessage: "Couldn't Download the Bank Transfer Sheet.",
   })
 }

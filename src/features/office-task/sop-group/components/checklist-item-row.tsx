@@ -87,7 +87,7 @@ export function ChecklistItemRow({
           label="Times per Day"
           required
           error={errors?.frequency?.message}
-          hint="How many runs of this task each employee gets per day."
+          hint="How Many Runs of This Task Each Employee Gets per Day."
         >
           <Input inputMode="numeric" {...register(`items.${index}.frequency`)} />
           {!errors?.frequency && frequency > 0 && (

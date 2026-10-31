@@ -80,7 +80,7 @@ export function useWeekoffPolicyForm(id?: number) {
     if (!isSelected && everyWeekDays.length >= 6) {
       setError('everyWeekDays', {
         type: 'manual',
-        message: "You can't select all seven days as off every week.",
+        message: "You Can't Select All Seven Days as off Every Week.",
       })
       return
     }
@@ -132,7 +132,7 @@ export function useWeekoffPolicyForm(id?: number) {
   const summary =
     offType === 'FLEXIBLE'
       ? flexibleCount === null
-        ? 'No rules'
+        ? 'No Rules'
         : flexibleWeekoffCaption(flexibleCount)
       : weekoffSummary([
           ...everyWeekDays.map(
@@ -159,7 +159,7 @@ export function useWeekoffPolicyForm(id?: number) {
     const mutation = isEdit ? updatePolicy : createPolicy
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Week-off policy updated' : 'Week-off policy created')
+        toast.success(isEdit ? 'Week-Off Policy Updated' : 'Week-Off Policy Created')
         goToList()
       },
       onError: (err) =>

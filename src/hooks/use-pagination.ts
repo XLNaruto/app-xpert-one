@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnSort, OnChangeFn, SortingState } from '@tanstack/react-table'
+import { ALL_PAGE_SIZE, INFINITE_BATCH_SIZE } from '@/components/data-table'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { DEFAULT_PAGE_SIZE, type PageParams } from '@/lib/pagination'
 
@@ -59,7 +60,10 @@ export function usePagination(
   const params = useMemo<PageParams>(() => {
     const [active] = sorting
     return {
-      limit,
+      // A list that opens on "All" holds the sentinel until `<DataTable>` turns
+      // it into a scroll of 100-row batches. Ask for that first batch rather
+      // than sending a limit that would fetch every row at once.
+      limit: limit === ALL_PAGE_SIZE ? INFINITE_BATCH_SIZE : limit,
       offset,
       ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
       ...(active ? { sort: active.id, sortBy: active.desc ? 'desc' : 'asc' } : {}),

@@ -55,7 +55,7 @@ export function CalculationFormulaStrip({ control }: CalculationFormulaStripProp
       formula:
         values.ptActType === 'Manual'
           ? `${amountOr(values.ptAmount)} per month`
-          : 'Per the salary slab in the PT rate setting',
+          : 'Per the Salary Slab in the PT Rate Setting',
       badgeTone: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
     })
   }
@@ -68,7 +68,7 @@ export function CalculationFormulaStrip({ control }: CalculationFormulaStripProp
       formula:
         values.lwfActType === 'Manual'
           ? `${amountOr(values.lwfAmount)} per contribution period`
-          : 'Fixed amount per the LWF rate setting for the state and month',
+          : 'Fixed Amount per the LWF Rate Setting for the State and Month',
       badgeTone: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     })
   }

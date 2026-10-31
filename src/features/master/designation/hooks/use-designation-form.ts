@@ -114,7 +114,7 @@ export function useDesignationForm() {
   const onSubmit = handleSubmit((values) => {
     createDesignation.mutate(values, {
       onSuccess: (designation) => {
-        toast.success('Designation created')
+        toast.success('Designation Created')
         /*
          * Go to the saved designation's LEAVE ALLOWANCE tab rather than back to
          * the list. That tab is locked on the create form — an allowance is stored
@@ -133,7 +133,7 @@ export function useDesignationForm() {
       },
       onError: (err) =>
         toast.error(
-          err instanceof Error ? err.message : 'Failed to create designation',
+          err instanceof Error ? err.message : 'Failed to Create Designation',
         ),
     })
   })

@@ -118,7 +118,7 @@ export function EmployeeFacesDialog({
               className="shrink-0"
             >
               <Trash2 className="size-4" />
-              {isClearing ? 'Deleting…' : 'Delete faces'}
+              {isClearing ? 'Deleting…' : 'Delete Faces'}
             </Button>
           )}
         </div>

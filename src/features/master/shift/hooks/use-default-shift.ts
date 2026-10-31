@@ -63,17 +63,17 @@ export function useDefaultShift({
 
   const save = () => {
     if (departmentId === undefined) {
-      toast.error('Save the department first, then set its shift.')
+      toast.error('Save the Department First, Then Set Its Shift.')
       return
     }
     if (!shiftId) {
-      toast.error('Select a shift to set as the default.')
+      toast.error('Select a Shift to Set as the Default.')
       return
     }
     setDefault.mutate(
       { shiftId: Number(shiftId), scope: { department_id: departmentId } },
       {
-        onSuccess: () => {toast.success('Default shift saved for this department');
+        onSuccess: () => {toast.success('Default Shift Saved for This Department');
           goToList()
         },
         onError: (err) =>
@@ -89,7 +89,7 @@ export function useDefaultShift({
       {
         onSuccess: () => {
           setShiftId('')
-          toast.success("Default cleared — this department follows the company's shift")
+          toast.success("Default Cleared — This Department Follows the Company's Shift")
         },
         onError: (err) =>
           toast.error(getApiErrorMessage(err, 'Failed to clear the default shift')),

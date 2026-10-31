@@ -37,7 +37,7 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
     return (
       <NotFound
         title="Group Not Found"
-        description="That attendance link is missing or no longer readable. Open the group again from Attendance Management."
+        description="That Attendance Link Is Missing or No Longer Readable. Open the Group Again from Attendance Management."
       />
     )
   }
@@ -142,14 +142,14 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
         <AttendanceSearchBox
           value={detail.search}
           onChange={detail.setSearch}
-          placeholder="Search name or code…"
+          placeholder="Search Name or Code…"
         />
       </div>
 
       {detail.isError ? (
         <Card className="p-6">
           <EmptyState
-            title="Couldn't load the group"
+            title="Couldn't Load the Group"
             description={getApiErrorMessage(detail.error)}
           />
         </Card>
@@ -166,7 +166,7 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
             title="Nobody to Show"
             description={
               detail.search.trim()
-                ? 'No employee in this group matches that search.'
+                ? 'No Employee in This Group Matches That Search.'
                 : `No ${detail.status === 'all' ? '' : detail.status} employee on this day.`
             }
           />

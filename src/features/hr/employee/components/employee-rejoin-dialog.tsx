@@ -57,7 +57,7 @@ export function EmployeeRejoinDialog({ rejoin }: { rejoin: EmployeeRejoin }) {
                 description={
                   rejoin.lastLeavingDate
                     ? `Their last posting ended on ${formatDate(rejoin.lastLeavingDate)} — the new one starts after it.`
-                    : 'Where the employee rejoins, and on what terms'
+                    : 'Where the Employee Rejoins, and on What Terms'
                 }
                 className="mt-0"
               />
@@ -67,15 +67,15 @@ export function EmployeeRejoinDialog({ rejoin }: { rejoin: EmployeeRejoin }) {
               label="Company"
               required
               error={errors.companyId?.message}
-              hint="Only companies they worked in before, newest first."
+              hint="Only Companies They Worked in Before, Newest First."
             >
               <Combobox
                 className="w-full"
                 value={rejoin.companyId}
                 onChange={rejoin.changeCompany}
                 options={rejoin.companyOptions}
-                placeholder="Select company"
-                searchPlaceholder="Search company"
+                placeholder="Select Company"
+                searchPlaceholder="Search Company"
               />
             </Field>
 

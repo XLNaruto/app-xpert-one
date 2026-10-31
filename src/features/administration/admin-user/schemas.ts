@@ -23,7 +23,7 @@ export const adminUserStatusSchema = z.enum(['active', 'inactive'])
  */
 export const talkGrantFormSchema = z.object({
   /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
-  companyId: z.string().trim().min(1, 'Pick a company'),
+  companyId: z.string().trim().min(1, 'Pick a Company'),
   /**
    * The departments picked inside that company, as strings for the same reason.
    * EMPTY means the WHOLE company — every department, present and future —
@@ -94,7 +94,7 @@ export function adminUserSchema({
       /** The login itself — unique across the whole platform, not just this account. */
       email: emailField({ required: true, max: MAX_ADMIN_USER_EMAIL }),
       /** Held as a string: it comes from a `<Combobox>`, which speaks strings. */
-      roleId: requireRole ? z.string().trim().min(1, 'Pick a role') : z.string().trim(),
+      roleId: requireRole ? z.string().trim().min(1, 'Pick a Role') : z.string().trim(),
       password,
       /**
        * FRONT-END ONLY — it is never sent. The endpoint takes a single
@@ -115,21 +115,21 @@ export function adminUserSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['employeeId'],
-          message: 'Select an employee',
+          message: 'Select an Employee',
         })
       } else if (values.employeeId) {
         if (!values.firstName.trim()) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['employeeId'],
-            message: 'This employee has no name on record — complete their employee record first',
+            message: 'This Employee Has No Name on Record — Complete Their Employee Record First',
           })
         } else if (!values.mobileNumber) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['employeeId'],
             message:
-              'This employee has no mobile number on record — add one to their employee record first',
+              'This Employee Has No Mobile Number on Record — Add One to Their Employee Record First',
           })
         } else if (
           values.firstName.length > MAX_ADMIN_USER_NAME ||
@@ -152,7 +152,7 @@ export function adminUserSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['companyIds'],
-          message: 'Select at least one company for company-specific access',
+          message: 'Select at Least One Company for Company-Specific Access',
         })
       }
 
@@ -170,7 +170,7 @@ export function adminUserSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['talkAccess'],
-          message: 'Select at least one Talk company when Talk access is enabled',
+          message: 'Select at Least One Talk Company When Talk Access Is Enabled',
         })
       }
 
@@ -191,7 +191,7 @@ export function adminUserSchema({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['talkAccess', index, 'companyId'],
-            message: 'This company already has a grant — add its departments to that row',
+            message: 'This Company Already Has a Grant — Add Its Departments to That Row',
           })
         }
         seen.add(grant.companyId)
@@ -203,7 +203,7 @@ export function adminUserSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['password'],
-          message: 'Please enter a password',
+          message: 'Please Enter a Password',
         })
         return
       }
@@ -222,7 +222,7 @@ export function adminUserSchema({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['confirmPassword'],
-          message: 'Passwords do not match',
+          message: 'Passwords Do Not Match',
         })
       }
     })

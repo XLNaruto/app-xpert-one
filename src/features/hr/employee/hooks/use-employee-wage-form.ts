@@ -222,7 +222,7 @@ export function useEmployeeWageForm(employeeId: number) {
     /* Said once, rather than as a line per row — the cells that need attention
        outline themselves, and the first of them is scrolled to and lit. */
     (errors) => {
-      toast.error('Fill in the highlighted cells before saving')
+      toast.error('Fill In the Highlighted Cells Before Saving')
       revealFirstError(errors)
     },
   )
@@ -231,7 +231,7 @@ export function useEmployeeWageForm(employeeId: number) {
     if (!pendingRemoval) return
     try {
       await deleteWage.mutateAsync(pendingRemoval.id)
-      toast.success('Wage version removed')
+      toast.success('Wage Version Removed')
       setPendingRemoval(null)
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't remove this wage version."))
@@ -295,5 +295,5 @@ function savedMessage(added: number, corrected: number): string {
     corrected > 0 && `${corrected} corrected`,
   ].filter(Boolean)
 
-  return parts.length ? `Wage saved — ${parts.join(', ')}` : 'Nothing to save'
+  return parts.length ? `Wage saved — ${parts.join(', ')}` : 'Nothing to Save'
 }

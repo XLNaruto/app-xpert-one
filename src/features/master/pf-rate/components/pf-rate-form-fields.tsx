@@ -25,7 +25,7 @@ export function PfRateFormFields({ register, control, errors }: PfRateFormFields
       <FormSection
         icon={Percent}
         title="PF Rate Settings"
-        description="Configure the rate setup for Provident Fund"
+        description="Configure the Rate Setup for Provident Fund"
         className="mt-0"
       />
 

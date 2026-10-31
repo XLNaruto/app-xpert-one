@@ -38,7 +38,7 @@ export function ReportBasisStrip({
   items,
   isRateOnFile,
   rateEffectiveDate,
-  missingRateMessage = 'No rate is configured for this period — the figures use the statutory defaults.',
+  missingRateMessage = 'No Rate Is Configured for This Period — The Figures Use the Statutory Defaults.',
 }: ReportBasisStripProps) {
   const shown = items.filter((item) => item.value !== null && item.value !== '')
   if (!shown.length && isRateOnFile !== false) return null

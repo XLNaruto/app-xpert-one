@@ -104,14 +104,14 @@ export function ContractExpiryListPage() {
       },
       {
         id: 'dates',
-        header: 'Term ends',
+        header: 'Term Ends',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => <ContractDatesCell row={row.original} />,
       },
       {
         id: 'review',
-        header: 'Review due',
+        header: 'Review Due',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
@@ -174,7 +174,7 @@ export function ContractExpiryListPage() {
     <div>
       <PageHeader
         title="Contract Expiry"
-        description="Contractual postings whose term is running out. Renew the contract, or let it end and complete the service."
+        description="Contractual Postings Whose Term Is Running Out. Renew the Contract, or Let It End and Complete the Service."
       />
 
       <FilterBar
@@ -186,7 +186,7 @@ export function ContractExpiryListPage() {
         search={{
           value: list.search,
           onChange: list.setSearch,
-          placeholder: 'Employee name or code…',
+          placeholder: 'Search…',
         }}
         panelExtras={
           <div className="space-y-1.5">
@@ -203,7 +203,7 @@ export function ContractExpiryListPage() {
               }))}
               value={list.filters.companyIds}
               onChange={(value) => list.setFilter('companyIds', value)}
-              placeholder="All companies"
+              placeholder="All Companies"
               clearable
               loading={isCompaniesLoading}
               maxVisibleLabels={1}
@@ -213,8 +213,8 @@ export function ContractExpiryListPage() {
         footer={
           <p className="text-xs text-muted-foreground">
             {list.isPreviewing
-              ? 'Previewing beyond the warning date — rows marked “Upcoming” do not need work yet.'
-              : 'Every row here has passed its review date. Measured as of now, not over a period.'}
+              ? 'Previewing Beyond the Warning Date — Rows Marked “Upcoming” Do Not Need Work Yet.'
+              : 'Every Row Here Has Passed Its Review Date. Measured as of Now, Not over a Period.'}
           </p>
         }
       />
@@ -254,7 +254,7 @@ export function ContractExpiryListPage() {
             <EmptyState
               icon={FileClock}
               title="No Matching Contracts"
-              description="No contract in this population matches the filters you have applied."
+              description="No Contract in This Population Matches the Filters You Have Applied."
             />
           }
         />

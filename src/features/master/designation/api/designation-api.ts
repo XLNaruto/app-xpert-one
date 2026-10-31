@@ -117,7 +117,7 @@ export async function fetchDesignations(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load designations.")
+    throw toApiError(error, "Couldn't Load Designations.")
   }
 }
 
@@ -130,7 +130,7 @@ export async function fetchDesignation(id: number): Promise<Designation> {
     const raw = await http.get<unknown>(endpoints.DESIGNATIONS.GET(id))
     return toDesignationDetail(designationDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Designation not found')
+    throw toApiError(error, 'Designation Not Found')
   }
 }
 
@@ -153,7 +153,7 @@ export async function createDesignation(
     )
     return toDesignation(designationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the designation.")
+    throw toApiError(error, "Couldn't Create the Designation.")
   }
 }
 
@@ -173,7 +173,7 @@ export async function updateDesignationName(
     )
     return toDesignation(designationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the designation.")
+    throw toApiError(error, "Couldn't Update the Designation.")
   }
 }
 
@@ -186,6 +186,6 @@ export async function deleteDesignation(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.DESIGNATIONS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the designation.")
+    throw toApiError(error, "Couldn't Delete the Designation.")
   }
 }

@@ -65,7 +65,7 @@ export function LeaveQuotaGrid({
       <EmptyState
         icon={CalendarDays}
         title="No Leave Types Yet"
-        description="Add leave types to the master first — an allowance is set per type."
+        description="Add Leave Types to the Master First — An Allowance Is Set per Type."
       />
     )
   }
@@ -80,7 +80,7 @@ export function LeaveQuotaGrid({
             <TableRow>
               <TableHead>Leave Type</TableHead>
               <TableHead className="w-56">Paid Days per Year</TableHead>
-              {showFallback && <TableHead>{fallbackLabel ?? 'Falls back to'}</TableHead>}
+              {showFallback && <TableHead>{fallbackLabel ?? 'Falls Back To'}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,7 +137,7 @@ export function LeaveQuotaGrid({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <p className="max-w-xl text-xs text-muted-foreground">
           {footerNote ??
-            'Leave a box empty to set nothing here. A typed 0 is different — it stores "no paid days of this type".'}
+            'Leave a Box Empty to Set Nothing Here. A Typed 0 Is Different — It Stores "No Paid Days of This Type".'}
         </p>
 
         {!grid.isReadOnly && (
@@ -155,7 +155,7 @@ export function LeaveQuotaGrid({
               onClick={grid.onSave}
               disabled={grid.isSaving || grid.hasErrors || !grid.isDirty}
             >
-              {grid.isSaving ? 'Saving…' : 'Save allowances'}
+              {grid.isSaving ? 'Saving…' : 'Save Allowances'}
             </Button>
           </div>
         )}

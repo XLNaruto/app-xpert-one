@@ -111,7 +111,7 @@ export function AssetVariantTable({
                     <PackagePlus className="size-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Add / remove stock</TooltipContent>
+                <TooltipContent>Add / Remove Stock</TooltipContent>
               </Tooltip>
             )}
             {canView && (
@@ -126,7 +126,7 @@ export function AssetVariantTable({
                     <History className="size-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Stock history</TooltipContent>
+                <TooltipContent>Stock History</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -152,7 +152,7 @@ export function AssetVariantTable({
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
           row.original.quantity === 0 ? (
-            <Badge variant="destructive">Out of stock</Badge>
+            <Badge variant="destructive">Out of Stock</Badge>
           ) : (
             <span className="font-medium text-foreground">{row.original.quantity}</span>
           ),
@@ -173,7 +173,7 @@ export function AssetVariantTable({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Issuing one consumes it — no status change puts the unit back.
+                Issuing One Consumes It — No Status Change Puts the Unit Back.
               </TooltipContent>
             </Tooltip>
           ),
@@ -223,14 +223,14 @@ export function AssetVariantTable({
 
       {isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load the variants."}
+          {error instanceof Error ? error.message : "Couldn't Load the Variants."}
         </p>
       ) : (
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search variants…"
+          searchPlaceholder="Search Variants…"
           itemName="variants"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -249,8 +249,8 @@ export function AssetVariantTable({
               title={search ? 'No Matching Variants' : 'No Variants Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Add a variant to start counting stock for this asset.'
+                  ? 'Try a Different Search Term.'
+                  : 'Add a Variant to Start Counting Stock for This Asset.'
               }
               action={
                 search || blockedByOwnStock
@@ -313,7 +313,7 @@ export function AssetVariantTable({
         onOpenChange={(open) => !open && setPendingDelete(null)}
         variant="destructive"
         icon={Layers}
-        title="Delete variant?"
+        title="Delete Variant?"
         description={
           pendingDelete
             ? `"${pendingDelete.variantName}" will be removed, along with the ${pendingDelete.quantity} unit(s) it counts. Employees still holding one will block the delete.`

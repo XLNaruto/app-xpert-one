@@ -48,8 +48,8 @@ export function PtRateCreatePage({ data }: PtRateCreatePageProps) {
         title={isEdit ? 'Edit PT Rate' : 'Add PT Rate'}
         description={
           isEdit
-            ? 'Update this Professional Tax rate and its salary slabs'
-            : 'Configure Professional Tax rate details and salary slabs'
+            ? 'Update This Professional Tax Rate and Its Salary Slabs'
+            : 'Configure Professional Tax Rate Details and Salary Slabs'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -71,7 +71,7 @@ export function PtRateCreatePage({ data }: PtRateCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this PT rate."}
+                : "Couldn't Load This PT Rate."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>

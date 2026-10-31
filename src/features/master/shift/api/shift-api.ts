@@ -100,7 +100,7 @@ export async function fetchShifts(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load shifts.")
+    throw toApiError(error, "Couldn't Load Shifts.")
   }
 }
 
@@ -110,7 +110,7 @@ export async function fetchShift(id: number): Promise<Shift> {
     const raw = await http.get<unknown>(endpoints.SHIFTS.GET(id))
     return toShift(shiftResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Shift not found')
+    throw toApiError(error, 'Shift Not Found')
   }
 }
 
@@ -132,7 +132,7 @@ export async function createShift(
     })
     return toShift(shiftResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the shift.")
+    throw toApiError(error, "Couldn't Create the Shift.")
   }
 }
 
@@ -164,7 +164,7 @@ export async function updateShift(
     })
     return toShift(shiftResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the shift.")
+    throw toApiError(error, "Couldn't Update the Shift.")
   }
 }
 
@@ -181,7 +181,7 @@ export async function fetchShiftHistory(id: number): Promise<ShiftVersion[]> {
     const { items } = shiftHistoryResponseSchema.parse(raw)
     return items.map(toShiftVersion)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the shift's history.")
+    throw toApiError(error, "Couldn't Load the Shift's History.")
   }
 }
 
@@ -193,7 +193,7 @@ export async function deleteShift(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.SHIFTS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the shift.")
+    throw toApiError(error, "Couldn't Delete the Shift.")
   }
 }
 
@@ -215,7 +215,7 @@ export async function setDefaultShift(
       scope,
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't set the default shift.")
+    throw toApiError(error, "Couldn't Set the Default Shift.")
   }
 }
 
@@ -228,6 +228,6 @@ export async function clearDefaultShift(scope: ShiftDefaultScope): Promise<void>
   try {
     await http.post<unknown, ShiftDefaultScope>(endpoints.SHIFTS.CLEAR_DEFAULT, scope)
   } catch (error) {
-    throw toApiError(error, "Couldn't clear the default shift.")
+    throw toApiError(error, "Couldn't Clear the Default Shift.")
   }
 }

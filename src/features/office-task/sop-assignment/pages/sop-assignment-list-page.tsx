@@ -135,7 +135,7 @@ export function SopAssignmentListPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="SOP Assignments"
-        description="Who runs which SOP group. Their daily tasks appear in My Tasks."
+        description="Who Runs Which SOP Group. Their Daily Tasks Appear in My Tasks."
         actions={
           <>
             <Button variant="outline" onClick={list.goToGroups}>
@@ -170,7 +170,7 @@ export function SopAssignmentListPage({ data }: { data?: string }) {
             search={{
               value: list.search,
               onChange: list.setSearch,
-              placeholder: 'Search employee, code or group…',
+              placeholder: 'Search…',
             }}
             facets={[
               {
@@ -199,7 +199,7 @@ export function SopAssignmentListPage({ data }: { data?: string }) {
           <EmptyState
             icon={UserCheck}
             title="No Assignments Found"
-            description="Assign an SOP group to employees from SOP Tasks to start their daily tasks."
+            description="Assign an SOP Group to Employees from SOP Tasks to Start Their Daily Tasks."
           />
         }
       />

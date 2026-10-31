@@ -36,7 +36,7 @@ const optionalPercent = z
   .trim()
   .refine(
     (v) => v === '' || (AMOUNT_RE.test(v) && Number(v) <= 100),
-    'Enter a percentage between 0 and 100',
+    'Enter a Percentage Between 0 and 100',
   )
 
 /**
@@ -46,7 +46,7 @@ const optionalPercent = z
 const AMOUNT_TYPES = ['Percentage', 'Fixed', 'Per Day', 'Days'] as const
 
 /** What a value read as a percentage is told when it runs over the cap. */
-export const PERCENT_CAP_MESSAGE = 'A percentage cannot exceed 100'
+export const PERCENT_CAP_MESSAGE = 'A Percentage Cannot Exceed 100'
 
 /**
  * A value entered in `%` is a rate, so it can't run over 100 — the API refuses
@@ -96,7 +96,7 @@ const scheduleFields = {
 }
 
 /** What a head with a non-monthly payout and no anchor is told. */
-export const START_MONTH_REQUIRED_MESSAGE = 'Pick the month the payout cycle starts on'
+export const START_MONTH_REQUIRED_MESSAGE = 'Pick the Month the Payout Cycle Starts On'
 
 /**
  * The schedule's own cross-field rules, raised against the control that caused
@@ -131,7 +131,7 @@ function checkSchedule(
     ctx.addIssue({
       code: 'custom',
       path: ['startMonth'],
-      message: 'A monthly payout has no start month',
+      message: 'A Monthly Payout Has No Start Month',
     })
   }
   if (!supportsAccrual(row.payoutFrequency) && row.amountMode === 'ACCRUED') {
@@ -157,7 +157,7 @@ const componentRowSchema = z
   .object({
     componentId: z.string().trim(),
     valueType: z.enum(AMOUNT_TYPES),
-    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
+    amount: optionalMatch(RATE_RE, 'Enter a Valid Amount'),
     pfApplicable: z.boolean(),
     esicApplicable: z.boolean(),
     ptApplicable: z.boolean(),
@@ -185,18 +185,18 @@ export const designationSchema = z
     basicPay: z
       .string()
       .trim()
-      .min(1, 'Basic pay is required')
+      .min(1, 'Basic Pay Is Required')
       .refine((v) => AMOUNT_RE.test(v), 'Enter a valid amount'),
     workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
-    workingDays: optionalMatch(DIGITS_RE, 'Enter a whole number'),
+    workingDays: optionalMatch(DIGITS_RE, 'Enter a Whole Number'),
     weeklyOff: text,
-    extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
     // PF act
     pfActApplicable: z.boolean(),
     pfDeductionType: z.enum(['', 'Fixed', 'Percentage']),
     /** Read as a percentage or a rupee amount, per `pfDeductionType`. */
-    pfDeductionValue: optionalMatch(AMOUNT_RE, 'Enter a valid value'),
+    pfDeductionValue: optionalMatch(AMOUNT_RE, 'Enter a Valid Value'),
     employeePfContributionOnWageLimit: z.boolean(),
     employerPfContributionOnWageLimit: z.boolean(),
 
@@ -207,7 +207,7 @@ export const designationSchema = z
     // Professional tax act
     ptActApplicable: z.boolean(),
     ptActType: z.enum(['', 'As Per Act', 'Manual']),
-    ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    ptAmount: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
     /*
      * TDS act. Unlike PT and LWF there is no slab to fall back on — the rate is
@@ -221,11 +221,11 @@ export const designationSchema = z
     // Labour welfare fund act
     lwfActApplicable: z.boolean(),
     lwfActType: z.enum(['', 'As Per Act', 'Manual']),
-    lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+    lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
     // Overtime — a rate entered here is what's paid; left blank it's derived.
     overtimeApplicable: z.boolean(),
-    overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
+    overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a Valid Rate'),
 
     // Allowance / deduction heads
     allowances: z.array(componentRowSchema),
@@ -268,7 +268,7 @@ const wageAllowanceRowSchema = z
   .object({
     componentId: z.number(),
     valueType: z.enum(AMOUNT_TYPES),
-    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
+    amount: optionalMatch(RATE_RE, 'Enter a Valid Amount'),
     pfApplicable: z.boolean(),
     esicApplicable: z.boolean(),
     ptApplicable: z.boolean(),
@@ -284,7 +284,7 @@ const wageDeductionRowSchema = z
   .object({
     componentId: z.number(),
     valueType: z.enum(AMOUNT_TYPES),
-    amount: optionalMatch(RATE_RE, 'Enter a valid amount'),
+    amount: optionalMatch(RATE_RE, 'Enter a Valid Amount'),
     ...scheduleFields,
   })
   .superRefine((row, ctx) => {
@@ -312,7 +312,7 @@ export const wageStructureRowBaseSchema = z.object({
    * entry, and a value field of that name would be shadowed by it.
    */
   wageStructureId: z.number().optional(),
-  effectiveFrom: z.string().trim().min(1, 'Pick an effective month'),
+  effectiveFrom: z.string().trim().min(1, 'Pick an Effective Month'),
 
   /**
    * Whether the row's head list is its **own**, or inherited.
@@ -327,35 +327,35 @@ export const wageStructureRowBaseSchema = z.object({
 
   workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
   weeklyOff: text,
-  workingDays: optionalMatch(DIGITS_RE, 'Enter a whole number'),
+  workingDays: optionalMatch(DIGITS_RE, 'Enter a Whole Number'),
   salaryType: z.enum(['Daily', 'Monthly']),
   /*
    * One of these two is captured and the other derived, per the salary type —
    * see the cross-field rule below. Both are optional here so the rule can say
    * which one is missing.
    */
-  basicPay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-  wagePerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
-  extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  basicPay: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
+  wagePerDay: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
+  extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
   allowances: z.array(wageAllowanceRowSchema),
   deductions: z.array(wageDeductionRowSchema),
 
   overtimeApplicable: z.boolean(),
-  overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a valid rate'),
+  overtimeRatePerHour: optionalMatch(AMOUNT_RE, 'Enter a Valid Rate'),
 
   pfActApplicable: z.boolean(),
   employeePfContributionOnWageLimit: z.boolean(),
   employerPfContributionOnWageLimit: z.boolean(),
   pfValueType: z.enum(['Percentage', 'Fixed']),
-  pfValue: optionalMatch(AMOUNT_RE, 'Enter a valid value'),
+  pfValue: optionalMatch(AMOUNT_RE, 'Enter a Valid Value'),
 
   esicActApplicable: z.boolean(),
   esicDeductionBasis: text,
 
   ptActApplicable: z.boolean(),
   ptActType: z.enum(['', 'As Per Act', 'Manual']),
-  ptAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  ptAmount: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
   /*
    * No slab behind it — TDS carries the row's own rate, and the amount that rate
@@ -369,7 +369,7 @@ export const wageStructureRowBaseSchema = z.object({
 
   lwfActApplicable: z.boolean(),
   lwfActType: z.enum(['', 'As Per Act', 'Manual']),
-  lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a valid amount'),
+  lwfAmount: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 })
 
 /**
@@ -394,10 +394,10 @@ export function missingWageField(
   >,
 ): { path: 'basicPay' | 'wagePerDay'; message: string } | null {
   if (row.salaryType === 'Monthly' && row.basicPay.trim() === '') {
-    return { path: 'basicPay', message: 'Basic pay is required for a monthly wage' }
+    return { path: 'basicPay', message: 'Basic Pay Is Required for a Monthly Wage' }
   }
   if (row.salaryType === 'Daily' && row.wagePerDay.trim() === '') {
-    return { path: 'wagePerDay', message: 'Wage per day is required for a daily wage' }
+    return { path: 'wagePerDay', message: 'Wage per Day Is Required for a Daily Wage' }
   }
   return null
 }
@@ -426,7 +426,7 @@ export const wageStructureRowSchema = wageStructureRowBaseSchema.superRefine(
  * editable and one submit only ever writes the drafts.
  */
 export const wageStructureFormSchema = z.object({
-  rows: z.array(wageStructureRowSchema).min(1, 'Add at least one row'),
+  rows: z.array(wageStructureRowSchema).min(1, 'Add at Least One Row'),
 })
 
 export type WageStructureFormValues = z.infer<typeof wageStructureFormSchema>

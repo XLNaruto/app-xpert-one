@@ -29,7 +29,7 @@ export function EffectiveFromField({
     <Field
       label="Effective from (IST)"
       required
-      hint="Changes take effect at least 7 days ahead, counting today, at the same clock time."
+      hint="Changes Take Effect at Least 7 Days Ahead, Counting Today, at the Same Clock Time."
       error={error}
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

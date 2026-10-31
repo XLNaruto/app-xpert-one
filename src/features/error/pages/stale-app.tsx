@@ -46,14 +46,14 @@ export function StaleApp() {
 
         <h1 className="cs-rise font-heading text-4xl font-bold tracking-tight sm:text-5xl [animation-delay:.25s]">
           <span className="bg-gradient-to-r from-primary via-sky-400 to-primary bg-clip-text text-transparent">
-            {reloading ? 'Refreshing…' : 'Reload needed'}
+            {reloading ? 'Refreshing…' : 'Reload Needed'}
           </span>
         </h1>
 
         <p className="cs-rise mx-auto mt-4 max-w-md text-balance text-sm leading-relaxed text-muted-foreground sm:text-base [animation-delay:.35s]">
           {reloading
-            ? 'This page is running an older version of the app. Reloading it now — nothing you entered on other screens is affected.'
-            : 'This page is running an older version of the app and its files are no longer available. Reload to pick up the latest version.'}
+            ? 'This Page Is Running an Older Version of the App. Reloading It Now — Nothing You Entered on Other Screens Is Affected.'
+            : 'This Page Is Running an Older Version of the App and Its Files Are No Longer Available. Reload to Pick Up the Latest Version.'}
         </p>
 
         {!reloading && (

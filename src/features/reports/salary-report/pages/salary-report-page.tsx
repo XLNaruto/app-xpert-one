@@ -52,7 +52,7 @@ export function SalaryReportPage() {
     onSearchChange: view.setSearch,
     sorting: view.sorting,
     onSortingChange: view.onSortingChange,
-    searchPlaceholder: 'Search by name, code or mobile…',
+    searchPlaceholder: 'Search by Name, Code or Mobile…',
     itemName: 'records',
   }
 
@@ -62,7 +62,7 @@ export function SalaryReportPage() {
     <div>
       <PageHeader
         title="Salary Report"
-        description="The month already processed — the payslip, the statutory register, and what has and hasn't been released."
+        description="The Month Already Processed — The Payslip, the Statutory Register, and What Has and Hasn't Been Released."
       />
 
       <ReportFilterCard
@@ -96,19 +96,19 @@ export function SalaryReportPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its payroll reports."
+          description="Select a Company for This Session to Read Its Payroll Reports."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
           title="Choose What to Report On"
-          description="Pick a type and a period above, then press “Filter Data” to load the report."
+          description="Pick a Type and a Period Above, Then Press “Filter Data” to Load the Report."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {view.error instanceof Error
             ? view.error.message
-            : "Couldn't load the salary report."}
+            : "Couldn't Load the Salary Report."}
         </p>
       ) : (
         <>

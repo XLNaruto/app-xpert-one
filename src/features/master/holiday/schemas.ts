@@ -23,13 +23,13 @@ function crossesAccountingYear(fromDate: string, toDate: string): string | null 
 export const holidaySchema = z
   .object({
     holidayName: recordNameField('the holiday name', { max: 200 }),
-    fromDate: z.string().trim().min(1, 'Please select from date'),
-    toDate: z.string().trim().min(1, 'Please select to date'),
+    fromDate: z.string().trim().min(1, 'Please Select from Date'),
+    toDate: z.string().trim().min(1, 'Please Select to Date'),
   })
   // Both dates are `yyyy-MM-dd`, so a plain string compare orders them.
   .refine((v) => !v.fromDate || !v.toDate || v.toDate >= v.fromDate, {
     path: ['toDate'],
-    message: 'To date must be on or after from date',
+    message: 'To Date Must Be on or After from Date',
   })
   .superRefine((v, ctx) => {
     const message = crossesAccountingYear(v.fromDate, v.toDate)
@@ -100,7 +100,7 @@ export const holidayYearSchema = z
   .object({
     accountingYear: z
       .string()
-      .refine(isAccountingYear, 'Please select an accounting year'),
+      .refine(isAccountingYear, 'Please Select an Accounting Year'),
     rows: z.array(holidayYearRowSchema),
   })
   .superRefine((v, ctx) => {
@@ -110,14 +110,14 @@ export const holidayYearSchema = z
       .filter(({ row }) => row.name.trim() || row.fromDate || row.toDate)
 
     if (filled.length === 0) {
-      ctx.addIssue({ code: 'custom', path: ['rows'], message: 'Add at least one holiday' })
+      ctx.addIssue({ code: 'custom', path: ['rows'], message: 'Add at Least One Holiday' })
       return
     }
     if (filled.length > 100) {
       ctx.addIssue({
         code: 'custom',
         path: ['rows'],
-        message: 'A single save can hold at most 100 holidays',
+        message: 'A Single Save Can Hold at Most 100 Holidays',
       })
     }
 
@@ -127,12 +127,12 @@ export const holidayYearSchema = z
     for (const { row, index } of filled) {
       const name = row.name.trim()
       if (!name) {
-        ctx.addIssue({ code: 'custom', path: ['rows', index, 'name'], message: 'Please enter the holiday name' })
+        ctx.addIssue({ code: 'custom', path: ['rows', index, 'name'], message: 'Please Enter the Holiday Name' })
       } else if (name.length > 200) {
-        ctx.addIssue({ code: 'custom', path: ['rows', index, 'name'], message: 'Maximum 200 characters' })
+        ctx.addIssue({ code: 'custom', path: ['rows', index, 'name'], message: 'Maximum 200 Characters' })
       }
       if (!row.fromDate) {
-        ctx.addIssue({ code: 'custom', path: ['rows', index, 'fromDate'], message: 'Please select from date' })
+        ctx.addIssue({ code: 'custom', path: ['rows', index, 'fromDate'], message: 'Please Select from Date' })
       } else if (range && !isInAccountingYear(row.fromDate, v.accountingYear)) {
         ctx.addIssue({
           code: 'custom',
@@ -141,12 +141,12 @@ export const holidayYearSchema = z
         })
       }
       if (!row.toDate) {
-        ctx.addIssue({ code: 'custom', path: ['rows', index, 'toDate'], message: 'Please select to date' })
+        ctx.addIssue({ code: 'custom', path: ['rows', index, 'toDate'], message: 'Please Select to Date' })
       } else if (row.fromDate && row.toDate < row.fromDate) {
         ctx.addIssue({
           code: 'custom',
           path: ['rows', index, 'toDate'],
-          message: 'To date must be on or after from date',
+          message: 'To Date Must Be on or After from Date',
         })
       } else if (range && !isInAccountingYear(row.toDate, v.accountingYear)) {
         ctx.addIssue({
@@ -162,7 +162,7 @@ export const holidayYearSchema = z
           ctx.addIssue({
             code: 'custom',
             path: ['rows', index, 'name'],
-            message: 'Listed twice for the same start date',
+            message: 'Listed Twice for the Same Start Date',
           })
         }
         seen.add(key)

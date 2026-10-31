@@ -56,7 +56,7 @@ export async function fetchDistrictPage(
       total,
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't load districts.")
+    throw toApiError(error, "Couldn't Load Districts.")
   }
 }
 
@@ -101,7 +101,7 @@ export async function fetchDistricts(stateId?: number): Promise<DistrictRecord[]
 
     return districts.sort((a, b) => a.districtName.localeCompare(b.districtName))
   } catch (error) {
-    throw toApiError(error, "Couldn't load districts.")
+    throw toApiError(error, "Couldn't Load Districts.")
   }
 }
 
@@ -139,6 +139,6 @@ export async function fetchDistrict(id: number): Promise<DistrictRecord> {
       createdAt: item.created_at,
     }
   } catch (error) {
-    throw toApiError(error, 'District not found')
+    throw toApiError(error, 'District Not Found')
   }
 }

@@ -44,6 +44,6 @@ export async function fetchSalaryReport(
     })
     return toSalaryView(salaryReportResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the processed salaries.")
+    throw toApiError(error, "Couldn't Load the Processed Salaries.")
   }
 }

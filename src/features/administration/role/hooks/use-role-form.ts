@@ -227,7 +227,7 @@ export function useRoleForm(id?: number) {
     const mutation = isEdit ? updateRole : createRole
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Role updated' : 'Role created')
+        toast.success(isEdit ? 'Role Updated' : 'Role Created')
         goToList()
       },
       onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't save the role.")),

@@ -44,6 +44,9 @@ export function useBulkWageHistoryList() {
     limit: pagination.limit,
     offset: pagination.offset,
     onPaginationChange: pagination.onPaginationChange,
+    /** Server-side, on the designation name — the only column the endpoint searches. */
+    search: pagination.search,
+    setSearch: pagination.setSearch,
 
     isLoading: query.isLoading,
     /** A page arriving over the one already on screen — the grid stays put. */

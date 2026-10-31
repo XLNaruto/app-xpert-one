@@ -99,7 +99,7 @@ export function CompanyLogoField({
           {showImage ? (
             <img
               src={src}
-              alt="Company logo"
+              alt="Company Logo"
               onError={() => setFailed(true)}
               // Inside the square the logo keeps its own proportions: bounded by
               // the box on both axes and never stretched or cropped to fill it,
@@ -112,7 +112,7 @@ export function CompanyLogoField({
             <span className="flex size-full flex-col items-center justify-center gap-1 bg-muted/40 text-muted-foreground">
               <ImagePlus className="size-6" />
               <span className="text-[11px] font-medium leading-none">
-                {hasLogo ? 'Logo unavailable' : 'Add logo'}
+                {hasLogo ? 'Logo Unavailable' : 'Add Logo'}
               </span>
             </span>
           )}
@@ -144,7 +144,7 @@ export function CompanyLogoField({
                 <X className="size-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Remove logo</TooltipContent>
+            <TooltipContent>Remove Logo</TooltipContent>
           </Tooltip>
         )}
       </div>

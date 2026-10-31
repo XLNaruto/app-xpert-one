@@ -78,7 +78,7 @@ export async function fetchPfRates(
 
     return { items: rates, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load PF rates.")
+    throw toApiError(error, "Couldn't Load PF Rates.")
   }
 }
 
@@ -88,7 +88,7 @@ export async function fetchPfRate(id: number): Promise<PfRate> {
     const raw = await http.get<unknown>(endpoints.PF_RATES.GET(id))
     return toPfRate(pfRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'PF rate not found')
+    throw toApiError(error, 'PF Rate Not Found')
   }
 }
 
@@ -101,7 +101,7 @@ export async function createPfRate(values: PfRateFormValues): Promise<PfRate> {
     )
     return toPfRate(pfRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the PF rate.")
+    throw toApiError(error, "Couldn't Create the PF Rate.")
   }
 }
 
@@ -120,7 +120,7 @@ export async function updatePfRate(
     )
     return toPfRate(pfRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the PF rate.")
+    throw toApiError(error, "Couldn't Update the PF Rate.")
   }
 }
 
@@ -129,6 +129,6 @@ export async function deletePfRate(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.PF_RATES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the PF rate.")
+    throw toApiError(error, "Couldn't Delete the PF Rate.")
   }
 }

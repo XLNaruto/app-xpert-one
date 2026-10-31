@@ -66,8 +66,8 @@ export function PaySalaryToolbar({
             onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
             {...departments}
             icon={Building2}
-            placeholder="Every department"
-            searchPlaceholder="Search departments…"
+            placeholder="Every Department"
+            searchPlaceholder="Search Departments…"
             clearable
           />
         </Field>

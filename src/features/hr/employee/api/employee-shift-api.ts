@@ -60,7 +60,7 @@ export async function fetchEmployeeShiftOnDay(
     })
     return toEmployeeShiftOnDay(employeeShiftOnDayResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't work out this employee's shift for that date.")
+    throw toApiError(error, "Couldn't Work out This Employee's Shift for That Date.")
   }
 }
 
@@ -79,7 +79,7 @@ export async function fetchEmployeeShiftAssignments(
     const { items, total } = employeeShiftAssignmentsResponseSchema.parse(raw)
     return { items: items.map(toEmployeeShiftAssignment), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the shift assignment timeline.")
+    throw toApiError(error, "Couldn't Load the Shift Assignment Timeline.")
   }
 }
 
@@ -99,7 +99,7 @@ export async function createEmployeeShiftAssignment(
     )
     return toEmployeeShiftAssignment(employeeShiftAssignmentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the shift assignment.")
+    throw toApiError(error, "Couldn't Save the Shift Assignment.")
   }
 }
 
@@ -117,7 +117,7 @@ export async function deleteEmployeeShiftAssignment(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.SHIFT_ENTRY(employeeId, entryId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the timeline entry.")
+    throw toApiError(error, "Couldn't Remove the Timeline Entry.")
   }
 }
 
@@ -154,7 +154,7 @@ export async function fetchEmployeeRoster(
     const { items, total } = employeeRosterResponseSchema.parse(raw)
     return { items: items.map(toEmployeeRosterEntry), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the roster.")
+    throw toApiError(error, "Couldn't Load the Roster.")
   }
 }
 
@@ -175,7 +175,7 @@ export async function createEmployeeRosterEntry(
     )
     return toEmployeeRosterEntry(employeeRosterEntryResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't override the shift for that date.")
+    throw toApiError(error, "Couldn't Override the Shift for That Date.")
   }
 }
 
@@ -193,6 +193,6 @@ export async function deleteEmployeeRosterEntry(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.ROSTER_ENTRY(employeeId, entryId))
   } catch (error) {
-    throw toApiError(error, "Couldn't drop the date override.")
+    throw toApiError(error, "Couldn't Drop the Date Override.")
   }
 }

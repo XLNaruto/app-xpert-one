@@ -47,7 +47,7 @@ export function PfReportPage() {
     onSearchChange: view.setSearch,
     sorting: view.sorting,
     onSortingChange: view.onSortingChange,
-    searchPlaceholder: 'Search by name, code, PF number or UAN…',
+    searchPlaceholder: 'Search by Name, Code, PF Number or UAN…',
     itemName: 'members',
   }
 
@@ -57,7 +57,7 @@ export function PfReportPage() {
     <div>
       <PageHeader
         title="PF Report"
-        description="The month's EPFO sheets — the challan, the employer's statement, the new-member registrations and the ECR."
+        description="The Month's EPFO Sheets — The Challan, the Employer's Statement, the New-Member Registrations and the ECR."
       />
 
       <ReportFilterCard
@@ -91,17 +91,17 @@ export function PfReportPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its PF sheets."
+          description="Select a Company for This Session to Read Its PF Sheets."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
           title="Choose a Sheet and a Period"
-          description="Pick a type and a month above, then press “Filter Data” to load the sheet."
+          description="Pick a Type and a Month Above, Then Press “Filter Data” to Load the Sheet."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {view.error instanceof Error ? view.error.message : "Couldn't load the PF report."}
+          {view.error instanceof Error ? view.error.message : "Couldn't Load the PF Report."}
         </p>
       ) : (
         <>
@@ -118,7 +118,7 @@ export function PfReportPage() {
               items={view.basisItems}
               isRateOnFile={view.basis.isRateOnFile}
               rateEffectiveDate={view.basis.rateEffectiveDate}
-              missingRateMessage="No PF rate is configured for this period — these figures use the statutory defaults."
+              missingRateMessage="No PF Rate Is Configured for This Period — These Figures Use the Statutory Defaults."
             />
           )}
 

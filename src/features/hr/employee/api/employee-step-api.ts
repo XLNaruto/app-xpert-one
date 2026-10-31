@@ -101,7 +101,7 @@ export async function fetchEmployeeKyc(employeeId: number): Promise<EmployeeKyc>
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.KYC(employeeId))
     return toEmployeeKyc(employeeKycResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the KYC detail.")
+    throw toApiError(error, "Couldn't Load the KYC Detail.")
   }
 }
 
@@ -121,7 +121,7 @@ export async function saveEmployeeKyc(
     )
     return toEmployeeKyc(employeeKycResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the KYC detail.")
+    throw toApiError(error, "Couldn't Save the KYC Detail.")
   }
 }
 
@@ -137,7 +137,7 @@ export async function updateEmployeeKyc(
     )
     return toEmployeeKyc(employeeKycResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the KYC detail.")
+    throw toApiError(error, "Couldn't Update the KYC Detail.")
   }
 }
 
@@ -155,7 +155,7 @@ export async function fetchEmployeeWageStructure(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.WAGE_STRUCTURE(employeeId))
     return toEmployeeWageStructure(employeeWageStructureResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the wage structure.")
+    throw toApiError(error, "Couldn't Load the Wage Structure.")
   }
 }
 
@@ -168,7 +168,7 @@ export async function fetchEmployeeFamily(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.FAMILY(employeeId))
     return employeeFamilyListResponseSchema.parse(raw).items.map(toEmployeeFamilyMember)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the family detail.")
+    throw toApiError(error, "Couldn't Load the Family Detail.")
   }
 }
 
@@ -183,7 +183,7 @@ export async function createEmployeeFamilyMember(
     )
     return toEmployeeFamilyMember(employeeFamilyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't add the family member.")
+    throw toApiError(error, "Couldn't Add the Family Member.")
   }
 }
 
@@ -199,7 +199,7 @@ export async function updateEmployeeFamilyMember(
     )
     return toEmployeeFamilyMember(employeeFamilyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the family member.")
+    throw toApiError(error, "Couldn't Update the Family Member.")
   }
 }
 
@@ -210,7 +210,7 @@ export async function deleteEmployeeFamilyMember(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.FAMILY_MEMBER(employeeId, memberId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the family member.")
+    throw toApiError(error, "Couldn't Remove the Family Member.")
   }
 }
 
@@ -223,7 +223,7 @@ export async function fetchEmployeeEducations(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.EDUCATIONS(employeeId))
     return employeeEducationListResponseSchema.parse(raw).items.map(toEmployeeEducation)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the education detail.")
+    throw toApiError(error, "Couldn't Load the Education Detail.")
   }
 }
 
@@ -238,7 +238,7 @@ export async function createEmployeeEducation(
     )
     return toEmployeeEducation(employeeEducationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't add the qualification.")
+    throw toApiError(error, "Couldn't Add the Qualification.")
   }
 }
 
@@ -254,7 +254,7 @@ export async function updateEmployeeEducation(
     )
     return toEmployeeEducation(employeeEducationResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the qualification.")
+    throw toApiError(error, "Couldn't Update the Qualification.")
   }
 }
 
@@ -265,7 +265,7 @@ export async function deleteEmployeeEducation(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.EDUCATION(employeeId, educationId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the qualification.")
+    throw toApiError(error, "Couldn't Remove the Qualification.")
   }
 }
 
@@ -278,7 +278,7 @@ export async function fetchEmployeeExperiences(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.EXPERIENCES(employeeId))
     return employeeExperienceListResponseSchema.parse(raw).items.map(toEmployeeExperience)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the experience detail.")
+    throw toApiError(error, "Couldn't Load the Experience Detail.")
   }
 }
 
@@ -293,7 +293,7 @@ export async function createEmployeeExperience(
     )
     return toEmployeeExperience(employeeExperienceResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't add the experience.")
+    throw toApiError(error, "Couldn't Add the Experience.")
   }
 }
 
@@ -309,7 +309,7 @@ export async function updateEmployeeExperience(
     )
     return toEmployeeExperience(employeeExperienceResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the experience.")
+    throw toApiError(error, "Couldn't Update the Experience.")
   }
 }
 
@@ -320,7 +320,7 @@ export async function deleteEmployeeExperience(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.EXPERIENCE(employeeId, experienceId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the experience.")
+    throw toApiError(error, "Couldn't Remove the Experience.")
   }
 }
 
@@ -333,7 +333,7 @@ export async function fetchEmployeeDocuments(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.DOCUMENTS(employeeId))
     return employeeDocumentListResponseSchema.parse(raw).items.map(toEmployeeDocument)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the documents.")
+    throw toApiError(error, "Couldn't Load the Documents.")
   }
 }
 
@@ -365,7 +365,7 @@ export async function createEmployeeDocument(
     )
     return toEmployeeDocument(employeeDocumentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't attach the document.")
+    throw toApiError(error, "Couldn't Attach the Document.")
   }
 }
 
@@ -381,7 +381,7 @@ export async function updateEmployeeDocument(
     )
     return toEmployeeDocument(employeeDocumentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the document.")
+    throw toApiError(error, "Couldn't Update the Document.")
   }
 }
 
@@ -394,7 +394,7 @@ export async function deleteEmployeeDocument(
       endpoints.EMPLOYEES.DOCUMENT(employeeId, employeeDocumentId),
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the document.")
+    throw toApiError(error, "Couldn't Remove the Document.")
   }
 }
 
@@ -405,7 +405,7 @@ export async function fetchEmployeeAssets(employeeId: number): Promise<EmployeeA
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.ASSETS(employeeId))
     return employeeAssetListResponseSchema.parse(raw).items.map(toEmployeeAsset)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the assets.")
+    throw toApiError(error, "Couldn't Load the Assets.")
   }
 }
 
@@ -420,7 +420,7 @@ export async function createEmployeeAsset(
     )
     return toEmployeeAsset(employeeAssetResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't assign the asset.")
+    throw toApiError(error, "Couldn't Assign the Asset.")
   }
 }
 
@@ -437,7 +437,7 @@ export async function updateEmployeeAsset(
     )
     return toEmployeeAsset(employeeAssetResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the asset.")
+    throw toApiError(error, "Couldn't Update the Asset.")
   }
 }
 
@@ -448,7 +448,7 @@ export async function deleteEmployeeAsset(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.ASSET(employeeId, employeeAssetId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove the asset.")
+    throw toApiError(error, "Couldn't Remove the Asset.")
   }
 }
 
@@ -465,7 +465,7 @@ export async function fetchEmployeeTransfers(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.TRANSFERS(employeeId))
     return employeeTransferListResponseSchema.parse(raw).items.map(toEmployeeTransfer)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the transfer history.")
+    throw toApiError(error, "Couldn't Load the Transfer History.")
   }
 }
 
@@ -480,7 +480,7 @@ export async function fetchEmployeeTransferDetail(
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the posting detail.")
+    throw toApiError(error, "Couldn't Load the Posting Detail.")
   }
 }
 
@@ -502,7 +502,7 @@ export async function transferEmployee(
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't transfer the employee.")
+    throw toApiError(error, "Couldn't Transfer the Employee.")
   }
 }
 
@@ -525,7 +525,7 @@ export async function updateEmployeeService(
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the posting.")
+    throw toApiError(error, "Couldn't Update the Posting.")
   }
 }
 
@@ -545,7 +545,7 @@ export async function leaveEmployeeService(
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't close the posting.")
+    throw toApiError(error, "Couldn't Close the Posting.")
   }
 }
 
@@ -560,7 +560,7 @@ export async function fetchEmployeeRejoinEligibility(
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.REJOIN(employeeId))
     return toEmployeeRejoinEligibility(employeeRejoinEligibilityResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't check whether this employee can rejoin.")
+    throw toApiError(error, "Couldn't Check Whether This Employee Can Rejoin.")
   }
 }
 
@@ -584,6 +584,6 @@ export async function rejoinEmployee(
     )
     return toEmployeeTransferDetail(employeeTransferDetailResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't rejoin the employee.")
+    throw toApiError(error, "Couldn't Rejoin the Employee.")
   }
 }

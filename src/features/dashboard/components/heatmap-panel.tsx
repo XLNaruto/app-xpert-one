@@ -67,14 +67,14 @@ export function HeatmapPanel({ panel, ignoredFilters = [] }: HeatmapPanelProps) 
       title={shape === 'calendar' ? 'Activity Calendar' : 'Punch Pattern'}
       description={
         shape === 'calendar'
-          ? 'One cell per day, weeks across and weekdays down.'
-          : 'Weekday down, local hour across — the shape that shows a shift pattern or an office that really starts at ten.'
+          ? 'One Cell per Day, Weeks Across and Weekdays Down.'
+          : 'Weekday Down, Local Hour Across — The Shape That Shows a Shift Pattern or an Office That Really Starts at Ten.'
       }
       isLoading={panel.isPending}
       isFetching={panel.isFetching && !panel.isPending}
       error={panel.error}
       isEmpty={Boolean(data) && data!.max === 0}
-      emptyDescription="No activity was recorded across the whole grid for this period."
+      emptyDescription="No Activity Was Recorded Across the Whole Grid for This Period."
       skeletonHeight={220}
       actions={
         <>
@@ -101,7 +101,7 @@ export function HeatmapPanel({ panel, ignoredFilters = [] }: HeatmapPanelProps) 
             <p className="flex items-start gap-2 rounded-md bg-muted/60 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
               <Info className="mt-0.5 size-3.5 shrink-0" />
               <span>
-                This grid is keyed by company only, so the{' '}
+                This Grid Is Keyed by Company Only, So The{' '}
                 {ignoredFilters.join(', ')} filter
                 {ignoredFilters.length === 1 ? ' is' : 's are'} not applied here.
                 Switch to the calendar to narrow further.

@@ -64,7 +64,7 @@ export function useAssetVariantForm({
       : createVariant.mutateAsync(values)
     mutation
       .then(() => {
-        toast.success(isEdit ? 'Variant updated' : 'Variant added')
+        toast.success(isEdit ? 'Variant Updated' : 'Variant Added')
         onSaved()
       })
       // A 409 names the duplicate; leave the form as it was so the user can

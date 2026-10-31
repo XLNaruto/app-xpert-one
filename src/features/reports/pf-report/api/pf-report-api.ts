@@ -40,7 +40,7 @@ export type PfReportData =
   | ({ type: 'new-joining' } & PfReportPage<PfNewJoiningRow>)
   | ({ type: 'ecr' } & PfReportPage<PfEcrRow>)
 
-const ERROR_MESSAGE = "Couldn't load the PF report."
+const ERROR_MESSAGE = "Couldn't Load the PF Report."
 
 export async function fetchPfChallan(
   filters: ReportFilters,

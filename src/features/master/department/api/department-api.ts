@@ -100,7 +100,7 @@ export async function fetchDepartments(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load departments.")
+    throw toApiError(error, "Couldn't Load Departments.")
   }
 }
 
@@ -110,7 +110,7 @@ export async function fetchDepartment(id: number): Promise<Department> {
     const raw = await http.get<unknown>(endpoints.DEPARTMENTS.GET(id))
     return toDepartment(departmentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Department not found')
+    throw toApiError(error, 'Department Not Found')
   }
 }
 
@@ -128,7 +128,7 @@ export async function createDepartment(
     )
     return toDepartment(departmentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the department.")
+    throw toApiError(error, "Couldn't Create the Department.")
   }
 }
 
@@ -148,7 +148,7 @@ export async function updateDepartment(
     )
     return toDepartment(departmentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the department.")
+    throw toApiError(error, "Couldn't Update the Department.")
   }
 }
 
@@ -157,6 +157,6 @@ export async function deleteDepartment(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.DEPARTMENTS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the department.")
+    throw toApiError(error, "Couldn't Delete the Department.")
   }
 }

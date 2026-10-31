@@ -37,7 +37,7 @@ export function SopGroupCreatePage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title={f.isEdit ? 'Edit SOP Group' : 'Add SOP Group'}
-        description="The checklist, then the employees who run it every day."
+        description="The Checklist, Then the Employees Who Run It Every Day."
         actions={
           <Button variant="outline" onClick={f.goToList}>
             <ArrowLeft className="size-4" />
@@ -87,10 +87,10 @@ export function SopGroupCreatePage({ data }: { data?: string }) {
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
                 <p className="text-sm text-muted-foreground">
                   {f.tab === 'group'
-                    ? 'Saves the group and its checklist, then moves on to assigning employees.'
+                    ? 'Saves the Group and Its Checklist, Then Moves on to Assigning Employees.'
                     : f.newAssignees > 0
                       ? `Saving assigns this group to ${f.newAssignees} new employee${f.newAssignees === 1 ? '' : 's'}.`
-                      : 'The group is saved. Pick employees now, or come back and assign them later.'}
+                      : 'The Group Is Saved. Pick Employees Now, or Come Back and Assign Them Later.'}
                 </p>
                 <div className="flex items-center gap-3">
                   <Button type="button" variant="outline" onClick={f.goToList} disabled={f.isPending}>
@@ -141,10 +141,10 @@ export function SopGroupCreatePage({ data }: { data?: string }) {
         icon={Trash2}
         title={
           f.removal?.kind === 'item'
-            ? 'Remove this checklist task?'
+            ? 'Remove This Checklist Task?'
             : f.removal?.kind === 'assignee'
-              ? 'Remove this employee?'
-              : 'Remove this custom task?'
+              ? 'Remove This Employee?'
+              : 'Remove This Custom Task?'
         }
         description={
           f.removal?.kind === 'item'

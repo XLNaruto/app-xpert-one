@@ -47,7 +47,7 @@ export function SidebarBrand({
     logo && !failed ? (
       <img
         src={src}
-        alt={name ?? 'Company logo'}
+        alt={name ?? 'Company Logo'}
         onError={() => setFailed(true)}
         className={cn(
           'shrink-0 object-contain',

@@ -50,7 +50,7 @@ export function WeekoffDefaultDialog({
           <Field
             label="Apply To"
             required
-            hint="A department's default wins over its company's, so a department pick only affects that department's staff."
+            hint="A Department's Default Wins over Its Company's, So a Department Pick Only Affects That Department's Staff."
           >
             <Combobox
               className="w-full"
@@ -58,7 +58,7 @@ export function WeekoffDefaultDialog({
               value={pin.level}
               onChange={(value) => pin.setLevel(value as WeekoffDefaultLevel)}
               options={WEEKOFF_DEFAULT_SCOPES}
-              placeholder="Select level"
+              placeholder="Select Level"
             />
           </Field>
 
@@ -69,8 +69,8 @@ export function WeekoffDefaultDialog({
                 value={pin.companyId}
                 onChange={pin.setCompanyId}
                 {...pin.companySelect}
-                placeholder="Select company"
-                searchPlaceholder="Search company"
+                placeholder="Select Company"
+                searchPlaceholder="Search Company"
               />
             </Field>
           ) : (
@@ -80,8 +80,8 @@ export function WeekoffDefaultDialog({
                 value={pin.departmentId}
                 onChange={pin.setDepartmentId}
                 {...pin.departmentSelect}
-                placeholder="Select department"
-                searchPlaceholder="Search department"
+                placeholder="Select Department"
+                searchPlaceholder="Search Department"
               />
             </Field>
           )}

@@ -23,6 +23,11 @@ export const endpoints = {
   },
   ME: {
     GET: '/user/me',
+    /** Edit the caller's own name / email / mobile — answers the `GET` body. */
+    PATCH: '/user/me',
+    PROFILE_PHOTO_PRESIGN: '/user/me/profile-photo/presign',
+    /** `{ profile_photo: key | null }` — store (or clear) the presigned key. */
+    PROFILE_PHOTO: '/user/me/profile-photo',
     COMPANIES: '/user/my/companies',
     VERIFY_PASSWORD: '/user/me/verify-password',
     TWO_FACTOR_ENABLE: '/user/me/two-factor/enable',

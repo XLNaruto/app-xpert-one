@@ -80,7 +80,7 @@ export function WorkspaceLayout() {
               <ArrowLeft className="size-4" />
             </Link>
           </TooltipTrigger>
-          <TooltipContent>Back to dashboard</TooltipContent>
+          <TooltipContent>Back to Dashboard</TooltipContent>
         </Tooltip>
 
         {/*

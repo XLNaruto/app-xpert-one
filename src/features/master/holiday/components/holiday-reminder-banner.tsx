@@ -38,7 +38,7 @@ export function HolidayReminderBanner({ companyIds }: { companyIds?: string[] })
         </p>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
           {overdue
-            ? 'The year has already started and these companies have no holidays in it.'
+            ? 'The Year Has Already Started and These Companies Have No Holidays in It.'
             : `Add holidays for ${reminder.accountingYear}${
                 reminder.startsOn ? ` (from ${formatDate(reminder.startsOn)})` : ''
               } for:`}

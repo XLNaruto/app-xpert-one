@@ -113,7 +113,7 @@ export function PfRateListPage() {
     <div>
       <PageHeader
         title="PF Rate Setting"
-        description="Manage Provident Fund rate slabs by effective date."
+        description="Manage Provident Fund Rate Slabs by Effective Date."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -129,7 +129,7 @@ export function PfRateListPage() {
         columns={columns}
         data={rows}
         isLoading={isLoading}
-        searchPlaceholder="Search PF rate…"
+        searchPlaceholder="Search PF Rate…"
         itemName="PF rates"
         pageSizeOptions={[5, 10, 25, 50]}
         serverPagination
@@ -150,19 +150,19 @@ export function PfRateListPage() {
             <div>
               <p className="font-medium text-foreground">
                 {isError
-                  ? "Couldn't load PF rates"
+                  ? "Couldn't Load PF Rates"
                   : search
-                    ? 'No matching PF rates'
-                    : 'No PF rates yet'}
+                    ? 'No Matching PF Rates'
+                    : 'No PF Rates Yet'}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isError
                   ? error instanceof Error
                     ? error.message
-                    : 'Something went wrong. Please try again.'
+                    : 'Something Went Wrong. Please Try Again.'
                   : search
-                    ? 'Try a different search term.'
-                    : 'Add your first PF rate slab to get started.'}
+                    ? 'Try a Different Search Term.'
+                    : 'Add Your First PF Rate Slab to Get Started.'}
               </p>
             </div>
             {!isError && !search && canCreate && (

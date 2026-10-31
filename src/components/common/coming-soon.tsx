@@ -12,7 +12,7 @@ interface ComingSoonProps {
 /** Animated, theme-aware placeholder for modules that aren't built yet. */
 export function ComingSoon({
   title = 'Coming Soon',
-  description = 'This module is being crafted and will be available here shortly.',
+  description = 'This Module Is Being Crafted and Will Be Available Here Shortly.',
   eyebrow = 'Something great is on the way',
 }: ComingSoonProps) {
   return (

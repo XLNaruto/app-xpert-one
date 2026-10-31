@@ -127,7 +127,7 @@ export function useLeaveQuotaGrid({
     if (hasErrors) return
 
     save(buildRows(), {
-      onSuccess: () => toast.success('Leave allowances saved'),
+      onSuccess: () => toast.success('Leave Allowances Saved'),
       onError: (error) =>
         toast.error(getApiErrorMessage(error, "Couldn't save the leave allowances.")),
     })

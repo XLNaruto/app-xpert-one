@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { LEAVE_TYPE_DEFAULT_SORT } from '../constants'
 import { useLeaveTypes } from '../api/use-leave-types'
 import { useDeleteLeaveType } from '../api/use-leave-type-mutations'
@@ -25,7 +25,7 @@ export function useLeaveTypeList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, LEAVE_TYPE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, LEAVE_TYPE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useLeaveTypes(params)
   const deleteLeaveType = useDeleteLeaveType()
 
@@ -41,11 +41,11 @@ export function useLeaveTypeList() {
     if (!pendingDelete) return
     deleteLeaveType.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Leave type deleted')
+        toast.success('Leave Type Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete leave type'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Leave Type'),
     })
   }
 

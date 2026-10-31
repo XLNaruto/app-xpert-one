@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { BRANCH_DEFAULT_SORT } from '../constants'
@@ -26,7 +26,7 @@ export function useBranchList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, BRANCH_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, BRANCH_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useBranches(params)
   const deleteBranch = useDeleteBranch()
 
@@ -44,11 +44,11 @@ export function useBranchList() {
     if (!pendingDelete) return
     deleteBranch.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Branch deleted')
+        toast.success('Branch Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete branch'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Branch'),
     })
   }
 

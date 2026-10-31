@@ -78,7 +78,7 @@ export function OfficeAddressFormFields({
       <FormSection
         icon={Phone}
         title="Contact Details"
-        description="How to reach this office"
+        description="How to Reach This Office"
       />
       <Field label="Mobile Number" error={errors.mobile?.message}>
         <Input inputMode="numeric" placeholder="Mobile Number" {...register('mobile')} />
@@ -93,7 +93,7 @@ export function OfficeAddressFormFields({
       <FormSection
         icon={MapPin}
         title="Address Details"
-        description="Where the office is located"
+        description="Where the Office Is Located"
       />
       <Field label="Address Line 1" required error={errors.addressLine1?.message}>
         <Input placeholder="Address Line 1" {...register('addressLine1')} />
@@ -115,7 +115,7 @@ export function OfficeAddressFormFields({
               onChange={(value) => changeState(value, field.onChange)}
               {...state}
               placeholder="Select State"
-              searchPlaceholder="Search state"
+              searchPlaceholder="Search State"
             />
           )}
         />
@@ -130,8 +130,8 @@ export function OfficeAddressFormFields({
               value={field.value}
               onChange={field.onChange}
               {...district}
-              placeholder={hasState ? 'Select District' : 'Select a state first'}
-              searchPlaceholder="Search district"
+              placeholder={hasState ? 'Select District' : 'Select a State First'}
+              searchPlaceholder="Search District"
             />
           )}
         />

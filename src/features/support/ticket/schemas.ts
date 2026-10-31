@@ -52,7 +52,7 @@ export const supportTicketSchema = z.object({
   description: z
     .string()
     .trim()
-    .min(1, 'Please describe the problem')
+    .min(1, 'Please Describe the Problem')
     .max(MAX_SUPPORT_DESCRIPTION, `Cannot exceed ${MAX_SUPPORT_DESCRIPTION} characters`),
   ticketType: supportTicketTypeSchema,
   subCategoryId: z.string(),
@@ -74,7 +74,7 @@ export const supportReopenSchema = z.object({
   reason: z
     .string()
     .trim()
-    .min(1, 'Say what is still wrong')
+    .min(1, 'Say What Is Still Wrong')
     .max(MAX_SUPPORT_REOPEN_REASON, `Cannot exceed ${MAX_SUPPORT_REOPEN_REASON} characters`),
 })
 

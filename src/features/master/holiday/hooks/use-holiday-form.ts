@@ -58,7 +58,7 @@ export function useHolidayForm(id?: number) {
     const mutation = isEdit ? updateHoliday : createHoliday
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Holiday updated' : 'Holiday created')
+        toast.success(isEdit ? 'Holiday Updated' : 'Holiday Created')
         goToList()
       },
       onError: (err) =>

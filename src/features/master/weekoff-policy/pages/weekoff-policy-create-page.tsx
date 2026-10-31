@@ -38,7 +38,7 @@ export function WeekoffPolicyCreatePage({ data }: WeekoffPolicyCreatePageProps) 
     <div>
       <PageHeader
         title={form.isEdit ? 'Edit Week-Off Policy' : 'Add Week-Off Policy'}
-        description="Name the pattern, then mark which days are off."
+        description="Name the Pattern, Then Mark Which Days Are Off."
         actions={
           <Button variant="outline" onClick={form.goToList}>
             <ArrowLeft className="size-4" />
@@ -59,7 +59,7 @@ export function WeekoffPolicyCreatePage({ data }: WeekoffPolicyCreatePageProps) 
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this week-off policy."}
+                : "Couldn't Load This Week-Off Policy."}
             </p>
           ) : (
             <form
@@ -70,7 +70,7 @@ export function WeekoffPolicyCreatePage({ data }: WeekoffPolicyCreatePageProps) 
               <FormSection
                 icon={CalendarOff}
                 title="Week-Off Policy"
-                description="A named pattern of non-working days that shifts, departments and companies can point at"
+                description="A Named Pattern of Non-working Days That Shifts, Departments and Companies Can Point At"
                 className="mt-0"
               />
 
@@ -87,7 +87,7 @@ export function WeekoffPolicyCreatePage({ data }: WeekoffPolicyCreatePageProps) 
 
               <Field
                 label="Status"
-                hint="An inactive policy stays on record but shouldn't be pointed at by new shifts."
+                hint="An Inactive Policy Stays on Record but Shouldn't Be Pointed at by New Shifts."
               >
                 <div className="flex h-9 items-center gap-2">
                   <Controller
@@ -113,7 +113,7 @@ export function WeekoffPolicyCreatePage({ data }: WeekoffPolicyCreatePageProps) 
                 <FormSection
                   icon={CalendarOff}
                   title="The Pattern"
-                  description="Off every week, plus any rule that only applies to certain occurrences in the month"
+                  description="Off Every Week, Plus Any Rule That Only Applies to Certain Occurrences in the Month"
                 />
               </div>
 

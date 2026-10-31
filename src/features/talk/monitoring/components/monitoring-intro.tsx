@@ -22,12 +22,12 @@ export function MonitoringIntro({ hasPerson }: { hasPerson: boolean }) {
 
       <div className="max-w-md space-y-2">
         <h2 className="font-heading text-lg font-semibold">
-          {hasPerson ? 'Pick a conversation' : 'Pick someone'}
+          {hasPerson ? 'Pick a Conversation' : 'Pick Someone'}
         </h2>
         <p className="text-sm text-muted-foreground">
           {hasPerson
-            ? 'Choose one of their chats to read the full history — safely, in read-only mode.'
-            : 'Select an employee or admin on the left to see the conversations they take part in.'}
+            ? 'Choose One of Their Chats to Read the Full History — Safely, in Read-Only Mode.'
+            : 'Select an Employee or Admin on the Left to See the Conversations They Take Part In.'}
         </p>
       </div>
 

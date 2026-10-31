@@ -334,7 +334,7 @@ export function AnalysisListPage() {
 
   const toolbar = (
     <FilterBar
-      search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search employee…' }}
+      search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search…' }}
       leading={
         <div className="flex items-center gap-2">
           <DatePicker
@@ -397,7 +397,7 @@ export function AnalysisListPage() {
     sorting: list.sorting,
     onSortingChange: list.onSortingChange,
     emptyState: (
-      <EmptyState icon={BarChart3} title="No Employees Found" description="Try a wider date range or other filters." />
+      <EmptyState icon={BarChart3} title="No Employees Found" description="Try a Wider Date Range or Other Filters." />
     ),
   }
 
@@ -405,7 +405,7 @@ export function AnalysisListPage() {
     <div className="space-y-4">
       <PageHeader
         title="Task Analysis"
-        description="Employee-wise completion, punctuality and time spent on SOP checklists and project work."
+        description="Employee-Wise Completion, Punctuality and Time Spent on SOP Checklists and Project Work."
       />
 
       {list.companyId === null ? (
@@ -452,7 +452,7 @@ export function AnalysisListPage() {
                 <Card className="lg:col-span-3">
                   <CardHeader>
                     <CardTitle>Done vs Open</CardTitle>
-                    <CardDescription>The employees on this page of the table, in its order — scroll for more.</CardDescription>
+                    <CardDescription>The Employees on This Page of the Table, in Its Order — Scroll for More.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {list.isLoading ? (

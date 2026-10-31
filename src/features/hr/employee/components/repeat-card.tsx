@@ -175,7 +175,7 @@ export function RepeatCard({
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            {canRemove ? 'Remove' : 'Keep at least one entry'}
+            {canRemove ? 'Remove' : 'Keep at Least One Entry'}
           </TooltipContent>
         </Tooltip>
       </div>

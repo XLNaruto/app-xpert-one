@@ -104,7 +104,7 @@ export function useSupportTicketForm(id?: number) {
 
       updateTicket.mutate(values, {
         onSuccess: () => {
-          toast.success('Ticket updated')
+          toast.success('Ticket Updated')
           goToList()
         },
         // A 409 here means the desk picked it up between load and save.
@@ -120,7 +120,7 @@ export function useSupportTicketForm(id?: number) {
         // The promise may simply not cover this desk at this severity — say so
         // now rather than leaving them waiting on a deadline that was never made.
         if (ticket.dueAt === null) {
-          toast.info('Your plan states no response time for this desk and severity.')
+          toast.info('Your Plan States No Response Time for This Desk and Severity.')
         }
         goToList()
       },

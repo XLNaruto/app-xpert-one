@@ -3,7 +3,7 @@ import { recordNameField, shortCodeField } from '@/lib/validation'
 
 /** Create/edit form for an allowance / deduction master record. */
 export const allowanceDeductionSchema = z.object({
-  type: z.enum(['ALLOWANCE', 'DEDUCTION'], { message: 'Please select type' }),
+  type: z.enum(['ALLOWANCE', 'DEDUCTION'], { message: 'Please Select Type' }),
   name: recordNameField('the name', { max: 120 }),
   shortName: shortCodeField('the short name', { max: 20 }),
 })

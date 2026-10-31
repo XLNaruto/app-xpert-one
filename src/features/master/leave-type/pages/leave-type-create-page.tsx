@@ -45,7 +45,7 @@ export function LeaveTypeCreatePage({ data }: LeaveTypeCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Leave Type' : 'Add Leave Type'}
-        description="Configure leave type details."
+        description="Configure Leave Type Details."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -66,7 +66,7 @@ export function LeaveTypeCreatePage({ data }: LeaveTypeCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this leave type."}
+                : "Couldn't Load This Leave Type."}
             </p>
           ) : (
             <form
@@ -77,7 +77,7 @@ export function LeaveTypeCreatePage({ data }: LeaveTypeCreatePageProps) {
               <FormSection
                 icon={CalendarDays}
                 title="Leave Type Details"
-                description="Name, short code and pay treatment"
+                description="Name, Short Code and Pay Treatment"
                 className="mt-0"
               />
 
@@ -98,7 +98,7 @@ export function LeaveTypeCreatePage({ data }: LeaveTypeCreatePageProps) {
                       onChange={field.onChange}
                       options={PAY_TYPE_OPTIONS}
                       placeholder="Select"
-                      searchPlaceholder="Search pay type"
+                      searchPlaceholder="Search Pay Type"
                     />
                   )}
                 />

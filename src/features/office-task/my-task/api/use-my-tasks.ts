@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import { isForbiddenError } from '@/lib/api-error'
 import { useOfficeTaskMutation } from '@/features/office-task/common'
@@ -32,21 +32,28 @@ export function useMyTaskSettings(enabled: boolean) {
   })
 }
 
-export function useMySopTasks(date: string, enabled: boolean) {
+/**
+ * One day's SOP runs. `search` is sent to the server (trimmed; empty means no
+ * filter), and the previous result stays on screen while a new term loads.
+ */
+export function useMySopTasks(date: string, search: string, enabled: boolean) {
   return useQuery({
-    queryKey: queryKeys.officeTask.mySopTasks(date),
-    queryFn: () => fetchMySopTasks(date),
+    queryKey: queryKeys.officeTask.mySopTasks(date, search),
+    queryFn: () => fetchMySopTasks(date, search || undefined),
     enabled,
     retry,
+    placeholderData: keepPreviousData,
   })
 }
 
-export function useMyProjectTasks(date: string, enabled: boolean) {
+/** One day's project shares — searched server-side like the SOP queue. */
+export function useMyProjectTasks(date: string, search: string, enabled: boolean) {
   return useQuery({
-    queryKey: queryKeys.officeTask.myProjectTasks(date),
-    queryFn: () => fetchMyProjectTasks(date),
+    queryKey: queryKeys.officeTask.myProjectTasks(date, search),
+    queryFn: () => fetchMyProjectTasks(date, search || undefined),
     enabled,
     retry,
+    placeholderData: keepPreviousData,
   })
 }
 

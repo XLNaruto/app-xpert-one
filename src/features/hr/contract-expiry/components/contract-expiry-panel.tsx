@@ -96,14 +96,14 @@ export function ContractExpiryPanel({ companyIds }: { companyIds?: string[] }) {
       },
       {
         id: 'dates',
-        header: 'Term ends',
+        header: 'Term Ends',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => <ContractDatesCell row={row.original} />,
       },
       {
         id: 'review',
-        header: 'Review due',
+        header: 'Review Due',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
@@ -147,7 +147,7 @@ export function ContractExpiryPanel({ companyIds }: { companyIds?: string[] }) {
           to="/hr/contract-expiry"
           className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
-          View all
+          View All
           <ArrowRight className="size-3.5" />
         </Link>
       </CardHeader>

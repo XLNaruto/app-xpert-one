@@ -58,7 +58,7 @@ export function SalaryPage() {
     <>
       <PageHeader
         title="Calculate Salary"
-        description="Process the month for a designation — set the days, adjust the heads that need it, and save the month."
+        description="Process the Month for a Designation — Set the Days, Adjust the Heads That Need It, and Save the Month."
         actions={
           <>
             <Button
@@ -121,7 +121,7 @@ export function SalaryPage() {
                 <TooltipContent className="max-w-56 text-pretty font-normal">
                   {selectedCount > 0
                     ? `Process the ${selectedCount} selected ${selectedCount === 1 ? 'row' : 'rows'}`
-                    : 'Process every row on this page'}
+                    : 'Process Every Row on This Page'}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -291,7 +291,7 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
     return (
       <EmptyState
         title="No Company Selected"
-        description="Select a company for this session to run its payroll."
+        description="Select a Company for This Session to Run Its Payroll."
       />
     )
   }
@@ -299,7 +299,7 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
     return (
       <EmptyState
         title="Pick a Designation"
-        description="The register is read one designation at a time — its wage structure and its allowance / deduction heads are what the columns are built from."
+        description="The Register Is Read One Designation at a Time — Its Wage Structure and Its Allowance / Deduction Heads Are What the Columns Are Built From."
       />
     )
   }
@@ -315,7 +315,7 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
       <p className="px-4 py-10 text-center text-xs text-destructive">
         {form.error instanceof Error
           ? form.error.message
-          : "Couldn't load the salary register."}
+          : "Couldn't Load the Salary Register."}
       </p>
     )
   }
@@ -323,12 +323,12 @@ function RegisterBody({ form }: { form: ReturnType<typeof useSalaryForm> }) {
     return form.status === 'pending' ? (
       <EmptyState
         title="Nothing Left to Process"
-        description="No posting of this designation is open in the period without a salary for it. The processed tab has the month that was run."
+        description="No Posting of This Designation Is Open in the Period Without a Salary for It. The Processed Tab Has the Month That Was Run."
       />
     ) : (
       <EmptyState
         title="Nothing Processed Yet"
-        description="This designation's month hasn't been run. Switch to “To Process” to run it."
+        description="This Designation's Month Hasn't Been Run. Switch to “To Process” to Run It."
       />
     )
   }

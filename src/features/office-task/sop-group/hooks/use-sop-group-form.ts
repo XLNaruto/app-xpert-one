@@ -250,13 +250,13 @@ export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupT
     toOption: (row): ComboboxOption => ({
       label: row.name,
       value: String(row.id),
-      hint: row.alreadyAssigned ? 'Already assigned' : personHint(row),
+      hint: row.alreadyAssigned ? 'Already Assigned' : personHint(row),
       disabled: row.alreadyAssigned,
     }),
   })
   const lockedIds = new Set(watchedAssignees.filter((a) => a.locked).map((a) => a.employeeId))
   const employeeOptions = employeeSelect.options.map((o) =>
-    lockedIds.has(o.value) ? { ...o, disabled: true, hint: 'Already assigned' } : o,
+    lockedIds.has(o.value) ? { ...o, disabled: true, hint: 'Already Assigned' } : o,
   )
   /** The picker holds only the NEW people — everyone already running it is fixed. */
   const pickedIds = watchedAssignees.filter((a) => !a.locked).map((a) => a.employeeId)
@@ -396,7 +396,7 @@ export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupT
     const onGroupTab = GROUP_TAB_FIELDS.some((f) => errors[f])
     if (onGroupTab) setTab('group')
     else setTab('assign')
-    toast.error('Please fix the highlighted fields')
+    toast.error('Please Fix the Highlighted Fields')
   }
 
   /**
@@ -417,7 +417,7 @@ export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupT
    */
   const saveGroupAndNext = async () => {
     if (!(await trigger(GROUP_TAB_FIELDS as unknown as (keyof SopGroupFormValues)[]))) {
-      toast.error('Please fix the highlighted fields')
+      toast.error('Please Fix the Highlighted Fields')
       return
     }
     const values = getValues()
@@ -446,7 +446,7 @@ export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupT
   const saveAssigneesTab = handleSubmit(async (values) => {
     if (groupId === undefined) {
       setTab('group')
-      toast.error('Save the group details first')
+      toast.error('Save the Group Details First')
       return
     }
     const payload = assigneesToPayload(values)
@@ -460,7 +460,7 @@ export function useSopGroupForm(routeId: number | undefined, routeTab: SopGroupT
       toast.success(
         assigned
           ? `Assigned to ${assigned} employee${assigned === 1 ? '' : 's'}`
-          : 'Assigned employees saved',
+          : 'Assigned Employees Saved',
       )
       goToList()
     } catch (error) {

@@ -34,7 +34,7 @@ export function LwfRateFormFields({
       <FormSection
         icon={Landmark}
         title="LWF Rate Settings"
-        description="Configure Labour Welfare Fund contribution details"
+        description="Configure Labour Welfare Fund Contribution Details"
         className="mt-0"
       />
 
@@ -61,7 +61,7 @@ export function LwfRateFormFields({
               onChange={field.onChange}
               {...stateSelect}
               placeholder="Select State"
-              searchPlaceholder="Search state"
+              searchPlaceholder="Search State"
             />
           )}
         />

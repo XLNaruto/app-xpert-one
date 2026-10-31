@@ -201,7 +201,7 @@ export function ProjectTaskListPage() {
     <div className="space-y-4">
       <PageHeader
         title="Project Tasks"
-        description="Work with a start and a deadline. Assignees record progress from My Tasks."
+        description="Work with a Start and a Deadline. Assignees Record Progress from My Tasks."
         actions={list.companyId === null ? undefined : addButton}
       />
 
@@ -231,7 +231,7 @@ export function ProjectTaskListPage() {
         onSortingChange={list.onSortingChange}
         toolbar={
           <FilterBar
-            search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search task, other name or mobile…' }}
+            search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search…' }}
             facets={[
               {
                 key: 'status',
@@ -259,7 +259,7 @@ export function ProjectTaskListPage() {
           <EmptyState
             icon={FolderKanban}
             title="No Project Tasks Found"
-            description="Add a task and assign it by designation, by role, or to an outside person."
+            description="Add a Task and Assign It by Designation, by Role, or to an Outside Person."
             action={addButton}
           />
         }

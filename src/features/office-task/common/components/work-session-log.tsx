@@ -31,7 +31,7 @@ function Figure({ icon: Icon, label, value }: { icon: LucideIcon; label: string;
 export function WorkSessionLog({
   sessions,
   now = Date.now(),
-  emptyText = 'The clock has not been started yet.',
+  emptyText = 'The Clock Has Not Been Started Yet.',
 }: {
   sessions: WorkSession[]
   now?: number

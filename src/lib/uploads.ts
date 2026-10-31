@@ -66,7 +66,7 @@ export async function presignUpload(
     const parsed = presignResponseSchema.parse(raw)
     return { uploadUrl: parsed.upload_url, key: parsed.key }
   } catch (error) {
-    throw toApiError(error, "Couldn't prepare the upload.")
+    throw toApiError(error, "Couldn't Prepare the Upload.")
   }
 }
 
@@ -106,7 +106,7 @@ export async function uploadFile(
     // header would make the storage host reject the request.
     await axios.put(uploadUrl, file, { headers: { 'Content-Type': contentType } })
   } catch (error) {
-    throw toApiError(error, "Couldn't upload the file.")
+    throw toApiError(error, "Couldn't Upload the File.")
   }
 
   return key

@@ -215,7 +215,7 @@ export function SupportTicketListPage() {
     <div>
       <PageHeader
         title="Raise Support"
-        description="Your queries to the XpertOne help desk. The desk you pick and how urgent you mark it together set the response time your plan promises — and that deadline is fixed the moment the ticket is raised."
+        description="Your Queries to the XpertOne Help Desk. The Desk You Pick and How Urgent You Mark It Together Set the Response Time Your Plan Promises — And That Deadline Is Fixed the Moment the Ticket Is Raised."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -253,7 +253,7 @@ export function SupportTicketListPage() {
               search={{
                 value: list.search,
                 onChange: list.setSearch,
-                placeholder: 'Search by ticket code, subject or description…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -315,13 +315,13 @@ export function SupportTicketListPage() {
               icon={LifeBuoy}
               title={
                 list.search || list.hasFilters
-                  ? 'No matching tickets'
-                  : 'No tickets raised yet'
+                  ? 'No Matching Tickets'
+                  : 'No Tickets Raised Yet'
               }
               description={
                 list.search || list.hasFilters
-                  ? 'Try a different search term or clear the filters.'
-                  : "Stuck on something, or a question about your subscription? Raise a ticket and the help desk picks it up within the time your plan promises."
+                  ? 'Try a Different Search Term or Clear the Filters.'
+                  : "Stuck on Something, or a Question About Your Subscription? Raise a Ticket and the Help Desk Picks It up Within the Time Your Plan Promises."
               }
               action={
                 list.search || list.hasFilters

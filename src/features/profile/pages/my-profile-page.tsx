@@ -16,13 +16,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useMyProfile } from '../api/use-profile'
+import { ProfilePhotoControl } from '../components/profile-photo-control'
 import { TwoFactorCard } from '../components/two-factor-card'
 import { USAGE_FULL_PERCENT, USAGE_WARN_PERCENT } from '../constants'
 import type { StatusTone } from '../constants'
 import {
   accountStatusTone,
   initialsOf,
-  shouldShowUserDetails,
   statusLabel,
   subscriptionStatusTone,
   usagePercent,
@@ -156,9 +156,10 @@ function UsageMeter({
 }
 
 /**
- * "My Profile" — a read-only view of the signed-in account, sourced from
- * `GET /user/me`: the organization, the plan it is running and how much of that
- * plan it is using.
+ * "My Profile" — the signed-in account, sourced from `GET /user/me`: the
+ * organization (read-only — only the super admin changes it), the user's own
+ * details (read-only) and photo (editable by every user), the plan it
+ * is running and how much of that plan it is using.
  */
 export function MyProfilePage() {
   const { data, isLoading, isError, error } = useMyProfile()
@@ -172,7 +173,7 @@ export function MyProfilePage() {
     <div className="mx-auto max-w-4xl">
       <PageHeader
         title="View Profile"
-        description="Your account details as they appear across the panel."
+        description="Your Account Details as They Appear Across the Panel."
       />
 
       {isLoading ? (
@@ -188,7 +189,7 @@ export function MyProfilePage() {
         <Card>
           <CardContent className="pt-5">
             <p className="text-sm text-rose-600 dark:text-rose-400">
-              {error instanceof Error ? error.message : "Couldn't load your profile."}
+              {error instanceof Error ? error.message : "Couldn't Load Your Profile."}
             </p>
           </CardContent>
         </Card>
@@ -258,13 +259,16 @@ export function MyProfilePage() {
             />
           </div>
 
-          {/* The signed-in user — an owner who holds no role *is* the account,
-              so their details would only repeat the block above. */}
-          {user && shouldShowUserDetails(user) ? (
+          {/* The signed-in user's own details and photo — shown to the owner
+              too. Only the photo is editable here for now. */}
+          {user ? (
             <section className="space-y-3">
               <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 User Details
               </h2>
+              <Card className="p-4">
+                <ProfilePhotoControl user={user} />
+              </Card>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field
                   icon={User}
@@ -334,7 +338,7 @@ export function MyProfilePage() {
                         <p className="mt-0.5 font-medium text-foreground">
                           {subscription.currentPeriodStart
                             ? `${formatDate(subscription.currentPeriodStart)} — ${formatDate(subscription.currentPeriodEnd)}`
-                            : 'Not started'}
+                            : 'Not Started'}
                         </p>
                       </div>
                       <div>

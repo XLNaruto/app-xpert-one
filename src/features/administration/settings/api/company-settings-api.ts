@@ -31,7 +31,7 @@ export async function fetchCompanySettings(companyId: number): Promise<CompanySe
     })
     return toCompanySettings(companySettingsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the settings.")
+    throw toApiError(error, "Couldn't Load the Settings.")
   }
 }
 
@@ -46,14 +46,15 @@ export async function updateCompanySettings(
     )
     return toCompanySettings(companySettingsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't schedule the change.")
+    throw toApiError(error, "Couldn't Schedule the Change.")
   }
 }
 
 /**
  * GET /user/company-settings/changes — one page of the history, newest
- * `effective_from` first (the endpoint's fixed order; it takes no sort or
- * search). A negative limit asks for the most one page serves.
+ * `effective_from` first (the endpoint's fixed order; it takes no sort).
+ * `search` matches the setting, the previous / new value, the effective date
+ * and the status. A negative limit asks for the most one page serves.
  */
 export async function fetchSettingChanges(
   companyId: number,
@@ -69,6 +70,7 @@ export async function fetchSettingChanges(
             ? Math.min(params.limit, SETTING_CHANGES_MAX_LIMIT)
             : SETTING_CHANGES_MAX_LIMIT,
         offset: params.offset,
+        ...(params.search ? { search: params.search } : {}),
         ...(filters.settingKey ? { setting_key: filters.settingKey } : {}),
         ...(filters.status ? { status: filters.status } : {}),
       },
@@ -76,7 +78,7 @@ export async function fetchSettingChanges(
     const { items, total } = settingChangesResponseSchema.parse(raw)
     return { items: items.map(toSettingChangeHistoryItem), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the settings history.")
+    throw toApiError(error, "Couldn't Load the Settings History.")
   }
 }
 
@@ -91,6 +93,6 @@ export async function withdrawSettingChange(id: number): Promise<string> {
     )
     return raw?.message ?? 'Scheduled change withdrawn.'
   } catch (error) {
-    throw toApiError(error, "Couldn't withdraw the change.")
+    throw toApiError(error, "Couldn't Withdraw the Change.")
   }
 }

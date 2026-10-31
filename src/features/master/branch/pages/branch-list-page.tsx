@@ -139,7 +139,7 @@ export function BranchListPage() {
     <div>
       <PageHeader
         title="Branch"
-        description="Manage your branch master records."
+        description="Manage Your Branch Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -161,7 +161,7 @@ export function BranchListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search branches…"
+          searchPlaceholder="Search Branches…"
           itemName="branches"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -178,7 +178,7 @@ export function BranchListPage() {
             <EmptyState
               icon={Building}
               title="No Branches Yet"
-              description="Create your first branch to get started."
+              description="Create Your First Branch to Get Started."
               action={
                 canCreate && (
                   <Button onClick={goToCreate}>

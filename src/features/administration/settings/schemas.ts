@@ -68,10 +68,10 @@ export const settingChangesResponseSchema = z.object({
 export const companySettingsFormSchema = z.object({
   sopTaskSubmission: taskSubmissionModeSchema,
   projectTaskSubmission: taskSubmissionModeSchema,
-  effectiveDate: z.string().min(1, 'Choose the date the change takes effect'),
+  effectiveDate: z.string().min(1, 'Choose the Date the Change Takes Effect'),
   effectiveTime: z
     .string()
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Choose the time the change takes effect'),
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Choose the Time the Change Takes Effect'),
 })
 
 export type CompanySettingsFormValues = z.infer<typeof companySettingsFormSchema>

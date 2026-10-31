@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useMyCompanies } from '@/features/company'
 import { ALL_COMPANIES, TALK_CREDENTIAL_DEFAULT_SORT } from '../constants'
@@ -36,7 +36,7 @@ export function useTalkCredentialList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, TALK_CREDENTIAL_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, TALK_CREDENTIAL_DEFAULT_SORT)
 
   /** '' is every company — which the API gets as no `company_id` at all. */
   const [companyFilter, setCompanyFilter] = useState<string>(ALL_COMPANIES)
@@ -79,7 +79,7 @@ export function useTalkCredentialList() {
     if (!pendingDelete) return
     removeCredential.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Talk credential deleted')
+        toast.success('Talk Credential Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>

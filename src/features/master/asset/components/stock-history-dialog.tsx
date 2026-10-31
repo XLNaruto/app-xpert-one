@@ -60,6 +60,8 @@ export function StockHistoryDialog({
     onPaginationChange,
     sorting,
     onSortingChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,
@@ -235,7 +237,7 @@ export function StockHistoryDialog({
         <div className="mt-4">
           {isError ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error instanceof Error ? error.message : "Couldn't load the stock history."}
+              {error instanceof Error ? error.message : "Couldn't Load the Stock History."}
             </p>
           ) : (
             <DataTable
@@ -253,12 +255,23 @@ export function StockHistoryDialog({
               manualSorting
               sorting={sorting}
               onSortingChange={onSortingChange}
+              searchPlaceholder="Search…"
+              searchValue={search}
+              onSearchChange={setSearch}
               emptyState={
-                <EmptyState
-                  icon={History}
-                  title="No Stock Movements Yet"
-                  description="Refills, write-offs and handouts all land here."
-                />
+                search.trim() ? (
+                  <EmptyState
+                    icon={History}
+                    title="No Matching Movements"
+                    description="Try a Different Search Term."
+                  />
+                ) : (
+                  <EmptyState
+                    icon={History}
+                    title="No Stock Movements Yet"
+                    description="Refills, Write-Offs and Handouts All Land Here."
+                  />
+                )
               }
             />
           )}

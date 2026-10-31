@@ -47,7 +47,7 @@ export async function fetchBulkWageGrid(
     const { items } = bulkWageGridResponseSchema.parse(raw)
     return items.map((item) => toBulkWageDesignation(item, heads))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the wage grid.")
+    throw toApiError(error, "Couldn't Load the Wage Grid.")
   }
 }
 
@@ -61,17 +61,18 @@ export async function fetchBulkWageGrid(
  * paging is over the *designations*, so `total` counts titles rather than
  * versions and a title's history is never split across two pages.
  *
- * The endpoint takes `limit`/`offset` and nothing else: it neither searches nor
- * sorts, so the screen offers neither rather than filtering a page client-side.
+ * The endpoint takes `limit`/`offset` and a `search` on the designation name.
+ * It doesn't sort, so the screen offers no sort rather than ordering a page
+ * client-side.
  */
 export async function fetchBulkWageHistory(
   companyId: number,
-  { limit, offset }: PageParams,
+  { limit, offset, search }: PageParams,
   heads: WageHeads,
 ): Promise<Paginated<BulkWageHistoryDesignation>> {
   try {
     const raw = await http.get<unknown>(endpoints.DESIGNATIONS.BULK_WAGE_HISTORY, {
-      params: { company_id: companyId, limit, offset },
+      params: { company_id: companyId, limit, offset, ...(search ? { search } : {}) },
     })
     const { items, total } = bulkWageHistoryResponseSchema.parse(raw)
     return {
@@ -79,7 +80,7 @@ export async function fetchBulkWageHistory(
       total,
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the wage structure history.")
+    throw toApiError(error, "Couldn't Load the Wage Structure History.")
   }
 }
 
@@ -108,6 +109,6 @@ export async function saveBulkWage(
     const { items } = bulkWageGridResponseSchema.parse(raw)
     return items.map((item) => toBulkWageDesignation(item, heads))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the wage grid.")
+    throw toApiError(error, "Couldn't Save the Wage Grid.")
   }
 }

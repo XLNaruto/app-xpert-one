@@ -70,7 +70,7 @@ export async function fetchAttendanceGroups(
     })
     return toAttendanceGroups(attendanceGroupsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the attendance summary.")
+    throw toApiError(error, "Couldn't Load the Attendance Summary.")
   }
 }
 
@@ -112,7 +112,7 @@ export async function fetchAttendanceGroupEmployees(
       attendanceGroupEmployeesResponseSchema.parse(raw),
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't load the group's attendance.")
+    throw toApiError(error, "Couldn't Load the Group's Attendance.")
   }
 }
 
@@ -140,6 +140,6 @@ export async function fetchAttendanceMonth(
     })
     return toAttendanceMonth(attendanceMonthResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the employee's attendance.")
+    throw toApiError(error, "Couldn't Load the Employee's Attendance.")
   }
 }

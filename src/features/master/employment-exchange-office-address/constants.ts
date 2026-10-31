@@ -11,10 +11,10 @@ export const EMPLOYMENT_EXCHANGE_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   listPath: '/master/employment-exchange-office-address',
   createPath: '/master/employment-exchange-office-address/create',
   title: 'Employment Exchange Office Address',
-  description: 'Manage the employment exchange offices establishments file their returns with.',
+  description: 'Manage the Employment Exchange Offices Establishments File Their Returns With.',
   shortLabel: 'Employment Exchange Address',
   recordsLabel: 'employment exchange addresses',
   emptyTitle: 'No Employment Exchange Office Addresses Yet',
-  emptyDescription: 'Add your first employment exchange office to get started.',
+  emptyDescription: 'Add Your First Employment Exchange Office to Get Started.',
   icon: Building2,
 }

@@ -92,7 +92,7 @@ export function EmployeePhotoField({
           {hasPhoto ? (
             <ImageWithFallback
               src={src}
-              alt="Employee photo"
+              alt="Employee Photo"
               wrapperClassName="size-full bg-transparent"
               className="object-cover"
             />
@@ -130,7 +130,7 @@ export function EmployeePhotoField({
                 <X className="size-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Remove photo</TooltipContent>
+            <TooltipContent>Remove Photo</TooltipContent>
           </Tooltip>
         )}
       </div>

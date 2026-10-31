@@ -57,7 +57,7 @@ function SentBack({
       <TooltipContent className="max-w-72">
         <p className="font-semibold">Sent back{by ? ` by ${by}` : ''}</p>
         <p className="mt-0.5 whitespace-pre-wrap opacity-90">
-          {reason ? `“${reason}”` : 'Redo it and submit again.'}
+          {reason ? `“${reason}”` : 'Redo It and Submit Again.'}
         </p>
       </TooltipContent>
     </Tooltip>
@@ -319,18 +319,22 @@ export function MyTaskListPage() {
     <EmptyState
       icon={CalendarClock}
       title={
-        board.filter !== 'all'
-          ? 'No task matches this filter'
+        board.search.trim()
+          ? 'No Matching Tasks'
+          : board.filter !== 'all'
+          ? 'No Task Matches This Filter'
           : board.isFuture && board.tab === 'sop'
-            ? 'Not created yet'
-            : 'Nothing scheduled'
+            ? 'Not Created Yet'
+            : 'Nothing Scheduled'
       }
       description={
-        board.filter !== 'all'
-          ? 'Pick another status above.'
+        board.search.trim()
+          ? 'Try a Different Search Term.'
+          : board.filter !== 'all'
+          ? 'Pick Another Status Above.'
           : board.isFuture && board.tab === 'sop'
-            ? 'SOP tasks for a day are created on that day.'
-            : 'No tasks for this day.'
+            ? 'SOP Tasks for a Day Are Created on That Day.'
+            : 'No Tasks for This Day.'
       }
     />
   )
@@ -339,7 +343,7 @@ export function MyTaskListPage() {
     <div className="space-y-4">
       <PageHeader
         title="My Tasks"
-        description="Start, pause and complete your SOP tasks; record progress on project tasks."
+        description="Start, Pause and Complete Your SOP Tasks; Record Progress on Project Tasks."
       />
 
       {board.companyId === null ? (
@@ -406,7 +410,9 @@ export function MyTaskListPage() {
           isLoading={board.isLoading}
           hidePagination
           maxHeight="60vh"
-          searchPlaceholder="Search this day's tasks…"
+          searchPlaceholder="Search…"
+          searchValue={board.search}
+          onSearchChange={board.setSearch}
           itemName="tasks"
           emptyState={empty}
         />
@@ -417,7 +423,9 @@ export function MyTaskListPage() {
           isLoading={board.isLoading}
           hidePagination
           maxHeight="60vh"
-          searchPlaceholder="Search this day's tasks…"
+          searchPlaceholder="Search…"
+          searchValue={board.search}
+          onSearchChange={board.setSearch}
           itemName="tasks"
           emptyState={empty}
         />

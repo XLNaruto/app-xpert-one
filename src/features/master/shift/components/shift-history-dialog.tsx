@@ -52,8 +52,8 @@ export function ShiftHistoryDialog({
             {shift ? `${shift.shiftName} — Update History` : 'Update History'}
           </DialogTitle>
           <DialogDescription>
-            Each row is the rule set in force from its date. Days before a row go on
-            being judged by the version above it in time, not by today's timings.
+            Each Row Is the Rule Set In Force from Its Date. Days Before a Row Go On
+            Being Judged by the Version Above It in Time, Not by Today's Timings.
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +72,7 @@ export function ShiftHistoryDialog({
             <EmptyState
               icon={History}
               title="No Versions Yet"
-              description="This shift has no dated rule set on record."
+              description="This Shift Has No Dated Rule Set On Record."
             />
           ) : (
             <table className="w-full min-w-[860px] text-sm">

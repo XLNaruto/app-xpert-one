@@ -16,7 +16,7 @@ interface OfflineScreenProps {
  */
 export function OfflineScreen({
   title = 'Connection Lost',
-  description = "You're offline. Check your internet connection — this page will refresh automatically once you're back online.",
+  description = "You're Offline. Check Your Internet Connection — This Page Will Refresh Automatically Once You're Back Online.",
 }: OfflineScreenProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-background">

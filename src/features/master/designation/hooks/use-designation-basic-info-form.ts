@@ -46,11 +46,11 @@ export function useDesignationBasicInfoForm(id: number) {
   const onSubmit = handleSubmit((values) => {
     updateName.mutate(values.designationName, {
       onSuccess: () => {
-        toast.success('Designation updated')
+        toast.success('Designation Updated')
         goToList()
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to update designation'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Update Designation'),
     })
   })
 

@@ -30,7 +30,7 @@ export async function fetchLeaveApprovalChain(): Promise<LeaveApprovalChain> {
     const raw = await http.get<unknown>(endpoints.LEAVE_APPROVAL_CHAIN.GET)
     return toLeaveApprovalChain(leaveApprovalChainResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the leave approval chain.")
+    throw toApiError(error, "Couldn't Load the Leave Approval Chain.")
   }
 }
 
@@ -43,7 +43,7 @@ export async function fetchLeaveApprovalRoleNames(): Promise<string[]> {
     const raw = await http.get<unknown>(endpoints.LEAVE_APPROVAL_CHAIN.ROLES)
     return leaveApprovalRolesResponseSchema.parse(raw).role_names
   } catch (error) {
-    throw toApiError(error, "Couldn't load the account's role names.")
+    throw toApiError(error, "Couldn't Load the Account's Role Names.")
   }
 }
 
@@ -73,6 +73,6 @@ export async function saveLeaveApprovalChain(
     )
     return toLeaveApprovalChain(leaveApprovalChainResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the leave approval chain.")
+    throw toApiError(error, "Couldn't Save the Leave Approval Chain.")
   }
 }

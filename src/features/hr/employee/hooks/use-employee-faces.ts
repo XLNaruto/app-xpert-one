@@ -38,7 +38,7 @@ export function useEmployeeFaces(rows: Employee[]) {
       onSuccess: (deleted) => {
         toast.success(
           deleted === 1
-            ? 'Face de-registered — 1 image deleted'
+            ? 'Face De-registered — 1 Image Deleted'
             : `Face de-registered — ${deleted} images deleted`,
         )
         setClearEmployeeId(null)
@@ -47,7 +47,7 @@ export function useEmployeeFaces(rows: Employee[]) {
       },
       onError: (err) =>
         toast.error(
-          err instanceof Error ? err.message : 'Failed to delete the registered face',
+          err instanceof Error ? err.message : 'Failed to Delete the Registered Face',
         ),
     })
   }

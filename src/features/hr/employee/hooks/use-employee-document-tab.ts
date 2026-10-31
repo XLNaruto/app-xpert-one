@@ -232,9 +232,9 @@ export function useEmployeeDocumentTab({
     const documentTypeId = Number(form.getValues(`rows.${index}.documentTypeId`))
     if (!documentTypeId) {
       form.setError(`rows.${index}.documentTypeId`, {
-        message: 'Choose a document type before uploading the file.',
+        message: 'Choose a Document Type Before Uploading the File.',
       })
-      toast.error('Choose a document type before uploading the file.')
+      toast.error('Choose a Document Type Before Uploading the File.')
       throw new Error('documentTypeId is required to presign the upload')
     }
 
@@ -264,7 +264,7 @@ export function useEmployeeDocumentTab({
         remove: (id) => deleteDocument.mutateAsync(id),
       })
       setRemovedIds([])
-      toast.success('Documents saved')
+      toast.success('Documents Saved')
       onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save the documents."))

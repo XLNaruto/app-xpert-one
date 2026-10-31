@@ -68,7 +68,7 @@ export function WeekoffPolicyListPage() {
                   <Pin className="size-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Set as default</TooltipContent>
+              <TooltipContent>Set as Default</TooltipContent>
             </Tooltip>
             <TableRowActions
               onEdit={canUpdate ? () => list.goToEdit(row.original.id) : undefined}
@@ -102,7 +102,7 @@ export function WeekoffPolicyListPage() {
           row.original.offType === 'FLEXIBLE' ? (
             <Badge variant="secondary">
               {row.original.weeklyOffDays === null
-                ? 'Any days'
+                ? 'Any Days'
                 : flexibleWeekoffCaption(row.original.weeklyOffDays)}
             </Badge>
           ) : row.original.days.length === 0 ? (
@@ -145,7 +145,7 @@ export function WeekoffPolicyListPage() {
     <div>
       <PageHeader
         title="Week-Off Policy"
-        description="The days that don't count as working days — per week, or per occurrence in the month."
+        description="The Days That Don't Count as Working Days — Per Week, or per Occurrence in the Month."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -167,7 +167,7 @@ export function WeekoffPolicyListPage() {
           columns={columns}
           data={list.rows}
           isLoading={list.isLoading}
-          searchPlaceholder="Search policies…"
+          searchPlaceholder="Search Policies…"
           itemName="policies"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -186,8 +186,8 @@ export function WeekoffPolicyListPage() {
               title={list.search ? 'No Matching Policies' : 'No Week-Off Policies Yet'}
               description={
                 list.search
-                  ? 'Try a different search term.'
-                  : "Without one, every shift falls back to the platform's Sunday-only pattern."
+                  ? 'Try a Different Search Term.'
+                  : "Without One, Every Shift Falls Back to the Platform's Sunday-Only Pattern."
               }
               action={
                 list.search

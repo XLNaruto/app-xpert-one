@@ -81,7 +81,7 @@ function DepartmentGrantRow({
                 }}
                 options={companyOptions}
                 icon={Building2}
-                placeholder="Select company"
+                placeholder="Select Company"
                 className="w-full"
               />
             )}
@@ -104,14 +104,14 @@ function DepartmentGrantRow({
                 icon={Network}
                 placeholder={
                   !companyId
-                    ? 'Pick a company first'
+                    ? 'Pick a Company First'
                     : departmentSelect.loading && departmentSelect.options.length === 0
-                      ? 'Loading departments…'
+                      ? 'Loading Departments…'
                       : hasNoDepartments
-                        ? 'This company has no departments'
-                        : 'Select departments'
+                        ? 'This Company Has No Departments'
+                        : 'Select Departments'
                 }
-                searchPlaceholder="Search departments"
+                searchPlaceholder="Search Departments"
                 className="w-full"
                 panelMinWidth={260}
               />
@@ -126,7 +126,7 @@ function DepartmentGrantRow({
 
         <span className="flex h-9 items-center text-xs text-muted-foreground">
           {selectedIds.length === 0
-            ? 'None yet'
+            ? 'None Yet'
             : `${selectedIds.length} department${selectedIds.length === 1 ? '' : 's'}`}
         </span>
 
@@ -182,7 +182,7 @@ export function TalkCredentialReachFields({
       <div className="col-span-full">
         <Field
           label="Whole Companies"
-          hint="Every department in each, including any the company adds later."
+          hint="Every Department in Each, Including Any the Company Adds Later."
           error={companyError}
         >
           {/* The tiles sit on a panel of their own: the account can hold more
@@ -239,7 +239,7 @@ export function TalkCredentialReachFields({
       <div className="col-span-full space-y-2">
         <Field
           label="Individual Departments"
-          hint="For reach narrower than a whole company. A department can be granted on its own — its company doesn't have to be ticked above."
+          hint="For Reach Narrower Than a Whole Company. A Department Can Be Granted on Its Own — Its Company Doesn't Have to Be Ticked Above."
           error={grantsError}
         >
           <div className="space-y-2">
@@ -293,8 +293,8 @@ export function TalkCredentialReachFields({
               </TooltipTrigger>
               <TooltipContent className="max-w-56 text-pretty font-normal">
                 {form.canAddDepartmentGrant
-                  ? 'Grant departments inside one company'
-                  : 'Every company already has a row'}
+                  ? 'Grant Departments Inside One Company'
+                  : 'Every Company Already Has a Row'}
               </TooltipContent>
             </Tooltip>
           </div>

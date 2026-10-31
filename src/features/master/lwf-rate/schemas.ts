@@ -10,14 +10,14 @@ const amount = (what: string) =>
     .string()
     .trim()
     .min(1, `Please enter ${what}`)
-    .refine((v) => Number.isFinite(Number(v)), 'Please enter a valid amount')
-    .refine((v) => Number(v) >= 0, 'Amount must be positive')
+    .refine((v) => Number.isFinite(Number(v)), 'Please Enter a Valid Amount')
+    .refine((v) => Number(v) >= 0, 'Amount Must Be Positive')
 
 /** Create/edit form for an LWF rate. */
 export const lwfRateSchema = z.object({
-  wef: z.string().trim().min(1, 'Please select W.E.F date'),
-  stateId: z.string().trim().min(1, 'Please select state'),
-  month: z.string().trim().min(1, 'Please select month'),
+  wef: z.string().trim().min(1, 'Please Select W.E.F Date'),
+  stateId: z.string().trim().min(1, 'Please Select State'),
+  month: z.string().trim().min(1, 'Please Select Month'),
   employeeContribution: amount('employee contribution'),
   employerContribution: amount('employer contribution'),
 })

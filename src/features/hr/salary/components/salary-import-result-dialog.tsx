@@ -113,7 +113,7 @@ export function SalaryImportResultDialog({
           {rows.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-muted-foreground">
               {active === 'saved'
-                ? 'Nothing was created from this sheet.'
+                ? 'Nothing Was Created from This Sheet.'
                 : `No ${active === 'errors' ? 'errors' : 'skipped rows'} — nothing to read here.`}
             </p>
           ) : (

@@ -87,8 +87,8 @@ export function SalaryToolbar({
             onChange={(value) => onDesignationChange(value ? Number(value) : null)}
             {...designations}
             icon={Briefcase}
-            placeholder="Select a designation"
-            searchPlaceholder="Search designations…"
+            placeholder="Select a Designation"
+            searchPlaceholder="Search Designations…"
             clearable
           />
         </Field>

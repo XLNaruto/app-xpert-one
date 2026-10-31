@@ -87,7 +87,7 @@ export async function fetchDocuments(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load documents.")
+    throw toApiError(error, "Couldn't Load Documents.")
   }
 }
 
@@ -97,7 +97,7 @@ export async function fetchDocument(id: number): Promise<Document> {
     const raw = await http.get<unknown>(endpoints.DOCUMENTS.GET(id))
     return toDocument(documentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Document not found')
+    throw toApiError(error, 'Document Not Found')
   }
 }
 
@@ -114,7 +114,7 @@ export async function createDocument(values: DocumentFormValues): Promise<Docume
     })
     return toDocument(documentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the document.")
+    throw toApiError(error, "Couldn't Create the Document.")
   }
 }
 
@@ -134,7 +134,7 @@ export async function updateDocument(
     )
     return toDocument(documentResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the document.")
+    throw toApiError(error, "Couldn't Update the Document.")
   }
 }
 
@@ -146,6 +146,6 @@ export async function deleteDocument(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.DOCUMENTS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the document.")
+    throw toApiError(error, "Couldn't Delete the Document.")
   }
 }

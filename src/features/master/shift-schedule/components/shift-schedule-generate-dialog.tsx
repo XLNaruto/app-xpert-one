@@ -20,7 +20,7 @@ export function ShiftScheduleGenerateDialog({ state }: { state: ShiftScheduleGen
       description={
         state.canRun
           ? `This will fill ${formatDate(state.from)} – ${formatDate(state.to)} from the week-off policy for everyone the filters match. Dates you changed by hand are kept.`
-          : 'The whole window has passed. Past dates can only be changed one at a time on the grid.'
+          : 'The Whole Window Has Passed. Past Dates Can Only Be Changed One at a Time on the Grid.'
       }
       confirmLabel={state.isRunning ? 'Generating…' : 'Generate'}
       cancelLabel="Cancel"
@@ -38,7 +38,7 @@ export function ShiftScheduleGenerateDialog({ state }: { state: ShiftScheduleGen
           )}
           <Field
             label="Only These Employees"
-            hint="Leave it clear to generate for everyone the filters match."
+            hint="Leave It Clear to Generate for Everyone the Filters Match."
           >
             <Combobox
               multiple
@@ -50,8 +50,8 @@ export function ShiftScheduleGenerateDialog({ state }: { state: ShiftScheduleGen
               }
               {...state.employees}
               icon={UsersRound}
-              placeholder="All matching employees"
-              searchPlaceholder="Search employees…"
+              placeholder="All Matching Employees"
+              searchPlaceholder="Search Employees…"
             />
           </Field>
         </div>

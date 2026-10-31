@@ -300,7 +300,7 @@ export function EmployeeListPage() {
     <div>
       <PageHeader
         title="Employee Management"
-        description="Add employees and complete their eight-step record."
+        description="Add Employees and Complete Their Eight-Step Record."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -347,7 +347,7 @@ export function EmployeeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search by name, code or mobile…"
+          searchPlaceholder="Search…"
           itemName="employees"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -364,7 +364,7 @@ export function EmployeeListPage() {
             <EmptyState
               icon={UsersRound}
               title="No Employees Yet"
-              description="Add your first employee to start building the register."
+              description="Add Your First Employee to Start Building the Register."
               action={
                 canCreate ? (
                   <Button onClick={goToCreate}>
@@ -425,7 +425,7 @@ export function EmployeeListPage() {
               : `${geoFenceConfirm.employee.name || 'This employee'} will be able to mark attendance from anywhere.`
             : undefined
         }
-        confirmLabel={geoFenceConfirm?.enabled ? 'Turn on' : 'Turn off'}
+        confirmLabel={geoFenceConfirm?.enabled ? 'Turn On' : 'Turn Off'}
         onConfirm={confirmGeoFence}
       />
 

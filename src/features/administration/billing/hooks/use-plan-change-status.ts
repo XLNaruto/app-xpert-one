@@ -30,7 +30,7 @@ export function usePlanChangeStatus() {
       toastsuccessmsg('The booked plan change was cancelled.', 3000)
       setConfirmCancelOpen(false)
     } catch (error) {
-      toastApiError(error, "Couldn't cancel the booked plan change.")
+      toastApiError(error, "Couldn't Cancel the Booked Plan Change.")
     }
   }, [cancelSwitch])
 
@@ -40,7 +40,7 @@ export function usePlanChangeStatus() {
       toastsuccessmsg('Your plan change request was withdrawn.', 3000)
       setConfirmWithdrawOpen(false)
     } catch (error) {
-      toastApiError(error, "Couldn't withdraw your plan change request.")
+      toastApiError(error, "Couldn't Withdraw Your Plan Change Request.")
     }
   }, [withdraw])
 

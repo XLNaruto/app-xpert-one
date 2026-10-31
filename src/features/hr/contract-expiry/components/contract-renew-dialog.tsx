@@ -115,7 +115,7 @@ export function ContractRenewDialog({
             {showEffectiveFrom ? (
               <Field
                 label="New Term Starts"
-                hint="This contract has already lapsed. Leave it on the old end date to renew continuously, or move it to today if the new term really starts now."
+                hint="This Contract Has Already Lapsed. Leave It on the Old End Date to Renew Continuously, or Move It to Today If the New Term Really Starts Now."
                 error={errors.effectiveFrom?.message}
                 className="sm:col-span-2"
               >
@@ -161,7 +161,7 @@ export function ContractRenewDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Renewing…' : 'Renew contract'}
+              {isPending ? 'Renewing…' : 'Renew Contract'}
             </Button>
           </DialogFooter>
         </form>

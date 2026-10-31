@@ -237,7 +237,7 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
   /** Switch tabs, refusing the locked one with a reason rather than silently. */
   const selectTab = (next: BranchFormTab) => {
     if (next === 'acts' && !canEditActs) {
-      toast.error('Complete the branch detail first, then add its applicable acts.')
+      toast.error('Complete the Branch Detail First, Then Add Its Applicable Acts.')
       return
     }
     setTab(next)
@@ -255,14 +255,14 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
       { branchId, actsId: acts.data?.id ?? null, values },
       {
         onSuccess: () => {
-          toast.success('Branch updated')
+          toast.success('Branch Updated')
           goToList()
         },
         onError: (err) => {
           toast.error(
             err instanceof Error
               ? `Branch saved, but the applicable acts didn't: ${err.message}`
-              : "Branch saved, but the applicable acts didn't.",
+              : "Branch Saved, but the Applicable Acts Didn't.",
           )
           setTab('acts')
         },
@@ -276,7 +276,7 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
         updateBranch.mutate(values, {
           onSuccess: (branch) => saveActsThenLeave(branch.id, values),
           onError: (err) =>
-            toast.error(err instanceof Error ? err.message : 'Failed to update branch'),
+            toast.error(err instanceof Error ? err.message : 'Failed to Update Branch'),
         })
         return
       }
@@ -286,7 +286,7 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
       // acts row now has something to hang off.
       createBranch.mutate(values, {
         onSuccess: (branch) => {
-          toast.success('Branch created — now add its applicable acts')
+          toast.success('Branch Created — Now Add Its Applicable Acts')
           /*
            * One navigation carries both: the screen becomes that branch's edit
            * screen AND opens step two, which now has something to hang off. Pushed
@@ -296,7 +296,7 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
           void openTabOf(branch.id, 'acts', { replace: false })
         },
         onError: (err) =>
-          toast.error(err instanceof Error ? err.message : 'Failed to create branch'),
+          toast.error(err instanceof Error ? err.message : 'Failed to Create Branch'),
       })
     },
     // Every invalid field already says so under itself, so a toast would only

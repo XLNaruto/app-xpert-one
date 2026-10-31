@@ -210,7 +210,7 @@ export function LeaveListPage() {
         cell: ({ row }) =>
           row.original.duration === 'HALF_DAY' ? (
             <span>
-              Half day
+              Half Day
               {row.original.fromTime && (
                 <span className="ml-1 text-xs text-muted-foreground">
                   ({formatTime12(row.original.fromTime)}–{formatTime12(row.original.toTime)})
@@ -341,7 +341,7 @@ export function LeaveListPage() {
     <div>
       <PageHeader
         title="Leave Management"
-        description="Record and decide leave for every employee in the company."
+        description="Record and Decide Leave for Every Employee in the Company."
         actions={
           <div className="flex items-center gap-2">
             {canCreate && (
@@ -411,7 +411,7 @@ export function LeaveListPage() {
               search={{
                 value: leave.search,
                 onChange: leave.setSearch,
-                placeholder: 'Search leaves…',
+                placeholder: 'Search Leaves…',
               }}
               facets={[
                 {
@@ -437,17 +437,17 @@ export function LeaveListPage() {
               icon={CalendarDays}
               title={
                 leave.search
-                  ? 'No matching leave records'
+                  ? 'No Matching Leave Records'
                   : leave.isMyQueue
-                    ? 'Nothing waiting on you'
-                    : 'No leave recorded yet'
+                    ? 'Nothing Waiting on You'
+                    : 'No Leave Recorded Yet'
               }
               description={
                 leave.search
-                  ? 'Try a different search term.'
+                  ? 'Try a Different Search Term.'
                   : leave.isMyQueue
-                    ? 'No pending leave is standing at your level of the approval hierarchy.'
-                    : 'Record a leave against an employee to get started.'
+                    ? 'No Pending Leave Is Standing at Your Level of the Approval Hierarchy.'
+                    : 'Record a Leave Against an Employee to Get Started.'
               }
               action={
                 leave.search || leave.isMyQueue
@@ -522,7 +522,7 @@ function AttachmentLink({ attachment }: { attachment: string }) {
           <Paperclip className="size-3.5" />
         </a>
       </TooltipTrigger>
-      <TooltipContent>Open the attached proof</TooltipContent>
+      <TooltipContent>Open the Attached Proof</TooltipContent>
     </Tooltip>
   )
 }

@@ -34,13 +34,13 @@ function optionalPercentField(label: string) {
 export const companySchema = z.object({
   // Company information
   companyName: recordNameField('the company name', { max: 200 }),
-  establishYear: z.string().trim().min(1, 'Establish year is required'),
+  establishYear: z.string().trim().min(1, 'Establish Year Is Required'),
   /**
    * The logo's **object key**, never the file — the bytes go to storage on a
    * presigned PUT and only the key the upload answers is stored here. Blank
    * means no logo.
    */
-  logo: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+  logo: z.string().trim().max(500, 'Cannot Exceed 500 Characters'),
   registrationNumber: registrationNumberField(),
   panNumber: panField({ required: true }),
   gstNumber: gstField(),
@@ -49,11 +49,11 @@ export const companySchema = z.object({
   addressLine1: z
     .string()
     .trim()
-    .min(1, 'Address line 1 is required')
-    .max(500, 'Cannot exceed 500 characters'),
+    .min(1, 'Address Line 1 Is Required')
+    .max(500, 'Cannot Exceed 500 Characters'),
   addressLine2: text(500),
   addressLine3: text(500),
-  stateId: z.string().trim().min(1, 'State is required'),
+  stateId: z.string().trim().min(1, 'State Is Required'),
   districtId: z.string().trim(),
   city: recordNameField('the city', { required: false, max: 100 }),
   pinCode: pinCodeField(),

@@ -60,11 +60,11 @@ export function AllowanceDeductionSection({
       <HeadColumn
         icon={CirclePlus}
         title="Allowances"
-        description="Set a value for the heads that apply to this designation"
+        description="Set a Value for the Heads That Apply to This Designation"
         iconTone="text-emerald-600 dark:text-emerald-400"
         count={allowanceHeads.length}
         loading={componentsLoading}
-        emptyLabel="No allowance heads in the master yet."
+        emptyLabel="No Allowance Heads in the Master Yet."
       >
         {allowanceHeads.map((head, index) => (
           <ComponentRow
@@ -95,11 +95,11 @@ export function AllowanceDeductionSection({
       <HeadColumn
         icon={CircleMinus}
         title="Deductions"
-        description="Set a value for the deduction heads that apply"
+        description="Set a Value for the Deduction Heads That Apply"
         iconTone="text-rose-600 dark:text-rose-400"
         count={deductionHeads.length}
         loading={componentsLoading}
-        emptyLabel="No deduction heads in the master yet."
+        emptyLabel="No Deduction Heads in the Master Yet."
         footnote={statutoryNote({ pfActApplicable, esicActApplicable, ptActApplicable })}
       >
         {deductionHeads.map((head, index) => (

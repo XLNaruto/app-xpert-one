@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { useAuthStore } from '@/stores/auth-store'
 import { useMyCompanies } from '@/features/company'
@@ -33,7 +33,7 @@ export function useAdminUserList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ADMIN_USER_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ADMIN_USER_DEFAULT_SORT)
 
   /** '' is every company — which the API gets as no `company_id` at all. */
   const [companyFilter, setCompanyFilter] = useState<string>(ALL_COMPANIES)
@@ -91,7 +91,7 @@ export function useAdminUserList() {
     if (!pendingDelete) return
     removeUser.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('User deleted')
+        toast.success('User Deleted')
         setPendingDelete(null)
       },
       onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't delete the user.")),

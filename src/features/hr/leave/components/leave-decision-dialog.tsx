@@ -60,8 +60,8 @@ export function LeaveDecisionDialog({
           <DialogTitle>{isReject ? 'Reject Leave' : 'Approve Leave'}</DialogTitle>
           <DialogDescription>
             {isReject
-              ? "The remark is what the employee reads, so say why. This can't be undone — a rejected leave has to be removed and recorded again."
-              : "Only an approved leave marks its days as leave on the attendance calendar. This can't be undone."}
+              ? "The Remark Is What the Employee Reads, So Say Why. This Can't Be Undone — A Rejected Leave Has to Be Removed and Recorded Again."
+              : "Only an Approved Leave Marks Its Days as Leave on the Attendance Calendar. This Can't Be Undone."}
           </DialogDescription>
         </DialogHeader>
 
@@ -109,7 +109,7 @@ export function LeaveDecisionDialog({
               <p className="mt-2 flex items-start gap-2 rounded-md bg-warning/10 p-2 text-xs">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" />
                 <span>
-                  This application was split — <strong>{formatSplit(leave)}</strong>.
+                  This Application Was Split — <strong>{formatSplit(leave)}</strong>.
                   Deciding it moves both halves together and sends the employee one
                   notification for the whole range.
                 </span>
@@ -132,13 +132,13 @@ export function LeaveDecisionDialog({
             error={form.formState.errors.remark?.message}
             hint={
               isReject
-                ? "Required. It's what the employee reads, and it's the only thing they have to act on."
-                : 'Shown to the employee alongside the decision.'
+                ? "Required. It's What the Employee Reads, and It's the Only Thing They Have to Act On."
+                : 'Shown to the Employee Alongside the Decision.'
             }
           >
             <Textarea
               rows={3}
-              placeholder={isReject ? 'Reason for rejecting' : 'Optional note'}
+              placeholder={isReject ? 'Reason for Rejecting' : 'Optional Note'}
               aria-invalid={form.formState.errors.remark ? true : undefined}
               {...form.register('remark')}
             />

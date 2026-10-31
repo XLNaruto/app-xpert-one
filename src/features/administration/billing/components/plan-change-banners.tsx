@@ -109,7 +109,7 @@ export function PlanChangeBanners({
             )
           }
         >
-          Request pending: <strong>{pendingRequest.planName ?? `Plan #${pendingRequest.planId}`}</strong>{' '}
+          Request Pending: <strong>{pendingRequest.planName ?? `Plan #${pendingRequest.planId}`}</strong>{' '}
           ({pendingRequest.isYearly ? 'yearly' : 'monthly'}
           {pendingRequest.extendType === 'next_renewal'
             ? ', at next renewal'
@@ -122,7 +122,7 @@ export function PlanChangeBanners({
 
       {creditBalance > 0 && (
         <Banner icon={PiggyBank} tone="success">
-          You have <strong>{formatCurrency(creditBalance)}</strong> in stored credit. It's
+          You Have <strong>{formatCurrency(creditBalance)}</strong> in stored credit. It's
           used automatically on your next plan change.
         </Banner>
       )}

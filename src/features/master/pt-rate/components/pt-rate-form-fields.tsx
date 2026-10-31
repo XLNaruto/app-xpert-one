@@ -32,7 +32,7 @@ export function PtRateFormFields({
       <FormSection
         icon={MapPin}
         title="Basic Details"
-        description="When this Professional Tax rate applies, and where"
+        description="When This Professional Tax Rate Applies, and Where"
         className="mt-0"
       />
 
@@ -55,7 +55,7 @@ export function PtRateFormFields({
               onChange={field.onChange}
               {...stateSelect}
               placeholder="Select State"
-              searchPlaceholder="Search state"
+              searchPlaceholder="Search State"
             />
           )}
         />

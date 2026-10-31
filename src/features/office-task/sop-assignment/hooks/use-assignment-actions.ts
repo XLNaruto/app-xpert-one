@@ -11,9 +11,9 @@ import type { SopAssignmentRow } from '../types'
 export type AssignmentAction = { kind: 'start' | 'stop' | 'delete'; row: SopAssignmentRow }
 
 const DONE: Record<AssignmentAction['kind'], string> = {
-  start: 'Assignment started',
-  stop: 'Assignment stopped',
-  delete: 'Assignment deleted',
+  start: 'Assignment Started',
+  stop: 'Assignment Stopped',
+  delete: 'Assignment Deleted',
 }
 
 /**

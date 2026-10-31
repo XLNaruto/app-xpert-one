@@ -304,7 +304,7 @@ export function ApprovalListPage() {
 
   const toolbar = (
     <FilterBar
-      search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search task or employee…' }}
+      search={{ value: list.search, onChange: list.setSearch, placeholder: 'Search…' }}
       leading={
         <div className="flex items-center gap-2">
           <DatePicker
@@ -384,7 +384,7 @@ export function ApprovalListPage() {
       <EmptyState
         icon={ShieldCheck}
         title={list.filters.tab === 'awaiting' ? 'Nothing Waiting for You' : 'No Tasks Found'}
-        description="Try a wider date range or another tab."
+        description="Try a Wider Date Range or Another Tab."
       />
     ),
   }
@@ -393,7 +393,7 @@ export function ApprovalListPage() {
     <div className="space-y-4">
       <PageHeader
         title="Task Approval"
-        description="Review handed-in work and its proof, then approve it or send it back."
+        description="Review Handed-In Work and Its Proof, Then Approve It or Send It Back."
       />
 
       {list.companyId === null ? (

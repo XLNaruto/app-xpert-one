@@ -59,14 +59,14 @@ export function EmployeeTicketResolveDialog({
           htmlFor="resolution-note"
           className="text-sm font-medium text-foreground/90"
         >
-          What was done?
+          What Was Done?
           <span className="ml-0.5 text-destructive">*</span>
         </label>
         <Textarea
           id="resolution-note"
           rows={4}
           maxLength={MAX_EMPLOYEE_TICKET_RESOLUTION}
-          placeholder="Explain what you did, in words the employee will understand."
+          placeholder="Explain What You Did, in Words the Employee Will Understand."
           {...form.register('resolutionNote')}
         />
         {error ? (

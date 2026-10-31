@@ -73,7 +73,7 @@ export function TwoFactorCard() {
             <p className="mt-1 text-sm text-muted-foreground">
               {enabled
                 ? `Every sign-in asks for a six-digit code sent to ${email ?? 'your email address'}.`
-                : 'Add a second step to your sign-in — a six-digit code emailed to you each time you log in.'}
+                : 'Add a Second Step to Your Sign-In — A Six-Digit Code Emailed to You Each Time You Log In.'}
             </p>
           </div>
 
@@ -92,15 +92,15 @@ export function TwoFactorCard() {
         icon={turningOn ? ShieldCheck : ShieldAlert}
         title={
           turningOn
-            ? 'Turn on two-factor authentication?'
-            : 'Turn off two-factor authentication?'
+            ? 'Turn On Two-Factor Authentication?'
+            : 'Turn Off Two-Factor Authentication?'
         }
         description={
           turningOn
-            ? 'From your next sign-in, a six-digit code will be emailed to you. Enter your password to confirm.'
-            : 'Your password alone will be enough to sign in. Enter your password to confirm.'
+            ? 'From Your Next Sign-In, a Six-Digit Code Will Be Emailed to You. Enter Your Password to Confirm.'
+            : 'Your Password Alone Will Be Enough to Sign In. Enter Your Password to Confirm.'
         }
-        confirmLabel={turningOn ? 'Turn on' : 'Turn off'}
+        confirmLabel={turningOn ? 'Turn On' : 'Turn Off'}
       />
     </>
   )

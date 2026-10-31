@@ -11,10 +11,10 @@ export const LWF_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   listPath: '/master/lwf-office-address',
   createPath: '/master/lwf-office-address/create',
   title: 'LWF Office Address',
-  description: 'Manage the Labour Welfare Board offices establishments file contributions with.',
+  description: 'Manage the Labour Welfare Board Offices Establishments File Contributions With.',
   shortLabel: 'LWF Address',
-  recordsLabel: 'LWF addresses',
+  recordsLabel: 'LWF Addresses',
   emptyTitle: 'No LWF Office Addresses Yet',
-  emptyDescription: 'Add your first LWF office to get started.',
+  emptyDescription: 'Add Your First LWF Office to Get Started.',
   icon: Building2,
 }

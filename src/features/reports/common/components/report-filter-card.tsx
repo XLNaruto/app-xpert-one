@@ -112,7 +112,7 @@ export function ReportFilterCard<TType extends string>({
             {departmentId
               ? (departments.options.find((o) => o.value === String(departmentId))?.label ??
                 'Department')
-              : 'All departments'}
+              : 'All Departments'}
           </Badge>
           {employeeIds.length > 0 && (
             <Badge variant="outline">
@@ -134,8 +134,8 @@ export function ReportFilterCard<TType extends string>({
               onChange={(value) => onTypeChange(value as TType)}
               options={typeOptions}
               icon={FileText}
-              placeholder="Select a report"
-              searchPlaceholder="Search report types…"
+              placeholder="Select a Report"
+              searchPlaceholder="Search Report Types…"
             />
           </Field>
 
@@ -156,7 +156,7 @@ export function ReportFilterCard<TType extends string>({
               <Field
                 label="To Month"
                 required
-                error={isRangeInvalid ? 'The range starts after it ends.' : undefined}
+                error={isRangeInvalid ? 'The Range Starts After It Ends.' : undefined}
               >
                 <MonthPicker
                   value={to}
@@ -175,7 +175,7 @@ export function ReportFilterCard<TType extends string>({
                   onChange={(value) => onMonthChange(Number(value))}
                   options={REPORT_MONTH_OPTIONS}
                   icon={CalendarDays}
-                  placeholder="Select a month"
+                  placeholder="Select a Month"
                   searchable={false}
                 />
               </Field>
@@ -185,7 +185,7 @@ export function ReportFilterCard<TType extends string>({
                   onChange={(value) => onYearChange(Number(value))}
                   options={yearOptions}
                   icon={CalendarDays}
-                  placeholder="Select a year"
+                  placeholder="Select a Year"
                   searchable={false}
                 />
               </Field>
@@ -194,22 +194,22 @@ export function ReportFilterCard<TType extends string>({
 
           <Field
             label="Department"
-            hint="Leave it clear to report on the whole company. The PT and ESIC establishment details are only filled in once a department is chosen."
+            hint="Leave It Clear to Report on the Whole Company. The PT and ESIC Establishment Details Are Only Filled in Once a Department Is Chosen."
           >
             <Combobox
               value={departmentId === null ? '' : String(departmentId)}
               onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
               {...departments}
               icon={Building2}
-              placeholder="All departments"
-              searchPlaceholder="Search departments…"
+              placeholder="All Departments"
+              searchPlaceholder="Search Departments…"
               clearable
             />
           </Field>
 
           <Field
             label="Employee"
-            hint="Narrow the report to specific people. Leave it clear for everyone."
+            hint="Narrow the Report to Specific People. Leave It Clear for Everyone."
           >
             <Combobox
               multiple
@@ -217,8 +217,8 @@ export function ReportFilterCard<TType extends string>({
               onChange={(value) => onEmployeesChange(value.map(Number))}
               {...employees}
               icon={UsersRound}
-              placeholder="All employees"
-              searchPlaceholder="Search employees…"
+              placeholder="All Employees"
+              searchPlaceholder="Search Employees…"
             />
           </Field>
         </div>
@@ -230,8 +230,8 @@ export function ReportFilterCard<TType extends string>({
         <div className="mt-4 flex flex-wrap items-center justify-end gap-x-4 gap-y-2 border-t border-border/60 pt-3">
           <p className="mr-auto text-xs text-muted-foreground">
             {hasApplied
-              ? 'Change a filter and press “Filter Data” to read the report again.'
-              : 'Press “Filter Data” to load the report into the table below.'}
+              ? 'Change a Filter and Press “Filter Data” to Read the Report Again.'
+              : 'Press “Filter Data” to Load the Report into the Table Below.'}
           </p>
           <Button
             type="button"

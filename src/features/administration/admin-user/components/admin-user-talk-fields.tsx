@@ -78,7 +78,7 @@ function TalkGrantRow({
                 }}
                 options={companyOptions}
                 icon={Building2}
-                placeholder="Select company"
+                placeholder="Select Company"
                 className="w-full"
               />
             )}
@@ -104,14 +104,14 @@ function TalkGrantRow({
                 clearable
                 placeholder={
                   !companyId
-                    ? 'Pick a company first'
+                    ? 'Pick a Company First'
                     : departmentSelect.loading && departmentSelect.options.length === 0
-                      ? 'Loading departments…'
+                      ? 'Loading Departments…'
                       : hasNoDepartments
-                        ? 'No departments — whole company'
+                        ? 'No Departments — Whole Company'
                         : WHOLE_COMPANY_LABEL
                 }
-                searchPlaceholder="Search departments"
+                searchPlaceholder="Search Departments"
                 className="w-full"
                 panelMinWidth={260}
               />
@@ -262,8 +262,8 @@ export function AdminUserTalkFields({ form, disabled = false }: AdminUserTalkFie
             </TooltipTrigger>
             <TooltipContent className="max-w-56 text-pretty font-normal">
               {form.canAddTalkGrant
-                ? 'Add a company this user may talk in'
-                : 'Every company already has a grant'}
+                ? 'Add a Company This User May Talk In'
+                : 'Every Company Already Has a Grant'}
             </TooltipContent>
           </Tooltip>
         </div>

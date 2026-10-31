@@ -128,7 +128,7 @@ export function EmployeeTicketReplyForm({
           <Textarea
             rows={1}
             maxLength={MAX_EMPLOYEE_TICKET_MESSAGE}
-            placeholder="Write your reply — the employee is pushed this on their device."
+            placeholder="Write Your Reply — The Employee Is Pushed This on Their Device."
             // Enter sends, Shift+Enter breaks the line: a chat's muscle memory.
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {

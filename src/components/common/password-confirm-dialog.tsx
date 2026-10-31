@@ -67,7 +67,7 @@ export function PasswordConfirmDialog({
   attemptsRemaining = null,
   locked = false,
   title = 'Confirm Your Password',
-  description = 'For your security, enter your password to continue.',
+  description = 'For Your Security, Enter Your Password to Continue.',
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
   variant = 'default',
@@ -115,7 +115,7 @@ export function PasswordConfirmDialog({
             // A browser-managed autofill would defeat the point of asking.
             autoComplete="off"
             autoFocus
-            placeholder="Enter your password"
+            placeholder="Enter Your Password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={pending || locked}

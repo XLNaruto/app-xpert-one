@@ -44,7 +44,7 @@ export function useEsicRateForm(id?: number) {
     const mutation = isEdit ? updateEsicRate : createEsicRate
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'ESIC rate updated' : 'ESIC rate created')
+        toast.success(isEdit ? 'ESIC Rate Updated' : 'ESIC Rate Created')
         goToList()
       },
       onError: (err) =>

@@ -5,8 +5,8 @@ import type { SettingChangeStatus, SettingKey } from './schemas'
 
 /** What each setting key is called on screen. */
 export const SETTING_KEY_LABELS: Record<SettingKey, string> = {
-  sop_task_submission: 'SOP task submission',
-  project_task_submission: 'Project task submission',
+  sop_task_submission: 'SOP Task Submission',
+  project_task_submission: 'Project Task Submission',
 }
 
 /** A mode in a sentence or a table cell — shorter than the picker's card titles. */

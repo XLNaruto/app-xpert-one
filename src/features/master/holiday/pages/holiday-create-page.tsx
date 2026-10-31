@@ -47,7 +47,7 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Holiday' : 'Add Holiday'}
-        description="Configure holiday details."
+        description="Configure Holiday Details."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -68,7 +68,7 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this holiday."}
+                : "Couldn't Load This Holiday."}
             </p>
           ) : (
             <form
@@ -79,7 +79,7 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
               <FormSection
                 icon={CalendarHeart}
                 title="Holiday Details"
-                description="Name and the dates it spans"
+                description="Name and the Dates It Spans"
                 className="mt-0"
               />
 
@@ -113,7 +113,7 @@ export function HolidayCreatePage({ data }: HolidayCreatePageProps) {
                 hint={
                   fromYear
                     ? `A holiday stays inside one accounting year — ${fromYear} ends on 31 March.`
-                    : 'A holiday stays inside one accounting year (1 April – 31 March).'
+                    : 'A Holiday Stays Inside One Accounting Year (1 April – 31 March).'
                 }
               />
 

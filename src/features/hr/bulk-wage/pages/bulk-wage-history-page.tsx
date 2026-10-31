@@ -2,6 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, ChevronLeft, ChevronRight, History } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
+import { FilterBar } from '@/components/common/filter-bar'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
 import {
@@ -34,7 +35,7 @@ export function BulkWageHistoryPage() {
     <>
       <PageHeader
         title="Wage Structure History"
-        description="Every designation of the company with every wage version it has been paid on — read only."
+        description="Every Designation of the Company with Every Wage Version It Has Been Paid on — Read Only."
         actions={
           <Button
             type="button"
@@ -65,6 +66,16 @@ export function BulkWageHistoryPage() {
               </p>
             </div>
           </div>
+          {list.companyId !== null && (
+            <FilterBar
+              search={{
+                value: list.search,
+                onChange: list.setSearch,
+                placeholder: 'Search Designation…',
+              }}
+              onReset={() => list.setSearch('')}
+            />
+          )}
         </div>
 
         <HistoryBody list={list} />
@@ -83,7 +94,7 @@ function HistoryBody({ list }: { list: ReturnType<typeof useBulkWageHistoryList>
     return (
       <EmptyState
         title="No Company Selected"
-        description="Select a company for this session to read its wage structure history."
+        description="Select a Company for This Session to Read Its Wage Structure History."
       />
     )
   }
@@ -99,15 +110,23 @@ function HistoryBody({ list }: { list: ReturnType<typeof useBulkWageHistoryList>
       <p className="px-4 py-10 text-center text-xs text-destructive">
         {list.error instanceof Error
           ? list.error.message
-          : "Couldn't load the wage structure history."}
+          : "Couldn't Load the Wage Structure History."}
       </p>
+    )
+  }
+  if (list.designations.length === 0 && list.search.trim()) {
+    return (
+      <EmptyState
+        title="No Matching Designations"
+        description="Try a Different Designation Name."
+      />
     )
   }
   if (list.designations.length === 0) {
     return (
       <EmptyState
         title="No Designations Yet"
-        description="This company has no designations, so there is no wage history to show. Add them under Master → Designation first."
+        description="This Company Has No Designations, So There Is No Wage History to Show. Add Them Under Master → Designation First."
       />
     )
   }

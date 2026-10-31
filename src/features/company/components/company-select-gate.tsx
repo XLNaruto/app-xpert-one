@@ -38,7 +38,7 @@ export function CompanySelectGate() {
             </div>
             <div>
               <DialogTitle>Select Company</DialogTitle>
-              <DialogDescription>Choose your company</DialogDescription>
+              <DialogDescription>Choose Your Company</DialogDescription>
             </div>
           </div>
         </DialogHeader>

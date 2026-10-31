@@ -52,12 +52,12 @@ export const ATTENTION_ALL_BATCH_SIZE = 100
 
 export const DATE_PRESET_LABELS: Record<DatePreset, string> = {
   today: 'Today',
-  this_week: 'This week',
-  this_month: 'This month',
-  last_30_days: 'Last 30 days',
-  this_quarter: 'This quarter',
-  this_financial_year: 'This financial year',
-  all_time: 'All time',
+  this_week: 'This Week',
+  this_month: 'This Month',
+  last_30_days: 'Last 30 Days',
+  this_quarter: 'This Quarter',
+  this_financial_year: 'This Financial Year',
+  all_time: 'All Time',
 }
 
 export const DATE_PRESET_OPTIONS: ComboboxOption[] = (
@@ -122,16 +122,16 @@ export const SERIES_METRIC_LABELS: Record<SeriesMetric, string> = {
   headcount: 'Headcount',
   joined: 'Joins',
   exited: 'Exits',
-  present_days: 'Present days',
-  late_arrivals: 'Late arrivals',
-  worked_hours: 'Worked hours',
-  overtime_hours: 'Overtime hours',
-  leave_applications: 'Leave applications',
-  leave_days: 'Leave days',
-  payroll_net: 'Net payroll',
-  payroll_gross: 'Gross payroll',
-  tickets_raised: 'Tickets raised',
-  tickets_resolved: 'Tickets resolved',
+  present_days: 'Present Days',
+  late_arrivals: 'Late Arrivals',
+  worked_hours: 'Worked Hours',
+  overtime_hours: 'Overtime Hours',
+  leave_applications: 'Leave Applications',
+  leave_days: 'Leave Days',
+  payroll_net: 'Net Payroll',
+  payroll_gross: 'Gross Payroll',
+  tickets_raised: 'Tickets Raised',
+  tickets_resolved: 'Tickets Resolved',
 }
 
 /**
@@ -157,7 +157,7 @@ export const GRANULARITY_LABELS: Record<Granularity, string> = {
 /** How an axis names its buckets, given the grain the RESPONSE came back with. */
 export const GRANULARITY_AXIS_LABELS: Record<Granularity, string> = {
   day: 'Day',
-  week: 'Week commencing (Monday)',
+  week: 'Week Commencing (Monday)',
   month: 'Month',
 }
 
@@ -196,15 +196,15 @@ export const TREND_METRIC_OPTIONS: ComboboxOption[] = (
 
 export const BREAKDOWN_MEASURE_LABELS: Record<BreakdownMeasure, string> = {
   headcount: 'Headcount',
-  present_days: 'Present days',
-  worked_hours: 'Worked hours',
-  overtime_hours: 'Overtime hours',
-  late_arrivals: 'Late arrivals',
-  leave_applications: 'Leave applications',
-  leave_days: 'Leave days',
-  net_pay: 'Net pay',
-  gross_pay: 'Gross pay',
-  total_deduction: 'Total deduction',
+  present_days: 'Present Days',
+  worked_hours: 'Worked Hours',
+  overtime_hours: 'Overtime Hours',
+  late_arrivals: 'Late Arrivals',
+  leave_applications: 'Leave Applications',
+  leave_days: 'Leave Days',
+  net_pay: 'Net Pay',
+  gross_pay: 'Gross Pay',
+  total_deduction: 'Total Deduction',
   tickets: 'Tickets',
 }
 
@@ -220,7 +220,7 @@ export const BREAKDOWN_DIMENSION_LABELS: Record<BreakdownDimension, string> = {
   branch: 'Branch',
   department: 'Department',
   designation: 'Designation',
-  employment_type: 'Employment type',
+  employment_type: 'Employment Type',
   grade: 'Grade',
 }
 
@@ -302,9 +302,9 @@ export const RADAR_AXIS_LABELS: Record<RadarAxis, string> = {
   attendance_rate: 'Attendance',
   punctuality_rate: 'Punctuality',
   retention_rate: 'Retention',
-  leave_approval_rate: 'Leave approval',
-  payroll_paid_rate: 'Payroll paid',
-  helpdesk_resolution_rate: 'Ticket resolution',
+  leave_approval_rate: 'Leave Approval',
+  payroll_paid_rate: 'Payroll Paid',
+  helpdesk_resolution_rate: 'Ticket Resolution',
 }
 
 export const RADAR_GROUP_BY_LABELS: Record<RadarGroupBy, string> = {
@@ -333,7 +333,7 @@ export const RADAR_LIMIT = 5
 // ─── /heatmap ──────────────────────────────────────────────────────────────
 
 export const HEATMAP_SHAPE_LABELS: Record<HeatmapShape, string> = {
-  weekday_hour: 'Weekday × hour',
+  weekday_hour: 'Weekday × Hour',
   calendar: 'Calendar',
 }
 
@@ -343,10 +343,10 @@ export const HEATMAP_SHAPE_OPTIONS: ComboboxOption[] = (
 
 export const HEATMAP_METRIC_LABELS: Record<HeatmapMetric, string> = {
   check_ins: 'Check-ins',
-  present_days: 'Present days',
-  late_arrivals: 'Late arrivals',
-  leave_days: 'Leave days',
-  overtime_hours: 'Overtime hours',
+  present_days: 'Present Days',
+  late_arrivals: 'Late Arrivals',
+  leave_days: 'Leave Days',
+  overtime_hours: 'Overtime Hours',
 }
 
 /**
@@ -385,48 +385,48 @@ export interface SignalSpec {
 export const SIGNAL_SPECS: Record<AttentionSignal, SignalSpec> = {
   leave_pending: {
     label: 'Leave Pending',
-    description: 'A leave application has been sitting for more than 3 days.',
+    description: 'A Leave Application Has Been Sitting for More Than 3 Days.',
     to: '/hr/leave',
   },
   missing_checkout: {
     label: 'Missing Check-Out',
-    description: 'A past day has a check-in and no check-out.',
+    description: 'A Past Day Has a Check-In and No Check-Out.',
     to: '/hr/attendance',
   },
   contract_expiring: {
     label: 'Contract Expiring',
-    description: 'The posting comes up for renewal within 30 days.',
+    description: 'The Posting Comes up for Renewal Within 30 Days.',
     to: '/hr/employee',
   },
   document_expiring: {
     label: 'Document Expiring',
-    description: 'A passport or licence expires within 30 days.',
+    description: 'A Passport or Licence Expires Within 30 Days.',
     to: '/hr/employee',
   },
   no_wage: {
     label: 'No Wage',
-    description: 'No wage row — payroll skips this employee entirely.',
+    description: 'No Wage Row — Payroll Skips This Employee Entirely.',
     to: '/hr/employee',
   },
   probation_due: {
     label: 'Probation Due',
-    description: 'Joined more than 6 months ago and still unconfirmed.',
+    description: 'Joined More Than 6 Months Ago and Still Unconfirmed.',
     to: '/hr/employee',
   },
   ticket_overdue: {
     label: 'Ticket Overdue',
-    description: 'An open help-desk ticket is more than 7 days old.',
+    description: 'An Open Help-Desk Ticket Is More Than 7 Days Old.',
     to: '/support/employee-ticket',
   },
   no_posting: {
     label: 'No Posting',
     description:
-      'Employed by nobody — excluded from every headcount on this screen.',
+      'Employed by Nobody — Excluded from Every Headcount on This Screen.',
     to: '/hr/employee',
   },
   incomplete_kyc: {
     label: 'Incomplete KYC',
-    description: 'A bank account, PAN or Aadhaar is missing.',
+    description: 'A Bank Account, PAN or Aadhaar Is Missing.',
     to: '/hr/employee',
   },
 }

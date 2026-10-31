@@ -138,7 +138,7 @@ function patternField(
  * the department writes it.
  */
 export const panField = (options: FieldOptions = {}) =>
-  patternField(PAN_RE, 'Enter a valid PAN, e.g. ABCDE1234F', {
+  patternField(PAN_RE, 'Enter a Valid PAN, e.g. ABCDE1234F', {
     label: 'the PAN number',
     uppercase: true,
     ...options,
@@ -146,7 +146,7 @@ export const panField = (options: FieldOptions = {}) =>
 
 /** GSTIN — 15 characters, and the embedded PAN has to be shaped like one. */
 export const gstField = (options: FieldOptions = {}) =>
-  patternField(GST_RE, 'Enter a valid 15-character GST number, e.g. 24ABCDE1234F1Z5', {
+  patternField(GST_RE, 'Enter a Valid 15-Character GST Number, e.g. 24ABCDE1234F1Z5', {
     label: 'the GST number',
     uppercase: true,
     ...options,
@@ -154,7 +154,7 @@ export const gstField = (options: FieldOptions = {}) =>
 
 /** IFSC — the branch code on every Indian bank transfer. */
 export const ifscField = (options: FieldOptions = {}) =>
-  patternField(IFSC_RE, 'Enter a valid IFSC code, e.g. HDFC0001234', {
+  patternField(IFSC_RE, 'Enter a Valid IFSC Code, e.g. HDFC0001234', {
     label: 'the IFSC code',
     uppercase: true,
     ...options,
@@ -162,7 +162,7 @@ export const ifscField = (options: FieldOptions = {}) =>
 
 /** Bank account number — digits only; no spaces, dashes or letters. */
 export const accountNumberField = (options: FieldOptions = {}) =>
-  patternField(ACCOUNT_NUMBER_RE, 'Account number must be 9 to 18 digits', {
+  patternField(ACCOUNT_NUMBER_RE, 'Account Number Must Be 9 to 18 Digits', {
     label: 'the account number',
     ...options,
   })
@@ -192,7 +192,7 @@ export const aadhaarField = ({ required = false, max }: FieldOptions = {}) => {
   const base = z.string().trim()
   const capped = max === undefined ? base : base.max(max, `Cannot exceed ${max} characters`)
   const required_ = required
-    ? capped.min(1, 'Please enter the Aadhaar number')
+    ? capped.min(1, 'Please Enter the Aadhaar Number')
     : capped
   // superRefine rather than `patternField`: the two failures need two messages.
   return required_.superRefine((value, ctx) => {
@@ -202,34 +202,34 @@ export const aadhaarField = ({ required = false, max }: FieldOptions = {}) => {
 }
 
 export const uanField = (options: FieldOptions = {}) =>
-  patternField(UAN_RE, 'UAN must be 12 digits', { label: 'the UAN', ...options })
+  patternField(UAN_RE, 'UAN Must Be 12 Digits', { label: 'the UAN', ...options })
 
 export const esicNumberField = (options: FieldOptions = {}) =>
-  patternField(ESIC_NUMBER_RE, 'ESIC number must be 10 to 17 digits', {
+  patternField(ESIC_NUMBER_RE, 'ESIC Number Must Be 10 to 17 Digits', {
     label: 'the ESIC number',
     ...options,
   })
 
 export const mobileField = (options: FieldOptions = {}) =>
-  patternField(MOBILE_RE, 'Enter a valid 10-digit mobile number', {
+  patternField(MOBILE_RE, 'Enter a Valid 10-Digit Mobile Number', {
     label: 'the mobile number',
     ...options,
   })
 
 export const phoneField = (options: FieldOptions = {}) =>
-  patternField(PHONE_RE, 'Enter a valid phone number', {
+  patternField(PHONE_RE, 'Enter a Valid Phone Number', {
     label: 'the phone number',
     ...options,
   })
 
 export const pinCodeField = (options: FieldOptions = {}) =>
-  patternField(PIN_CODE_RE, 'Enter a valid 6-digit PIN code', {
+  patternField(PIN_CODE_RE, 'Enter a Valid 6-Digit PIN Code', {
     label: 'the PIN code',
     ...options,
   })
 
 export const emailField = (options: FieldOptions = {}) =>
-  patternField(EMAIL_RE, 'Enter a valid email address', {
+  patternField(EMAIL_RE, 'Enter a Valid Email Address', {
     label: 'the email address',
     max: 255,
     ...options,
@@ -239,17 +239,17 @@ export const emailField = (options: FieldOptions = {}) =>
 export const registrationNumberField = (options: FieldOptions = {}) =>
   patternField(
     REGISTRATION_NO_RE,
-    'Use letters, digits and - / only',
+    'Use Letters, Digits and - / Only',
     { label: 'the registration number', max: 100, ...options },
   )
 
 /** A whole number held as a string — that's what a text input gives us. */
 export const wholeNumberField = (options: FieldOptions = {}) =>
-  patternField(DIGITS_RE, 'Enter a whole number', { label: 'a number', ...options })
+  patternField(DIGITS_RE, 'Enter a Whole Number', { label: 'a number', ...options })
 
 /** An amount held as a string, up to two decimals. */
 export const amountField = (options: FieldOptions = {}) =>
-  patternField(AMOUNT_RE, 'Enter a valid amount', { label: 'an amount', ...options })
+  patternField(AMOUNT_RE, 'Enter a Valid Amount', { label: 'an amount', ...options })
 
 /* ── Name fields ──────────────────────────────────────────────────────────── */
 
@@ -264,7 +264,7 @@ export function personNameField(
   const base = z.string().trim().max(max, `Cannot exceed ${max} characters`)
   const message = `${label} can only use letters, spaces and . ' -`
   return required
-    ? base.min(1, `Please enter ${label}`).min(2, 'Minimum 2 characters').regex(PERSON_NAME_RE, message)
+    ? base.min(1, `Please enter ${label}`).min(2, 'Minimum 2 Characters').regex(PERSON_NAME_RE, message)
     : base.refine((v) => v === '' || PERSON_NAME_RE.test(v), message)
 }
 

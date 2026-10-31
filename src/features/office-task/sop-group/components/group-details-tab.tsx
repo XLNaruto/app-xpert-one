@@ -12,7 +12,7 @@ import { ChecklistItemRow } from './checklist-item-row'
 /** Tab 1 — the group's name, who it applies to, and its checklist. */
 export function GroupDetailsTab({ f }: { f: SopGroupForm }) {
   const { register, control, formState: { errors } } = f.form
-  const lockHint = f.targetLocked ? 'Employees already run this group, so who it applies to is fixed.' : undefined
+  const lockHint = f.targetLocked ? 'Employees Already Run This Group, So Who It Applies to Is Fixed.' : undefined
 
   return (
     <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
@@ -42,7 +42,7 @@ export function GroupDetailsTab({ f }: { f: SopGroupForm }) {
                 onChange={(v) => f.changeTarget('designationId', v)}
                 {...f.designationSelect}
                 placeholder="Select Designation"
-                searchPlaceholder="Search designation"
+                searchPlaceholder="Search Designation"
                 disabled={f.targetLocked}
               />
             )}
@@ -60,7 +60,7 @@ export function GroupDetailsTab({ f }: { f: SopGroupForm }) {
                 onChange={(v) => f.changeTarget('roleId', v)}
                 {...f.roleSelect}
                 placeholder="Select Role"
-                searchPlaceholder="Search role"
+                searchPlaceholder="Search Role"
                 disabled={f.targetLocked}
               />
             )}

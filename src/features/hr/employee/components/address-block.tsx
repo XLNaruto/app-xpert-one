@@ -60,7 +60,7 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
         <Textarea
           rows={2}
           disabled={disabled}
-          placeholder="House / flat, building, street"
+          placeholder="House / Flat, Building, Street"
           aria-invalid={errorFor(names.address1) ? true : undefined}
           {...register(names.address1 as Path<T>)}
         />
@@ -70,7 +70,7 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
         <Textarea
           rows={2}
           disabled={disabled}
-          placeholder="Area, locality"
+          placeholder="Area, Locality"
           {...register(names.address2 as Path<T>)}
         />
       </Field>
@@ -105,8 +105,8 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
               loading={state.loading}
               onScrollEnd={state.onScrollEnd}
               onSearchChange={state.onSearchChange}
-              placeholder="Select state"
-              searchPlaceholder="Search state"
+              placeholder="Select State"
+              searchPlaceholder="Search State"
             />
           )}
         />
@@ -116,7 +116,7 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
         label="District"
         error={errorFor(names.districtId)}
         // The API narrows districts by `state_id`, so there's nothing to list yet.
-        hint={hasState ? undefined : 'Choose a state first.'}
+        hint={hasState ? undefined : 'Choose a State First.'}
       >
         <Controller
           control={control}
@@ -131,8 +131,8 @@ export function AddressBlock<T extends FieldValues = EmployeeBasicFormValues>({
               loading={district.loading}
               onScrollEnd={district.onScrollEnd}
               onSearchChange={district.onSearchChange}
-              placeholder={hasState ? 'Select district' : 'Select a state first'}
-              searchPlaceholder="Search district"
+              placeholder={hasState ? 'Select District' : 'Select a State First'}
+              searchPlaceholder="Search District"
             />
           )}
         />

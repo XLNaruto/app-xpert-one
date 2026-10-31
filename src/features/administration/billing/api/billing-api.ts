@@ -69,7 +69,7 @@ export async function fetchPlans(): Promise<Plan[]> {
     const raw = await http.get<unknown>(endpoints.BILLING.PLANS)
     return plansResponseSchema.parse(raw).items.map(toPlan)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the available plans.")
+    throw toApiError(error, "Couldn't Load the Available Plans.")
   }
 }
 
@@ -87,7 +87,7 @@ export async function fetchSubscription(): Promise<Subscription | null> {
     if (raw === null || raw === undefined || raw === '') return null
     return toSubscription(subscriptionResponseSchema.parse(raw))
   } catch (error) {
-    const apiError = toApiError(error, "Couldn't load your subscription.")
+    const apiError = toApiError(error, "Couldn't Load Your Subscription.")
     if (apiError.status === 404) return null
     throw apiError
   }
@@ -110,7 +110,7 @@ export async function purchasePlan(
     )
     return toPlanPurchase(createSubscriptionResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't start the purchase for this plan.")
+    throw toApiError(error, "Couldn't Start the Purchase for This Plan.")
   }
 }
 
@@ -127,16 +127,17 @@ export async function fetchAccountOverview(): Promise<AccountOverview> {
     const raw = await http.get<unknown>(endpoints.ME.GET)
     return toAccountOverview(accountOverviewResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load your account details.")
+    throw toApiError(error, "Couldn't Load Your Account Details.")
   }
 }
 
 /**
  * GET /user/subscriptions — every plan this account has bought, newest first.
  *
- * Paged with `limit`/`offset` only: the endpoint neither searches nor sorts, so
- * `search`/`sort` on the params are ignored. The API caps `limit` at 100, and a
- * negative ("every row") limit is sent as that cap.
+ * Paged with `limit`/`offset`; `search` matches the plan, term, period, amount
+ * paid, purchase date, status and invoice number. The endpoint doesn't sort, so
+ * `sort` on the params is ignored. The API caps `limit` at 100, and a negative
+ * ("every row") limit is sent as that cap.
  */
 export async function fetchPurchasedPlans(
   params: PageParams = { limit: DEFAULT_PAGE_SIZE, offset: 0 },
@@ -149,12 +150,13 @@ export async function fetchPurchasedPlans(
             ? Math.min(params.limit, PURCHASE_HISTORY_MAX_LIMIT)
             : PURCHASE_HISTORY_MAX_LIMIT,
         offset: params.offset,
+        ...(params.search ? { search: params.search } : {}),
       },
     })
     const { items, total } = purchasedPlansResponseSchema.parse(raw)
     return { items: items.map(toPurchasedPlan), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load your purchase history.")
+    throw toApiError(error, "Couldn't Load Your Purchase History.")
   }
 }
 
@@ -175,7 +177,7 @@ export async function downloadInvoice({
 }): Promise<void> {
   await downloadFile(endpoints.BILLING.INVOICE(subscriptionId), {
     fallbackName: `${invoiceNumber}.pdf`,
-    errorMessage: "Couldn't download the invoice.",
+    errorMessage: "Couldn't Download the Invoice.",
   })
 }
 
@@ -205,7 +207,7 @@ export async function previewPlanSwitch(choice: SwitchChoice): Promise<SwitchSum
     )
     return toSwitchSummary(switchSummarySchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't price this plan change.")
+    throw toApiError(error, "Couldn't Price This Plan Change.")
   }
 }
 
@@ -226,7 +228,7 @@ export async function switchPlan(input: ApplySwitchInput): Promise<SwitchResult>
     )
     return toSwitchResult(switchResultSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't change your plan.")
+    throw toApiError(error, "Couldn't Change Your Plan.")
   }
 }
 
@@ -236,7 +238,7 @@ export async function cancelScheduledSwitch(): Promise<Subscription> {
     const raw = await http.delete<unknown>(endpoints.BILLING.SWITCH)
     return toSubscription(subscriptionResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't cancel the booked plan change.")
+    throw toApiError(error, "Couldn't Cancel the Booked Plan Change.")
   }
 }
 
@@ -250,7 +252,7 @@ export async function fetchCredits(
     })
     return toCreditLedger(creditsResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load your stored credit.")
+    throw toApiError(error, "Couldn't Load Your Stored Credit.")
   }
 }
 
@@ -273,7 +275,7 @@ export async function createSwitchRequest(
     )
     return toSwitchRequest(switchRequestSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't send your plan change request.")
+    throw toApiError(error, "Couldn't Send Your Plan Change Request.")
   }
 }
 
@@ -284,7 +286,7 @@ export async function fetchPendingSwitchRequest(): Promise<SwitchRequest | null>
     if (raw === null || raw === undefined || raw === '') return null
     return toSwitchRequest(switchRequestSchema.parse(raw))
   } catch (error) {
-    const apiError = toApiError(error, "Couldn't load your plan change request.")
+    const apiError = toApiError(error, "Couldn't Load Your Plan Change Request.")
     if (apiError.status === 404) return null
     throw apiError
   }
@@ -296,7 +298,7 @@ export async function withdrawSwitchRequest(): Promise<SwitchRequest> {
     const raw = await http.delete<unknown>(endpoints.BILLING.SWITCH_REQUEST_PENDING)
     return toSwitchRequest(switchRequestSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't withdraw your plan change request.")
+    throw toApiError(error, "Couldn't Withdraw Your Plan Change Request.")
   }
 }
 
@@ -311,6 +313,6 @@ export async function fetchSwitchRequests(
     const { items, total } = switchRequestsResponseSchema.parse(raw)
     return { items: items.map(toSwitchRequest), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load your plan change requests.")
+    throw toApiError(error, "Couldn't Load Your Plan Change Requests.")
   }
 }

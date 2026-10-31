@@ -89,7 +89,7 @@ export async function fetchDocumentTypes(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load document types.")
+    throw toApiError(error, "Couldn't Load Document Types.")
   }
 }
 
@@ -99,7 +99,7 @@ export async function fetchDocumentType(id: number): Promise<DocumentType> {
     const raw = await http.get<unknown>(endpoints.DOCUMENT_TYPES.GET(id))
     return toDocumentType(documentTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Document type not found')
+    throw toApiError(error, 'Document Type Not Found')
   }
 }
 
@@ -121,7 +121,7 @@ export async function createDocumentType(
     )
     return toDocumentType(documentTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the document type.")
+    throw toApiError(error, "Couldn't Create the Document Type.")
   }
 }
 
@@ -137,7 +137,7 @@ export async function updateDocumentType(
     )
     return toDocumentType(documentTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the document type.")
+    throw toApiError(error, "Couldn't Update the Document Type.")
   }
 }
 
@@ -151,6 +151,6 @@ export async function deleteDocumentType(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.DOCUMENT_TYPES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the document type.")
+    throw toApiError(error, "Couldn't Delete the Document Type.")
   }
 }

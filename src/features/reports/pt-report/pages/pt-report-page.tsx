@@ -91,7 +91,7 @@ export function PtReportPage() {
     <div>
       <PageHeader
         title="PT Report"
-        description="The month's Professional Tax — the gross each employee was assessed on, and the tax deducted."
+        description="The Month's Professional Tax — The Gross Each Employee Was Assessed On, and the Tax Deducted."
       />
 
       <ReportFilterCard
@@ -125,17 +125,17 @@ export function PtReportPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to read its PT statement."
+          description="Select a Company for This Session to Read Its PT Statement."
         />
       ) : !view.hasApplied ? (
         <EmptyState
           icon={Filter}
           title="Choose a Period"
-          description="Pick a month above, then press “Filter Data” to load the statement."
+          description="Pick a Month Above, Then Press “Filter Data” to Load the Statement."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {view.error instanceof Error ? view.error.message : "Couldn't load the PT report."}
+          {view.error instanceof Error ? view.error.message : "Couldn't Load the PT Report."}
         </p>
       ) : (
         <>
@@ -173,7 +173,7 @@ export function PtReportPage() {
             onSortingChange={view.onSortingChange}
             /* Name and code only: PT issues no per-employee identifier to search
                on, unlike a UAN or an ESIC insurance number. */
-            searchPlaceholder="Search by name or code…"
+            searchPlaceholder="Search by Name or Code…"
             itemName="employees"
           />
         </>

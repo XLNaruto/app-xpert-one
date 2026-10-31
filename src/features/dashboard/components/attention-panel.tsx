@@ -108,7 +108,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
       },
       {
         id: 'signals',
-        header: 'What needs work',
+        header: 'What Needs Work',
         enableSorting: false,
         // The widest column by right: a row can trip five signals at once, and
         // at the width the table would otherwise hand it every chip lands on
@@ -130,10 +130,10 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
         cell: ({ row }) => (
           <div className="text-xs text-muted-foreground">
             {row.original.contractEndsOn ? (
-              <p>Contract ends {formatDateField(row.original.contractEndsOn)}</p>
+              <p>Contract Ends {formatDateField(row.original.contractEndsOn)}</p>
             ) : null}
             {row.original.documentExpiresOn ? (
-              <p>Document expires {formatDateField(row.original.documentExpiresOn)}</p>
+              <p>Document Expires {formatDateField(row.original.documentExpiresOn)}</p>
             ) : null}
             {row.original.joiningDate ? (
               <p>Joined {formatDateField(row.original.joiningDate)}</p>
@@ -166,7 +166,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
               ? `${formatCount(list.total)} ${
                   list.total === 1 ? 'record needs' : 'records need'
                 } attention as of now`
-              : 'Measured as of now, not over the selected period'}
+              : 'Measured as of Now, Not over the Selected Period'}
             {populationSummary ? ` · ${populationSummary}` : ''}
           </p>
         </div>
@@ -177,7 +177,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             <Input
               value={list.search}
               onChange={(event) => list.setSearch(event.target.value)}
-              placeholder="Name or code…"
+              placeholder="Name or Code…"
               className="h-10 pl-9 pr-9"
             />
             {list.search ? (
@@ -197,7 +197,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             onChange={(value) => list.setSignal(value as AttentionSignal | '')}
             searchable={false}
             className="w-44"
-            placeholder="All signals"
+            placeholder="All Signals"
           />
         </div>
       </CardHeader>
@@ -241,7 +241,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             emptyState={
               <EmptyState
                 title="No Matching Records"
-                description="No record in this population trips the selected signal."
+                description="No Record in This Population Trips the Selected Signal."
               />
             }
           />

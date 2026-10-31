@@ -65,7 +65,7 @@ export function usePtRateForm(id?: number) {
     const mutation = isEdit ? updatePtRate : createPtRate
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'PT rate updated' : 'PT rate created')
+        toast.success(isEdit ? 'PT Rate Updated' : 'PT Rate Created')
         goToList()
       },
       onError: (err) =>

@@ -13,7 +13,7 @@ export const MAX_WEEKOFF_RULES = 35
  */
 export const weekoffRuleSchema = z.object({
   /** 0 = Sunday … 6 = Saturday, held as the dropdown's string. */
-  weekDay: z.string().trim().min(1, 'Pick a day'),
+  weekDay: z.string().trim().min(1, 'Pick a Day'),
   weekNumber: z.string().trim(),
   /** Off, or a working-day exception carved out of a broader rule. */
   isOff: z.boolean(),
@@ -65,7 +65,7 @@ export const weekoffPolicySchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['weeklyOffDays'],
-          message: 'Enter a whole number of days between 1 and 6',
+          message: 'Enter a Whole Number of Days Between 1 and 6',
         })
       }
       return
@@ -77,7 +77,7 @@ export const weekoffPolicySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['everyWeekDays'],
-        message: 'Mark at least one week-off day, or add an occurrence rule',
+        message: 'Mark at Least One Week-Off Day, or Add an Occurrence Rule',
       })
     }
 
@@ -87,7 +87,7 @@ export const weekoffPolicySchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['everyWeekDays'],
-        message: "You can't select all seven days as off every week.",
+        message: "You Can't Select All Seven Days as off Every Week.",
       })
     }
 
@@ -108,7 +108,7 @@ export const weekoffPolicySchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['rules', index, 'weekDay'],
-          message: 'This day and occurrence already has a rule',
+          message: 'This Day and Occurrence Already Has a Rule',
         })
       }
       seen.add(key)
@@ -122,7 +122,7 @@ export const weekoffPolicySchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['rules', index, 'weekNumber'],
-          message: 'This day is already off every week — pick an occurrence',
+          message: 'This Day Is Already off Every Week — Pick an Occurrence',
         })
       }
     })

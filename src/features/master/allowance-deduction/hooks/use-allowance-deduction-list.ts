@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { ALLOWANCE_DEDUCTION_DEFAULT_SORT } from '../constants'
 import { useAllowanceDeductions } from '../api/use-allowance-deductions'
 import { useDeleteAllowanceDeduction } from '../api/use-allowance-deduction-mutations'
@@ -25,7 +25,7 @@ export function useAllowanceDeductionList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ALLOWANCE_DEDUCTION_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ALLOWANCE_DEDUCTION_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useAllowanceDeductions(params)
   const deleteRecord = useDeleteAllowanceDeduction()
 
@@ -44,11 +44,11 @@ export function useAllowanceDeductionList() {
     if (!pendingDelete) return
     deleteRecord.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Record deleted')
+        toast.success('Record Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete record'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Record'),
     })
   }
 

@@ -70,7 +70,7 @@ export function BillingCycleToggle({
               : 'bg-muted text-muted-foreground',
           )}
         >
-          Save up to {savingsPercent}% yearly
+          Save up To {savingsPercent}% yearly
         </span>
       )}
     </div>

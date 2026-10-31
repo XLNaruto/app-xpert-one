@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { ESIC_RATE_DEFAULT_SORT } from '../constants'
 import { useEsicRates } from '../api/use-esic-rates'
 import { useDeleteEsicRate } from '../api/use-esic-rate-mutations'
@@ -25,7 +25,7 @@ export function useEsicRateList() {
     setSearch,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ESIC_RATE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ESIC_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useEsicRates(params)
   const deleteEsicRate = useDeleteEsicRate()
 
@@ -41,12 +41,12 @@ export function useEsicRateList() {
     if (!pendingDelete) return
     deleteEsicRate.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('ESIC rate deleted')
+        toast.success('ESIC Rate Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
         toast.error(
-          err instanceof Error ? err.message : 'Failed to delete ESIC rate',
+          err instanceof Error ? err.message : 'Failed to Delete ESIC Rate',
         ),
     })
   }

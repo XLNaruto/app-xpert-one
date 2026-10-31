@@ -281,7 +281,7 @@ export function EmployeeTicketListPage() {
     <div>
       <PageHeader
         title="Employee Support"
-        description="What your employees have raised from the app, across every company. Most urgent first — this is work waiting on somebody, and nothing here is on a clock."
+        description="What Your Employees Have Raised from the App, Across Every Company. Most Urgent First — This Is Work Waiting on Somebody, and Nothing Here Is on a Clock."
         actions={
           list.canShowMyDesk && (
             <div className="flex flex-wrap items-center gap-2">
@@ -356,7 +356,7 @@ export function EmployeeTicketListPage() {
               search={{
                 value: list.search,
                 onChange: list.setSearch,
-                placeholder: 'Search by ticket code, subject or description…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -369,7 +369,7 @@ export function EmployeeTicketListPage() {
                   onChange: (value) => list.setFilter('companyId', value),
                   options: list.companyOptions,
                   clearValue: ALL_FILTER,
-                  searchPlaceholder: 'Search companies',
+                  searchPlaceholder: 'Search Companies',
                 },
                 {
                   key: 'category',
@@ -405,7 +405,7 @@ export function EmployeeTicketListPage() {
                   onChange: list.changeAssignee,
                   ...list.assigneeFacet,
                   clearValue: ALL_FILTER,
-                  searchPlaceholder: 'Search people',
+                  searchPlaceholder: 'Search People',
                 },
                 {
                   // Outstanding AND nobody's. It carries its own status
@@ -440,13 +440,13 @@ export function EmployeeTicketListPage() {
               icon={Headset}
               title={
                 list.search || list.hasFilters
-                  ? 'No matching tickets'
-                  : 'Nothing waiting on you'
+                  ? 'No Matching Tickets'
+                  : 'Nothing Waiting on You'
               }
               description={
                 list.search || list.hasFilters
-                  ? 'Try a different search term or clear the filters.'
-                  : 'Queries your employees raise from the app land here, most urgent first.'
+                  ? 'Try a Different Search Term or Clear the Filters.'
+                  : 'Queries Your Employees Raise from the App Land Here, Most Urgent First.'
               }
             />
           }

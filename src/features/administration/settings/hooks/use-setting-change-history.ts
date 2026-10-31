@@ -1,18 +1,19 @@
 import { useState } from 'react'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { useSettingChanges } from '../api/use-setting-changes'
 import type { SettingChangeStatus, SettingKey } from '../schemas'
 
 /**
  * The Settings screen's History tab: one server page of booked changes, with
- * the setting and status filters. The order is the endpoint's own (newest
- * `effective_from` first) — it takes no sort or search.
+ * a server-side search and the setting and status filters. The order is the
+ * endpoint's own (newest `effective_from` first) — it takes no sort.
  */
 export function useSettingChangeHistory() {
   const companyId = useAuthStore((s) => s.user?.companyId ?? null)
-  const { params, limit, offset, onPaginationChange } = usePagination(DEFAULT_PAGE_SIZE)
+  const { params, limit, offset, onPaginationChange, search, setSearch } =
+    usePagination(ALL_PAGE_SIZE)
 
   /** '' is "any", which the API gets as no parameter at all. */
   const [settingKeyFilter, setSettingKeyFilter] = useState('')
@@ -35,6 +36,7 @@ export function useSettingChangeHistory() {
   const resetFilters = () => {
     setSettingKeyFilter('')
     setStatusFilter('')
+    setSearch('')
     onPaginationChange({ limit, offset: 0 })
   }
 
@@ -44,6 +46,8 @@ export function useSettingChangeHistory() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
     settingKeyFilter,
     changeSettingKeyFilter,
     statusFilter,

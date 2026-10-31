@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { COMPANY_DEFAULT_SORT } from '../constants'
@@ -26,7 +26,7 @@ export function useCompanyList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, COMPANY_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, COMPANY_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useCompanies(params)
   const deleteCompany = useDeleteCompany()
 
@@ -44,11 +44,11 @@ export function useCompanyList() {
     if (!pendingDelete) return
     deleteCompany.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Company deleted')
+        toast.success('Company Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete company'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Company'),
     })
   }
 

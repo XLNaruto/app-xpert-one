@@ -7,7 +7,7 @@ import { recordNameField } from '@/lib/validation'
  * mappers.
  */
 export const documentSchema = z.object({
-  documentTypeId: z.string().trim().min(1, 'Please select a document type'),
+  documentTypeId: z.string().trim().min(1, 'Please Select a Document Type'),
   documentName: recordNameField('the document name', { max: 200 }),
   /** Mandatory for every employee — the API defaults it to false. */
   isRequired: z.boolean(),

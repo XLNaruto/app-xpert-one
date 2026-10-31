@@ -99,6 +99,11 @@ interface AuthState {
    * refresh); the local copy is what the company gate and switcher read.
    */
   setActiveCompany: (companyId: number | null) => void
+  /**
+   * Keep the session's copy of the user in step after they edit their own
+   * profile (`PATCH /user/me`) — the token stays valid, so nothing re-logs in.
+   */
+  patchUser: (patch: Partial<Pick<AuthUser, 'name' | 'email'>>) => void
   /** Clear the session locally (backend logout is handled by `useLogout`). */
   logout: () => void
 }
@@ -148,6 +153,8 @@ export const useAuthStore = create<AuthState>()(
           ...(s.user ? { user: { ...s.user, companyId } } : {}),
           companySelected: companyId != null,
         })),
+      patchUser: (patch) =>
+        set((s) => (s.user ? { user: { ...s.user, ...patch } } : {})),
       logout: () =>
         set({
           user: null,

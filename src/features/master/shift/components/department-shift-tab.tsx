@@ -52,13 +52,13 @@ export function DepartmentShiftTab({
       <FormSection
         icon={Clock}
         title="Department Shift"
-        description="The shift this department's staff work by default"
+        description="The Shift This Department's Staff Work by Default"
         className="mt-0"
       />
 
       <Field
         label="Default Shift"
-        hint="Overrides the company's default for this department. Employees who deviate still get their own assignment."
+        hint="Overrides the Company's Default for This Department. Employees Who Deviate Still Get Their Own Assignment."
       >
         {/*
           A shift's label carries its window as well as its name, which the
@@ -76,10 +76,10 @@ export function DepartmentShiftTab({
             isLoadingShifts
               ? 'Loading…'
               : hasNoShifts
-                ? 'No shifts in this company yet'
+                ? 'No Shifts in This Company Yet'
                 : 'Select Shift'
           }
-          searchPlaceholder="Search shift"
+          searchPlaceholder="Search Shift"
         />
       </Field>
 

@@ -34,6 +34,6 @@ export async function verifyPasswordRequest(password: string): Promise<PasswordC
       message: data.message,
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't confirm your password. Please try again.")
+    throw toApiError(error, "Couldn't Confirm Your Password. Please Try Again.")
   }
 }

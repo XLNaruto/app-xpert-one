@@ -98,7 +98,7 @@ export function useEmployeeFamilyTab({
         remove: (id) => deleteMember.mutateAsync(id),
       })
       setRemovedIds([])
-      toast.success('Family detail saved')
+      toast.success('Family Detail Saved')
       onSaved()
     } catch (error) {
       // The calls that already went through stay done; a second Save resumes.

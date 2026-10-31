@@ -93,12 +93,12 @@ export function usePlanPurchase({
         toastsuccessmsg('Payment successful. Your plan is being activated.')
       } else {
         toast.info(
-          'Payment cancelled. Your order is still open if you want to finish it.',
+          'Payment Cancelled. Your Order Is Still Open If You Want to Finish It.',
           { duration: 5000 },
         )
       }
     } catch (error) {
-      toastApiError(error, "Couldn't complete the purchase.")
+      toastApiError(error, "Couldn't Complete the Purchase.")
     } finally {
       setIsPaying(false)
       // Whatever happened, a subscription record now exists — even an abandoned

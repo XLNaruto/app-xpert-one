@@ -95,7 +95,7 @@ export function WageStructureTab({
       <EmptyState
         icon={Wallet}
         title="No Wage to Show"
-        description="Couldn't read what this employee is paid. Check they have a current posting, then try again."
+        description="Couldn't Read What This Employee Is Paid. Check They Have a Current Posting, Then Try Again."
       />
     )
   }
@@ -119,7 +119,7 @@ export function WageStructureTab({
         <EmptyState
           icon={Wallet}
           title="Nothing Prices This Employee Yet"
-          description="Neither this employee nor their designation has a wage structure in force. Set one on the designation, or give this employee their own below."
+          description="Neither This Employee nor Their Designation Has a Wage Structure in Force. Set One on the Designation, or Give This Employee Their Own Below."
         />
       )}
 
@@ -229,7 +229,7 @@ export function WageStructureTab({
         <FormSection
           icon={Wallet}
           title="Allowances & Deductions"
-          description="The heads in force for this employee — their own where a version carries them, the designation's catalog otherwise."
+          description="The Heads in Force for This Employee — Their Own Where a Version Carries Them, the Designation's Catalog Otherwise."
         />
 
         <div className="mt-4">
@@ -255,8 +255,8 @@ export function WageStructureTab({
       </div>
 
       <StepNavFooter onContinue={onContinue} onBack={onBack}>
-        Save the grid before moving on — rows left on it aren't carried to the next
-        step.
+        Save the Grid Before Moving on — Rows Left on It Aren't Carried to the Next
+        Step.
       </StepNavFooter>
 
       <ConfirmDialog
@@ -297,9 +297,9 @@ function ComponentSourceBanner({ wage }: { wage: EmployeeWage }) {
       <p className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
         <Info className="mt-0.5 size-4 shrink-0" />
         <span>
-          No allowance or deduction heads are configured at either tier yet. Set them
-          on the designation, or on a row of the grid above to price this employee
-          alone.
+          No Allowance or Deduction Heads Are Configured at Either Tier Yet. Set Them
+          on the Designation, or on a Row of the Grid Above to Price This Employee
+          Alone.
         </span>
       </p>
     )
@@ -311,7 +311,7 @@ function ComponentSourceBanner({ wage }: { wage: EmployeeWage }) {
       <span>
         {isOwn ? (
           <>
-            These are <strong>this employee's own heads</strong>. The designation's
+            These Are <strong>this employee's own heads</strong>. The designation's
             catalog{' '}
             {designationCount > 0
               ? `(${designationCount} head${designationCount === 1 ? '' : 's'})`
@@ -322,7 +322,7 @@ function ComponentSourceBanner({ wage }: { wage: EmployeeWage }) {
           </>
         ) : (
           <>
-            These are <strong>the designation's heads</strong>. Turn a version's Heads
+            These Are <strong>the designation's heads</strong>. Turn a version's Heads
             column to Own on the grid above to price this employee on a list of their
             own instead.
           </>
@@ -344,13 +344,13 @@ function SourceBanner({ wage }: { wage: EmployeeWage }) {
       <span>
         {isOwn ? (
           <>
-            This employee is on <strong>their own wage</strong>, which outranks their
+            This Employee Is On <strong>their own wage</strong>, which outranks their
             designation's structure. Withdraw every version below to put them back on
             the designation's terms.
           </>
         ) : (
           <>
-            This employee is priced by <strong>their designation's</strong> wage
+            This Employee Is Priced By <strong>their designation's</strong> wage
             structure. Revise it from Master → Designation to move everyone on that
             title, or add a row below to move only this employee.
           </>
@@ -380,7 +380,7 @@ function EffectiveWageBlock({ wage }: { wage: EmployeeWage }) {
           className="ml-auto shrink-0 gap-1"
         >
           {isOwn ? <UserPen className="size-3" /> : <Building2 className="size-3" />}
-          {isOwn ? "Employee's own" : 'From designation'}
+          {isOwn ? "Employee's Own" : 'From Designation'}
         </Badge>
       </div>
 
@@ -416,7 +416,7 @@ function EffectiveWageBlock({ wage }: { wage: EmployeeWage }) {
               ? version.overtimeRatePerHour === null
                 ? 'Applicable'
                 : `${formatAmount(version.overtimeRatePerHour)} / hour`
-              : 'Not applicable'
+              : 'Not Applicable'
           }
         />
         <ReadOnlyTile
@@ -445,7 +445,7 @@ function ActsBlock({ version }: { version: EmployeeWageVersion }) {
       <FormSection
         icon={Landmark}
         title="Statutory Compliance"
-        description="Which acts apply on the wage in force, and on what basis"
+        description="Which Acts Apply on the Wage in Force, and on What Basis"
       />
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -554,7 +554,7 @@ function ActTile({
         <div>
           <p className="text-sm font-medium text-foreground">{label}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {applicable ? detail || 'Applicable' : 'Not applicable'}
+            {applicable ? detail || 'Applicable' : 'Not Applicable'}
           </p>
         </div>
         <Badge variant={applicable ? 'success' : 'secondary'}>

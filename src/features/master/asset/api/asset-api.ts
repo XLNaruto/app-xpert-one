@@ -89,7 +89,7 @@ export async function fetchAssets(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load assets.")
+    throw toApiError(error, "Couldn't Load Assets.")
   }
 }
 
@@ -99,7 +99,7 @@ export async function fetchAsset(id: number): Promise<AssetRecord> {
     const raw = await http.get<unknown>(endpoints.ASSETS.GET(id))
     return toAsset(assetResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Asset not found')
+    throw toApiError(error, 'Asset Not Found')
   }
 }
 
@@ -114,7 +114,7 @@ export async function createAsset(values: AssetFormValues): Promise<AssetRecord>
     } as AssetPayload)
     return toAsset(assetResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the asset.")
+    throw toApiError(error, "Couldn't Create the Asset.")
   }
 }
 
@@ -138,7 +138,7 @@ export async function updateAsset(
     )
     return toAsset(assetResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the asset.")
+    throw toApiError(error, "Couldn't Update the Asset.")
   }
 }
 
@@ -147,7 +147,7 @@ export async function deleteAsset(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.ASSETS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the asset.")
+    throw toApiError(error, "Couldn't Delete the Asset.")
   }
 }
 
@@ -174,14 +174,14 @@ export async function changeAssetStock(
       movement: toStockMovement(parsed.movement),
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't update the stock.")
+    throw toApiError(error, "Couldn't Update the Stock.")
   }
 }
 
 /**
  * GET /user/assets/:id/stock-movements — the asset's WHOLE ledger: its own
  * lines and its variants', newest first. `variant_id` is null on a line about
- * the asset itself.
+ * the asset itself. `search` matches the variant, reason, change, stock and note.
  */
 export async function fetchAssetStockMovements(
   id: number,
@@ -189,6 +189,7 @@ export async function fetchAssetStockMovements(
 ): Promise<Paginated<StockMovement>> {
   try {
     const query = {
+      ...(params.search ? { search: params.search } : {}),
       sort: params.sort ?? STOCK_MOVEMENT_DEFAULT_SORT.id,
       sort_by: params.sortBy ?? (STOCK_MOVEMENT_DEFAULT_SORT.desc ? 'desc' : 'asc'),
     }
@@ -220,6 +221,6 @@ export async function fetchAssetStockMovements(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the stock history.")
+    throw toApiError(error, "Couldn't Load the Stock History.")
   }
 }

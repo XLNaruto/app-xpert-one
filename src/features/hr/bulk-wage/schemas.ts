@@ -47,7 +47,7 @@ export const bulkWageFormSchema = z.object({
   effectiveFrom: z
     .string()
     .trim()
-    .min(1, 'Pick the month these wages take effect from'),
+    .min(1, 'Pick the Month These Wages Take Effect From'),
   rows: z.array(bulkWageRowSchema),
 })
 

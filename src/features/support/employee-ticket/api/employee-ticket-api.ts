@@ -136,7 +136,7 @@ export async function fetchEmployeeTickets(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the employee help desk.")
+    throw toApiError(error, "Couldn't Load the Employee Help Desk.")
   }
 }
 
@@ -156,7 +156,7 @@ export async function fetchEmployeeTicketSummary(
     })
     return toEmployeeTicketSummary(employeeTicketSummaryResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the queue counts.")
+    throw toApiError(error, "Couldn't Load the Queue Counts.")
   }
 }
 
@@ -172,7 +172,7 @@ export async function fetchEmployeeTicket(id: number): Promise<EmployeeTicket> {
     const raw = await http.get<unknown>(endpoints.EMPLOYEE_SUPPORT_TICKETS.GET(id))
     return toEmployeeTicket(employeeTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Ticket not found')
+    throw toApiError(error, 'Ticket Not Found')
   }
 }
 
@@ -208,7 +208,7 @@ export async function postEmployeeTicketMessage(
     )
     return toEmployeeTicketMessage(employeeTicketMessageResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't send the reply.")
+    throw toApiError(error, "Couldn't Send the Reply.")
   }
 }
 
@@ -231,7 +231,7 @@ export async function updateEmployeeTicketStatus(
     )
     return toEmployeeTicket(employeeTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the ticket.")
+    throw toApiError(error, "Couldn't Update the Ticket.")
   }
 }
 
@@ -266,7 +266,7 @@ export async function updateEmployeeTicketAssignee(
     )
     return toEmployeeTicket(employeeTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't change who is handling this ticket.")
+    throw toApiError(error, "Couldn't Change Who Is Handling This Ticket.")
   }
 }
 
@@ -288,6 +288,6 @@ export async function fetchEmployeeTicketWorkSessions(
       employeeTicketWorkSessionsResponseSchema.parse(raw),
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't load the work sessions.")
+    throw toApiError(error, "Couldn't Load the Work Sessions.")
   }
 }

@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/common/page-header'
 import { DetailItem } from '@/components/common/detail-item'
 import { EmptyState } from '@/components/common/empty-state'
 import { FilterBar } from '@/components/common/filter-bar'
-import { DataTable } from '@/components/data-table'
+import { ALL_PAGE_SIZE, DataTable } from '@/components/data-table'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -174,7 +174,7 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
         {error ? (
           <ScopedDataError error={error} fallback="Assignment not found." what="SOP assignments" />
         ) : (
-          <EmptyState title="Assignment Not Found" description="It may have been deleted." />
+          <EmptyState title="Assignment Not Found" description="It May Have Been Deleted." />
         )}
       </div>
     )
@@ -245,6 +245,7 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
             data={items.rows}
             isLoading={items.isLoading}
             itemName="items"
+            pageSize={ALL_PAGE_SIZE}
             pageSizeOptions={[5, 10, 25, 50]}
           />
         )}
@@ -267,12 +268,12 @@ export function SopAssignmentDetailPage({ data }: { data?: string }) {
             <EmptyState
               icon={ClipboardList}
               title="No Tasks in This Range"
-              description="Tasks are created from the effective date — pick other dates."
+              description="Tasks Are Created from the Effective Date — Pick Other Dates."
             />
           }
           toolbar={
             <FilterBar
-              search={{ value: runs.search, onChange: runs.setSearch, placeholder: 'Search task…' }}
+              search={{ value: runs.search, onChange: runs.setSearch, placeholder: 'Search…' }}
               leading={
                 <div className="flex items-center gap-2">
                   <DatePicker

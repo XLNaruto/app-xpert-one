@@ -68,7 +68,7 @@ export async function fetchSalaryRegister(
     })
     return toSalaryRegister(salaryRegisterResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the salary register.")
+    throw toApiError(error, "Couldn't Load the Salary Register.")
   }
 }
 
@@ -104,7 +104,7 @@ export async function saveSalaries(
       })),
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't save the salary register.")
+    throw toApiError(error, "Couldn't Save the Salary Register.")
   }
 }
 
@@ -198,7 +198,7 @@ export async function importSalaries(
     // would make the storage host reject the request.
     await axios.put(uploadUrl, file, { headers: { 'Content-Type': contentType } })
   } catch (error) {
-    throw toApiError(error, "Couldn't upload the sheet.")
+    throw toApiError(error, "Couldn't Upload the Sheet.")
   }
 
   try {
@@ -226,7 +226,7 @@ export async function importSalaries(
       })),
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't import the salary sheet.")
+    throw toApiError(error, "Couldn't Import the Salary Sheet.")
   }
 }
 
@@ -253,6 +253,6 @@ export async function deleteSalaries(
       skipped: skipped.map((row) => ({ salaryId: row.salary_id, reason: row.reason })),
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't discard the processed salaries.")
+    throw toApiError(error, "Couldn't Discard the Processed Salaries.")
   }
 }

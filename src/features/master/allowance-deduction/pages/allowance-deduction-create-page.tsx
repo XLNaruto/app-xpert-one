@@ -47,7 +47,7 @@ export function AllowanceDeductionCreatePage({
     <div>
       <PageHeader
         title={isEdit ? 'Edit Allowance / Deduction' : 'Add Allowance / Deduction'}
-        description="Configure allowance and deduction details."
+        description="Configure Allowance and Deduction Details."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -68,7 +68,7 @@ export function AllowanceDeductionCreatePage({
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this record."}
+                : "Couldn't Load This Record."}
             </p>
           ) : (
             <form
@@ -79,7 +79,7 @@ export function AllowanceDeductionCreatePage({
               <FormSection
                 icon={Wallet}
                 title="Allowance / Deduction Details"
-                description="Whether it adds to or subtracts from pay, and its identity"
+                description="Whether It Adds to or Subtracts from Pay, and Its Identity"
                 className="mt-0"
               />
 
@@ -98,7 +98,7 @@ export function AllowanceDeductionCreatePage({
                       onChange={field.onChange}
                       options={TYPE_OPTIONS}
                       placeholder="Select"
-                      searchPlaceholder="Search type"
+                      searchPlaceholder="Search Type"
                     />
                   )}
                 />

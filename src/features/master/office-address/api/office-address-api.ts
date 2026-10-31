@@ -124,7 +124,7 @@ export async function fetchOfficeAddresses(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load office addresses.")
+    throw toApiError(error, "Couldn't Load Office Addresses.")
   }
 }
 
@@ -136,7 +136,7 @@ export async function fetchOfficeAddress(id: number): Promise<OfficeAddress> {
     const { stateName, districtName } = await recordNames(response)
     return toOfficeAddress(response, stateName, districtName)
   } catch (error) {
-    throw toApiError(error, 'Office address not found')
+    throw toApiError(error, 'Office Address Not Found')
   }
 }
 
@@ -152,7 +152,7 @@ export async function createOfficeAddress(
     )
     return toOfficeAddress(officeAddressResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the office address.")
+    throw toApiError(error, "Couldn't Create the Office Address.")
   }
 }
 
@@ -173,7 +173,7 @@ export async function updateOfficeAddress(
     )
     return toOfficeAddress(officeAddressResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the office address.")
+    throw toApiError(error, "Couldn't Update the Office Address.")
   }
 }
 
@@ -182,6 +182,6 @@ export async function deleteOfficeAddress(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.OFFICE_ADDRESSES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the office address.")
+    throw toApiError(error, "Couldn't Delete the Office Address.")
   }
 }

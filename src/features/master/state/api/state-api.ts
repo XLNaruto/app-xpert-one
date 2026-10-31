@@ -56,7 +56,7 @@ export async function fetchStatePage(
     const { items, total } = statesResponseSchema.parse(raw)
     return { items: items.map(toStateRecord), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load states.")
+    throw toApiError(error, "Couldn't Load States.")
   }
 }
 
@@ -84,7 +84,7 @@ export async function fetchStates(): Promise<StateRecord[]> {
 
     return states.sort((a, b) => a.stateName.localeCompare(b.stateName))
   } catch (error) {
-    throw toApiError(error, "Couldn't load states.")
+    throw toApiError(error, "Couldn't Load States.")
   }
 }
 
@@ -115,6 +115,6 @@ export async function fetchState(id: number): Promise<StateRecord> {
     const raw = await http.get<unknown>(endpoints.STATES.GET(id))
     return toStateRecord(stateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'State not found')
+    throw toApiError(error, 'State Not Found')
   }
 }

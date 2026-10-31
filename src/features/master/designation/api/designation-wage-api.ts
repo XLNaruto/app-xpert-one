@@ -66,7 +66,7 @@ export async function fetchDesignationWageStructures(
     // the grid's reading depends on — assert it rather than assume it.
     return collected.sort(byEffectiveMonthDesc)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the wage structure history.")
+    throw toApiError(error, "Couldn't Load the Wage Structure History.")
   }
 }
 
@@ -87,7 +87,7 @@ export async function createDesignationWageStructure(
     )
     return toWageStructure(wageStructureResponseSchema.parse(raw), designationId, heads)
   } catch (error) {
-    throw toApiError(error, "Couldn't save the wage structure.")
+    throw toApiError(error, "Couldn't Save the Wage Structure.")
   }
 }
 
@@ -109,6 +109,6 @@ export async function updateDesignationWageStructure(
     )
     return toWageStructure(wageStructureResponseSchema.parse(raw), designationId, heads)
   } catch (error) {
-    throw toApiError(error, "Couldn't update the wage structure.")
+    throw toApiError(error, "Couldn't Update the Wage Structure.")
   }
 }

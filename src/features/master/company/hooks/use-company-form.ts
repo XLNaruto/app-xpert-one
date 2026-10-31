@@ -79,7 +79,7 @@ export function useCompanyForm(id?: number) {
    */
   const pickLogoFile = async (file: File | null) => {
     if (file && !(IMAGE_CONTENT_TYPES as readonly string[]).includes(file.type)) {
-      toast.error('Logo must be a JPG, PNG or WebP image.')
+      toast.error('Logo Must Be a JPG, PNG or WebP Image.')
       return
     }
     // `file.type` comes from the name, so anything renamed to .png passes it.
@@ -150,7 +150,7 @@ export function useCompanyForm(id?: number) {
   /** Switch tabs, refusing the locked one with a reason rather than silently. */
   const selectTab = (next: CompanyFormTab) => {
     if (next === 'shift' && !canEditShifts) {
-      toast.error('Save the company first, then add its shifts.')
+      toast.error('Save the Company First, Then Add Its Shifts.')
       return
     }
     setTab(next)
@@ -193,11 +193,11 @@ export function useCompanyForm(id?: number) {
     if (isEdit) {
       updateCompany.mutate({ values: payload, billingTouched }, {
         onSuccess: () => {
-          toast.success('Company updated')
+          toast.success('Company Updated')
           goToList()
         },
         onError: (err) =>
-          toast.error(err instanceof Error ? err.message : 'Failed to update company'),
+          toast.error(err instanceof Error ? err.message : 'Failed to Update Company'),
       })
       return
     }
@@ -207,7 +207,7 @@ export function useCompanyForm(id?: number) {
     // have a company to hang off.
     createCompany.mutate({ values: payload, billingTouched }, {
       onSuccess: (company) => {
-        toast.success('Company created — now add its shifts')
+        toast.success('Company Created — Now Add Its Shifts')
         setTab('shift')
         navigate({
           to: '/master/company/create',
@@ -215,7 +215,7 @@ export function useCompanyForm(id?: number) {
         })
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to create company'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Create Company'),
     })
   })
 

@@ -114,7 +114,7 @@ export function AssigneeTaskGroup({
                 {taskCount} task{taskCount === 1 ? '' : 's'} · {perDay(checklist) + perDay(a.customTasks ?? [])} / day
               </p>
             </div>
-            {a.locked && <Badge variant="secondary">Already assigned</Badge>}
+            {a.locked && <Badge variant="secondary">Already Assigned</Badge>}
             {a.locked && a.effectiveFrom && (
               <span className="hidden whitespace-nowrap text-xs text-muted-foreground sm:inline">
                 {formatDate(a.effectiveFrom)} → {a.effectiveTo ? formatDate(a.effectiveTo) : 'Ongoing'}
@@ -163,7 +163,7 @@ export function AssigneeTaskGroup({
               ) : (
                 (!a.locked || f.canDelete) && (
                   <IconButton
-                    label={a.locked ? 'Remove employee from this group' : 'Remove employee'}
+                    label={a.locked ? 'Remove Employee from This Group' : 'Remove Employee'}
                     onClick={() => f.removeEmployee(index)}
                     className="size-8 rounded-lg border border-destructive/60 bg-destructive/10 text-destructive shadow-sm hover:bg-destructive/20"
                   >
@@ -214,8 +214,8 @@ export function AssigneeTaskGroup({
                   </TooltipTrigger>
                   <TooltipContent className="max-w-64">
                     {a.locked
-                      ? 'Their copy of the checklist from when they were assigned — Group Details edits don’t change it'
-                      : 'From the group checklist — edit it in Group Details'}
+                      ? 'Their Copy of the Checklist from When They Were Assigned — Group Details Edits Don’t Change It'
+                      : 'From the Group Checklist — Edit It in Group Details'}
                   </TooltipContent>
                 </Tooltip>
               </td>
@@ -251,7 +251,7 @@ export function AssigneeTaskGroup({
                           <Lock className="size-3.5" />
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent>Already started — it can't be edited or removed</TooltipContent>
+                      <TooltipContent>Already Started — It Can't Be Edited or Removed</TooltipContent>
                     </Tooltip>
                   </td>
                   <td className={cell}>
@@ -295,7 +295,7 @@ export function AssigneeTaskGroup({
                 <EditableCell
                   editing={t.isEditing(ti, 'task')}
                   text={a.customTasks?.[ti]?.task}
-                  emptyText="Task name"
+                  emptyText="Task Name"
                   error={errors?.[ti]?.task?.message}
                   registration={register(`assignees.${index}.customTasks.${ti}.task`)}
                   onStartEdit={() => t.startEdit(ti, 'task')}
@@ -372,7 +372,7 @@ export function AssigneeTaskGroup({
                   <Input
                     autoFocus
                     className="h-8"
-                    placeholder="Task name — Enter to add"
+                    placeholder="Task Name — Enter to Add"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     onKeyDown={(e) => {
@@ -396,7 +396,7 @@ export function AssigneeTaskGroup({
                     <span className="grid size-4 place-items-center rounded-full bg-primary text-primary-foreground">
                       <Plus className="size-3" />
                     </span>
-                    Add custom task
+                    Add Custom Task
                   </button>
                 )}
               </td>

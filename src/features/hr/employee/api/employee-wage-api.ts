@@ -21,7 +21,7 @@ export async function fetchEmployeeWage(employeeId: number): Promise<EmployeeWag
     const raw = await http.get<unknown>(endpoints.EMPLOYEES.WAGE(employeeId))
     return toEmployeeWage(employeeWageResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the employee's wage.")
+    throw toApiError(error, "Couldn't Load the Employee's Wage.")
   }
 }
 
@@ -54,7 +54,7 @@ export async function createEmployeeWage(
     )
     return toEmployeeWage(employeeWageResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't save the employee's wage.")
+    throw toApiError(error, "Couldn't Save the Employee's Wage.")
   }
 }
 
@@ -79,7 +79,7 @@ export async function updateEmployeeWage(
     )
     return toEmployeeWage(employeeWageResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update this wage version.")
+    throw toApiError(error, "Couldn't Update This Wage Version.")
   }
 }
 
@@ -100,6 +100,6 @@ export async function deleteEmployeeWage(
   try {
     await http.delete<unknown>(endpoints.EMPLOYEES.WAGE_VERSION(employeeId, wageId))
   } catch (error) {
-    throw toApiError(error, "Couldn't remove this wage version.")
+    throw toApiError(error, "Couldn't Remove This Wage Version.")
   }
 }

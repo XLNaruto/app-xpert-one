@@ -57,8 +57,8 @@ export const USAGE_DANGER_RATIO = 1
  */
 export const USAGE_TONE_LABELS = {
   normal: 'Healthy',
-  warning: 'Nearing limit',
-  danger: 'Limit reached',
+  warning: 'Nearing Limit',
+  danger: 'Limit Reached',
 } as const
 
 /** How an SLA's ticket type reads on screen. */

@@ -88,7 +88,7 @@ export async function fetchMonitoringPeople(
 
     return { items: collected, total, truncated }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the people to monitor.")
+    throw toApiError(error, "Couldn't Load the People to Monitor.")
   }
 }
 
@@ -124,7 +124,7 @@ export async function fetchMonitoringChats(
     const { items, total } = monitoringChatsResponseSchema.parse(raw)
     return { items: items.map(toMonitoringChat), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load this person's conversations.")
+    throw toApiError(error, "Couldn't Load This Person's Conversations.")
   }
 }
 
@@ -166,6 +166,6 @@ export async function fetchMonitoringMessages(
     const { items, total } = monitoringMessagesResponseSchema.parse(raw)
     return { items: items.map(toMonitoringMessage), total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load this conversation.")
+    throw toApiError(error, "Couldn't Load This Conversation.")
   }
 }

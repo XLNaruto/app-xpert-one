@@ -53,7 +53,7 @@ export function CompanyDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="Company Details"
-        description="Company information at a glance"
+        description="Company Information at a Glance"
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={goToList}>
@@ -82,7 +82,7 @@ export function CompanyDetailPage({ data }: { data?: string }) {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Couldn't load this company."}
+              {error instanceof Error ? error.message : "Couldn't Load This Company."}
             </p>
           </CardContent>
         </Card>

@@ -80,7 +80,7 @@ function CreateView() {
   return (
     <PageShell
       title="Add New Designation"
-      description="Create a new designation record"
+      description="Create a New Designation Record"
       goToList={form.goToList}
     >
       <form onSubmit={form.onSubmit} noValidate>
@@ -107,7 +107,7 @@ function CreateView() {
                     disabled
                     onDisabledClick={() =>
                       toast.warning(
-                        'Save the designation first — a leave allowance is stored against it.',
+                        'Save the Designation First — A Leave Allowance Is Stored Against It.',
                       )
                     }
                   >
@@ -145,7 +145,7 @@ function CreateView() {
             <FormSection
               icon={Wallet}
               title="Allowance & Deduction"
-              description="Every head in the master, listed for this designation"
+              description="Every Head in the Master, Listed for This Designation"
             />
 
             <div className="mt-5">
@@ -189,7 +189,7 @@ function EditView({
   return (
     <PageShell
       title="Edit Designation"
-      description="Rename the designation, or add a wage structure revision"
+      description="Rename the Designation, or Add a Wage Structure Revision"
       goToList={form.goToList}
     >
       <StateGate
@@ -347,7 +347,7 @@ function StateGate({
       <p className="text-sm text-destructive">
         {loadError instanceof Error
           ? loadError.message
-          : "Couldn't load this designation."}
+          : "Couldn't Load This Designation."}
       </p>
     )
   }

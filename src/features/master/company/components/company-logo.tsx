@@ -28,7 +28,7 @@ export function CompanyLogo({
   return (
     <ImageWithFallback
       src={logo ? src : null}
-      alt="Company logo"
+      alt="Company Logo"
       wrapperClassName={cn('size-24 rounded-xl border border-border', className)}
       className="object-contain p-1.5"
     />

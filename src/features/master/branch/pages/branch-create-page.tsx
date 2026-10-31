@@ -79,7 +79,7 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Branch' : 'Add New Branch'}
-        description={isEdit ? 'Update this branch record' : 'Create a new branch record'}
+        description={isEdit ? 'Update This Branch Record' : 'Create a New Branch Record'}
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -100,7 +100,7 @@ export function BranchCreatePage({ data }: BranchCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this branch."}
+                : "Couldn't Load This Branch."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId, encryptParams } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { PERMISSIONS, useCan, useResourceAccess } from '@/features/permissions'
 import { SOP_GROUP_DEFAULT_SORT } from '../constants'
@@ -13,7 +13,7 @@ import type { SopGroupRow } from '../types'
 /** SOP Tasks: the group list, navigation, the checklist preview and delete. */
 export function useSopGroupList() {
   const navigate = useNavigate()
-  const pagination = usePagination(DEFAULT_PAGE_SIZE, SOP_GROUP_DEFAULT_SORT)
+  const pagination = usePagination(ALL_PAGE_SIZE, SOP_GROUP_DEFAULT_SORT)
   const companyId = useAuthStore((state) => state.user?.companyId ?? null)
   const { data, isLoading, isError, error } = useSopGroups(pagination.params)
   const remove = useDeleteSopGroup()
@@ -27,7 +27,7 @@ export function useSopGroupList() {
     if (!pendingDelete) return
     remove.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('SOP group deleted')
+        toast.success('SOP Group Deleted')
         setPendingDelete(null)
       },
       onError: (err) => toast.error(err.message),

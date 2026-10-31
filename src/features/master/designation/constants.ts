@@ -239,25 +239,25 @@ export const PAYOUT_FREQUENCY_OPTIONS: {
     value: 'BI_MONTHLY',
     label: 'Every 2 Months',
     short: '2 Mo',
-    hint: 'Paid once every 2 months — six payouts a year, counted from the start month.',
+    hint: 'Paid Once Every 2 Months — Six Payouts a Year, Counted from the Start Month.',
   },
   {
     value: 'QUARTERLY',
     label: 'Quarterly',
     short: 'Qtr',
-    hint: 'Paid once every 3 months — four payouts a year, counted from the start month.',
+    hint: 'Paid Once Every 3 Months — Four Payouts a Year, Counted from the Start Month.',
   },
   {
     value: 'HALF_YEARLY',
     label: 'Half Yearly',
     short: 'Half',
-    hint: 'Paid twice a year, six months apart, counted from the start month.',
+    hint: 'Paid Twice a Year, Six Months Apart, Counted from the Start Month.',
   },
   {
     value: 'ANNUAL',
     label: 'Annual',
     short: 'Annual',
-    hint: 'Paid once a year, in the start month.',
+    hint: 'Paid Once a Year, in the Start Month.',
   },
 ]
 
@@ -270,12 +270,12 @@ export const AMOUNT_MODE_OPTIONS: {
   {
     value: 'PER_PAYOUT',
     label: 'Per Payout',
-    hint: 'The figure entered is paid in full in each payout month.',
+    hint: 'The Figure Entered Is Paid in Full in Each Payout Month.',
   },
   {
     value: 'ACCRUED',
     label: 'Accrued',
-    hint: 'The figure entered accrues every month, and the payout month releases the whole period at once — a quarterly head pays three times the figure.',
+    hint: 'The Figure Entered Accrues Every Month, and the Payout Month Releases the Whole Period at Once — A Quarterly Head Pays Three Times the Figure.',
   },
 ]
 
@@ -292,12 +292,12 @@ export const PAYROLL_CALCULATION_OPTIONS: {
   {
     value: 'INCLUDE',
     label: 'Include',
-    hint: 'Counts towards the base the other heads calculate on — and towards PF, ESI and PT wherever this head’s own chip is set.',
+    hint: 'Counts Towards the Base the Other Heads Calculate on — And Towards PF, ESI and PT Wherever This Head’s Own Chip Is Set.',
   },
   {
     value: 'EXCLUDE',
     label: 'Exclude',
-    hint: 'Still paid, and still in gross pay — but kept out of every base, the statutory ones included, whatever this head’s chips say.',
+    hint: 'Still Paid, and Still in Gross Pay — But Kept out of Every Base, the Statutory Ones Included, Whatever This Head’s Chips Say.',
   },
 ]
 
@@ -379,25 +379,25 @@ export const AMOUNT_TYPE_OPTIONS: {
     value: 'Percentage',
     label: 'Percentage',
     unit: '%',
-    hint: 'A share of the base this head is calculated on — the earned basic on an allowance, the named base on a deduction.',
+    hint: 'A Share of the Base This Head Is Calculated on — The Earned Basic on an Allowance, the Named Base on a Deduction.',
   },
   {
     value: 'Fixed',
     label: 'Fixed',
     unit: currencySymbol(),
-    hint: 'A monthly rupee figure, prorated by attendance — 13 of 26 days pays half.',
+    hint: 'A Monthly Rupee Figure, Prorated by Attendance — 13 of 26 Days Pays Half.',
   },
   {
     value: 'Per Day',
     label: 'Per Day',
     unit: `${currencySymbol()}/day`,
-    hint: 'A rupee rate for each payable day. Not prorated again — the day count already carries the attendance, so 29 payable days against a 26-day month pay all 29.',
+    hint: 'A Rupee Rate for Each Payable Day. Not Prorated Again — The Day Count Already Carries the Attendance, So 29 Payable Days Against a 26-Day Month Pay All 29.',
   },
   {
     value: 'Days',
     label: 'Days',
     unit: 'days',
-    hint: 'A count of days at the day’s wage — an entitlement for a full month, so a 25-of-26-day month accrues 25/26 of it, capped at the month.',
+    hint: 'A Count of Days at the Day’s Wage — An Entitlement for a Full Month, So a 25-Of-26-day Month Accrues 25/26 of It, Capped at the Month.',
   },
 ]
 

@@ -97,8 +97,8 @@ export function MonitoringThreadPane({
         <ThreadState>
           <EmptyState
             icon={Lock}
-            title="Reading conversations isn't enabled"
-            description="Your plan covers seeing who is talking, but not opening what they said. Contact the account owner to enable conversation monitoring."
+            title="Reading Conversations Isn't Enabled"
+            description="Your Plan Covers Seeing Who Is Talking, but Not Opening What They Said. Contact the Account Owner to Enable Conversation Monitoring."
           />
         </ThreadState>
       ) : messagesQuery.isPending ? (
@@ -112,7 +112,7 @@ export function MonitoringThreadPane({
         <ThreadState>
           <EmptyState
             icon={AlertCircle}
-            title="Couldn't load this conversation"
+            title="Couldn't Load This Conversation"
             description={getApiErrorMessage(
               messagesQuery.error,
               'Something went wrong while reading the thread.',
@@ -124,7 +124,7 @@ export function MonitoringThreadPane({
           <EmptyState
             icon={MessageSquareOff}
             title="Nothing to Read"
-            description="This conversation has no messages yet."
+            description="This Conversation Has No Messages Yet."
           />
         </ThreadState>
       ) : (
@@ -168,9 +168,9 @@ function ParticipantStanding({
       : participant.isBlocked
         ? 'Blocked'
         : participant.memberRole === 'owner'
-          ? 'Group owner'
+          ? 'Group Owner'
           : participant.memberRole === 'admin'
-            ? 'Group admin'
+            ? 'Group Admin'
             : null
 
   if (!label) return null

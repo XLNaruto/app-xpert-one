@@ -83,7 +83,7 @@ export async function fetchLeaveTypes(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load leave types.")
+    throw toApiError(error, "Couldn't Load Leave Types.")
   }
 }
 
@@ -93,7 +93,7 @@ export async function fetchLeaveType(id: number): Promise<LeaveType> {
     const raw = await http.get<unknown>(endpoints.LEAVE_TYPES.GET(id))
     return toLeaveType(leaveTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Leave type not found')
+    throw toApiError(error, 'Leave Type Not Found')
   }
 }
 
@@ -106,7 +106,7 @@ export async function createLeaveType(values: LeaveTypeFormValues): Promise<Leav
     })
     return toLeaveType(leaveTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the leave type.")
+    throw toApiError(error, "Couldn't Create the Leave Type.")
   }
 }
 
@@ -125,7 +125,7 @@ export async function updateLeaveType(
     )
     return toLeaveType(leaveTypeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the leave type.")
+    throw toApiError(error, "Couldn't Update the Leave Type.")
   }
 }
 
@@ -134,6 +134,6 @@ export async function deleteLeaveType(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.LEAVE_TYPES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the leave type.")
+    throw toApiError(error, "Couldn't Delete the Leave Type.")
   }
 }

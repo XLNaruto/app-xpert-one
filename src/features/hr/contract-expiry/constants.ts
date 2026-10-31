@@ -34,19 +34,19 @@ export const CONTRACT_STATUS_SPECS: Record<ContractStatus, ContractStatusSpec> =
   due: {
     label: 'Due',
     description:
-      'The warning date has passed and the term has not ended yet. Renew it, or decide not to.',
+      'The Warning Date Has Passed and the Term Has Not Ended Yet. Renew It, or Decide Not To.',
     className: 'bg-warning/10 text-warning',
   },
   expired: {
     label: 'Expired',
     description:
-      'The term has ended and the posting is still open — somebody is working past the contract that authorises it.',
+      'The Term Has Ended and the Posting Is Still Open — Somebody Is Working Past the Contract That Authorises It.',
     className: 'bg-destructive/10 text-destructive',
   },
   upcoming: {
     label: 'Upcoming',
     description:
-      'The warning date has not arrived yet — shown only because you are previewing beyond it.',
+      'The Warning Date Has Not Arrived Yet — Shown Only Because You Are Previewing Beyond It.',
     className: 'bg-muted text-muted-foreground',
   },
 }

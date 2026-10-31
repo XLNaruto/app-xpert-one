@@ -249,7 +249,7 @@ function SessionCard({
           </span>
           {/* An open session is a fact about the day, not a gap in the data. */}
           {session.checkIn && !session.checkOut && (
-            <Badge variant="secondary">Still checked in</Badge>
+            <Badge variant="secondary">Still Checked In</Badge>
           )}
         </span>
 
@@ -355,7 +355,7 @@ function PunchRow({
                 </a>
               </TooltipTrigger>
               <TooltipContent>
-                Open where this punch was taken in Google Maps
+                Open Where This Punch Was Taken in Google Maps
               </TooltipContent>
             </Tooltip>
           )}

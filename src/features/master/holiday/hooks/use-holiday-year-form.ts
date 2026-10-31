@@ -110,7 +110,7 @@ export function useHolidayYearForm({
       // 409 names the start dates that already have a holiday — the user
       // removes those rows and saves again, so the message is shown verbatim.
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : "Failed to save the year's holidays"),
+        toast.error(err instanceof Error ? err.message : "Failed to Save the Year's Holidays"),
     })
   })
 

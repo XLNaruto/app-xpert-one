@@ -66,12 +66,12 @@ export const ipAddressSchema = z.object({
   ipAddresses: z
     .string()
     .trim()
-    .min(1, 'Please enter an IP address')
-    .max(49, 'Cannot exceed 49 characters')
-    .refine(isIpEntry, 'Enter a valid IP address or CIDR range (e.g. 10.0.0.0/8)')
+    .min(1, 'Please Enter an IP Address')
+    .max(49, 'Cannot Exceed 49 Characters')
+    .refine(isIpEntry, 'Enter a Valid IP Address or CIDR Range (e.g. 10.0.0.0/8)')
     .refine(
       (value) => !isWildcardIpEntry(value),
-      'This matches every address — enter a specific host or a narrower range',
+      'This Matches Every Address — Enter a Specific Host or a Narrower Range',
     ),
   type: ipAddressTypeSchema,
 })

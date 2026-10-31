@@ -66,7 +66,7 @@ export function MeasuringSheet() {
         fontSize: 14,
       }}
     >
-      Laying out pages…
+      Laying out Pages…
     </div>
   )
 }

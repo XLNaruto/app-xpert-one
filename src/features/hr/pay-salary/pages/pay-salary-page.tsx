@@ -228,7 +228,7 @@ export function PaySalaryPage() {
     <div>
       <PageHeader
         title="Pay Salary"
-        description="What the month still owes, and what has already gone out — settled one payment batch at a time."
+        description="What the Month Still Owes, and What Has Already Gone out — Settled One Payment Batch at a Time."
       />
 
       <PaySalaryToolbar
@@ -249,7 +249,7 @@ export function PaySalaryPage() {
       {view.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to settle its payroll."
+          description="Select a Company for This Session to Settle Its Payroll."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -301,14 +301,14 @@ export function PaySalaryPage() {
                 icon={unpaid ? CircleAlert : Wallet}
                 title={
                   view.search
-                    ? 'No matching employees'
+                    ? 'No Matching Employees'
                     : unpaid
-                      ? 'Nothing outstanding'
-                      : 'Nothing paid yet'
+                      ? 'Nothing Outstanding'
+                      : 'Nothing Paid Yet'
                 }
                 description={
                   view.search
-                    ? 'Try a different name, employee code or mobile number.'
+                    ? 'Try a Different Name, Employee Code or Mobile Number.'
                     : unpaid
                       ? `Every processed salary for ${periodLabel} has been paid. A month that was never run shows nothing here — process it from Calculate Salary first.`
                       : `No salary has been paid for ${periodLabel} yet. Record one from the Unpaid Salary tab.`

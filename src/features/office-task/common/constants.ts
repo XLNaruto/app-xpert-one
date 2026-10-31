@@ -82,10 +82,10 @@ export const TASK_SUBMISSION_MODE_META: Record<
 > = {
   START_STOP: {
     label: 'Start / Stop, Then Submit',
-    hint: 'Employees start the task, stop or pause it, then hand it in. Time worked is recorded.',
+    hint: 'Employees Start the Task, Stop or Pause It, Then Hand It In. Time Worked Is Recorded.',
   },
   DIRECT: {
-    label: 'Direct submission (no Start / Stop)',
-    hint: 'Employees submit the task directly. No time is recorded.',
+    label: 'Direct Submission (No Start / Stop)',
+    hint: 'Employees Submit the Task Directly. No Time Is Recorded.',
   },
 }

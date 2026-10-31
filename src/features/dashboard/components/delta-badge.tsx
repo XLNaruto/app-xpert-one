@@ -48,7 +48,7 @@ export function DeltaBadge({
   // "the number did not move".
   if (value == null) {
     return (
-      <Hint text="No comparable period before this one">
+      <Hint text="No Comparable Period Before This One">
         <span
           className={cn(
             'inline-flex items-center gap-1 text-xs font-medium text-muted-foreground',

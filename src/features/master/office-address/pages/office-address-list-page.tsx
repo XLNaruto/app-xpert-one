@@ -188,7 +188,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
               icon={screen.icon}
               title={search ? `No matching ${screen.recordsLabel}` : screen.emptyTitle}
               description={
-                search ? 'Try a different search term.' : screen.emptyDescription
+                search ? 'Try a Different Search Term.' : screen.emptyDescription
               }
               action={
                 search

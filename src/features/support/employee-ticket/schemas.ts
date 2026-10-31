@@ -74,7 +74,7 @@ export const employeeTicketReplySchema = z.object({
   body: z
     .string()
     .trim()
-    .min(1, 'Write a reply')
+    .min(1, 'Write a Reply')
     .max(
       MAX_EMPLOYEE_TICKET_MESSAGE,
       `Cannot exceed ${MAX_EMPLOYEE_TICKET_MESSAGE} characters`,
@@ -91,7 +91,7 @@ export const employeeTicketResolveSchema = z.object({
   resolutionNote: z
     .string()
     .trim()
-    .min(1, 'Say what was done')
+    .min(1, 'Say What Was Done')
     .max(
       MAX_EMPLOYEE_TICKET_RESOLUTION,
       `Cannot exceed ${MAX_EMPLOYEE_TICKET_RESOLUTION} characters`,

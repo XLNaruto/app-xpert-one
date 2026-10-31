@@ -51,11 +51,16 @@ export async function fetchMyTaskSettings(): Promise<MyTaskSettings> {
 
 // ── SOP ───────────────────────────────────────────────────────────────────
 
-/** GET /my-tasks/sop?date= — past days as they settled, today's generated, future empty. */
-export async function fetchMySopTasks(date: string): Promise<MySopRow[]> {
+/**
+ * GET /my-tasks/sop?date=&search= — past days as they settled, today's
+ * generated, future empty. `search` matches the task, group, run and status.
+ */
+export async function fetchMySopTasks(date: string, search?: string): Promise<MySopRow[]> {
   try {
     requireCompany()
-    const raw = await http.get<unknown>(MY_TASKS.SOP, { params: { date } })
+    const raw = await http.get<unknown>(MY_TASKS.SOP, {
+      params: { date, ...(search ? { search } : {}) },
+    })
     return mySopTasksResponseSchema.parse(raw).items.map(toSopTask)
   } catch (error) {
     throw toOfficeTaskError(error, "Couldn't load your SOP tasks.")
@@ -100,13 +105,20 @@ export async function completeSopTask(input: HandInInput): Promise<HandInStatus>
 // ── Project ───────────────────────────────────────────────────────────────
 
 /**
- * GET /my-tasks/project?date= — shares live on that day: started by then, and
- * still open or finished on/after it. `worked_seconds` is FINISHED sessions only.
+ * GET /my-tasks/project?date=&search= — shares live on that day: started by
+ * then, and still open or finished on/after it. `worked_seconds` is FINISHED
+ * sessions only. `search` matches the task (and "On behalf of"), priority,
+ * schedule, status and progress %.
  */
-export async function fetchMyProjectTasks(date: string): Promise<MyProjectRow[]> {
+export async function fetchMyProjectTasks(
+  date: string,
+  search?: string,
+): Promise<MyProjectRow[]> {
   try {
     requireCompany()
-    const raw = await http.get<unknown>(MY_TASKS.PROJECT, { params: { date } })
+    const raw = await http.get<unknown>(MY_TASKS.PROJECT, {
+      params: { date, ...(search ? { search } : {}) },
+    })
     return myProjectTasksResponseSchema.parse(raw).items.map(toMyProjectRow)
   } catch (error) {
     throw toOfficeTaskError(error, "Couldn't load your project tasks.")

@@ -98,7 +98,7 @@ export function PtRateListPage() {
     <div>
       <PageHeader
         title="PT Rate Setting"
-        description="Manage Professional Tax slabs by state and effective date."
+        description="Manage Professional Tax Slabs by State and Effective Date."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -111,14 +111,14 @@ export function PtRateListPage() {
 
       {isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load PT rates."}
+          {error instanceof Error ? error.message : "Couldn't Load PT Rates."}
         </p>
       ) : (
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search PT rate…"
+          searchPlaceholder="Search PT Rate…"
           itemName="PT rates"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -137,8 +137,8 @@ export function PtRateListPage() {
               title={search ? 'No Matching PT Rates' : 'No PT Rates Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Add your first Professional Tax slab set to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Add Your First Professional Tax Slab Set to Get Started.'
               }
               action={
                 search

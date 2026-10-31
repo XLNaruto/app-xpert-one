@@ -121,7 +121,7 @@ export function LoginPage() {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              placeholder="Enter your email"
+              placeholder="Enter Your Email"
               className={fieldClasses}
               {...register('email')}
             />
@@ -145,7 +145,7 @@ export function LoginPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder="Enter Your Password"
               className={cn(fieldClasses, 'pr-10')}
               {...register('password')}
             />

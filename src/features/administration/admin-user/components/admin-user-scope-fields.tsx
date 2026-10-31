@@ -84,7 +84,7 @@ export function AdminUserScopeFields({ form, disabled = false }: AdminUserScopeF
         <Field
           label="Companies"
           required={!isGlobal}
-          hint="The companies this user may act in. Reaching all of them includes any the account adds later."
+          hint="The Companies This User May Act In. Reaching All of Them Includes Any the Account Adds Later."
           error={companyError}
         >
           {/* The tiles sit on a panel of their own: on a long form a bare grid of

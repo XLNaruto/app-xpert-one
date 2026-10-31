@@ -54,8 +54,8 @@ export function AssetVariantFormDialog({
             error={errors.quantity?.message}
             hint={
               isEdit
-                ? 'The number on the shelf right now. Changing it is recorded as an adjustment — use Add / Remove Stock to buy units in or scrap them.'
-                : 'How many are on the shelf to start with. Leave it at 0 and refill later.'
+                ? 'The Number on the Shelf Right Now. Changing It Is Recorded as an Adjustment — Use Add / Remove Stock to Buy Units in or Scrap Them.'
+                : 'How Many Are on the Shelf to Start With. Leave It at 0 and Refill Later.'
             }
           >
             <Input type="text" inputMode="numeric" placeholder="0" {...register('quantity')} />

@@ -83,7 +83,7 @@ export function DesignationSalarySection({
       <FormSection
         icon={Briefcase}
         title="Designation Details"
-        description="The designation this configuration applies to, company-wide"
+        description="The Designation This Configuration Applies To, Company-Wide"
         className="mt-0"
       />
 
@@ -98,7 +98,7 @@ export function DesignationSalarySection({
       <FormSection
         icon={Wallet}
         title="Salary Configuration"
-        description="Salary type, basic pay and the working-day calculation"
+        description="Salary Type, Basic Pay and the Working-Day Calculation"
       />
 
       <Field label="Salary Type" error={errors.salaryType?.message}>
@@ -121,7 +121,7 @@ export function DesignationSalarySection({
       <Field
         label={amountLabel('Basic Pay')}
         required
-        hint="The monthly basic on which PF, ESIC and every percentage allowance are calculated."
+        hint="The Monthly Basic on Which PF, ESIC and Every Percentage Allowance Are Calculated."
         error={errors.basicPay?.message}
       >
         <Input {...amountInputProps} placeholder={amountLabel('Basic Pay')} {...register('basicPay')} />
@@ -189,7 +189,7 @@ export function DesignationSalarySection({
       </Field>
       <Field
         label={amountLabel('Extra Day Amount Per Day')}
-        hint="Paid for each day worked beyond the designation's working days."
+        hint="Paid for Each Day Worked Beyond the Designation's Working Days."
         error={errors.extraDayAmountPerDay?.message}
       >
         <Input
@@ -204,7 +204,7 @@ export function DesignationSalarySection({
       <FormSection
         icon={Scale}
         title="Applicable Acts"
-        description="Turn on the acts this designation is covered by"
+        description="Turn On the Acts This Designation Is Covered By"
       />
 
       <div className="col-span-full grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -215,7 +215,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={ShieldCheck}
               title="PF Act Applicable"
-              description="Enable Employee Provident Fund deductions"
+              description="Enable Employee Provident Fund Deductions"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-primary/30 bg-primary/5"
@@ -230,7 +230,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={HeartPulse}
               title="ESIC Act Applicable"
-              description="Enable Employee State Insurance deductions"
+              description="Enable Employee State Insurance Deductions"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-emerald-500/30 bg-emerald-500/5"
@@ -245,7 +245,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={IndianRupee}
               title="PT Act Applicable"
-              description="Enable Professional Tax deductions"
+              description="Enable Professional Tax Deductions"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-violet-500/30 bg-violet-500/5"
@@ -261,7 +261,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={Receipt}
               title="TDS Act Applicable"
-              description="Enable tax deducted at source"
+              description="Enable Tax Deducted at Source"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-rose-500/30 bg-rose-500/5"
@@ -276,7 +276,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={HandCoins}
               title="LWF Act Applicable"
-              description="Enable Labour Welfare Fund deductions"
+              description="Enable Labour Welfare Fund Deductions"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-amber-500/30 bg-amber-500/5"
@@ -291,7 +291,7 @@ export function DesignationSalarySection({
             <ActToggleTile
               icon={Clock}
               title="Overtime (OT) Applicable"
-              description="Enable overtime wage calculations"
+              description="Enable Overtime Wage Calculations"
               checked={field.value}
               onCheckedChange={field.onChange}
               tone="border-sky-500/30 bg-sky-500/5"
@@ -346,7 +346,7 @@ export function DesignationSalarySection({
                 name="employeePfContributionOnWageLimit"
                 render={({ field }) => (
                   <SwitchRow
-                    label="Cap the employee share at the statutory wage limit"
+                    label="Cap the Employee Share at the Statutory Wage Limit"
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
@@ -359,7 +359,7 @@ export function DesignationSalarySection({
                 name="employerPfContributionOnWageLimit"
                 render={({ field }) => (
                   <SwitchRow
-                    label="Cap the employer share at the statutory wage limit"
+                    label="Cap the Employer Share at the Statutory Wage Limit"
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
@@ -404,7 +404,7 @@ export function DesignationSalarySection({
             iconTone="text-violet-600 dark:text-violet-400"
             footnote={
               ptActType === 'As Per Act'
-                ? 'Deduction is calculated from the salary slab defined in the PT rate setting.'
+                ? 'Deduction Is Calculated from the Salary Slab Defined in the PT Rate Setting.'
                 : undefined
             }
           >
@@ -448,7 +448,7 @@ export function DesignationSalarySection({
                 designation's own, so there is no "As Per Act" to choose. */}
             <Field
               label="TDS Percentage (%)"
-              hint="The rate deducted each month. On its own it deducts nothing — pick what it is charged on below."
+              hint="The Rate Deducted Each Month. On Its Own It Deducts Nothing — Pick What It Is Charged on Below."
               error={errors.tdsPercentage?.message}
             >
               <Input
@@ -482,7 +482,7 @@ export function DesignationSalarySection({
                     value={field.value}
                     onChange={field.onChange}
                     options={TDS_CALCULATION_BASE_OPTIONS}
-                    placeholder="Nothing is deducted"
+                    placeholder="Nothing Is Deducted"
                     searchable={false}
                   />
                 )}
@@ -499,7 +499,7 @@ export function DesignationSalarySection({
             iconTone="text-amber-600 dark:text-amber-400"
             footnote={
               lwfActType === 'As Per Act'
-                ? 'Deduction is calculated from the LWF rate setting for the branch state.'
+                ? 'Deduction Is Calculated from the LWF Rate Setting for the Branch State.'
                 : undefined
             }
           >
@@ -542,7 +542,7 @@ export function DesignationSalarySection({
           >
             <Field
               label={amountLabel('OT Rate Per Hour')}
-              hint="The flat rate paid for each overtime hour — leave it blank to derive one from the wage."
+              hint="The Flat Rate Paid for Each Overtime Hour — Leave It Blank to Derive One from the Wage."
               error={errors.overtimeRatePerHour?.message}
             >
               <Input

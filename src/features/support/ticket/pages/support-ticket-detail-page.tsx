@@ -68,7 +68,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title={ticket ? `Ticket ${ticket.code}` : 'Ticket Details'}
-        description="Your query to the XpertOne help desk, and the response time your plan promised for it."
+        description="Your Query to the XpertOne Help Desk, and the Response Time Your Plan Promised for It."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={detail.goToList}>
@@ -111,7 +111,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
             <p className="text-sm text-destructive">
               {detail.error instanceof Error
                 ? detail.error.message
-                : "Couldn't load this ticket."}
+                : "Couldn't Load This Ticket."}
             </p>
           </CardContent>
         </Card>
@@ -122,8 +122,8 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
             <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
               <span>
-                This ticket is past the response time your plan promised, and is
-                still unfinished.
+                This Ticket Is Past the Response Time Your Plan Promised, and Is
+                Still Unfinished.
               </span>
             </p>
           )}
@@ -204,7 +204,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
                     <SupportDueBadge ticket={ticket} label={due} />
                   ) : (
                     <p className="text-sm font-semibold text-foreground">
-                      {asMoment(ticket.dueAt) ?? 'No response time promised'}
+                      {asMoment(ticket.dueAt) ?? 'No Response Time Promised'}
                     </p>
                   )}
                 </div>
@@ -216,7 +216,7 @@ export function SupportTicketDetailPage({ data }: { data?: string }) {
                 value={
                   sla
                     ? `${sla}${ticket.planName ? ` — ${ticket.planName} plan` : ''}`
-                    : 'Your plan states none for this desk at this priority'
+                    : 'Your Plan States None for This Desk at This Priority'
                 }
               />
               <DetailItem

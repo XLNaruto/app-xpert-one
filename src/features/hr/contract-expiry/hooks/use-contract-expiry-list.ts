@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { ApiError, getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import {
   ANY_STATUS,
-  CONTRACT_EXPIRY_PAGE_SIZE,
   EMPTY_CONTRACT_EXPIRY_FILTERS,
 } from '../constants'
 import { formatDay } from '../lib/contract-format'
@@ -58,7 +58,7 @@ interface ContractExpiryListOptions {
 }
 
 export function useContractExpiryList({
-  pageSize = CONTRACT_EXPIRY_PAGE_SIZE,
+  pageSize = ALL_PAGE_SIZE,
   companyIds,
   filterable = true,
 }: ContractExpiryListOptions = {}) {
@@ -108,7 +108,7 @@ export function useContractExpiryList({
   const handleWriteError = useCallback(
     (error: unknown, fallback: string) => {
       if (error instanceof ApiError && error.status === 409) {
-        toast.info('That posting was already closed. Refreshing the list…')
+        toast.info('That Posting Was Already Closed. Refreshing the List…')
         void list.refetch()
         return true
       }
@@ -132,7 +132,7 @@ export function useContractExpiryList({
             toast.success(
               posting.contractEndsOn
                 ? `Contract renewed to ${formatDay(posting.contractEndsOn)}.`
-                : 'Contract renewed.',
+                : 'Contract Renewed.',
             )
             setPendingRenew(null)
           },
@@ -158,7 +158,7 @@ export function useContractExpiryList({
             toast.success(
               posting.leavingDate
                 ? `Service completed on ${formatDay(posting.leavingDate)}.`
-                : 'Service completed.',
+                : 'Service Completed.',
             )
             setPendingComplete(null)
           },

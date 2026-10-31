@@ -91,7 +91,7 @@ export function WeekoffDaysField({
           label="Days Off Per Week"
           required
           error={errors.weeklyOffDays?.message}
-          hint="Employees may take this many days off each week, on whichever days the rota allows. No day is marked off in advance — the attendance grid credits them once the week has been worked."
+          hint="Employees May Take This Many Days off Each Week, on Whichever Days the Rota Allows. No Day Is Marked off in Advance — The Attendance Grid Credits Them Once the Week Has Been Worked."
           className="max-w-xs"
         >
           <Input
@@ -222,7 +222,7 @@ export function WeekoffDaysField({
                           value={control.value}
                           onChange={control.onChange}
                           options={WEEK_DAY_OPTIONS}
-                          placeholder="Select day"
+                          placeholder="Select Day"
                         />
                       )}
                     />
@@ -231,7 +231,7 @@ export function WeekoffDaysField({
                   <Field
                     label="Occurrence"
                     error={errors.rules?.[index]?.weekNumber?.message}
-                    hint="Which occurrence of that weekday in the month. 'Every occurrence' is the whole month."
+                    hint="Which Occurrence of That Weekday in the Month. 'Every Occurrence' Is the Whole Month."
                   >
                     <Controller
                       control={form.form.control}
@@ -243,7 +243,7 @@ export function WeekoffDaysField({
                           value={control.value}
                           onChange={control.onChange}
                           options={WEEK_NUMBER_OPTIONS}
-                          placeholder="Every occurrence"
+                          placeholder="Every Occurrence"
                         />
                       )}
                     />
@@ -267,7 +267,7 @@ export function WeekoffDaysField({
                               aria-label="Day off"
                             />
                             <span className="whitespace-nowrap text-xs text-muted-foreground">
-                              {control.value ? 'Week off' : 'Working day'}
+                              {control.value ? 'Week Off' : 'Working Day'}
                             </span>
                           </>
                         )}

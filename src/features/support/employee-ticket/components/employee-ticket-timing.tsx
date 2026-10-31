@@ -116,7 +116,7 @@ export function EmployeeTicketTiming({
         */}
         <TimeMetric
           icon={CalendarClock}
-          label={ticket.resolvedAt ? 'Total time to resolve' : 'Open for'}
+          label={ticket.resolvedAt ? 'Total Time to Resolve' : 'Open For'}
           hint={
             ticket.resolvedAt
               ? TIME_TO_RESOLVE_HINT

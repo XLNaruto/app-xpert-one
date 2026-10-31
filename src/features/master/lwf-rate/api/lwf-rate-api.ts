@@ -97,7 +97,7 @@ export async function fetchLwfRates(
 
     return { items: rates, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load LWF rates.")
+    throw toApiError(error, "Couldn't Load LWF Rates.")
   }
 }
 
@@ -109,7 +109,7 @@ export async function fetchLwfRate(id: number): Promise<LwfRate> {
     const names = await stateNamesById()
     return toLwfRate(response, names.get(response.state_id ?? 0))
   } catch (error) {
-    throw toApiError(error, 'LWF rate not found')
+    throw toApiError(error, 'LWF Rate Not Found')
   }
 }
 
@@ -122,7 +122,7 @@ export async function createLwfRate(values: LwfRateFormValues): Promise<LwfRate>
     )
     return toLwfRate(lwfRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the LWF rate.")
+    throw toApiError(error, "Couldn't Create the LWF Rate.")
   }
 }
 
@@ -141,7 +141,7 @@ export async function updateLwfRate(
     )
     return toLwfRate(lwfRateResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the LWF rate.")
+    throw toApiError(error, "Couldn't Update the LWF Rate.")
   }
 }
 
@@ -150,6 +150,6 @@ export async function deleteLwfRate(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.LWF_RATES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the LWF rate.")
+    throw toApiError(error, "Couldn't Delete the LWF Rate.")
   }
 }

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useUiStore } from '@/stores/ui-store'
 import { useResolvedTheme } from '@/hooks/use-resolved-theme'
+import { useMediaUrl } from '@/hooks/use-media-url'
 import { useAuthStore } from '@/stores/auth-store'
 import { useLogout } from '@/features/auth'
 import { useMyProfile, isAccountItself } from '@/features/profile'
@@ -58,6 +59,9 @@ export function Topbar() {
         }
 
   const name = identity.name ?? 'User'
+  // The signed-in person's own photo (a storage key), whichever name is shown.
+  const photoUrl = useMediaUrl(profile?.user.profilePhoto)
+  const avatarSrc = (profile?.user.profilePhoto ? photoUrl : undefined) ?? user?.avatarUrl
   const phone = identity.contact?.replace(/^\+91/, '')
 
   return (
@@ -75,7 +79,7 @@ export function Topbar() {
               <Menu className="size-5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Open menu</TooltipContent>
+          <TooltipContent side="bottom">Open Menu</TooltipContent>
         </Tooltip>
         <div className="hidden min-w-0 lg:block">
           <Breadcrumbs />
@@ -96,7 +100,7 @@ export function Topbar() {
           className="min-w-64 p-0"
           trigger={
             <button className="ml-1 flex cursor-pointer items-center gap-2 rounded-full pr-1">
-              <Avatar name={name} src={user?.avatarUrl} />
+              <Avatar name={name} src={avatarSrc} />
               <span className="hidden max-w-40 text-left leading-tight lg:block">
                 <span className="block truncate text-sm font-semibold text-foreground">{name}</span>
                 <span className="block truncate text-xs text-muted-foreground">{phone}</span>
@@ -107,7 +111,7 @@ export function Topbar() {
         >
           {/* Profile header */}
           <div className="flex items-center gap-3 p-4">
-            <Avatar name={name} src={user?.avatarUrl} className="size-11 text-sm" />
+            <Avatar name={name} src={avatarSrc} className="size-11 text-sm" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">{name}</p>
               <p className="truncate text-xs text-muted-foreground">{phone}</p>
@@ -164,7 +168,7 @@ export function Topbar() {
         variant="destructive"
         icon={LogOut}
         title="Sign Out?"
-        description="You'll need to log in again to access your dashboard."
+        description="You'll Need to Log In Again to Access Your Dashboard."
         confirmLabel="Sign Out"
         onConfirm={handleLogout}
       />

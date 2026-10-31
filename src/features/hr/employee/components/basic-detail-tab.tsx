@@ -104,7 +104,7 @@ export function BasicDetailTab({
           <FormSection
             icon={UserRound}
             title="Personal Details"
-            description="Who the employee is"
+            description="Who the Employee Is"
             className="mt-0"
           />
 
@@ -142,7 +142,7 @@ export function BasicDetailTab({
                 )}
               />
               <Input
-                placeholder="Full name"
+                placeholder="Full Name"
                 className="flex-1 rounded-l-none"
                 aria-invalid={errors.name ? true : undefined}
                 {...register('name')}
@@ -161,7 +161,7 @@ export function BasicDetailTab({
                   value={field.value}
                   onChange={field.onChange}
                   options={GENDER_OPTIONS}
-                  placeholder="Select gender"
+                  placeholder="Select Gender"
                 />
               )}
             />
@@ -188,7 +188,7 @@ export function BasicDetailTab({
                   value={field.value}
                   onChange={field.onChange}
                   options={MARITAL_STATUS_OPTIONS}
-                  placeholder="Select marital status"
+                  placeholder="Select Marital Status"
                 />
               )}
             />
@@ -213,13 +213,13 @@ export function BasicDetailTab({
                     onChange={field.onChange}
                     options={RELATION_OPTIONS}
                     placeholder="Relation"
-                    searchPlaceholder="Search relation"
+                    searchPlaceholder="Search Relation"
                     panelMinWidth={200}
                   />
                 )}
               />
               <Input
-                placeholder="Father's / husband's name"
+                placeholder="Father's / Husband's Name"
                 className="flex-1 rounded-l-none"
                 aria-invalid={errors.relativeName ? true : undefined}
                 {...register('relativeName')}
@@ -232,7 +232,7 @@ export function BasicDetailTab({
           <FormSection
             icon={Home}
             title="Current Address"
-            description="Where the employee lives now"
+            description="Where the Employee Lives Now"
           />
 
           <AddressBlock
@@ -252,7 +252,7 @@ export function BasicDetailTab({
           <FormSection
             icon={MapPin}
             title="Permanent Address"
-            description="The employee's home address"
+            description="The Employee's Home Address"
           />
 
           {/*
@@ -272,8 +272,8 @@ export function BasicDetailTab({
                   />
                   <span className="text-sm text-muted-foreground">
                     {field.value
-                      ? 'Copied from the current address'
-                      : 'Enter the permanent address separately'}
+                      ? 'Copied from the Current Address'
+                      : 'Enter the Permanent Address Separately'}
                   </span>
                 </div>
               )}
@@ -298,7 +298,7 @@ export function BasicDetailTab({
           <FormSection
             icon={Phone}
             title="Contact Details"
-            description="How the employee is reached"
+            description="How the Employee Is Reached"
           />
 
           <Field label="Mobile Number" required error={errors.mobileNumber1?.message}>
@@ -321,7 +321,7 @@ export function BasicDetailTab({
           </Field>
 
           <Field label="Landline" error={errors.landlineNumber?.message}>
-            <Input inputMode="numeric" placeholder="With STD code" {...register('landlineNumber')} />
+            <Input inputMode="numeric" placeholder="With STD Code" {...register('landlineNumber')} />
           </Field>
 
           <Field label="Email" required error={errors.email?.message}>
@@ -333,7 +333,7 @@ export function BasicDetailTab({
           <FormSection
             icon={HeartPulse}
             title="Health Details"
-            description="Recorded for statutory returns and site safety"
+            description="Recorded for Statutory Returns and Site Safety"
           />
 
           <Field label="Blood Group" error={errors.bloodGroup?.message}>
@@ -347,7 +347,7 @@ export function BasicDetailTab({
                   value={field.value}
                   onChange={field.onChange}
                   options={BLOOD_GROUP_OPTIONS}
-                  placeholder="Select blood group"
+                  placeholder="Select Blood Group"
                 />
               )}
             />
@@ -485,7 +485,7 @@ export function BasicDetailTab({
           <FormSection
             icon={DoorOpen}
             title="Leaving Details"
-            description="Only for correcting an exit already recorded — a real exit belongs in Service History"
+            description="Only for Correcting an Exit Already Recorded — A Real Exit Belongs in Service History"
           />
 
           <DateField
@@ -500,7 +500,7 @@ export function BasicDetailTab({
             error={errors.leavingReason?.message}
             className="md:col-span-2"
           >
-            <Input placeholder="Reason for leaving" {...register('leavingReason')} />
+            <Input placeholder="Reason for Leaving" {...register('leavingReason')} />
           </Field>
 
           {/* ── Remark ──────────────────────────────────────────────────── */}
@@ -508,7 +508,7 @@ export function BasicDetailTab({
           <FormSection icon={MessageSquare} title="Remark" />
 
           <Field label="Remarks" error={errors.remarks?.message} className="col-span-full">
-            <Textarea rows={3} placeholder="Anything worth noting" {...register('remarks')} />
+            <Textarea rows={3} placeholder="Anything Worth Noting" {...register('remarks')} />
           </Field>
 
           <div className="col-span-full">

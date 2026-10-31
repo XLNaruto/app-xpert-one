@@ -58,7 +58,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
     <>
       <SheetHeader
         title={f.isEdit ? 'Edit Project Task' : 'Add Project Task'}
-        description="Who it's for, the work, its schedule and how it gets signed off."
+        description="Who It's For, the Work, Its Schedule and How It Gets Signed Off."
         onClose={onClose}
       />
       <SheetBody>
@@ -76,10 +76,10 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
               <p className="col-span-full flex items-start gap-2 rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-700 dark:text-sky-400">
                 <Lock className="mt-0.5 size-4 shrink-0" />
                 {f.isCompleted
-                  ? 'Every assignee has completed this task, so it is read-only.'
+                  ? 'Every Assignee Has Completed This Task, So It Is Read-Only.'
                   : f.pickBy === 'other'
-                    ? 'Work has started, so the task name, the mobile number, the start date and its rules are fixed. You can still change the name, delegate, description, priority, deadline and progress updates.'
-                    : 'Work has started, so the task name, who it targets, the start date and its rules are fixed. You can still change the description, priority, deadline and progress updates, and add people.'}
+                    ? 'Work Has Started, So the Task Name, the Mobile Number, the Start Date and Its Rules Are Fixed. You Can Still Change the Name, Delegate, Description, Priority, Deadline and Progress Updates.'
+                    : 'Work Has Started, So the Task Name, Who It Targets, the Start Date and Its Rules Are Fixed. You Can Still Change the Description, Priority, Deadline and Progress Updates, and Add People.'}
               </p>
             )}
             <FormSection icon={Users} title="Who It's For" className="mt-0" />
@@ -106,7 +106,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                   label="Mobile Number"
                   required
                   error={errors.otherMobile?.message}
-                  hint={f.otherStarted ? 'They have started, so the number is fixed.' : undefined}
+                  hint={f.otherStarted ? 'They Have Started, So the Number Is Fixed.' : undefined}
                 >
                   <Input
                     inputMode="numeric"
@@ -119,7 +119,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                 <Field
                   label="Updated By (Delegate)"
                   error={errors.delegate?.message}
-                  hint="Optional — one employee or panel user who can update this task for them from their own My Tasks."
+                  hint="Optional — One Employee or Panel User Who Can Update This Task for Them from Their Own My Tasks."
                   className="col-span-full"
                 >
                   <Controller
@@ -135,8 +135,8 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                         loading={f.delegateSelect.loading}
                         onScrollEnd={f.delegateSelect.onScrollEnd}
                         onSearchChange={f.delegateSelect.onSearchChange}
-                        placeholder={f.delegateSelect.error ? "Couldn't load people" : 'Nobody — only they update it'}
-                        searchPlaceholder="Search name or code"
+                        placeholder={f.delegateSelect.error ? "Couldn't Load People" : 'Nobody — Only They Update It'}
+                        searchPlaceholder="Search Name or Code"
                         disabled={f.isCompleted}
                       />
                     )}
@@ -157,7 +157,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                         onChange={(v) => f.changeTarget('designationId', v)}
                         {...f.designationSelect}
                         placeholder="Select Designation"
-                        searchPlaceholder="Search designation"
+                        searchPlaceholder="Search Designation"
                         disabled={f.isLocked('designation_id')}
                       />
                     )}
@@ -175,7 +175,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                         onChange={(v) => f.changeTarget('roleId', v)}
                         {...f.roleSelect}
                         placeholder="Select Role"
-                        searchPlaceholder="Search role"
+                        searchPlaceholder="Search Role"
                         disabled={f.isLocked('role_id')}
                       />
                     )}
@@ -200,12 +200,12 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                         !f.picked
                           ? `Pick a ${f.pickBy} first`
                           : f.employeeSelect.error
-                            ? "Couldn't load employees"
+                            ? "Couldn't Load Employees"
                             : f.employeeOptions.length || f.employeeSelect.loading
-                            ? 'Select one or more people'
+                            ? 'Select One or More People'
                             : `Nobody has this ${f.pickBy}`
                       }
-                      searchPlaceholder="Search name or code"
+                      searchPlaceholder="Search Name or Code"
                       disabled={f.isLocked('people') || (!f.picked && f.employeeOptions.length === 0)}
                     />
                   )}
@@ -226,7 +226,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
                     onClick={f.toggleSelectAll}
                     className="cursor-pointer text-xs font-medium text-primary hover:underline"
                   >
-                    {f.allSelected ? 'Clear all' : `Select all ${f.matchingCount} listed`}
+                    {f.allSelected ? 'Clear All' : `Select all ${f.matchingCount} listed`}
                   </button>
                 )}
               </Field>
@@ -235,7 +235,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
 
             <FormSection icon={ClipboardList} title="The Work" />
             <Field label="Task Name" required error={errors.task?.message} className="col-span-full">
-              <Input placeholder="What needs to be done" disabled={f.isLocked('task')} {...register('task')} />
+              <Input placeholder="What Needs to Be Done" disabled={f.isLocked('task')} {...register('task')} />
             </Field>
             <Field label="Priority" required>
               <Controller
@@ -256,7 +256,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
             <Field label="Description" error={errors.description?.message} className="col-span-full">
               <Textarea
                 rows={3}
-                placeholder="Optional detail"
+                placeholder="Optional Detail"
                 disabled={f.isLocked('description')}
                 {...register('description')}
               />
@@ -267,7 +267,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
               label="Progress Updates"
               required
               error={errors.updatesPerDay?.message}
-              hint="How many progress updates each assignee records per period — 2 + Weekly means twice a week (Monday to Sunday). Updates are spread over 09:00–19:00 IST: the assignee is reminded when one is due, and the assignee, delegate and you are alerted if it is missed."
+              hint="How Many Progress Updates Each Assignee Records per Period — 2 + Weekly Means Twice a Week (Monday to Sunday). Updates Are Spread over 09:00–19:00 IST: The Assignee Is Reminded When One Is Due, and the Assignee, Delegate and You Are Alerted If It Is Missed."
               className="col-span-full"
             >
               {/* One control, two inputs: the count and its period share an
@@ -326,7 +326,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
               render={({ field }) => (
                 <RuleSwitch
                   label="Photo Required"
-                  hint="Proof must be uploaded before completing."
+                  hint="Proof Must Be Uploaded Before Completing."
                   checked={field.value}
                   onChange={field.onChange}
                   disabled={f.isLocked('photo_required')}
@@ -339,7 +339,7 @@ function ProjectTaskForm({ id, onClose }: { id?: number; onClose: () => void }) 
               render={({ field }) => (
                 <RuleSwitch
                   label="Needs Verification"
-                  hint="Completed work waits for sign-off in Task Approval."
+                  hint="Completed Work Waits for Sign-Off in Task Approval."
                   checked={field.value}
                   onChange={field.onChange}
                   disabled={f.isLocked('needs_verification')}

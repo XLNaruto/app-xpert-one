@@ -99,7 +99,7 @@ export async function fetchIpAddresses(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load IP addresses.")
+    throw toApiError(error, "Couldn't Load IP Addresses.")
   }
 }
 
@@ -121,7 +121,7 @@ export async function createIpAddress(
     )
     return toIpAddress(ipAddressResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't add the IP address.")
+    throw toApiError(error, "Couldn't Add the IP Address.")
   }
 }
 
@@ -143,7 +143,7 @@ export async function updateIpAddress(
     )
     return toIpAddress(ipAddressResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the IP address.")
+    throw toApiError(error, "Couldn't Update the IP Address.")
   }
 }
 
@@ -158,7 +158,7 @@ export async function deleteIpAddress(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.IP_ADDRESSES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the IP address.")
+    throw toApiError(error, "Couldn't Delete the IP Address.")
   }
 }
 
@@ -170,7 +170,7 @@ export async function fetchIpAccessMode(): Promise<IpAccessModeState> {
     })
     return toIpAccessModeState(ipAccessModeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't load the IP access mode.")
+    throw toApiError(error, "Couldn't Load the IP Access Mode.")
   }
 }
 
@@ -202,6 +202,6 @@ export async function updateIpAccessMode(
     )
     return toIpAccessModeState(ipAccessModeResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't change the IP access mode.")
+    throw toApiError(error, "Couldn't Change the IP Access Mode.")
   }
 }

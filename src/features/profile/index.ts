@@ -9,7 +9,7 @@ export { MyProfilePage } from './pages/my-profile-page'
 export { useMyProfile } from './api/use-profile'
 export { useSetTwoFactor } from './api/use-two-factor'
 export { TwoFactorCard } from './components/two-factor-card'
-export { isAccountItself, shouldShowUserDetails, statusLabel } from './lib/profile-mappers'
+export { isAccountItself, statusLabel } from './lib/profile-mappers'
 export type {
   MyProfile,
   ProfileAccount,

@@ -141,8 +141,8 @@ export function usePlanSwitchFlow({
       toastApiError(
         error,
         kind === 'request'
-          ? "Couldn't send your plan change request."
-          : "Couldn't change your plan.",
+          ? "Couldn't Send Your Plan Change Request."
+          : "Couldn't Change Your Plan.",
       )
       preview.refetch()
     }

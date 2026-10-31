@@ -73,7 +73,7 @@ export function TaskDetailDialog({
                     <DetailItem label="Time Worked" value={formatDuration(workedSeconds ?? target.row.workedSeconds)} />
                     <DetailItem
                       label="Run"
-                      value={target.row.slots > 1 ? `${target.row.slot} of ${target.row.slots}` : 'Once a day'}
+                      value={target.row.slots > 1 ? `${target.row.slot} of ${target.row.slots}` : 'Once a Day'}
                     />
                   </>
                 ) : (

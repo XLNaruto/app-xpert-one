@@ -54,7 +54,7 @@ export type SalaryReportData =
   | ({ type: 'paid-salary' } & PaymentReport<PaidSalaryRow>)
   | ({ type: 'unpaid-salary' } & PaymentReport<UnpaidSalaryRow>)
 
-const ERROR_MESSAGE = "Couldn't load the salary report."
+const ERROR_MESSAGE = "Couldn't Load the Salary Report."
 
 export async function fetchPaySlipReport(
   filters: ReportFilters,

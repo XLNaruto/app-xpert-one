@@ -42,7 +42,7 @@ export function ProofStrip({
   if (files.length === 0) {
     return (
       <span className={cn('text-xs', required ? 'text-destructive' : 'text-muted-foreground')}>
-        {required ? 'Required, none uploaded' : 'None'}
+        {required ? 'Required, None Uploaded' : 'None'}
       </span>
     )
   }

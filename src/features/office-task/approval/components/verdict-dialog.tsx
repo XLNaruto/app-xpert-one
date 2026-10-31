@@ -35,8 +35,8 @@ function VerdictForm({ request, onClose, onDone }: { request: VerdictRequest; on
         </DialogTitle>
         <DialogDescription>
           {approve
-            ? 'They are marked complete and signed off against your name.'
-            : 'They go back to the employee to redo and submit again.'}
+            ? 'They Are Marked Complete and Signed off Against Your Name.'
+            : 'They Go Back to the Employee to Redo and Submit Again.'}
         </DialogDescription>
       </DialogHeader>
 
@@ -65,14 +65,14 @@ function VerdictForm({ request, onClose, onDone }: { request: VerdictRequest; on
       )}
 
       <Field
-        label={approve ? 'Remarks' : 'Reason for rejection'}
+        label={approve ? 'Remarks' : 'Reason for Rejection'}
         required={!approve}
         error={form.formState.errors.remarks?.message}
         className="mt-4"
       >
         <Textarea
           rows={3}
-          placeholder={approve ? 'Optional' : 'Say what needs redoing — the employee sees this'}
+          placeholder={approve ? 'Optional' : 'Say What Needs Redoing — The Employee Sees This'}
           {...form.register('remarks')}
         />
       </Field>

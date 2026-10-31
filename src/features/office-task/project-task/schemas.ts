@@ -202,52 +202,52 @@ export const projectTaskSchema = z
     /** The PEOPLE's ids — employees or panel users, per `pickBy`. */
     employeeIds: z.array(z.string()),
     /** An "other"'s full name and mobile — only read for `pickBy: other`. */
-    otherName: z.string().trim().max(255, 'Keep it under 255 characters'),
+    otherName: z.string().trim().max(255, 'Keep It Under 255 Characters'),
     otherMobile: z.string().trim(),
     /** `employee:12` / `user:3` / `''` for nobody — see `delegateValue`. */
     delegate: z.string(),
-    task: z.string().trim().min(1, 'Task name is required').max(255, 'Keep it under 255 characters'),
+    task: z.string().trim().min(1, 'Task Name Is Required').max(255, 'Keep It Under 255 Characters'),
     priority: z.enum(['high', 'medium', 'low']),
-    description: z.string().trim().max(1000, 'Keep it under 1000 characters'),
+    description: z.string().trim().max(1000, 'Keep It Under 1000 Characters'),
     updatesPerDay: z
       .string()
       .trim()
-      .regex(/^\d+$/, 'Whole number only')
+      .regex(/^\d+$/, 'Whole Number Only')
       .refine(
         (v) => Number(v) >= FREQUENCY_MIN && Number(v) <= FREQUENCY_MAX,
         `Between ${FREQUENCY_MIN} and ${FREQUENCY_MAX}`,
       ),
     updateFrequency: updateFrequencySchema,
-    startDate: z.string().min(1, 'Start date is required'),
-    deadline: z.string().min(1, 'Deadline is required'),
+    startDate: z.string().min(1, 'Start Date Is Required'),
+    deadline: z.string().min(1, 'Deadline Is Required'),
     photoRequired: z.boolean(),
     needsVerification: z.boolean(),
   })
   .superRefine((v, ctx) => {
     if (v.pickBy === 'designation' && !v.designationId) {
-      ctx.addIssue({ code: 'custom', path: ['designationId'], message: 'Designation is required' })
+      ctx.addIssue({ code: 'custom', path: ['designationId'], message: 'Designation Is Required' })
     }
     if (v.pickBy === 'role' && !v.roleId) {
-      ctx.addIssue({ code: 'custom', path: ['roleId'], message: 'Role is required' })
+      ctx.addIssue({ code: 'custom', path: ['roleId'], message: 'Role Is Required' })
     }
     if (v.pickBy === 'other') {
       if (!v.otherName) {
-        ctx.addIssue({ code: 'custom', path: ['otherName'], message: 'Full name is required' })
+        ctx.addIssue({ code: 'custom', path: ['otherName'], message: 'Full Name Is Required' })
       }
       if (!v.otherMobile) {
-        ctx.addIssue({ code: 'custom', path: ['otherMobile'], message: 'Mobile number is required' })
+        ctx.addIssue({ code: 'custom', path: ['otherMobile'], message: 'Mobile Number Is Required' })
       } else if (!OTHER_MOBILE_PATTERN.test(v.otherMobile)) {
         ctx.addIssue({
           code: 'custom',
           path: ['otherMobile'],
-          message: 'Please enter a valid 10-digit mobile number.',
+          message: 'Please Enter a Valid 10-Digit Mobile Number.',
         })
       }
     } else if (v.employeeIds.length === 0) {
-      ctx.addIssue({ code: 'custom', path: ['employeeIds'], message: 'Assign at least one person' })
+      ctx.addIssue({ code: 'custom', path: ['employeeIds'], message: 'Assign at Least One Person' })
     }
     if (v.startDate && v.deadline && v.deadline < v.startDate) {
-      ctx.addIssue({ code: 'custom', path: ['deadline'], message: 'Cannot be before the start date' })
+      ctx.addIssue({ code: 'custom', path: ['deadline'], message: 'Cannot Be Before the Start Date' })
     }
   })
 
@@ -263,7 +263,7 @@ export const bulkEditSchema = z
   })
   .refine((v) => !v.startDate || !v.deadline || v.deadline >= v.startDate, {
     path: ['deadline'],
-    message: 'Cannot be before the start date',
+    message: 'Cannot Be Before the Start Date',
   })
 
 export type BulkEditValues = z.infer<typeof bulkEditSchema>

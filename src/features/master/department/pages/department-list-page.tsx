@@ -114,7 +114,7 @@ export function DepartmentListPage() {
     <div>
       <PageHeader
         title="Department"
-        description="Manage your department master records."
+        description="Manage Your Department Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -136,7 +136,7 @@ export function DepartmentListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search departments…"
+          searchPlaceholder="Search Departments…"
           itemName="departments"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -155,8 +155,8 @@ export function DepartmentListPage() {
               title={search ? 'No Matching Departments' : 'No Departments Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Create your first department to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Create Your First Department to Get Started.'
               }
               action={
                 search

@@ -32,7 +32,7 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
       <FormSection
         icon={CalendarRange}
         title="Period"
-        description="For the employees you add now — people already assigned keep the period shown on their card"
+        description="For the Employees You Add Now — People Already Assigned Keep the Period Shown on Their Card"
         className="mt-0"
       />
       <DateField
@@ -40,14 +40,14 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
         name="effectiveFrom"
         label="Effective From"
         required={f.newAssignees > 0}
-        hint="Daily tasks are created from this date."
+        hint="Daily Tasks Are Created from This Date."
         error={errors.effectiveFrom?.message}
       />
       <DateField
         control={control}
         name="effectiveTo"
         label="Effective To"
-        hint="Leave empty to run until stopped."
+        hint="Leave Empty to Run Until Stopped."
         minDate={f.effectiveFrom ? parseISO(f.effectiveFrom) : undefined}
         error={errors.effectiveTo?.message}
       />
@@ -77,12 +77,12 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
             !f.picked
               ? `Pick a ${f.pickBy} first`
               : f.employeeSelect.error
-                ? "Couldn't load employees"
+                ? "Couldn't Load Employees"
                 : f.employeeOptions.length || f.employeeSelect.loading
-                ? 'Select one or more employees'
+                ? 'Select One or More Employees'
                 : `Nobody has this ${f.pickBy}`
           }
-          searchPlaceholder="Search name or code"
+          searchPlaceholder="Search Name or Code"
           disabled={!f.picked}
           maxVisibleLabels={3}
         />
@@ -97,7 +97,7 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
             onClick={f.toggleAll}
             className="cursor-pointer text-xs font-medium text-primary hover:underline"
           >
-            {f.allPicked ? 'Clear all' : `Select all ${f.assignableCount} listed`}
+            {f.allPicked ? 'Clear All' : `Select all ${f.assignableCount} listed`}
           </button>
         )}
       </Field>

@@ -95,7 +95,7 @@ export function DocumentTypeListPage() {
     <div>
       <PageHeader
         title="Document Types"
-        description="Manage your document type master records."
+        description="Manage Your Document Type Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -117,7 +117,7 @@ export function DocumentTypeListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search document type…"
+          searchPlaceholder="Search Document Type…"
           itemName="document types"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -134,7 +134,7 @@ export function DocumentTypeListPage() {
             <EmptyState
               icon={FileType2}
               title="No Document Types Yet"
-              description="Create your first document type to get started."
+              description="Create Your First Document Type to Get Started."
               action={
                 canCreate && (
                   <Button onClick={goToCreate}>

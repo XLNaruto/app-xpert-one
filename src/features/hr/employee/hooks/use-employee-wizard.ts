@@ -163,7 +163,7 @@ export function useEmployeeWizard(employeeId: number | undefined, openTab: Emplo
 
   /** A click on a locked step says why rather than doing nothing. */
   const onLockedStep = useCallback(() => {
-    toast.warning('Save Basic Detail first — the other steps hang off the saved employee.')
+    toast.warning('Save Basic Detail First — The Other Steps Hang off the Saved Employee.')
   }, [])
 
   const isForbidden = employeeId !== undefined && isForbiddenError(detail.error)

@@ -98,7 +98,7 @@ export async function fetchAdminUsers(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load users.")
+    throw toApiError(error, "Couldn't Load Users.")
   }
 }
 
@@ -115,7 +115,7 @@ export async function fetchAdminUser(id: number): Promise<AdminUser> {
     const raw = await http.get<unknown>(endpoints.ADMIN_USERS.GET(id))
     return toAdminUser(adminUserResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'User not found')
+    throw toApiError(error, 'User Not Found')
   }
 }
 
@@ -131,7 +131,7 @@ export async function fetchAssignableRoles(): Promise<AssignableRole[]> {
     const raw = await http.get<unknown>(endpoints.ADMIN_USERS.ASSIGNABLE_ROLES)
     return assignableRolesResponseSchema.parse(raw).items.map(toAssignableRole)
   } catch (error) {
-    throw toApiError(error, "Couldn't load the roles a user can be given.")
+    throw toApiError(error, "Couldn't Load the Roles a User Can Be Given.")
   }
 }
 
@@ -155,7 +155,7 @@ export async function createAdminUser(values: AdminUserFormValues): Promise<Admi
     )
     return toAdminUser(adminUserResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the user.")
+    throw toApiError(error, "Couldn't Create the User.")
   }
 }
 
@@ -182,7 +182,7 @@ export async function updateAdminUser(
     )
     return toAdminUser(adminUserResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the user.")
+    throw toApiError(error, "Couldn't Update the User.")
   }
 }
 
@@ -197,6 +197,6 @@ export async function deleteAdminUser(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.ADMIN_USERS.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the user.")
+    throw toApiError(error, "Couldn't Delete the User.")
   }
 }

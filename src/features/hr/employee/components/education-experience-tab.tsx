@@ -92,7 +92,7 @@ export function EducationExperienceTab({
       <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
         {error instanceof Error
           ? error.message
-          : "Couldn't load education & experience."}
+          : "Couldn't Load Education & Experience."}
       </p>
     )
   }
@@ -184,7 +184,7 @@ export function EducationExperienceTab({
         addLabel="Add"
         onAdd={addExperience}
         collapsed={isFresher}
-        collapsedMessage="Marked as a fresher — no prior employment is recorded. Any experience already on the record is removed when you save."
+        collapsedMessage="Marked as a Fresher — No Prior Employment Is Recorded. Any Experience Already on the Record Is Removed When You Save."
         headerExtra={
           <Controller
             control={form.control}
@@ -293,7 +293,7 @@ export function EducationExperienceTab({
                       value={ctc.value}
                       onChange={ctc.onChange}
                       options={EXPERIENCE_CTC_TYPE_OPTIONS}
-                      placeholder="Not stated"
+                      placeholder="Not Stated"
                     />
                   )}
                 />
@@ -304,7 +304,7 @@ export function EducationExperienceTab({
                 error={errors?.contactPersonName?.message}
               >
                 <Input
-                  placeholder="Reference at that employer"
+                  placeholder="Reference at That Employer"
                   {...form.register(`experiences.${index}.contactPersonName`)}
                 />
               </Field>
@@ -341,7 +341,7 @@ export function EducationExperienceTab({
               >
                 <Textarea
                   rows={2}
-                  placeholder="Why the employee left"
+                  placeholder="Why the Employee Left"
                   {...form.register(`experiences.${index}.leavingReason`)}
                 />
               </Field>
@@ -361,8 +361,8 @@ export function EducationExperienceTab({
                           {verified.value
                             ? row?.verifiedByName
                               ? `Vouched for by ${row.verifiedByName}.`
-                              : 'Saving stamps you as the verifier.'
-                            : 'Turn this on once somebody has actually contacted the verifier.'}
+                              : 'Saving Stamps You as the Verifier.'
+                            : 'Turn This on Once Somebody Has Actually Contacted the Verifier.'}
                         </p>
                       </div>
                       <Switch
@@ -398,8 +398,8 @@ export function EducationExperienceTab({
                       disabled={!row?.isVerified}
                       placeholder={
                         row?.isVerified
-                          ? 'What the verifier said about this employment'
-                          : 'Available once the row is marked verified'
+                          ? 'What the Verifier Said About This Employment'
+                          : 'Available Once the Row Is Marked Verified'
                       }
                       {...form.register(`experiences.${index}.verificationReview`)}
                     />
@@ -414,7 +414,7 @@ export function EducationExperienceTab({
       <StepFormFooter
         onBack={onBack}
         isSaving={isSaving}
-        hint="At least one qualification is required; extra blank cards are ignored."
+        hint="At Least One Qualification Is Required; Extra Blank Cards Are Ignored."
       />
     </form>
   )

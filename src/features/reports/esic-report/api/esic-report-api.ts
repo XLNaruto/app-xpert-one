@@ -24,7 +24,7 @@ export type EsicReportData =
   | ({ type: 'esic-statement' } & EsicReportPage<EsicStatementRow>)
   | ({ type: 'esic-challan' } & EsicReportPage<EsicChallanRow>)
 
-const ERROR_MESSAGE = "Couldn't load the ESIC report."
+const ERROR_MESSAGE = "Couldn't Load the ESIC Report."
 
 export async function fetchEsicStatement(
   filters: ReportFilters,

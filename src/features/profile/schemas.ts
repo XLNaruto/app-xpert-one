@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { MOBILE_RE, emailField } from '@/lib/validation'
+import { normalizeMobile } from './lib/profile-mappers'
 
 /**
  * `POST /user/me/two-factor/{enable,disable}` — the stored flag, after the
@@ -34,6 +36,8 @@ export const myProfileResponseSchema = z.object({
     company_id: z.number().nullable(),
     employee_id: z.number().nullable(),
     two_factor_auth: z.boolean(),
+    /** Storage key of the user's own photo, null when none is set. */
+    profile_photo: z.string().nullable().optional(),
     created_at: z.string(),
   }),
   account: z.object({
@@ -71,3 +75,37 @@ export const myProfileResponseSchema = z.object({
 })
 
 export type MyProfileResponse = z.infer<typeof myProfileResponseSchema>
+
+/**
+ * `PATCH /user/me` — only the fields that changed. `mobile_number` is digits
+ * only, or `null` to clear it. Password, role, status and company aren't part
+ * of this body (the API drops them anyway).
+ */
+export interface UpdateMyProfileBody {
+  name?: string
+  email?: string
+  mobile_number?: string | null
+}
+
+/**
+ * The "Edit User Details" form. Forms hold strings — a cleared mobile is `''`
+ * here and goes out as `null`. The mobile is checked after stripping the
+ * spaces / `+91` people type, since that's what gets sent.
+ */
+export const profileEditSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Please Enter Your Name')
+    .max(200, 'Cannot exceed 200 characters'),
+  email: emailField({ required: true }),
+  mobileNumber: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === '' || MOBILE_RE.test(normalizeMobile(value)),
+      'Enter a Valid 10-Digit Mobile Number',
+    ),
+})
+
+export type ProfileEditFormValues = z.infer<typeof profileEditSchema>

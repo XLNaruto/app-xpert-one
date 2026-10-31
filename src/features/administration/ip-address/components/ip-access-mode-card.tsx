@@ -64,7 +64,7 @@ export function IpAccessModeCard({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-heading text-base font-semibold tracking-tight">
-                  {restricted ? 'Restricted access' : 'Public access'}
+                  {restricted ? 'Restricted Access' : 'Public Access'}
                 </p>
                 <Badge variant={restricted ? 'success' : 'warning'}>
                   {access.mode}
@@ -73,8 +73,8 @@ export function IpAccessModeCard({
 
               <p className="mt-1 text-sm text-muted-foreground">
                 {restricted
-                  ? 'Only the addresses on the allowed list can reach the panel.'
-                  : 'Every network can reach the panel except the addresses on the blocked list.'}
+                  ? 'Only the Addresses on the Allowed List Can Reach the Panel.'
+                  : 'Every Network Can Reach the Panel Except the Addresses on the Blocked List.'}
               </p>
 
               <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -142,8 +142,8 @@ export function IpAccessModeCard({
         variant={access.pendingMode === 'RESTRICTED' ? 'default' : 'destructive'}
         title={
           access.pendingMode === 'RESTRICTED'
-            ? 'Restrict access to the allowed list?'
-            : 'Open access to every network?'
+            ? 'Restrict Access to the Allowed List?'
+            : 'Open Access to Every Network?'
         }
         description={
           access.pendingMode === 'RESTRICTED'
@@ -171,7 +171,7 @@ export function IpAccessModeCard({
         <Field
           label="Your Password"
           required
-          hint="Confirms it's you making the change. It is sent with this request only and never stored."
+          hint="Confirms It's You Making the Change. It Is Sent with This Request Only and Never Stored."
           error={access.passwordError}
         >
           <PasswordInput
@@ -183,7 +183,7 @@ export function IpAccessModeCard({
                 access.confirmSwitch()
               }
             }}
-            placeholder="Enter your password"
+            placeholder="Enter Your Password"
             /*
               No autofill here. This field exists to prove the person at the
               keyboard is the account holder — a saved password dropped in by the

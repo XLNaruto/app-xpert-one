@@ -26,7 +26,7 @@ export function ProgressBar({ percent, className }: { percent: number; className
 /** Progress notes, newest first — date, percent, note and photos. */
 export function ProgressTimeline({
   notes,
-  emptyText = 'No progress recorded yet.',
+  emptyText = 'No Progress Recorded Yet.',
 }: {
   notes: ProgressNote[]
   emptyText?: string

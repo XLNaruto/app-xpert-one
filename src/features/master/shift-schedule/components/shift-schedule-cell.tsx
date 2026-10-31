@@ -19,12 +19,12 @@ function stateOf(day: ScheduleDay | undefined) {
     return {
       label: '—',
       tone: 'text-muted-foreground',
-      text: 'Not scheduled — the week-off policy decides',
+      text: 'Not Scheduled — The Week-Off Policy Decides',
     }
   }
   return day.isWeekOff
-    ? { label: 'OFF', tone: 'bg-success/15 font-semibold text-success', text: 'Scheduled off' }
-    : { label: 'W', tone: 'bg-primary/10 font-medium text-primary', text: 'Scheduled working' }
+    ? { label: 'OFF', tone: 'bg-success/15 font-semibold text-success', text: 'Scheduled Off' }
+    : { label: 'W', tone: 'bg-primary/10 font-medium text-primary', text: 'Scheduled Working' }
 }
 
 /**

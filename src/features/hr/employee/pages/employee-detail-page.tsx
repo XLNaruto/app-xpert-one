@@ -195,7 +195,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title="Employee Details"
-        description="Everything on record, read-only"
+        description="Everything on Record, Read-Only"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -635,7 +635,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             <CollapsibleSection
               icon={Banknote}
               title="Wage Structure"
-              description="Inherited from the designation on the current posting"
+              description="Inherited from the Designation on the Current Posting"
               isLoading={wage.isLoading}
             >
               {!wage.data ? (
@@ -1064,7 +1064,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             <CollapsibleSection
               icon={Boxes}
               title="Assets"
-              description="Everything issued, and what is still out with them"
+              description="Everything Issued, and What Is Still out with Them"
               defaultOpen={false}
               isLoading={assets.isLoading}
               badge={<CountBadge count={assetRows.length} />}
@@ -1124,7 +1124,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
         <CollapsibleSection
           icon={ScanFace}
           title="Registered Faces"
-          description="Captured in the mobile app for attendance recognition"
+          description="Captured in the Mobile App for Attendance Recognition"
           defaultOpen={false}
           badge={<CountBadge count={faces.length} />}
         >
@@ -1161,7 +1161,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
             <CollapsibleSection
               icon={CalendarDays}
               title="Leave History"
-              description="The five most recent records, and what's left of each paid allowance"
+              description="The Five Most Recent Records, and What's Left of Each Paid Allowance"
               defaultOpen={false}
               isLoading={leaves.isLoading}
               badge={<CountBadge count={leaveRows.length} />}
@@ -1329,7 +1329,7 @@ function EmployeeHero({
               onScrollEnd={onLoadMore}
               loading={optionsLoading}
               placeholder={fullName}
-              searchPlaceholder="Search name or code…"
+              searchPlaceholder="Search Name or Code…"
               triggerClassName="h-auto w-auto max-w-full gap-1.5 border-0 bg-transparent px-0 font-heading text-xl font-semibold text-foreground shadow-none hover:bg-transparent focus-visible:ring-0"
               className="w-auto"
               panelMinWidth={288}
@@ -1487,7 +1487,7 @@ function ActCard({
 /** The count a closed section shows, so it says what's inside before it opens. */
 function CountBadge({ count }: { count: number }) {
   return count === 0 ? (
-    <Badge variant="warning">No data</Badge>
+    <Badge variant="warning">No Data</Badge>
   ) : (
     <Badge variant="secondary">{count}</Badge>
   );
@@ -1583,7 +1583,7 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
               </Badge>
             )}
             <Badge variant={look.badge}>{asset.status || "—"}</Badge>
-            {asset.stockHeld && <Badge variant="warning">Holding a unit</Badge>}
+            {asset.stockHeld && <Badge variant="warning">Holding a Unit</Badge>}
             {overdue && <Badge variant="destructive">Overdue</Badge>}
           </div>
         </div>
@@ -1592,11 +1592,11 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
       <div className="grid grid-cols-2 gap-3 border-t px-4 py-3">
         <AssetFact
           label="Issued"
-          value={onDate(asset.assignedDate) ?? "Not recorded"}
+          value={onDate(asset.assignedDate) ?? "Not Recorded"}
         />
         <AssetFact
           label="Due Back"
-          value={onDate(asset.validTill) ?? "No return date"}
+          value={onDate(asset.validTill) ?? "No Return Date"}
           tone={overdue ? "danger" : undefined}
         />
       </div>
@@ -1620,12 +1620,12 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
       {/* `createdBy`/`updatedBy` already carry the NAME — see `auditOf`. */}
       <div className="mt-auto flex flex-col gap-0.5 border-t bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
         <span>
-          Issued by {asset.createdBy || "—"}
+          Issued By {asset.createdBy || "—"}
           {onDate(asset.createdAt) ? ` · ${onDate(asset.createdAt)}` : ""}
         </span>
         {asset.updatedBy && asset.updatedAt !== asset.createdAt && (
           <span>
-            Updated by {asset.updatedBy}
+            Updated By {asset.updatedBy}
             {onDate(asset.updatedAt) ? ` · ${onDate(asset.updatedAt)}` : ""}
           </span>
         )}

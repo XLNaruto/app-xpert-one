@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { IP_ADDRESS_DEFAULT_SORT } from '../constants'
 import { useIpAddresses } from '../api/use-ip-addresses'
 import { useDeleteIpAddress } from '../api/use-ip-address-mutations'
@@ -24,7 +24,7 @@ export function useIpAddressList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, IP_ADDRESS_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, IP_ADDRESS_DEFAULT_SORT)
 
   /** '' is "both lists", which the API gets as no `type` at all. */
   const [typeFilter, setTypeFilter] = useState('')
@@ -67,7 +67,7 @@ export function useIpAddressList() {
     if (!pendingDelete) return
     deleteIpAddress.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('IP address removed')
+        toast.success('IP Address Removed')
         setPendingDelete(null)
       },
       // A 409 here is the server refusing to strand the panel — the last allowed

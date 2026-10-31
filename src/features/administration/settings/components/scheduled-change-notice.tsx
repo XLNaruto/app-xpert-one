@@ -20,7 +20,7 @@ export function ScheduledChangeNotice({
       <p className="flex items-center gap-2 text-sm text-foreground">
         <CalendarClock className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
         <span>
-          Changes to{' '}
+          Changes To{' '}
           <strong className="font-medium">{submissionModeLabel(change.value)}</strong> on{' '}
           <strong className="font-medium">{formatIst(change.effectiveFrom)}</strong>
         </span>

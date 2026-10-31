@@ -30,12 +30,12 @@ export const officeAddressSchema = z.object({
   addressLine1: z
     .string()
     .trim()
-    .min(1, 'Address line 1 is required')
-    .max(500, 'Cannot exceed 500 characters'),
+    .min(1, 'Address Line 1 Is Required')
+    .max(500, 'Cannot Exceed 500 Characters'),
   addressLine2: text(500),
   addressLine3: text(500),
-  stateId: z.string().trim().min(1, 'Please select state'),
-  districtId: z.string().trim().min(1, 'Please select district'),
+  stateId: z.string().trim().min(1, 'Please Select State'),
+  districtId: z.string().trim().min(1, 'Please Select District'),
   city: recordNameField('the city', { required: false, max: 200 }),
   pinCode: pinCodeField(),
 })

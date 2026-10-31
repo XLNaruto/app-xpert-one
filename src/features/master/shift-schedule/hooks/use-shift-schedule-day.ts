@@ -71,7 +71,7 @@ export function useShiftScheduleDay() {
       },
       {
         onSuccess: () => {
-          toast.success(isWeekOff ? 'Marked as off' : 'Marked as working')
+          toast.success(isWeekOff ? 'Marked as Off' : 'Marked as Working')
           close()
         },
         onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't update the date.")),
@@ -85,7 +85,7 @@ export function useShiftScheduleDay() {
       { employeeId: target.employee.employeeId, date: target.date },
       {
         onSuccess: () => {
-          toast.success('Handed back to the week-off policy')
+          toast.success('Handed Back to the Week-Off Policy')
           close()
         },
         onError: (err) => toast.error(getApiErrorMessage(err, "Couldn't reset the date.")),

@@ -43,7 +43,7 @@ export function CompanyRequired({ what }: CompanyRequiredProps) {
       <p className="mt-1.5 max-w-sm text-balance text-sm leading-relaxed text-muted-foreground">
         {hasCompanies
           ? `${what.charAt(0).toUpperCase()}${what.slice(1)} are scoped to a single company. Choose the one you want to work in — you can switch any time from the top bar.`
-          : 'Your account isn’t linked to a company yet. Create one to start setting up your masters.'}
+          : 'Your Account Isn’t Linked to a Company Yet. Create One to Start Setting up Your Masters.'}
       </p>
 
       {isLoading && (

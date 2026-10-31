@@ -58,7 +58,7 @@ export function useAssetForm({ open, record, onSaved }: UseAssetFormArgs) {
       : createAsset.mutateAsync(values)
     mutation
       .then(() => {
-        toast.success(isEdit ? 'Asset updated' : 'Asset added')
+        toast.success(isEdit ? 'Asset Updated' : 'Asset Added')
         onSaved()
       })
       // A 409 names what's in the way — an asset that has variants, say.

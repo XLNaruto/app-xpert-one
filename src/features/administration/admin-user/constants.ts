@@ -57,12 +57,12 @@ export const ACCESS_LEVEL_OPTIONS = [
   {
     value: 'COMPANY' as const,
     label: 'Selected Companies',
-    description: 'Only the companies ticked below.',
+    description: 'Only the Companies Ticked Below.',
   },
   {
     value: 'GLOBAL' as const,
     label: 'All Companies',
-    description: 'Every company of the account, including ones added later.',
+    description: 'Every Company of the Account, Including Ones Added Later.',
   },
 ]
 

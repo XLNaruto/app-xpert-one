@@ -82,8 +82,8 @@ export function ShiftScheduleDayDialog({ state, canDelete }: ShiftScheduleDayDia
                 onChange={(value) => value && state.setShiftValue(value)}
                 {...state.shiftSelect}
                 icon={Clock}
-                placeholder="Normal shift"
-                searchPlaceholder="Search shifts…"
+                placeholder="Normal Shift"
+                searchPlaceholder="Search Shifts…"
               />
             </Field>
           </div>
@@ -98,7 +98,7 @@ export function ShiftScheduleDayDialog({ state, canDelete }: ShiftScheduleDayDia
                 disabled={busy}
               >
                 <RotateCcw className="size-4" />
-                {state.isResetting ? 'Resetting…' : 'Reset to policy'}
+                {state.isResetting ? 'Resetting…' : 'Reset to Policy'}
               </Button>
             )}
             <Button type="button" variant="outline" onClick={state.close} disabled={busy}>

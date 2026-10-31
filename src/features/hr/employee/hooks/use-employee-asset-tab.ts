@@ -85,7 +85,7 @@ export function useEmployeeAssetTab({
           asset.variantCount > 0
             ? `${asset.variantCount} variant${asset.variantCount === 1 ? '' : 's'}`
             : asset.quantity === 0
-              ? 'No stock'
+              ? 'No Stock'
               : `${asset.quantity} left`,
       })),
     [assetMaster.data],
@@ -163,7 +163,7 @@ export function useEmployeeAssetTab({
         remove: (id) => deleteAsset.mutateAsync(id),
       })
       setRemovedIds([])
-      toast.success('Assets saved')
+      toast.success('Assets Saved')
       onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save the assets."))

@@ -98,7 +98,7 @@ export function SopGroupListPage() {
                   <TooltipTrigger asChild>
                     <Lock className="size-3.5 text-muted-foreground" />
                   </TooltipTrigger>
-                  <TooltipContent>Employees run this group, so who it applies to is fixed</TooltipContent>
+                  <TooltipContent>Employees Run This Group, So Who It Applies to Is Fixed</TooltipContent>
                 </Tooltip>
               )}
             </p>
@@ -151,7 +151,7 @@ export function SopGroupListPage() {
     <div>
       <PageHeader
         title="SOP Tasks"
-        description="Checklists for a designation or role, assigned to employees as daily tasks."
+        description="Checklists for a Designation or Role, Assigned to Employees as Daily Tasks."
         actions={
           list.companyId === null ? undefined : (
             <>
@@ -176,7 +176,7 @@ export function SopGroupListPage() {
         columns={columns}
         data={list.rows}
         isLoading={list.isLoading}
-        searchPlaceholder="Search SOP groups…"
+        searchPlaceholder="Search SOP Groups…"
         itemName="groups"
         pageSizeOptions={[5, 10, 25, 50]}
         serverPagination
@@ -194,7 +194,7 @@ export function SopGroupListPage() {
             icon={ListChecks}
             title={list.search ? 'No Matching SOP Groups' : 'No SOP Groups Yet'}
             description={
-              list.search ? 'Try a different search term.' : 'Create a checklist and assign it to employees.'
+              list.search ? 'Try a Different Search Term.' : 'Create a Checklist and Assign It to Employees.'
             }
             action={list.search ? undefined : addButton}
           />

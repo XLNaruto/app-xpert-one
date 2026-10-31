@@ -56,8 +56,8 @@ export function AssetFormDialog({ open, onOpenChange, record }: AssetFormDialogP
                 error={errors.quantity?.message}
                 hint={
                   isEdit
-                    ? "The number on the shelf right now. Changing it is recorded as an adjustment — use Add / Remove Stock to buy units in or scrap them. Set it to 0 before giving this asset variants."
-                    : 'How many are on the shelf to start with. Leave it at 0 if this asset will have variants — they hold the stock instead.'
+                    ? "The Number on the Shelf Right Now. Changing It Is Recorded as an Adjustment — Use Add / Remove Stock to Buy Units in or Scrap Them. Set It to 0 Before Giving This Asset Variants."
+                    : 'How Many Are on the Shelf to Start With. Leave It at 0 If This Asset Will Have Variants — They Hold the Stock Instead.'
                 }
               >
                 <Input

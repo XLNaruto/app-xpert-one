@@ -124,7 +124,7 @@ export function TalkCredentialListPage() {
       {
         id: 'last_login_at',
         accessorKey: 'lastLoginAt',
-        header: 'Last sign-in',
+        header: 'Last Sign-In',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
@@ -152,7 +152,7 @@ export function TalkCredentialListPage() {
     <div>
       <PageHeader
         title="Talk Credential"
-        description="Each employee's own Talk login — the address they sign in with, and the companies and departments they may talk to."
+        description="Each Employee's Own Talk Login — The Address They Sign In With, and the Companies and Departments They May Talk To."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -190,7 +190,7 @@ export function TalkCredentialListPage() {
                 onChange: list.setSearch,
                 // The endpoint matches the ADDRESS only — not the employee's
                 // name — so the box says what it can actually find.
-                placeholder: 'Search by login address…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -202,7 +202,7 @@ export function TalkCredentialListPage() {
                   options: list.companyOptions,
                   // '' is every company — the API simply gets no `company_id`.
                   clearValue: '',
-                  searchPlaceholder: 'Search companies',
+                  searchPlaceholder: 'Search Companies',
                 },
               ]}
               onReset={list.resetFilters}
@@ -214,8 +214,8 @@ export function TalkCredentialListPage() {
               title={list.search ? 'No Matching Credentials' : 'No Talk Credentials Yet'}
               description={
                 list.search
-                  ? 'Try a different login address.'
-                  : 'Issue an employee their Talk login, then choose the companies and departments it reaches.'
+                  ? 'Try a Different Login Address.'
+                  : 'Issue an Employee Their Talk Login, Then Choose the Companies and Departments It Reaches.'
               }
               action={
                 list.search

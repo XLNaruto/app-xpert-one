@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { decryptParams, encryptId } from '@/lib/crypto'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { ASSET_DEFAULT_SORT } from '../constants'
 import { useAssets } from '../api/use-assets'
 import { useAsset } from '../api/use-asset'
@@ -42,7 +42,7 @@ export function useAssetList(dataToken?: string) {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ASSET_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ASSET_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useAssets(params)
   const deleteAsset = useDeleteAsset()
 
@@ -104,7 +104,7 @@ export function useAssetList(dataToken?: string) {
     if (!pendingDelete) return
     deleteAsset.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Asset deleted')
+        toast.success('Asset Deleted')
         setPendingDelete(null)
       },
       // A 409 names what's in the way — a live handout, or stock still on the

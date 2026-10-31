@@ -108,7 +108,7 @@ export function ShiftScheduleListPage() {
     <div>
       <PageHeader
         title="Off-Day Schedule"
-        description="Which days each employee is off and which they work. A scheduled date outranks the week-off policy in attendance and salary."
+        description="Which Days Each Employee Is off and Which They Work. A Scheduled Date Outranks the Week-Off Policy in Attendance and Salary."
         actions={
           canCreate &&
           list.companyId !== null && (
@@ -159,7 +159,7 @@ export function ShiftScheduleListPage() {
                 columns={columns}
                 data={list.rows}
                 isLoading={list.isLoading}
-                searchPlaceholder="Search by name or code…"
+                searchPlaceholder="Search by Name or Code…"
                 itemName="employees"
                 pageSize={list.limit}
                 pageSizeOptions={SCHEDULE_PAGE_SIZE_OPTIONS}
@@ -176,8 +176,8 @@ export function ShiftScheduleListPage() {
                     title={list.search ? 'No Matching Employees' : 'No Employees to Schedule'}
                     description={
                       list.search
-                        ? 'Try a different name or code.'
-                        : 'Nobody matches these filters for this window.'
+                        ? 'Try a Different Name or Code.'
+                        : 'Nobody Matches These Filters for This Window.'
                     }
                   />
                 }

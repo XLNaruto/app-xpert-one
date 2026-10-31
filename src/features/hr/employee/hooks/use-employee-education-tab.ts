@@ -201,7 +201,7 @@ export function useEmployeeEducationTab({
       )
       setRemovedEducationIds([])
       setRemovedExperienceIds([])
-      toast.success('Education & experience saved')
+      toast.success('Education & Experience Saved')
       onSaved()
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Couldn't save education & experience."))

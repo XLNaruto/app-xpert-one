@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { PT_RATE_DEFAULT_SORT } from '../constants'
 import { usePtRates } from '../api/use-pt-rates'
 import { useDeletePtRate } from '../api/use-pt-rate-mutations'
@@ -25,7 +25,7 @@ export function usePtRateList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, PT_RATE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, PT_RATE_DEFAULT_SORT)
   const { data, isLoading, isError, error } = usePtRates(params)
   const deletePtRate = useDeletePtRate()
 
@@ -41,11 +41,11 @@ export function usePtRateList() {
     if (!pendingDelete) return
     deletePtRate.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('PT rate deleted')
+        toast.success('PT Rate Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete PT rate'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete PT Rate'),
     })
   }
 

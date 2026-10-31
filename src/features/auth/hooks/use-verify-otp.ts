@@ -138,7 +138,7 @@ export function useVerifyOtp() {
   /** Signed in — the step is spent, so it goes before the app takes over. */
   const finish = () => {
     clearChallenge()
-    toast.success('Signed in')
+    toast.success('Signed In')
     navigate({ to: '/dashboard' })
   }
 
@@ -174,7 +174,7 @@ export function useVerifyOtp() {
 
     const parsed = otpSchema.safeParse({ otpCode: value })
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Enter the 6-digit code')
+      setError(parsed.error.issues[0]?.message ?? 'Enter the 6-Digit Code')
       return
     }
     setError(null)

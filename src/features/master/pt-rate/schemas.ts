@@ -12,8 +12,8 @@ const amount = (what: string) =>
     .string()
     .trim()
     .min(1, `Please enter ${what}`)
-    .refine((v) => Number.isFinite(Number(v)), 'Please enter a valid amount')
-    .refine((v) => Number(v) >= 0, 'Amount must be positive')
+    .refine((v) => Number.isFinite(Number(v)), 'Please Enter a Valid Amount')
+    .refine((v) => Number(v) >= 0, 'Amount Must Be Positive')
 
 /** Optional money field: blank is allowed, anything else must be a valid amount. */
 const optionalAmount = z
@@ -28,9 +28,9 @@ export const ptSlabSchema = z
     minSalary: amount('minimum salary'),
     maxSalary: optionalAmount,
     amount: amount('the amount to deduct'),
-    month: z.string().trim().min(1, 'Please select an applicable month'),
+    month: z.string().trim().min(1, 'Please Select an Applicable Month'),
     gender: z.enum(['Male', 'Female', 'Both'], {
-      message: 'Please select a gender',
+      message: 'Please Select a Gender',
     }),
     minAge: z
       .string()
@@ -38,12 +38,12 @@ export const ptSlabSchema = z
       .refine((v) => v === '' || Number.isFinite(Number(v)), 'Please enter a valid age')
       .refine(
         (v) => v === '' || (Number(v) > 0 && Number(v) <= 100),
-        'Age must be between 1 and 100',
+        'Age Must Be Between 1 and 100',
       ),
   })
   .refine((v) => v.maxSalary === '' || Number(v.maxSalary) >= Number(v.minSalary), {
     path: ['maxSalary'],
-    message: 'Maximum salary cannot be less than the minimum',
+    message: 'Maximum Salary Cannot Be Less Than the Minimum',
   })
 
 export type PtSlabFormValues = z.infer<typeof ptSlabSchema>
@@ -74,10 +74,10 @@ function formatRange(min: number, max: number): string {
 /** Create/edit form for a PT rate and its salary slabs. */
 export const ptRateSchema = z
   .object({
-    wef: z.string().trim().min(1, 'Please select W.E.F date'),
-    stateId: z.string().trim().min(1, 'Please select state'),
-    detail: z.string().trim().max(200, 'Detail cannot exceed 200 characters'),
-    slabs: z.array(ptSlabSchema).min(1, 'Add at least one salary slab'),
+    wef: z.string().trim().min(1, 'Please Select W.E.F Date'),
+    stateId: z.string().trim().min(1, 'Please Select State'),
+    detail: z.string().trim().max(200, 'Detail Cannot Exceed 200 Characters'),
+    slabs: z.array(ptSlabSchema).min(1, 'Add at Least One Salary Slab'),
   })
   // Overlapping bands would make the deduction for a salary ambiguous, so the
   // clash is reported on both rows — whichever one the user meant to fix.

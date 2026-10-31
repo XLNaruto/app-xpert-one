@@ -81,8 +81,8 @@ export function useWeekoffPolicyDefault() {
     if (!chosen) {
       toast.error(
         level === 'company'
-          ? 'Pick the company this default applies to.'
-          : 'Pick the department this default applies to.',
+          ? 'Pick the Company This Default Applies To.'
+          : 'Pick the Department This Default Applies To.',
       )
       return
     }
@@ -108,8 +108,8 @@ export function useWeekoffPolicyDefault() {
     if (!chosen) {
       toast.error(
         level === 'company'
-          ? 'Pick the company whose default should be cleared.'
-          : 'Pick the department whose default should be cleared.',
+          ? 'Pick the Company Whose Default Should Be Cleared.'
+          : 'Pick the Department Whose Default Should Be Cleared.',
       )
       return
     }
@@ -117,8 +117,8 @@ export function useWeekoffPolicyDefault() {
       onSuccess: () => {
         toast.success(
           level === 'company'
-            ? "Company default cleared — shifts fall back to Sunday-only unless they name their own pattern"
-            : "Department default cleared — it now follows the company's",
+            ? "Company Default Cleared — Shifts Fall Back to Sunday-Only Unless They Name Their Own Pattern"
+            : "Department Default Cleared — It Now Follows the Company's",
         )
         closePinning()
       },

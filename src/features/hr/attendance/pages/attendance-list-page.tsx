@@ -71,7 +71,7 @@ export function AttendanceListPage() {
         {attendance.isError ? (
           <Card className="p-6">
             <EmptyState
-              title="Couldn't load attendance"
+              title="Couldn't Load Attendance"
               description={getApiErrorMessage(attendance.error)}
             />
           </Card>
@@ -88,8 +88,8 @@ export function AttendanceListPage() {
               title={`No ${levelLabel} to show`}
               description={
                 attendance.search.trim()
-                  ? 'Nothing matches that search for this day.'
-                  : 'Nobody is posted to a group for this day yet.'
+                  ? 'Nothing Matches That Search for This Day.'
+                  : 'Nobody Is Posted to a Group for This Day Yet.'
               }
             />
           </Card>

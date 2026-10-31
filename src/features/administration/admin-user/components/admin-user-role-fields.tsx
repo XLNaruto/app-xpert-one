@@ -32,7 +32,7 @@ export function AdminUserRoleFields({ form }: AdminUserRoleFieldsProps) {
         label="Role"
         required={!form.isRoleLocked}
         error={form.errors.roleId?.message}
-        hint="The role decides which screens this user can open and what they can do there — and the company it belongs to becomes theirs. Which companies they reach is set below."
+        hint="The Role Decides Which Screens This User Can Open and What They Can Do There — And the Company It Belongs to Becomes Theirs. Which Companies They Reach Is Set Below."
       >
         {form.isRoleLocked ? (
           <Input
@@ -40,8 +40,8 @@ export function AdminUserRoleFields({ form }: AdminUserRoleFieldsProps) {
             disabled
             value={
               form.isOwner
-                ? 'Account owner — no role'
-                : (form.user?.roleName ?? 'No role assigned')
+                ? 'Account Owner — No Role'
+                : (form.user?.roleName ?? 'No Role Assigned')
             }
           />
         ) : (
@@ -51,8 +51,8 @@ export function AdminUserRoleFields({ form }: AdminUserRoleFieldsProps) {
             onChange={form.setRoleId}
             loading={form.isRolesLoading}
             icon={ShieldCheck}
-            placeholder={form.isRolesLoading ? 'Loading roles…' : 'Select a role'}
-            searchPlaceholder="Search roles"
+            placeholder={form.isRolesLoading ? 'Loading Roles…' : 'Select a Role'}
+            searchPlaceholder="Search Roles"
             className="w-full"
           />
         )}
@@ -62,7 +62,7 @@ export function AdminUserRoleFields({ form }: AdminUserRoleFieldsProps) {
         <Field
           label="Status"
           error={form.errors.status?.message}
-          hint="An inactive user keeps their record but cannot sign in."
+          hint="An Inactive User Keeps Their Record but Cannot Sign In."
         >
           <Combobox
             options={ADMIN_USER_STATUS_OPTIONS}

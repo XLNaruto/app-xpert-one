@@ -56,7 +56,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
     <div>
       <PageHeader
         title={form.isEdit ? 'Edit Talk Credential' : 'Issue Talk Credential'}
-        description="The email address is the Talk login, and it has to be unused across the whole Talk platform. The reach below decides who this person can talk to."
+        description="The Email Address Is the Talk Login, and It Has to Be Unused Across the Whole Talk Platform. The Reach Below Decides Who This Person Can Talk To."
         actions={
           <Button variant="outline" onClick={form.goToList}>
             <ArrowLeft className="size-4" />
@@ -80,7 +80,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this Talk credential."}
+                : "Couldn't Load This Talk Credential."}
             </p>
           ) : (
             <form
@@ -91,7 +91,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
               <FormSection
                 icon={UserRound}
                 title="Employee"
-                description="Who this Talk login is for. One employee may hold only one credential, and it can never be moved to someone else."
+                description="Who This Talk Login Is For. One Employee May Hold Only One Credential, and It Can Never Be Moved to Someone Else."
                 className="mt-0"
               />
 
@@ -101,7 +101,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                    still says whose login is being edited. */
                 <Field
                   label="Employee"
-                  hint="An issued credential cannot be moved to another employee — delete it and issue a new one."
+                  hint="An Issued Credential Cannot Be Moved to Another Employee — Delete It and Issue a New One."
                 >
                   <div className="flex h-9 items-center rounded-md border border-border/60 bg-muted/40 px-3 text-sm text-foreground">
                     {form.credential ? employeeLabel(form.credential) : '—'}
@@ -114,8 +114,8 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                   error={form.errors.employeeId?.message}
                   hint={
                     form.hasMoreEmployees
-                      ? 'Showing the first 100 — type to search the rest by name.'
-                      : 'Every employee of the account, across all companies.'
+                      ? 'Showing the First 100 — Type to Search the Rest by Name.'
+                      : 'Every Employee of the Account, Across All Companies.'
                   }
                 >
                   <Combobox
@@ -123,10 +123,10 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                     onChange={form.setEmployeeId}
                     options={form.employeeOptions}
                     icon={UserRound}
-                    placeholder="Select employee"
+                    placeholder="Select Employee"
                     // Matched server-side, by name, across every company.
                     onSearchChange={form.setEmployeeSearch}
-                    searchPlaceholder="Search employees by name"
+                    searchPlaceholder="Search Employees by Name"
                     loading={form.isEmployeesLoading}
                     panelMinWidth={280}
                     className="w-full"
@@ -139,8 +139,8 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                 title="Talk Login"
                 description={
                   form.isEdit
-                    ? "Talk's own credential, not the panel one. Leave the password blank to keep the current one — filling it replaces it."
-                    : "Talk's own credential, not the panel one. The address is the username, and it must be unused across the whole Talk platform — copy the employee's panel login, or type one here."
+                    ? "Talk's Own Credential, Not the Panel One. Leave the Password Blank to Keep the Current One — Filling It Replaces It."
+                    : "Talk's Own Credential, Not the Panel One. The Address Is the Username, and It Must Be Unused Across the Whole Talk Platform — Copy the Employee's Panel Login, or Type One Here."
                 }
               />
 
@@ -152,8 +152,8 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                 label="Panel Credentials"
                 hint={
                   form.isEdit
-                    ? "Turn on to re-copy the employee's panel login onto this credential as it stands right now. Turn off to make it its own again — the boxes come back and the password can be rotated there. The panel login itself is never touched."
-                    : "Copies the employee's panel email — and their panel password, if they have a panel login. It seeds this credential once; changing either side later does not affect the other."
+                    ? "Turn On to Re-copy the Employee's Panel Login Onto This Credential as It Stands Right Now. Turn Off to Make It Its Own Again — The Boxes Come Back and the Password Can Be Rotated There. The Panel Login Itself Is Never Touched."
+                    : "Copies the Employee's Panel Email — And Their Panel Password, If They Have a Panel Login. It Seeds This Credential Once; Changing Either Side Later Does Not Affect the Other."
                 }
                 className="flex flex-col justify-end"
               >
@@ -170,11 +170,11 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                   <span className="min-w-0 truncate text-sm text-muted-foreground">
                     {form.isSameAsPanelCreds
                       ? form.isEdit && !form.wasSeededFromPanel
-                        ? 'Will copy panel login'
-                        : 'Copied from panel login'
+                        ? 'Will Copy Panel Login'
+                        : 'Copied from Panel Login'
                       : form.isEdit
-                        ? 'Its own Talk login'
-                        : 'Enter a login below'}
+                        ? 'Its Own Talk Login'
+                        : 'Enter a Login Below'}
                   </span>
                 </div>
               </Field>
@@ -208,14 +208,14 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                     error={form.errors.password?.message}
                     hint={
                       form.isEdit
-                        ? 'Leave blank to keep the current password.'
+                        ? 'Leave Blank to Keep the Current Password.'
                         : `At least ${MIN_TALK_CREDENTIAL_PASSWORD} characters.`
                     }
                   >
                     <PasswordInput
                       autoComplete="new-password"
                       placeholder={
-                        form.isEdit ? 'Leave blank to keep current' : '••••••••'
+                        form.isEdit ? 'Leave Blank to Keep Current' : '••••••••'
                       }
                       {...form.form.register('password')}
                     />
@@ -229,12 +229,12 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                     label="Confirm Password"
                     required={!form.isEdit}
                     error={form.errors.confirmPassword?.message}
-                    hint="Checked in the browser only — the password is stored hashed and never shown again."
+                    hint="Checked in the Browser Only — The Password Is Stored Hashed and Never Shown Again."
                   >
                     <PasswordInput
                       autoComplete="new-password"
                       placeholder={
-                        form.isEdit ? 'Leave blank to keep current' : 'Re-enter the password'
+                        form.isEdit ? 'Leave Blank to Keep Current' : 'Re-enter the Password'
                       }
                       {...form.form.register('confirmPassword')}
                     />
@@ -260,8 +260,8 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                 <p className="col-span-full flex items-start gap-1.5 text-xs leading-4 text-muted-foreground">
                   <Info className="size-3.5 shrink-0 translate-y-px" />
                   {form.isSameAsPanelCreds
-                    ? "Saving replaces this Talk login with the employee's panel one as it stands now. The credential keeps its conversations and its reach — only the address and password change."
-                    : 'Saving keeps the address and password this credential already has and simply stops calling it the panel one. Set a new password below to rotate it at the same time.'}
+                    ? "Saving Replaces This Talk Login with the Employee's Panel One as It Stands Now. The Credential Keeps Its Conversations and Its Reach — Only the Address and Password Change."
+                    : 'Saving Keeps the Address and Password This Credential Already Has and Simply Stops Calling It the Panel One. Set a New Password Below to Rotate It at the Same Time.'}
                 </p>
               )}
 
@@ -270,7 +270,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
               {form.isEdit && (
                 <Field
                   label="Status"
-                  hint="Inactive suspends the login without deleting it — the address stays taken and the history intact."
+                  hint="Inactive Suspends the Login Without Deleting It — The Address Stays Taken and the History Intact."
                 >
                   <Combobox
                     value={form.status}
@@ -284,7 +284,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
               <FormSection
                 icon={SlidersHorizontal}
                 title="Reach"
-                description="Who this person can talk to. Whole companies and individual departments are two independent lists — a department can be granted without its company."
+                description="Who This Person Can Talk To. Whole Companies and Individual Departments Are Two Independent Lists — A Department Can Be Granted Without Its Company."
               />
 
               <TalkCredentialReachFields form={form} />

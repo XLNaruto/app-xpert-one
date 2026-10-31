@@ -207,7 +207,7 @@ function LocationDialog({ initial, onCancel, onSave }: LocationDialogProps) {
         <div className="border-b border-border px-6 py-4 pr-12">
           <DialogTitle>Choose Location</DialogTitle>
           <DialogDescription>
-            Search an address, click the map, drag the pin, or use your current location.
+            Search an Address, Click the Map, Drag the Pin, or Use Your Current Location.
           </DialogDescription>
         </div>
 
@@ -261,7 +261,7 @@ function LocationDialog({ initial, onCancel, onSave }: LocationDialogProps) {
           <MapPin className="size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-foreground">
-              {address || (draftPos ? 'Selected location' : 'No location selected yet')}
+              {address || (draftPos ? 'Selected Location' : 'No Location Selected Yet')}
             </p>
             {draft ? (
               <p className="text-xs text-muted-foreground tabular-nums">{draft}</p>

@@ -76,7 +76,7 @@ export function DocumentFileField({
         )}
       >
         <span className="truncate">
-          {name || (disabled ? 'Select a document type first' : 'Choose file…')}
+          {name || (disabled ? 'Select a Document Type First' : 'Choose File…')}
         </span>
       </button>
 
@@ -92,7 +92,7 @@ export function DocumentFileField({
               <Eye className="size-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>Preview file</TooltipContent>
+          <TooltipContent>Preview File</TooltipContent>
         </Tooltip>
       )}
 
@@ -118,9 +118,9 @@ export function DocumentFileField({
         </TooltipTrigger>
         <TooltipContent>
           {disabled
-            ? 'Choose a document type first'
+            ? 'Choose a Document Type First'
             : value
-              ? 'Replace file'
+              ? 'Replace File'
               : 'PDF, JPG, PNG or WebP'}
         </TooltipContent>
       </Tooltip>

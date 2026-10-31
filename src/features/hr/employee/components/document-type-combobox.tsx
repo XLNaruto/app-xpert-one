@@ -33,7 +33,7 @@ export function DocumentTypeCombobox({
       onChange={onChange}
       {...select}
       placeholder="Select Type"
-      searchPlaceholder="Search document type"
+      searchPlaceholder="Search Document Type"
       disabled={disabled}
     />
   )

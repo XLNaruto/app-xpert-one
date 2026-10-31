@@ -45,7 +45,7 @@ export function IpAddressFormDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit IP Address' : 'Add IP Address'}</DialogTitle>
           <DialogDescription>
-            A single host or a CIDR range, on the allowed or the blocked list.
+            A Single Host or a CIDR Range, on the Allowed or the Blocked List.
           </DialogDescription>
         </DialogHeader>
 
@@ -54,7 +54,7 @@ export function IpAddressFormDialog({
             label={IP_ADDRESS_LABELS.ipAddresses}
             required
             error={errors.ipAddresses?.message}
-            hint="One host (203.0.113.4, 2001:db8::1) or a range (10.0.0.0/8) — a range covers every address inside it."
+            hint="One Host (203.0.113.4, 2001:Db8::1) Or a Range (10.0.0.0/8) — A Range Covers Every Address Inside It."
           >
             <Input
               className="font-mono"
@@ -69,7 +69,7 @@ export function IpAddressFormDialog({
             label={IP_ADDRESS_LABELS.type}
             required
             error={errors.type?.message}
-            hint="An address on both lists is blocked — blocked always wins at the door."
+            hint="An Address on Both Lists Is Blocked — Blocked Always Wins at the Door."
           >
             <Controller
               control={control}
@@ -81,7 +81,7 @@ export function IpAddressFormDialog({
                   value={field.value}
                   onChange={(value) => field.onChange(value as IpAddressType)}
                   options={IP_ADDRESS_TYPES}
-                  placeholder="Select list"
+                  placeholder="Select List"
                 />
               )}
             />

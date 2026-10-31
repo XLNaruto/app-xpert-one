@@ -23,7 +23,7 @@ export function projectTaskSaveNotice(now: Who, before?: Who): SaveNotice | null
     if (!now.delegate) {
       return {
         tone: 'warn',
-        text: 'Nobody will be notified — an outside person has no app inbox. Name a delegate to have someone told.',
+        text: 'Nobody Will Be Notified — An Outside Person Has No App Inbox. Name a Delegate to Have Someone Told.',
       }
     }
     if (before && before.pickBy === 'other' && before.delegate === now.delegate) return null

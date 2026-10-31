@@ -151,13 +151,13 @@ export function useShiftForm({ companyId, editing, onSaved }: UseShiftFormOption
 
   const onSubmit = handleSubmit((values) => {
     if (companyId === undefined) {
-      toast.error('Save the company first, then add its shifts.')
+      toast.error('Save the Company First, Then Add Its Shifts.')
       return
     }
 
     const onSettled = {
       onSuccess: () => {
-        toast.success(isEdit ? 'Shift updated' : 'Shift added')
+        toast.success(isEdit ? 'Shift Updated' : 'Shift Added')
         // The list owns the selection, so clearing it is what blanks the form.
         onSaved()
         reset(blankForm())

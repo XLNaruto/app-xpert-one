@@ -72,7 +72,7 @@ export function ContractCompleteDialog({
         >
           <Field
             label="Leaving Date"
-            hint="Defaults to the end of the contract. The API refuses a date earlier than the joining date."
+            hint="Defaults to the End of the Contract. The API Refuses a Date Earlier Than the Joining Date."
             error={errors.leavingDate?.message}
           >
             <Controller
@@ -92,7 +92,7 @@ export function ContractCompleteDialog({
             <Textarea
               rows={2}
               maxLength={500}
-              placeholder="Contract completed — not renewed"
+              placeholder="Contract Completed — Not Renewed"
               {...register('leavingReason')}
             />
           </Field>
@@ -115,7 +115,7 @@ export function ContractCompleteDialog({
               Cancel
             </Button>
             <Button type="submit" variant="destructive" disabled={isPending}>
-              {isPending ? 'Completing…' : 'Complete service'}
+              {isPending ? 'Completing…' : 'Complete Service'}
             </Button>
           </DialogFooter>
         </form>

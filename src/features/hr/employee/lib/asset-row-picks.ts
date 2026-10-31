@@ -53,7 +53,7 @@ export function withTakenAssetsDisabled(
 
   return options.map((option) =>
     taken.has(option.value) && option.value !== keepValue
-      ? { ...option, hint: 'Already on this employee', disabled: true }
+      ? { ...option, hint: 'Already on This Employee', disabled: true }
       : option,
   )
 }

@@ -170,7 +170,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading = false,
   skeletonRows,
-  emptyMessage = 'No results.',
+  emptyMessage = 'No Results.',
   emptyState,
   hidePagination = false,
   searchColumn,
@@ -225,7 +225,14 @@ export function DataTable<TData, TValue>({
     // If the page on screen already holds every row from the top, it IS the
     // first batch. (A mock store can hand back the very same row objects, so
     // it would otherwise look like placeholder data forever.)
-    const holdsAll = offset === 0 && total != null && data.length >= total
+    //
+    // The same goes for a table that opens on "All": its hook already asked for
+    // the first batch, so the rows on screen are that batch, not placeholders.
+    const holdsAll =
+      offset === 0 &&
+      (limit === ALL_PAGE_SIZE ||
+        limit === INFINITE_BATCH_SIZE ||
+        (total != null && data.length >= total))
     entryRowsRef.current = holdsAll ? null : data
     entryOffsetRef.current = offset
     setBatches(holdsAll ? [{ offset: 0, rows: data }] : [])
@@ -240,10 +247,19 @@ export function DataTable<TData, TValue>({
   }
 
   // A caller can open on "All" (limit = ALL_PAGE_SIZE) or change the limit
-  // itself; keep the mode in step with the `limit` it actually sends.
+  // itself; keep the mode in step with the `limit` it actually sends. A table
+  // that mounts on the batch size was remounted mid-scroll (e.g. a tab swapping
+  // which table shows), so it carries on in "All" too — unless 100 is a page
+  // size the user can pick, when it may well be that.
+  const mountedRef = useRef(false)
   useEffect(() => {
     if (!lazyServer) return
-    if (limit === ALL_PAGE_SIZE && !lazyAll) startLazyAll()
+    const resumesAll =
+      !mountedRef.current &&
+      limit === INFINITE_BATCH_SIZE &&
+      !pageSizeOptions?.includes(INFINITE_BATCH_SIZE)
+    mountedRef.current = true
+    if ((limit === ALL_PAGE_SIZE || resumesAll) && !lazyAll) startLazyAll()
     else if (lazyAll && limit !== ALL_PAGE_SIZE && limit !== INFINITE_BATCH_SIZE) stopLazyAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lazyServer, limit])

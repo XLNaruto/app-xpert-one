@@ -68,7 +68,7 @@ export function useDepartmentForm(id?: number) {
   /** Switch tabs, refusing the locked one with a reason rather than silently. */
   const selectTab = (next: DepartmentFormTab) => {
     if (next === 'shift' && !canEditShift) {
-      toast.error('Save the department first, then set its shift.')
+      toast.error('Save the Department First, Then Set Its Shift.')
       return
     }
     setTab(next)
@@ -78,11 +78,11 @@ export function useDepartmentForm(id?: number) {
     if (isEdit) {
       updateDepartment.mutate(values, {
         onSuccess: () => {
-          toast.success('Department updated')
+          toast.success('Department Updated')
           goToList()
         },
         onError: (err) =>
-          toast.error(err instanceof Error ? err.message : 'Failed to update department'),
+          toast.error(err instanceof Error ? err.message : 'Failed to Update Department'),
       })
       return
     }
@@ -92,7 +92,7 @@ export function useDepartmentForm(id?: number) {
     // now has a department to be pinned to.
     createDepartment.mutate(values, {
       onSuccess: (department) => {
-        toast.success('Department created — now choose its shift')
+        toast.success('Department Created — Now Choose Its Shift')
         setTab('shift')
         navigate({
           to: '/master/department/create',
@@ -100,7 +100,7 @@ export function useDepartmentForm(id?: number) {
         })
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to create department'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Create Department'),
     })
   })
 

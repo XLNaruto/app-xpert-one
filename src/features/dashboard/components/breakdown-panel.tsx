@@ -135,7 +135,7 @@ export function BreakdownPanel({
       isFetching={panel.isFetching && !panel.isPending}
       error={panel.error}
       isEmpty={Boolean(data) && isEmptyBreakdown(data!)}
-      emptyDescription="Nothing was recorded for this measure in the selected period."
+      emptyDescription="Nothing Was Recorded for This Measure in the Selected Period."
       skeletonHeight={height}
       actions={
         <>

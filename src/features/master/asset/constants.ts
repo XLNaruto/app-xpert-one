@@ -98,27 +98,27 @@ export const STOCK_REASON_META: Record<
 > = {
   OPENING: {
     label: 'Opening',
-    description: 'The variant was created holding stock.',
+    description: 'The Variant Was Created Holding Stock.',
     variant: 'secondary',
   },
   REFILL: {
     label: 'Stock Added',
-    description: 'Units bought in.',
+    description: 'Units Bought In.',
     variant: 'success',
   },
   ASSIGNED: {
     label: 'Assigned',
-    description: 'A unit went out to an employee.',
+    description: 'A Unit Went out to an Employee.',
     variant: 'default',
   },
   RETURNED: {
     label: 'Returned',
-    description: 'An employee handed a unit back.',
+    description: 'An Employee Handed a Unit Back.',
     variant: 'success',
   },
   UNASSIGNED: {
     label: 'Unassigned',
-    description: 'A handout row was deleted while it still held a unit.',
+    description: 'A Handout Row Was Deleted While It Still Held a Unit.',
     variant: 'secondary',
   },
 }

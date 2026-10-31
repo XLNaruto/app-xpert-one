@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { encryptParams } from '@/lib/crypto'
 import { useProjectTask, useProjectWorks } from '../api/use-project-tasks'
 
@@ -11,7 +11,7 @@ import { useProjectTask, useProjectWorks } from '../api/use-project-tasks'
 export function useProjectTaskDetail(id?: number) {
   const navigate = useNavigate()
   const detail = useProjectTask(id)
-  const pagination = usePagination(DEFAULT_PAGE_SIZE)
+  const pagination = usePagination(ALL_PAGE_SIZE)
   const works = useProjectWorks(id, pagination.params)
 
   return {

@@ -5,7 +5,7 @@ import { recordNameField, shortCodeField } from '@/lib/validation'
 export const leaveTypeSchema = z.object({
   leaveName: recordNameField('the leave name', { max: 120 }),
   shortName: shortCodeField('the short name', { max: 20 }),
-  payType: z.enum(['PAID', 'UNPAID'], { message: 'Pay type is required' }),
+  payType: z.enum(['PAID', 'UNPAID'], { message: 'Pay Type Is Required' }),
 })
 
 export type LeaveTypeFormValues = z.infer<typeof leaveTypeSchema>

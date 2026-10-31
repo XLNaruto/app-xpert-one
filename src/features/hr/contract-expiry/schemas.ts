@@ -79,10 +79,10 @@ export type ContractPostingResponse = z.infer<typeof contractPostingResponseSche
 export const contractRenewSchema = z.object({
   contractPeriod: z
     .string()
-    .min(1, 'Contract period is required')
+    .min(1, 'Contract Period Is Required')
     .refine(
       (value) => Number.isInteger(Number(value)) && Number(value) > 0,
-      'Contract period must be a whole number greater than zero',
+      'Contract Period Must Be a Whole Number Greater Than Zero',
     ),
   contractPeriodType: periodTypeSchema,
   /** Blank = the API's default: the end of the term in force. */
@@ -98,7 +98,7 @@ export const contractRenewSchema = z.object({
 export const contractCompleteSchema = z.object({
   /** Blank = `contract_ends_on`, or today when the term can't be placed. */
   leavingDate: z.string().optional(),
-  leavingReason: z.string().max(500, 'Reason cannot exceed 500 characters').optional(),
+  leavingReason: z.string().max(500, 'Reason Cannot Exceed 500 Characters').optional(),
 })
 
 export type ContractRenewFormValues = z.infer<typeof contractRenewSchema>

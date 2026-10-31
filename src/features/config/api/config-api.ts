@@ -24,6 +24,6 @@ export async function fetchAppConfig(): Promise<AppConfig> {
     const { media_path } = configResponseSchema.parse(raw)
     return { mediaBaseUrl: media_path }
   } catch (error) {
-    throw toApiError(error, 'Failed to load application config.')
+    throw toApiError(error, 'Failed to Load Application Config.')
   }
 }

@@ -80,7 +80,7 @@ export const PF_REPORT_TYPES: readonly ReportTypeOption<PfReportType>[] = [
     value: 'pf-challan',
     label: 'PF Challan',
     description:
-      'Form 3A, one line per PF member. Wages here is a DAY COUNT, not money — the money base beside it is EPF Wages. Only months the PF act applied to are on it, or it wouldn’t reconcile with the challan that is filed.',
+      'Form 3A, One Line per PF Member. Wages Here Is a DAY COUNT, Not Money — The Money Base Beside It Is EPF Wages. Only Months the PF Act Applied to Are on It, or It Wouldn’t Reconcile with the Challan That Is Filed.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PF_CHALLAN_SORTABLE,
   },
@@ -88,7 +88,7 @@ export const PF_REPORT_TYPES: readonly ReportTypeOption<PfReportType>[] = [
     value: 'pf-statement',
     label: 'PF Statement',
     description:
-      'The employer’s contribution statement. Its Wages is the AGREED basic capped at the ceiling — not the challan’s prorated EPF Wages — so the two legitimately print different wages for the same employee in the same month.',
+      'The Employer’s Contribution Statement. Its Wages Is the AGREED Basic Capped at the Ceiling — Not the Challan’s Prorated EPF Wages — So the Two Legitimately Print Different Wages for the Same Employee in the Same Month.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PF_STATEMENT_SORTABLE,
   },
@@ -96,7 +96,7 @@ export const PF_REPORT_TYPES: readonly ReportTypeOption<PfReportType>[] = [
     value: 'new-joining',
     label: 'New Joining PF',
     description:
-      'The EPFO new-member sheet. The only type read off POSTINGS rather than payroll, so a joiner can be registered before their first month is processed — which is why nothing on it is money and a re-join is a second line.',
+      'The EPFO New-Member Sheet. The Only Type Read off POSTINGS Rather Than Payroll, So a Joiner Can Be Registered Before Their First Month Is Processed — Which Is Why Nothing on It Is Money and a Re-join Is a Second Line.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: NEW_JOINING_SORTABLE,
   },
@@ -104,7 +104,7 @@ export const PF_REPORT_TYPES: readonly ReportTypeOption<PfReportType>[] = [
     value: 'ecr',
     label: 'ECR',
     description:
-      'The Electronic Challan cum Return, keyed by UAN. A PF member with no UAN on file is NOT on it — the portal rejects a line without one — so expect fewer records here than on the challan for the same filter.',
+      'The Electronic Challan Cum Return, Keyed by UAN. A PF Member with No UAN on File Is NOT on It — The Portal Rejects a Line Without One — So Expect Fewer Records Here Than on the Challan for the Same Filter.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: ECR_SORTABLE,
   },

@@ -107,7 +107,7 @@ export async function fetchWeekoffPolicies(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load week-off policies.")
+    throw toApiError(error, "Couldn't Load Week-Off Policies.")
   }
 }
 
@@ -117,7 +117,7 @@ export async function fetchWeekoffPolicy(id: number): Promise<WeekoffPolicy> {
     const raw = await http.get<unknown>(endpoints.WEEKOFF_POLICIES.GET(id))
     return toWeekoffPolicy(weekoffPolicyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Week-off policy not found')
+    throw toApiError(error, 'Week-Off Policy Not Found')
   }
 }
 
@@ -136,7 +136,7 @@ export async function createWeekoffPolicy(
     )
     return toWeekoffPolicy(weekoffPolicyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the week-off policy.")
+    throw toApiError(error, "Couldn't Create the Week-Off Policy.")
   }
 }
 
@@ -157,7 +157,7 @@ export async function updateWeekoffPolicy(
     )
     return toWeekoffPolicy(weekoffPolicyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the week-off policy.")
+    throw toApiError(error, "Couldn't Update the Week-Off Policy.")
   }
 }
 
@@ -169,7 +169,7 @@ export async function deleteWeekoffPolicy(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.WEEKOFF_POLICIES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the week-off policy.")
+    throw toApiError(error, "Couldn't Delete the Week-Off Policy.")
   }
 }
 
@@ -191,7 +191,7 @@ export async function setDefaultWeekoffPolicy(
       scope,
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't set the default week-off pattern.")
+    throw toApiError(error, "Couldn't Set the Default Week-Off Pattern.")
   }
 }
 
@@ -209,6 +209,6 @@ export async function clearDefaultWeekoffPolicy(
       scope,
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't clear the default week-off pattern.")
+    throw toApiError(error, "Couldn't Clear the Default Week-Off Pattern.")
   }
 }

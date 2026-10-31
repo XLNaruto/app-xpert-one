@@ -27,7 +27,7 @@ interface RestrictedIpProps {
  */
 export function RestrictedIp({
   title = 'Network Blocked',
-  description = 'Requests from this IP address are blocked.',
+  description = 'Requests from This IP Address Are Blocked.',
 }: RestrictedIpProps) {
   const logout = useAuthStore((s) => s.logout)
 
@@ -83,9 +83,9 @@ export function RestrictedIp({
         <div className="cs-rise mx-auto mt-6 w-full max-w-xl rounded-xl border border-border bg-card/60 px-5 py-4 text-left text-sm leading-relaxed text-muted-foreground backdrop-blur [animation-delay:.4s]">
           <p className="mb-2 font-medium text-foreground">How to get back in</p>
           <ul className="list-outside list-disc space-y-1 pl-5">
-            <li>Reconnect from an approved network, such as your office Wi-Fi.</li>
+            <li>Reconnect from an Approved Network, Such as Your Office Wi-Fi.</li>
             <li>
-              Or ask an administrator to allow this address under{' '}
+              Or Ask an Administrator to Allow This Address Under{' '}
               <span className="font-medium text-foreground">
                 Administration → IP Access Control
               </span>

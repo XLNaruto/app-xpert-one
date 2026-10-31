@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptParams } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDepartmentSelect } from '@/features/master/department'
 import { useEmployeeSelect } from '@/features/hr/employee'
@@ -16,7 +16,7 @@ export function useAnalysisList() {
   const companyId = useAuthStore((state) => state.user?.companyId ?? null)
   const [kind, setKind] = useState<AnalysisKind>('sop')
   const [filters, setFilters] = useState<AnalysisFilters>(defaultAnalysisFilters)
-  const pagination = usePagination(DEFAULT_PAGE_SIZE, ANALYSIS_DEFAULT_SORT)
+  const pagination = usePagination(ALL_PAGE_SIZE, ANALYSIS_DEFAULT_SORT)
 
   const sop = useSopAnalysis(filters, pagination.params, kind === 'sop')
   const project = useProjectAnalysis(filters, pagination.params, kind === 'project')

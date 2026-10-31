@@ -33,7 +33,7 @@ interface PlaceSearchInputProps {
  */
 export function PlaceSearchInput({
   onSelect,
-  placeholder = 'Search for a place, area or address…',
+  placeholder = 'Search for a Place, Area or Address…',
   className,
   displayValue,
   onClear,

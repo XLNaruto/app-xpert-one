@@ -137,7 +137,7 @@ export function IpAddressListPage() {
     <div>
       <PageHeader
         title="IP Access Control"
-        description="Decide which networks can reach the panel for this company."
+        description="Decide Which Networks Can Reach the Panel for This Company."
         actions={
           canCreate && (
             <Button onClick={openCreate}>
@@ -176,7 +176,7 @@ export function IpAddressListPage() {
               search={{
                 value: search,
                 onChange: setSearch,
-                placeholder: 'Search IP address…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -197,7 +197,7 @@ export function IpAddressListPage() {
             <EmptyState
               icon={Network}
               title="No IP Addresses Yet"
-              description="Add an address or a CIDR range to start controlling who can reach the panel."
+              description="Add an Address or a CIDR Range to Start Controlling Who Can Reach the Panel."
               action={
                 canCreate && (
                   <Button onClick={openCreate}>

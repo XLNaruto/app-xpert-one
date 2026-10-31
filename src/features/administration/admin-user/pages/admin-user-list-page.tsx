@@ -202,7 +202,7 @@ export function AdminUserListPage() {
     <div>
       <PageHeader
         title="Users"
-        description="The people who can sign in to this account. Their role decides what they may do; their scope decides which companies they may do it in."
+        description="The People Who Can Sign In to This Account. Their Role Decides What They May Do; Their Scope Decides Which Companies They May Do It In."
         actions={
           canCreate && (
             <Button onClick={list.goToCreate}>
@@ -238,7 +238,7 @@ export function AdminUserListPage() {
               search={{
                 value: list.search,
                 onChange: list.setSearch,
-                placeholder: 'Search by name, email or mobile…',
+                placeholder: 'Search…',
               }}
               facets={[
                 {
@@ -251,7 +251,7 @@ export function AdminUserListPage() {
                   // '' is every company — the API simply gets no `company_id`,
                   // which is also the only view that includes the owners.
                   clearValue: '',
-                  searchPlaceholder: 'Search companies',
+                  searchPlaceholder: 'Search Companies',
                 },
               ]}
               onReset={list.resetFilters}
@@ -263,8 +263,8 @@ export function AdminUserListPage() {
               title={list.search ? 'No Matching Users' : 'No Users Yet'}
               description={
                 list.search
-                  ? 'Try a different search term.'
-                  : 'Add the people who need to sign in, and give each one a role to decide what they can reach.'
+                  ? 'Try a Different Search Term.'
+                  : 'Add the People Who Need to Sign In, and Give Each One a Role to Decide What They Can Reach.'
               }
               action={
                 list.search

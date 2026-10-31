@@ -11,10 +11,10 @@ export const ESIC_OFFICE_ADDRESS_SCREEN: OfficeAddressScreen = {
   listPath: '/master/esic-office-address',
   createPath: '/master/esic-office-address/create',
   title: 'ESIC Office Address',
-  description: 'Manage the ESIC regional and branch offices establishments register with.',
+  description: 'Manage the ESIC Regional and Branch Offices Establishments Register With.',
   shortLabel: 'ESIC Address',
-  recordsLabel: 'ESIC addresses',
+  recordsLabel: 'ESIC Addresses',
   emptyTitle: 'No ESIC Office Addresses Yet',
-  emptyDescription: 'Add your first ESIC office to get started.',
+  emptyDescription: 'Add Your First ESIC Office to Get Started.',
   icon: Building2,
 }

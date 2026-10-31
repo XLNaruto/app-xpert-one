@@ -141,7 +141,7 @@ export function useEmployeeBasicForm({
    */
   const pickPhotoFile = async (file: File | null) => {
     if (file && !(IMAGE_CONTENT_TYPES as readonly string[]).includes(file.type)) {
-      toast.error('Photo must be a JPG, PNG or WebP image.')
+      toast.error('Photo Must Be a JPG, PNG or WebP Image.')
       return
     }
     // `file.type` comes from the name, so an image-shaped extension on some
@@ -179,7 +179,7 @@ export function useEmployeeBasicForm({
     if (isEdit) {
       updateEmployee.mutate(payload, {
         onSuccess: () => {
-          toast.success('Basic detail saved')
+          toast.success('Basic Detail Saved')
           onSaved()
         },
         onError: (error) => toast.error(getApiErrorMessage(error, "Couldn't save.")),
@@ -189,7 +189,7 @@ export function useEmployeeBasicForm({
 
     createEmployee.mutate(payload, {
       onSuccess: (created) => {
-        toast.success('Employee created')
+        toast.success('Employee Created')
         // Every later step is addressed by this id, so the wizard has to adopt it
         // before any of them can open.
         onCreated(created.id)

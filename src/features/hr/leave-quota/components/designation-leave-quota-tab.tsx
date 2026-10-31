@@ -56,7 +56,7 @@ export function DesignationLeaveQuotaTab({ designationId }: { designationId: num
       <FormSection
         icon={CalendarDays}
         title="Leave Allowance"
-        description="Paid days per year for each leave type — the standing policy for everyone in this designation"
+        description="Paid Days per Year for Each Leave Type — The Standing Policy for Everyone in This Designation"
         className="mt-0"
       />
 

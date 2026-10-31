@@ -52,8 +52,8 @@ export function ShiftScheduleFilters({
               onChange={(value) => onBranchChange(value ? Number(value) : null)}
               {...branches}
               icon={GitBranch}
-              placeholder="All branches"
-              searchPlaceholder="Search branches…"
+              placeholder="All Branches"
+              searchPlaceholder="Search Branches…"
               clearable
             />
           </Field>
@@ -69,8 +69,8 @@ export function ShiftScheduleFilters({
               onChange={(value) => onDepartmentChange(value ? Number(value) : null)}
               {...departments}
               icon={Building2}
-              placeholder="All departments"
-              searchPlaceholder="Search departments…"
+              placeholder="All Departments"
+              searchPlaceholder="Search Departments…"
               clearable
             />
           </Field>

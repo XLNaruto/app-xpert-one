@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { ASSET_VARIANT_DEFAULT_SORT } from '../constants'
 import { useAssetVariants } from '../api/use-asset-variants'
@@ -25,7 +25,7 @@ export function useAssetVariantList(assetId: number) {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ASSET_VARIANT_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ASSET_VARIANT_DEFAULT_SORT)
 
   const { data, isLoading, isError, error } = useAssetVariants(assetId, params)
   const deleteVariant = useDeleteAssetVariant(assetId)
@@ -52,7 +52,7 @@ export function useAssetVariantList(assetId: number) {
     if (!pendingDelete) return
     deleteVariant.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Variant deleted')
+        toast.success('Variant Deleted')
         setPendingDelete(null)
       },
       // A 409 here names how many employees still hold the variant — show the

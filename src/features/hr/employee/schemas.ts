@@ -90,60 +90,60 @@ const employeeBasicFields = z.object({
     /** Salutation in front of the name — optional, stored as chosen. */
     prefix: z.string().trim(),
     name: nameField('employee name'),
-    gender: z.string().trim().min(1, 'Please select a gender'),
+    gender: z.string().trim().min(1, 'Please Select a Gender'),
     birthDate: z
       .string()
       .trim()
-      .min(1, 'Please select a date of birth')
+      .min(1, 'Please Select a Date of Birth')
       .refine(
         (value) => yearsSince(value) >= MINIMUM_EMPLOYEE_AGE,
         `Employee must be at least ${MINIMUM_EMPLOYEE_AGE} years old`,
       ),
-    maritalStatus: z.string().trim().min(1, 'Please select a marital status'),
-    relation: z.string().trim().min(1, 'Please select a relation'),
+    maritalStatus: z.string().trim().min(1, 'Please Select a Marital Status'),
+    relation: z.string().trim().min(1, 'Please Select a Relation'),
     relativeName: nameField('relative name'),
 
     currentAddress1: z
       .string()
       .trim()
-      .min(1, 'Please enter the current address')
-      .max(255, 'Cannot exceed 255 characters'),
-    currentAddress2: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    currentAddress3: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    currentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
+      .min(1, 'Please Enter the Current Address')
+      .max(255, 'Cannot Exceed 255 Characters'),
+    currentAddress2: z.string().trim().max(255, 'Cannot Exceed 255 Characters'),
+    currentAddress3: z.string().trim().max(255, 'Cannot Exceed 255 Characters'),
+    currentCountry: z.string().trim().max(60, 'Cannot Exceed 60 Characters'),
     currentStateId: z.string(),
     currentDistrictId: z.string(),
     currentTaluka: recordNameField('the taluka', { required: false, max: 255 }),
     currentCity: recordNameField('the city', { required: false, max: 255 }),
-    currentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
+    currentPinCode: optionalPattern(PIN_CODE_RE, 'PIN Code Must Be 6 Digits'),
 
     /**
      * UI-only: while on, the permanent block is hidden and kept in step with the
      * current one. It never reaches the API — both address sets are stored.
      */
     sameAsCurrent: z.boolean(),
-    permanentAddress1: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    permanentAddress2: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    permanentAddress3: z.string().trim().max(255, 'Cannot exceed 255 characters'),
-    permanentCountry: z.string().trim().max(60, 'Cannot exceed 60 characters'),
+    permanentAddress1: z.string().trim().max(255, 'Cannot Exceed 255 Characters'),
+    permanentAddress2: z.string().trim().max(255, 'Cannot Exceed 255 Characters'),
+    permanentAddress3: z.string().trim().max(255, 'Cannot Exceed 255 Characters'),
+    permanentCountry: z.string().trim().max(60, 'Cannot Exceed 60 Characters'),
     permanentStateId: z.string(),
     permanentDistrictId: z.string(),
     permanentTaluka: recordNameField('the taluka', { required: false, max: 255 }),
     permanentCity: recordNameField('the city', { required: false, max: 255 }),
-    permanentPinCode: optionalPattern(PIN_CODE_RE, 'PIN code must be 6 digits'),
+    permanentPinCode: optionalPattern(PIN_CODE_RE, 'PIN Code Must Be 6 Digits'),
 
     mobileNumber1: mobileField({ required: true, label: 'a mobile number' }),
     mobileNumber2: mobileField(),
-    landlineNumber: optionalPattern(/^\d{6,12}$/, 'Enter 6 to 12 digits'),
+    landlineNumber: optionalPattern(/^\d{6,12}$/, 'Enter 6 to 12 Digits'),
     email: emailField({ required: true }),
 
     bloodGroup: z.string(),
-    height: optionalPattern(AMOUNT_RE, 'Enter a number, e.g. 170 or 5.8'),
+    height: optionalPattern(AMOUNT_RE, 'Enter a Number, e.g. 170 or 5.8'),
     heightUnit: z.string(),
-    weight: optionalPattern(AMOUNT_RE, 'Enter a number, e.g. 68 or 68.5'),
+    weight: optionalPattern(AMOUNT_RE, 'Enter a Number, e.g. 68 or 68.5'),
     weightUnit: z.string(),
     isDisability: z.boolean(),
-    remarks: z.string().trim().max(1000, 'Cannot exceed 1000 characters'),
+    remarks: z.string().trim().max(1000, 'Cannot Exceed 1000 Characters'),
 
     /**
      * The posting. Branch and department are optional because the API supports a
@@ -152,13 +152,13 @@ const employeeBasicFields = z.object({
      */
     branchId: z.string(),
     departmentId: z.string(),
-    designationId: z.string().trim().min(1, 'Please select a designation'),
-    grade: z.string().trim().min(1, 'Please select a grade'),
-    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    designationId: z.string().trim().min(1, 'Please Select a Designation'),
+    grade: z.string().trim().min(1, 'Please Select a Grade'),
+    employmentType: z.string().trim().min(1, 'Please Select an Employment Type'),
     contractPeriod: z.string(),
     contractPeriodType: z.string(),
-    joiningDate: z.string().trim().min(1, 'Please select a joining date'),
-    confirmationDate: z.string().trim().min(1, 'Please select a confirmation date'),
+    joiningDate: z.string().trim().min(1, 'Please Select a Joining Date'),
+    confirmationDate: z.string().trim().min(1, 'Please Select a Confirmation Date'),
     renewalDate: z.string(),
     isPoliceVerified: z.boolean(),
     isStampAgreement: z.boolean(),
@@ -167,7 +167,7 @@ const employeeBasicFields = z.object({
 
     /** Leaving is recorded here for a correction; a real exit goes through step 8. */
     leavingDate: z.string(),
-    leavingReason: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+    leavingReason: z.string().trim().max(500, 'Cannot Exceed 500 Characters'),
   })
 
 /** Any 10 digits — what an EDIT accepts, so a number stored before the 6–9 rule still saves. */
@@ -184,48 +184,48 @@ function withBasicRules<T extends z.ZodType<z.infer<typeof employeeBasicFields>>
       // reach the employee when the first doesn't answer.
       .refine((v) => !v.mobileNumber2 || v.mobileNumber2.trim() !== v.mobileNumber1.trim(), {
         path: ['mobileNumber2'],
-        message: 'Alternate mobile must be different from the mobile number',
+        message: 'Alternate Mobile Must Be Different from the Mobile Number',
       })
       // A contract only means something with a period behind it — and the API
       // wants both halves of it, the number and its unit.
       .refine(
         (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
-        { path: ['contractPeriod'], message: 'Please enter the contract period' },
+        { path: ['contractPeriod'], message: 'Please Enter the Contract Period' },
       )
       .refine(
         (v) =>
           v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
-        { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+        { path: ['contractPeriodType'], message: 'Please Select the Contract Period Unit' },
       )
       .refine(
         (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.renewalDate.trim() !== '',
-        { path: ['renewalDate'], message: 'Please select a renewal date' },
+        { path: ['renewalDate'], message: 'Please Select a Renewal Date' },
       )
       // None of the posting's dates may precede the day the employee started.
       .refine(
         (v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate,
         {
           path: ['confirmationDate'],
-          message: 'Confirmation date cannot be before the joining date',
+          message: 'Confirmation Date Cannot Be Before the Joining Date',
         },
       )
       .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
         path: ['renewalDate'],
-        message: 'Renewal date cannot be before the joining date',
+        message: 'Renewal Date Cannot Be Before the Joining Date',
       })
       .refine((v) => !v.joiningDate || !v.leavingDate || v.leavingDate >= v.joiningDate, {
         path: ['leavingDate'],
-        message: 'Leaving date cannot be before the joining date',
+        message: 'Leaving Date Cannot Be Before the Joining Date',
       })
       // A leaving date without a reason leaves the record unexplained, and a
       // reason without a date explains nothing — the API refuses the latter.
       .refine((v) => !v.leavingDate || v.leavingReason.trim() !== '', {
         path: ['leavingReason'],
-        message: 'Please enter the leaving reason',
+        message: 'Please Enter the Leaving Reason',
       })
       .refine((v) => !v.leavingReason.trim() || v.leavingDate.trim() !== '', {
         path: ['leavingDate'],
-        message: 'Please select the leaving date for this reason',
+        message: 'Please Select the Leaving Date for This Reason',
       })
   )
 }
@@ -246,9 +246,9 @@ export const employeeBasicEditSchema = withBasicRules(
     mobileNumber1: z
       .string()
       .trim()
-      .min(1, 'Please enter a mobile number')
-      .regex(LEGACY_MOBILE_RE, 'Enter a 10-digit mobile number'),
-    mobileNumber2: optionalMatch(LEGACY_MOBILE_RE, 'Enter a 10-digit mobile number'),
+      .min(1, 'Please Enter a Mobile Number')
+      .regex(LEGACY_MOBILE_RE, 'Enter a 10-Digit Mobile Number'),
+    mobileNumber2: optionalMatch(LEGACY_MOBILE_RE, 'Enter a 10-Digit Mobile Number'),
   }),
 )
 
@@ -506,11 +506,11 @@ export type EmployeeBasicUpdatePayload = Omit<EmployeeBasicPayload, 'company_id'
  */
 export const employeeKycSchema = z
   .object({
-    pfNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    pfNumber: z.string().trim().max(50, 'Cannot Exceed 50 Characters'),
     uanNumber: uanField(),
     esicNumber: esicNumberField(),
 
-    bankId: z.string().trim().min(1, 'Please select a bank'),
+    bankId: z.string().trim().min(1, 'Please Select a Bank'),
     bankAccountNumber: accountNumberField({ required: true }),
     bankBranchName: recordNameField('the branch name', { required: false, max: 150 }),
     ifscCode: ifscField({ required: true }),
@@ -518,15 +518,15 @@ export const employeeKycSchema = z
     aadharNumber: aadhaarField({ required: true }),
     nameAsPerAadhar: personNameField('the name as per Aadhaar'),
     panNumber: panField(),
-    epicNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
-    rationCardNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    epicNumber: z.string().trim().max(50, 'Cannot Exceed 50 Characters'),
+    rationCardNumber: z.string().trim().max(50, 'Cannot Exceed 50 Characters'),
 
-    drivingLicenceNumber: z.string().trim().max(50, 'Cannot exceed 50 characters'),
+    drivingLicenceNumber: z.string().trim().max(50, 'Cannot Exceed 50 Characters'),
     drivingLicenceExpiryDate: z.string(),
 
     passportNumber: optionalPattern(
       /^[A-Z][0-9]{7}$/,
-      'Enter a valid passport number, e.g. A1234567',
+      'Enter a Valid Passport Number, e.g. A1234567',
     ),
     passportValidFrom: z.string(),
     passportValidTo: z.string(),
@@ -538,11 +538,11 @@ export const employeeKycSchema = z
   )
   .refine((v) => !v.drivingLicenceExpiryDate || v.drivingLicenceNumber.trim() !== '', {
     path: ['drivingLicenceNumber'],
-    message: 'Please enter the licence number',
+    message: 'Please Enter the Licence Number',
   })
   .refine((v) => (!v.passportValidFrom && !v.passportValidTo) || v.passportNumber.trim() !== '', {
     path: ['passportNumber'],
-    message: 'Please enter the passport number',
+    message: 'Please Enter the Passport Number',
   })
 
 export type EmployeeKycFormValues = z.infer<typeof employeeKycSchema>
@@ -860,26 +860,26 @@ export const employeeFamilyListSchema = z.object({
 
       const name = row.fullName.trim()
       if (name === '') {
-        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Please enter the name' })
+        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Please Enter the Name' })
       } else if (name.length < 2) {
-        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Minimum 2 characters' })
+        ctx.addIssue({ code: 'custom', path: [index, 'fullName'], message: 'Minimum 2 Characters' })
       } else if (!PERSON_NAME_RE.test(name)) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'fullName'],
-          message: "A name can only use letters, spaces and . ' -",
+          message: "A Name Can Only Use Letters, Spaces and . ' -",
         })
       }
 
       if (row.relation.trim() === '') {
-        ctx.addIssue({ code: 'custom', path: [index, 'relation'], message: 'Please select a relation' })
+        ctx.addIssue({ code: 'custom', path: [index, 'relation'], message: 'Please Select a Relation' })
       }
 
       if (row.birthDate && row.birthDate > today) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'birthDate'],
-          message: 'Date of birth cannot be in the future',
+          message: 'Date of Birth Cannot Be in the Future',
         })
       }
 
@@ -958,13 +958,13 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
       ctx.addIssue({
         code: 'custom',
         path: [index, 'educationName'],
-        message: 'Please enter the qualification',
+        message: 'Please Enter the Qualification',
       })
     } else if (!RECORD_NAME_RE.test(qualification)) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'educationName'],
-        message: 'A qualification must contain at least one letter',
+        message: 'A Qualification Must Contain at Least One Letter',
       })
     }
 
@@ -973,7 +973,7 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
       ctx.addIssue({
         code: 'custom',
         path: [index, 'board'],
-        message: 'A board name must contain at least one letter',
+        message: 'A Board Name Must Contain at Least One Letter',
       })
     }
     const year = row.passingYear.trim()
@@ -981,7 +981,7 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
       ctx.addIssue({
         code: 'custom',
         path: [index, 'passingYear'],
-        message: 'Please select the passing year',
+        message: 'Please Select the Passing Year',
       })
     } else if (
       !/^\d{4}$/.test(year) ||
@@ -1001,10 +1001,10 @@ function refineEducationRows(rows: EmployeeEducationFormValues[], ctx: z.Refinem
         ctx.addIssue({
           code: 'custom',
           path: [index, 'percentage'],
-          message: 'Enter a percentage, e.g. 78 or 78.5',
+          message: 'Enter a Percentage, e.g. 78 or 78.5',
         })
       } else if (Number(percentage) > 100) {
-        ctx.addIssue({ code: 'custom', path: [index, 'percentage'], message: 'Cannot exceed 100' })
+        ctx.addIssue({ code: 'custom', path: [index, 'percentage'], message: 'Cannot Exceed 100' })
       }
     }
   })
@@ -1097,13 +1097,13 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'companyName'],
-        message: 'Please enter the company name',
+        message: 'Please Enter the Company Name',
       })
     } else if (!RECORD_NAME_RE.test(company)) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'companyName'],
-        message: 'A company name must contain at least one letter',
+        message: 'A Company Name Must Contain at Least One Letter',
       })
     }
 
@@ -1112,13 +1112,13 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'designation'],
-        message: 'Please enter the designation',
+        message: 'Please Enter the Designation',
       })
     } else if (!RECORD_NAME_RE.test(designation)) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'designation'],
-        message: 'A designation must contain at least one letter',
+        message: 'A Designation Must Contain at Least One Letter',
       })
     }
 
@@ -1127,16 +1127,16 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'contactPersonName'],
-        message: "A name can only use letters, spaces and . ' -",
+        message: "A Name Can Only Use Letters, Spaces and . ' -",
       })
     }
 
     // The API takes `YYYY-MM` and nothing else, so both ends are month values.
     if (!MONTH_RE.test(row.fromDate)) {
-      ctx.addIssue({ code: 'custom', path: [index, 'fromDate'], message: 'Pick a from month' })
+      ctx.addIssue({ code: 'custom', path: [index, 'fromDate'], message: 'Pick a from Month' })
     }
     if (!MONTH_RE.test(row.toDate)) {
-      ctx.addIssue({ code: 'custom', path: [index, 'toDate'], message: 'Pick a to month' })
+      ctx.addIssue({ code: 'custom', path: [index, 'toDate'], message: 'Pick a to Month' })
     } else if (MONTH_RE.test(row.fromDate) && row.toDate < row.fromDate) {
       ctx.addIssue({
         code: 'custom',
@@ -1151,7 +1151,7 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'salary'],
-        message: 'Enter an amount, e.g. 25000',
+        message: 'Enter an Amount, e.g. 25000',
       })
     }
 
@@ -1160,7 +1160,7 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'contactPersonNumber'],
-        message: 'Enter a valid 10-digit mobile number',
+        message: 'Enter a Valid 10-Digit Mobile Number',
       })
     }
 
@@ -1169,13 +1169,13 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'contactPersonEmail'],
-        message: 'Enter a valid email address',
+        message: 'Enter a Valid Email Address',
       })
     } else if (contactEmail.length > 255) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'contactPersonEmail'],
-        message: 'Keep the email address under 255 characters',
+        message: 'Keep the Email Address Under 255 Characters',
       })
     }
 
@@ -1187,14 +1187,14 @@ function refineExperienceRows(
       ctx.addIssue({
         code: 'custom',
         path: [index, 'verificationReview'],
-        message: 'Turn Verified on before recording what the verifier said',
+        message: 'Turn Verified on Before Recording What the Verifier Said',
       })
     }
     if (row.verificationReview.trim().length > 2000) {
       ctx.addIssue({
         code: 'custom',
         path: [index, 'verificationReview'],
-        message: 'Keep the review under 2000 characters',
+        message: 'Keep the Review Under 2000 Characters',
       })
     }
   })
@@ -1311,14 +1311,14 @@ export const employeeDocumentListSchema = z.object({
         ctx.addIssue({
           code: 'custom',
           path: [index, 'documentTypeId'],
-          message: 'Please select a document type',
+          message: 'Please Select a Document Type',
         })
       }
       if (row.documentId.trim() === '') {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'documentId'],
-          message: 'Please select a document',
+          message: 'Please Select a Document',
         })
       }
       // The API rejects a row with no file behind it, and an attachment without
@@ -1327,7 +1327,7 @@ export const employeeDocumentListSchema = z.object({
         ctx.addIssue({
           code: 'custom',
           path: [index, 'document'],
-          message: 'Please upload the file',
+          message: 'Please Upload the File',
         })
       }
     })
@@ -1385,13 +1385,13 @@ export const employeeAssetRowSchema = z.object({
   status: z.string(),
   assignedDate: z.string(),
   validTill: z.string(),
-  remarks: z.string().trim().max(1000, 'Cannot exceed 1000 characters'),
+  remarks: z.string().trim().max(1000, 'Cannot Exceed 1000 Characters'),
   /**
    * Which unit this is — "IMEI" / "354812345678901" — for telling apart several
    * handouts of the same asset and variant. Optional, but a pair: both or neither.
    */
-  identificationTitle: z.string().max(100, 'Maximum 100 characters'),
-  identificationValue: z.string().max(100, 'Maximum 100 characters'),
+  identificationTitle: z.string().max(100, 'Maximum 100 Characters'),
+  identificationValue: z.string().max(100, 'Maximum 100 Characters'),
 })
 
 export type EmployeeAssetFormValues = z.infer<typeof employeeAssetRowSchema>
@@ -1427,23 +1427,23 @@ export const employeeAssetListSchema = z.object({
       if (!rowNeedsRules(rows, index, ASSET_ROW_KEYS)) return
 
       if (row.assetId.trim() === '') {
-        ctx.addIssue({ code: 'custom', path: [index, 'assetId'], message: 'Please select an asset' })
+        ctx.addIssue({ code: 'custom', path: [index, 'assetId'], message: 'Please Select an Asset' })
       }
       if (row.hasVariants && row.variantId.trim() === '') {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'variantId'],
-          message: 'Please select a variant',
+          message: 'Please Select a Variant',
         })
       }
       if (row.status.trim() === '') {
-        ctx.addIssue({ code: 'custom', path: [index, 'status'], message: 'Please select a status' })
+        ctx.addIssue({ code: 'custom', path: [index, 'status'], message: 'Please Select a Status' })
       }
       if (row.assignedDate.trim() === '') {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'assignedDate'],
-          message: 'Please pick an assigned date',
+          message: 'Please Pick an Assigned Date',
         })
       }
       if (row.assetId.trim() !== '' && (!row.hasVariants || row.variantId.trim() !== '')) {
@@ -1468,14 +1468,14 @@ export const employeeAssetListSchema = z.object({
         ctx.addIssue({
           code: 'custom',
           path: [index, 'identificationValue'],
-          message: 'Please enter the identification value',
+          message: 'Please Enter the Identification Value',
         })
       }
       if (hasValue && !hasTitle) {
         ctx.addIssue({
           code: 'custom',
           path: [index, 'identificationTitle'],
-          message: 'Please enter the identification title',
+          message: 'Please Enter the Identification Title',
         })
       }
 
@@ -1552,46 +1552,46 @@ export interface EmployeeAssetPayload {
  */
 export const employeeTransferSchema = z
   .object({
-    leavingDate: z.string().trim().min(1, 'Please select the leaving date'),
+    leavingDate: z.string().trim().min(1, 'Please Select the Leaving Date'),
     leavingReason: z
       .string()
       .trim()
-      .min(1, 'Please enter the leaving reason')
-      .max(500, 'Cannot exceed 500 characters'),
+      .min(1, 'Please Enter the Leaving Reason')
+      .max(500, 'Cannot Exceed 500 Characters'),
 
-    companyId: z.string().trim().min(1, 'Please select the company'),
+    companyId: z.string().trim().min(1, 'Please Select the Company'),
 
     branchId: z.string(),
     departmentId: z.string(),
-    designationId: z.string().trim().min(1, 'Please select a designation'),
-    grade: z.string().trim().min(1, 'Please select a grade'),
-    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    designationId: z.string().trim().min(1, 'Please Select a Designation'),
+    grade: z.string().trim().min(1, 'Please Select a Grade'),
+    employmentType: z.string().trim().min(1, 'Please Select an Employment Type'),
     contractPeriod: z.string(),
     contractPeriodType: z.string(),
-    joiningDate: z.string().trim().min(1, 'Please select the new joining date'),
-    confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+    joiningDate: z.string().trim().min(1, 'Please Select the New Joining Date'),
+    confirmationDate: z.string().trim().min(1, 'Please Select the Confirmation Date'),
     renewalDate: z.string(),
   })
   // The new posting has to start after the old one closed, never on the same day.
   .refine((v) => !v.leavingDate || !v.joiningDate || v.joiningDate > v.leavingDate, {
     path: ['joiningDate'],
-    message: 'The new joining date must be after the leaving date',
+    message: 'The New Joining Date Must Be After the Leaving Date',
   })
   .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
     path: ['confirmationDate'],
-    message: 'Confirmation date cannot be before the joining date',
+    message: 'Confirmation Date Cannot Be Before the Joining Date',
   })
   .refine(
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
-    { path: ['contractPeriod'], message: 'Please enter the contract period' },
+    { path: ['contractPeriod'], message: 'Please Enter the Contract Period' },
   )
   .refine(
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
-    { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+    { path: ['contractPeriodType'], message: 'Please Select the Contract Period Unit' },
   )
   .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
     path: ['renewalDate'],
-    message: 'Renewal date cannot be before the joining date',
+    message: 'Renewal Date Cannot Be Before the Joining Date',
   })
 
 export type EmployeeTransferFormValues = z.infer<typeof employeeTransferSchema>
@@ -1610,9 +1610,9 @@ export const employeeServiceEditSchema = z
   .object({
     branchId: z.string(),
     departmentId: z.string(),
-    designationId: z.string().trim().min(1, 'Please select a designation'),
-    grade: z.string().trim().min(1, 'Please select a grade'),
-    employmentType: z.string().trim().min(1, 'Please select an employment type'),
+    designationId: z.string().trim().min(1, 'Please Select a Designation'),
+    grade: z.string().trim().min(1, 'Please Select a Grade'),
+    employmentType: z.string().trim().min(1, 'Please Select an Employment Type'),
     contractPeriod: z.string(),
     contractPeriodType: z.string(),
     joiningDate: z.string(),
@@ -1621,27 +1621,27 @@ export const employeeServiceEditSchema = z
   })
   .refine(
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
-    { path: ['contractPeriod'], message: 'Please enter the contract period' },
+    { path: ['contractPeriod'], message: 'Please Enter the Contract Period' },
   )
   .refine(
     (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
-    { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+    { path: ['contractPeriodType'], message: 'Please Select the Contract Period Unit' },
   )
   .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
     path: ['renewalDate'],
-    message: 'Renewal date cannot be before the joining date',
+    message: 'Renewal Date Cannot Be Before the Joining Date',
   })
 
 export type EmployeeServiceEditFormValues = z.infer<typeof employeeServiceEditSchema>
 
 /** Closing the open posting without opening another — the employee exits. */
 export const leaveServiceSchema = z.object({
-  leavingDate: z.string().trim().min(1, 'Please select the leaving date'),
+  leavingDate: z.string().trim().min(1, 'Please Select the Leaving Date'),
   leavingReason: z
     .string()
     .trim()
-    .min(1, 'Please enter the leaving reason')
-    .max(500, 'Cannot exceed 500 characters'),
+    .min(1, 'Please Enter the Leaving Reason')
+    .max(500, 'Cannot Exceed 500 Characters'),
 })
 
 export type LeaveServiceFormValues = z.infer<typeof leaveServiceSchema>
@@ -1800,37 +1800,37 @@ export type EmployeeRejoinEligibilityResponse = z.infer<
 export const employeeRejoinSchema = (lastLeavingDate: string) =>
   z
     .object({
-      companyId: z.string().trim().min(1, 'Please select the company'),
+      companyId: z.string().trim().min(1, 'Please Select the Company'),
       branchId: z.string(),
       departmentId: z.string(),
-      designationId: z.string().trim().min(1, 'Please select a designation'),
-      grade: z.string().trim().min(1, 'Please select a grade'),
-      employmentType: z.string().trim().min(1, 'Please select an employment type'),
+      designationId: z.string().trim().min(1, 'Please Select a Designation'),
+      grade: z.string().trim().min(1, 'Please Select a Grade'),
+      employmentType: z.string().trim().min(1, 'Please Select an Employment Type'),
       contractPeriod: z.string(),
       contractPeriodType: z.string(),
-      joiningDate: z.string().trim().min(1, 'Please select the joining date'),
-      confirmationDate: z.string().trim().min(1, 'Please select the confirmation date'),
+      joiningDate: z.string().trim().min(1, 'Please Select the Joining Date'),
+      confirmationDate: z.string().trim().min(1, 'Please Select the Confirmation Date'),
       renewalDate: z.string(),
     })
     .refine((v) => !lastLeavingDate || !v.joiningDate || v.joiningDate > lastLeavingDate, {
       path: ['joiningDate'],
-      message: 'The joining date must be after the previous posting ended',
+      message: 'The Joining Date Must Be After the Previous Posting Ended',
     })
     .refine((v) => !v.joiningDate || !v.confirmationDate || v.confirmationDate >= v.joiningDate, {
       path: ['confirmationDate'],
-      message: 'Confirmation date cannot be before the joining date',
+      message: 'Confirmation Date Cannot Be Before the Joining Date',
     })
     .refine(
       (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriod.trim() !== '',
-      { path: ['contractPeriod'], message: 'Please enter the contract period' },
+      { path: ['contractPeriod'], message: 'Please Enter the Contract Period' },
     )
     .refine(
       (v) => v.employmentType === PERMANENT_EMPLOYMENT_TYPE || v.contractPeriodType.trim() !== '',
-      { path: ['contractPeriodType'], message: 'Please select the contract period unit' },
+      { path: ['contractPeriodType'], message: 'Please Select the Contract Period Unit' },
     )
     .refine((v) => !v.joiningDate || !v.renewalDate || v.renewalDate >= v.joiningDate, {
       path: ['renewalDate'],
-      message: 'Renewal date cannot be before the joining date',
+      message: 'Renewal Date Cannot Be Before the Joining Date',
     })
 
 export type EmployeeRejoinFormValues = z.infer<ReturnType<typeof employeeRejoinSchema>>
@@ -1870,15 +1870,15 @@ export const employeeShiftAssignmentSchema = z
     effectiveDate: z
       .string()
       .trim()
-      .min(1, 'Effective date is required')
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a date as YYYY-MM-DD'),
+      .min(1, 'Effective Date Is Required')
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a Date as YYYY-MM-DD'),
   })
   .superRefine((values, ctx) => {
     if (values.mode === 'shift' && !values.shiftId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['shiftId'],
-        message: 'Pick the shift to assign',
+        message: 'Pick the Shift to Assign',
       })
     }
   })
@@ -1892,9 +1892,9 @@ export const employeeRosterSchema = z.object({
   workDate: z
     .string()
     .trim()
-    .min(1, 'Date is required')
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a date as YYYY-MM-DD'),
-  shiftId: z.string().trim().min(1, 'Pick the shift for this date'),
+    .min(1, 'Date Is Required')
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a Date as YYYY-MM-DD'),
+  shiftId: z.string().trim().min(1, 'Pick the Shift for This Date'),
 })
 
 export type EmployeeRosterFormValues = z.infer<typeof employeeRosterSchema>

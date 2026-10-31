@@ -303,7 +303,7 @@ export function useSalaryForm() {
    */
   const calculate = useCallback(() => {
     if (draftDesignationId === null) {
-      toast.error('Select a designation to calculate salary for')
+      toast.error('Select a Designation to Calculate Salary For')
       return
     }
     setDesignationId(draftDesignationId)
@@ -405,7 +405,7 @@ export function useSalaryForm() {
     setRows(register.data.items)
     reset({ rows: seedRows(register.data.items, heads) })
     setSelected(defaultSelection(register.data.items))
-    toast.info('Reloaded — unsaved changes discarded')
+    toast.info('Reloaded — Unsaved Changes Discarded')
   }, [register.data, heads, reset, defaultSelection])
 
   /* ── Which rows have been typed into ───────────────────────────────────── */
@@ -499,15 +499,15 @@ export function useSalaryForm() {
 
   const runSave = useCallback(async () => {
     if (companyId === null) {
-      toast.error('Select a company first')
+      toast.error('Select a Company First')
       return
     }
     const saveTargets = computeSaveTargets()
     if (saveTargets.length === 0) {
       toast.info(
         status === 'complete'
-          ? 'Nothing to revise — edit a row, or select the ones to process again'
-          : 'Nothing to process — every row on this page is already paid',
+          ? 'Nothing to Revise — Edit a Row, or Select the Ones to Process Again'
+          : 'Nothing to Process — Every Row on This Page Is Already Paid',
       )
       return
     }
@@ -516,7 +516,7 @@ export function useSalaryForm() {
        page isn't what this click is about. */
     const paths = saveTargets.map((index) => `rows.${index}` as const)
     if (!(await trigger(paths))) {
-      toast.error('Fix the highlighted days before processing')
+      toast.error('Fix the Highlighted Days Before Processing')
       return
     }
 
@@ -580,7 +580,7 @@ export function useSalaryForm() {
         },
         onError: (error) =>
           toast.error(
-            error instanceof Error ? error.message : 'Failed to process the salary',
+            error instanceof Error ? error.message : 'Failed to Process the Salary',
           ),
       },
     )
@@ -625,7 +625,7 @@ export function useSalaryForm() {
 
   const runDiscard = useCallback(() => {
     if (discardTargets.length === 0) {
-      toast.info('Select the processed rows to discard first')
+      toast.info('Select the Processed Rows to Discard First')
       return
     }
 
@@ -637,7 +637,7 @@ export function useSalaryForm() {
         if (result.deleted.length > 0) {
           toast.success(
             result.deleted.length === 1
-              ? 'Salary discarded — the month can be processed again'
+              ? 'Salary Discarded — The Month Can Be Processed Again'
               : `${result.deleted.length} salaries discarded — the month can be processed again`,
           )
         }
@@ -651,7 +651,7 @@ export function useSalaryForm() {
       },
       onError: (error) =>
         toast.error(
-          error instanceof Error ? error.message : 'Failed to discard the salaries',
+          error instanceof Error ? error.message : 'Failed to Discard the Salaries',
         ),
     })
   }, [discard, discardTargets])
@@ -680,7 +680,7 @@ export function useSalaryForm() {
   const runImport = useCallback(
     (file: File) => {
       if (companyId === null) {
-        toast.error('Pick a company before importing a salary sheet')
+        toast.error('Pick a Company Before Importing a Salary Sheet')
         return
       }
 
@@ -725,17 +725,17 @@ export function useSalaryForm() {
 
   const downloadTemplate = useCallback(() => {
     if (companyId === null) {
-      toast.error('Pick a company before downloading the salary sheet')
+      toast.error('Pick a Company Before Downloading the Salary Sheet')
       return
     }
 
     template.mutate(
       { companyId, month: filters.month, year: filters.year, designationId },
       {
-        onSuccess: () => toast.success('Salary import sheet downloaded'),
+        onSuccess: () => toast.success('Salary Import Sheet Downloaded'),
         onError: (error) =>
           toast.error(
-            error instanceof Error ? error.message : 'Failed to download the sheet',
+            error instanceof Error ? error.message : 'Failed to Download the Sheet',
           ),
       },
     )

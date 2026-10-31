@@ -188,7 +188,7 @@ export function useDesignationWageForm(designationId: number) {
         },
         onError: (err) =>
           toast.error(
-            err instanceof Error ? err.message : 'Failed to save the wage structure',
+            err instanceof Error ? err.message : 'Failed to Save the Wage Structure',
           ),
       })
     },
@@ -200,7 +200,7 @@ export function useDesignationWageForm(designationId: number) {
      * is pressed, and a toast alone leaves you hunting for it.
      */
     (errors) => {
-      toast.error('Fill in the highlighted cells before saving')
+      toast.error('Fill In the Highlighted Cells Before Saving')
       revealFirstError(errors)
     },
   )

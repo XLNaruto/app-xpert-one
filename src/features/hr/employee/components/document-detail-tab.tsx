@@ -75,7 +75,7 @@ export function DocumentDetailTab({
   if (isError) {
     return (
       <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-        {error instanceof Error ? error.message : "Couldn't load the documents."}
+        {error instanceof Error ? error.message : "Couldn't Load the Documents."}
       </p>
     )
   }
@@ -147,10 +147,10 @@ export function DocumentDetailTab({
                 // The document master is filed under a type, so nothing lists yet.
                 hint={
                   isRequired
-                    ? 'Mandatory document — set by the document master.'
+                    ? 'Mandatory Document — Set by the Document Master.'
                     : row?.documentTypeId
                       ? undefined
-                      : 'Choose a document type first.'
+                      : 'Choose a Document Type First.'
                 }
               >
                 <Controller
@@ -168,8 +168,8 @@ export function DocumentDetailTab({
                           ? [{ label: nameLabel ?? '', value: row?.documentId ?? '' }]
                           : documentOptionsFor(row?.documentTypeId ?? '')
                       }
-                      placeholder={row?.documentTypeId ? 'Select Name' : 'Select Type first'}
-                      searchPlaceholder="Search document"
+                      placeholder={row?.documentTypeId ? 'Select Name' : 'Select Type First'}
+                      searchPlaceholder="Search Document"
                       disabled={isRequired}
                     />
                   )}
@@ -181,7 +181,7 @@ export function DocumentDetailTab({
                 name={`rows.${index}.expiryDate`}
                 label="Expiry Date"
                 error={errors?.expiryDate?.message}
-                hint="Leave empty for a document that doesn't expire."
+                hint="Leave Empty for a Document That Doesn't Expire."
               />
 
               <Field
@@ -189,7 +189,7 @@ export function DocumentDetailTab({
                 required
                 error={errors?.document?.message}
                 // The presign files the object key under the type, so it comes first.
-                hint={row?.documentTypeId ? undefined : 'Choose a document type first.'}
+                hint={row?.documentTypeId ? undefined : 'Choose a Document Type First.'}
               >
                 <DocumentFileField
                   value={row?.document ?? ''}
@@ -206,7 +206,7 @@ export function DocumentDetailTab({
       <StepFormFooter
         onBack={onBack}
         isSaving={isSaving}
-        hint="At least one document is required; files upload as you pick them."
+        hint="At Least One Document Is Required; Files Upload as You Pick Them."
       />
     </form>
   )

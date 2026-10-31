@@ -105,7 +105,7 @@ export function useBulkWageForm() {
   const reload = useCallback(() => {
     if (!grid.data) return
     seed(grid.data, getValues('effectiveFrom') || currentMonth())
-    toast.info('Reloaded — unsaved changes discarded')
+    toast.info('Reloaded — Unsaved Changes Discarded')
   }, [grid.data, seed, getValues])
 
   /* ── Cells that clear a sibling ───────────────────────────────────────── */
@@ -213,7 +213,7 @@ export function useBulkWageForm() {
   const saveRows = useCallback(
     (indexes: number[]) => {
       if (companyId === null) {
-        toast.error('Pick a company first')
+        toast.error('Pick a Company First')
         return
       }
       /*
@@ -227,14 +227,14 @@ export function useBulkWageForm() {
       const values = getValues()
       if (!values.effectiveFrom) {
         setError('effectiveFrom', {
-          message: 'Pick the month these wages take effect from',
+          message: 'Pick the Month These Wages Take Effect From',
         })
-        toast.error('Pick the month these wages take effect from')
+        toast.error('Pick the Month These Wages Take Effect From')
         return
       }
       const rows = indexes.map((index) => values.rows[index]).filter(Boolean)
       if (rows.length === 0) {
-        toast.info('Nothing to save — no row has changed')
+        toast.info('Nothing to Save — No Row Has Changed')
         return
       }
 
@@ -250,7 +250,7 @@ export function useBulkWageForm() {
       if (incomplete > 0) {
         toast.error(
           incomplete === 1
-            ? 'Fill in the highlighted wage before saving'
+            ? 'Fill In the Highlighted Wage Before Saving'
             : `Fill in the highlighted wages on ${incomplete} rows before saving`,
         )
         return
@@ -273,7 +273,7 @@ export function useBulkWageForm() {
           },
           onError: (error) =>
             toast.error(
-              error instanceof Error ? error.message : 'Failed to save the wage grid',
+              error instanceof Error ? error.message : 'Failed to Save the Wage Grid',
             ),
         },
       )

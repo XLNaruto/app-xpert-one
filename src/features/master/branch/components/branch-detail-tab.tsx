@@ -39,7 +39,7 @@ export function BranchDetailTab({
       <FormSection
         icon={Building2}
         title="Branch Information"
-        description="Identity and registration details"
+        description="Identity and Registration Details"
         className="mt-0"
       />
       <Field label="Branch Name" required error={errors.branchName?.message}>
@@ -66,7 +66,7 @@ export function BranchDetailTab({
       <FormSection
         icon={MapPin}
         title="Address Details"
-        description="Where the branch is located"
+        description="Where the Branch Is Located"
       />
       <Field
         label="Address Line 1"
@@ -92,7 +92,7 @@ export function BranchDetailTab({
               onChange={(value) => changeState(value, field.onChange)}
               {...state}
               placeholder="Select State"
-              searchPlaceholder="Search state"
+              searchPlaceholder="Search State"
             />
           )}
         />
@@ -107,8 +107,8 @@ export function BranchDetailTab({
               value={field.value}
               onChange={field.onChange}
               {...district}
-              placeholder={hasState ? 'Select District' : 'Select a state first'}
-              searchPlaceholder="Search district"
+              placeholder={hasState ? 'Select District' : 'Select a State First'}
+              searchPlaceholder="Search District"
             />
           )}
         />
@@ -128,7 +128,7 @@ export function BranchDetailTab({
       <FormSection
         icon={Phone}
         title="Contact Details"
-        description="How to reach the branch"
+        description="How to Reach the Branch"
       />
       <Field label="Phone" error={errors.phone?.message}>
         <Input placeholder="Phone" {...register('phone')} />

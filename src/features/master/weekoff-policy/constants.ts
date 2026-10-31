@@ -74,17 +74,17 @@ export const WEEKOFF_PRESETS: {
 }[] = [
   {
     label: 'Sunday Only',
-    description: 'Every Sunday off',
+    description: 'Every Sunday Off',
     apply: { everyWeekDays: [0], rules: [] },
   },
   {
     label: 'Saturday & Sunday',
-    description: 'A full weekend off',
+    description: 'A Full Weekend Off',
     apply: { everyWeekDays: [0, 6], rules: [] },
   },
   {
     label: 'Sunday + Alternate Saturdays',
-    description: 'Sundays, plus the 2nd and 4th Saturday',
+    description: 'Sundays, Plus the 2nd and 4th Saturday',
     apply: {
       everyWeekDays: [0],
       rules: [
@@ -108,12 +108,12 @@ export const WEEKOFF_OFF_TYPE_OPTIONS: {
   {
     value: 'FIXED',
     label: 'Fixed Days',
-    description: 'Name the weekdays that are off — the same every week.',
+    description: 'Name the Weekdays That Are off — The Same Every Week.',
   },
   {
     value: 'FLEXIBLE',
     label: 'Any Days',
-    description: 'Name how many days a week are off and let the rota pick them.',
+    description: 'Name How Many Days a Week Are off and Let the Rota Pick Them.',
   },
 ]
 

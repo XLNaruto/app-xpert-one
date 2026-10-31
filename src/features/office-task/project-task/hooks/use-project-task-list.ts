@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { isStaleRowError, type Priority } from '@/features/office-task/common'
@@ -23,7 +23,7 @@ const NO_FILTERS: ProjectTaskFilters = { status: 'all', priority: 'all' }
  */
 export function useProjectTaskList() {
   const navigate = useNavigate()
-  const pagination = usePagination(DEFAULT_PAGE_SIZE, PROJECT_TASK_DEFAULT_SORT)
+  const pagination = usePagination(ALL_PAGE_SIZE, PROJECT_TASK_DEFAULT_SORT)
   const [filters, setFilters] = useState<ProjectTaskFilters>(NO_FILTERS)
   const companyId = useAuthStore((state) => state.user?.companyId ?? null)
   const access = useResourceAccess(PERMISSIONS.projectTasks)
@@ -59,7 +59,7 @@ export function useProjectTaskList() {
     if (!pendingDelete) return
     remove.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Project task deleted')
+        toast.success('Project Task Deleted')
         setSelected((prev) => {
           const next = new Set(prev)
           next.delete(pendingDelete.id)

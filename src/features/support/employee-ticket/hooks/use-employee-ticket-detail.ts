@@ -133,12 +133,12 @@ export function useEmployeeTicketDetail(id?: number) {
       { body: values.body, attachment },
       {
         onSuccess: () => {
-          toast.success('Reply sent')
+          toast.success('Reply Sent')
           // The server moves an open or reopened ticket to `in_progress` when
           // the office answers — say so, or the status silently changing under
           // them reads as a bug.
           if (ticket.status === 'open' || ticket.status === 'reopened') {
-            toast.info('The ticket is now in progress — answering is picking it up.')
+            toast.info('The Ticket Is Now in Progress — Answering Is Picking It Up.')
           }
           replyForm.reset({ body: '' })
           setAttachment(null)
@@ -152,7 +152,7 @@ export function useEmployeeTicketDetail(id?: number) {
     changeStatus.mutate(
       { status: 'in_progress' },
       {
-        onSuccess: () => toast.success('Ticket picked up'),
+        onSuccess: () => toast.success('Ticket Picked Up'),
         onError: (err) =>
           toast.error(getApiErrorMessage(err, "Couldn't pick up the ticket.")),
       },
@@ -164,8 +164,8 @@ export function useEmployeeTicketDetail(id?: number) {
       { status: 'resolved', resolution_note: values.resolutionNote.trim() },
       {
         onSuccess: () => {
-          toast.success('Ticket resolved')
-          toast.info('The employee has been notified on their device.')
+          toast.success('Ticket Resolved')
+          toast.info('The Employee Has Been Notified on Their Device.')
           setIsResolveOpen(false)
           resolveForm.reset({ resolutionNote: '' })
         },
@@ -197,12 +197,12 @@ export function useEmployeeTicketDetail(id?: number) {
       onSuccess: (updated) => {
         toast.success(
           nextId === null
-            ? 'Released back to the unassigned queue'
+            ? 'Released Back to the Unassigned Queue'
             : `Handed to ${updated.assignedToName ?? 'your colleague'}`,
         )
         if (nextId !== null && updated.status === 'in_progress') {
           toast.info(
-            'Still in progress — the clock stops until the new handler picks it up.',
+            'Still in Progress — The Clock Stops Until the New Handler Picks It Up.',
           )
         }
         setIsAssignOpen(false)
@@ -219,7 +219,7 @@ export function useEmployeeTicketDetail(id?: number) {
       { status: 'closed' },
       {
         onSuccess: () => {
-          toast.success('Ticket closed')
+          toast.success('Ticket Closed')
           setIsCloseOpen(false)
         },
         onError: (err) =>

@@ -50,7 +50,7 @@ export function useAllowanceDeductionForm(id?: number) {
     const mutation = isEdit ? updateRecord : createRecord
     mutation.mutate(values, {
       onSuccess: () => {
-        toast.success(isEdit ? 'Record updated' : 'Record created')
+        toast.success(isEdit ? 'Record Updated' : 'Record Created')
         goToList()
       },
       onError: (err) =>

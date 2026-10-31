@@ -374,7 +374,7 @@ export function useEmployeeTransferTab(employeeId: number) {
   const failWith = (fallback: string) => (error: unknown) => {
     if (isConflictError(error)) {
       toast.error(getApiErrorMessage(error, fallback), {
-        description: 'The service history has been refreshed — review it and try again.',
+        description: 'The Service History Has Been Refreshed — Review It and Try Again.',
       })
       closeDialog()
       return
@@ -392,9 +392,9 @@ export function useEmployeeTransferTab(employeeId: number) {
         onSuccess: () => {
           // A company move re-codes the employee to the target company's next
           // code; the employee queries are invalidated, so it refreshes on screen.
-          toast.success('Employee transferred', {
+          toast.success('Employee Transferred', {
             description: isCompanyMove
-              ? 'The employee has been given the new company’s next employee code.'
+              ? 'The Employee Has Been Given the New Company’s Next Employee Code.'
               : undefined,
           })
           closeDialog()
@@ -418,7 +418,7 @@ export function useEmployeeTransferTab(employeeId: number) {
       { serviceId: activeServiceId, values, initial },
       {
         onSuccess: () => {
-          toast.success('Posting updated')
+          toast.success('Posting Updated')
           closeDialog()
         },
         onError: failWith("Couldn't update the posting."),
@@ -432,7 +432,7 @@ export function useEmployeeTransferTab(employeeId: number) {
       { serviceId: activeServiceId, values },
       {
         onSuccess: () => {
-          toast.success('Posting closed')
+          toast.success('Posting Closed')
           closeDialog()
         },
         onError: failWith("Couldn't close the posting."),
@@ -459,7 +459,7 @@ export function useEmployeeTransferTab(employeeId: number) {
     canRejoin: rejoinEligibility.data?.canRejoin === true,
     /** Why it's disabled: the API's own sentence, or the read still being in flight. */
     rejoinHint: rejoinEligibility.isLoading
-      ? 'Checking whether this employee can rejoin…'
+      ? 'Checking Whether This Employee Can Rejoin…'
       : rejoinEligibility.error
         ? getApiErrorMessage(rejoinEligibility.error, "Couldn't check whether this employee can rejoin.")
         : rejoinEligibility.data && !rejoinEligibility.data.canRejoin

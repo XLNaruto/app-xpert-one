@@ -93,7 +93,7 @@ export const SALARY_REPORT_TYPES: readonly ReportTypeOption<SalaryReportType>[] 
     value: 'pay-slip',
     label: 'Pay Slip',
     description:
-      'One row per processed salary: the days the month was paid on and the four money columns. Deductions is the whole month’s — PF, ESIC, PT, LWF, TDS and every deduction head — so gross less deductions is always the net.',
+      'One Row per Processed Salary: The Days the Month Was Paid on and the Four Money Columns. Deductions Is the Whole Month’s — PF, ESIC, PT, LWF, TDS and Every Deduction Head — So Gross Less Deductions Is Always the Net.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PAY_SLIP_SORTABLE,
   },
@@ -101,7 +101,7 @@ export const SALARY_REPORT_TYPES: readonly ReportTypeOption<SalaryReportType>[] 
     value: 'pay-register',
     label: 'Pay Register',
     description:
-      'The statutory register: one employee’s whole month in fixed columns — particulars, statutory numbers, bank details and pay. The PF, ESIC and PT figures here are the employee’s halves; the employer’s contributions are a company cost, not a deduction, and are not on this report.',
+      'The Statutory Register: One Employee’s Whole Month in Fixed Columns — Particulars, Statutory Numbers, Bank Details and Pay. The PF, ESIC and PT Figures Here Are the Employee’s Halves; The Employer’s Contributions Are a Company Cost, Not a Deduction, and Are Not on This Report.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PAY_REGISTER_SORTABLE,
   },
@@ -109,7 +109,7 @@ export const SALARY_REPORT_TYPES: readonly ReportTypeOption<SalaryReportType>[] 
     value: 'gross-salary',
     label: 'Gross Salary',
     description:
-      'What each employee earned across a RANGE of months. Grouped per employee, so someone who transferred mid-range is one line and the record count is a count of employees, not of processed months.',
+      'What Each Employee Earned Across a RANGE of Months. Grouped per Employee, So Someone Who Transferred Mid-Range Is One Line and the Record Count Is a Count of Employees, Not of Processed Months.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: GROSS_SALARY_SORTABLE,
     isRange: true,
@@ -118,7 +118,7 @@ export const SALARY_REPORT_TYPES: readonly ReportTypeOption<SalaryReportType>[] 
     value: 'paid-salary',
     label: 'Paid Salary',
     description:
-      'The months of the period already released, with the date each batch went out.',
+      'The Months of the Period Already Released, with the Date Each Batch Went Out.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: PAID_SALARY_SORTABLE,
   },
@@ -126,7 +126,7 @@ export const SALARY_REPORT_TYPES: readonly ReportTypeOption<SalaryReportType>[] 
     value: 'unpaid-salary',
     label: 'Unpaid Salary',
     description:
-      'The mirror: processed but still outstanding. This reports what is owed — releasing it is the Pay Salary screen.',
+      'The Mirror: Processed but Still Outstanding. This Reports What Is Owed — Releasing It Is the Pay Salary Screen.',
     defaultSort: { id: 'employee_name', desc: false },
     sortable: UNPAID_SALARY_SORTABLE,
   },

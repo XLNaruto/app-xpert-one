@@ -244,7 +244,7 @@ export function useTalkCredentialForm(id?: number) {
       NO_PANEL_PASSWORD_ERROR.test(err.message)
     ) {
       setPanelPasswordRequired(true)
-      toast.error(message, { description: 'Enter a password below and save again.' })
+      toast.error(message, { description: 'Enter a Password Below and Save Again.' })
       return
     }
 
@@ -262,7 +262,7 @@ export function useTalkCredentialForm(id?: number) {
     if (isEdit) {
       updateCredential.mutate(values, {
         onSuccess: () => {
-          toast.success('Talk credential updated')
+          toast.success('Talk Credential Updated')
           goToList()
         },
         // A moved address is re-checked platform-wide, and a re-seed can find
@@ -274,7 +274,7 @@ export function useTalkCredentialForm(id?: number) {
 
     createCredential.mutate(values, {
       onSuccess: () => {
-        toast.success('Talk credential issued')
+        toast.success('Talk Credential Issued')
         goToList()
       },
       // Either the address is taken somewhere on the platform, the employee

@@ -197,7 +197,7 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
   const onSubmit = handleSubmit((values) => {
     const options = {
       onSuccess: () => {
-        toast.success(isEdit ? 'Project task updated' : 'Project task created')
+        toast.success(isEdit ? 'Project Task Updated' : 'Project Task Created')
         onSaved()
       },
       onError: (err: Error) => {

@@ -151,7 +151,7 @@ export function EmployeeWizardNav({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {step.locked ? 'Save Basic Detail first' : step.label}
+                  {step.locked ? 'Save Basic Detail First' : step.label}
                 </TooltipContent>
               </Tooltip>
             )

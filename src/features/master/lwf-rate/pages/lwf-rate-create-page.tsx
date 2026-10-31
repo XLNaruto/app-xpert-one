@@ -51,8 +51,8 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
         title={isEdit ? 'Edit LWF Rate' : 'Add LWF Rate'}
         description={
           isEdit
-            ? 'Update this Labour Welfare Fund contribution'
-            : 'Configure Labour Welfare Fund rate details'
+            ? 'Update This Labour Welfare Fund Contribution'
+            : 'Configure Labour Welfare Fund Rate Details'
         }
         actions={
           <Button variant="outline" onClick={goToList}>
@@ -74,7 +74,7 @@ export function LwfRateCreatePage({ data }: LwfRateCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this LWF rate."}
+                : "Couldn't Load This LWF Rate."}
             </p>
           ) : (
             <form onSubmit={onSubmit} noValidate>

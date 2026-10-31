@@ -118,8 +118,8 @@ export function useLeaveApprovalChainList() {
         onSuccess: () => {
           toast.success(
             order.length === 0
-              ? 'Approval chain cleared — anyone who may decide leave can decide any leave again'
-              : 'Approval chain saved',
+              ? 'Approval Chain Cleared — Anyone Who May Decide Leave Can Decide Any Leave Again'
+              : 'Approval Chain Saved',
           )
         },
         // The opt-out's 400 names the companies that would be stranded, so it is

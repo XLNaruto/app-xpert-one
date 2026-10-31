@@ -338,7 +338,7 @@ export function BonusEstimationPage() {
     <div>
       <PageHeader
         title="Bonus Estimation"
-        description="What a bonus over a range of months would cost, employee by employee — and the bonuses already committed for it."
+        description="What a Bonus over a Range of Months Would Cost, Employee by Employee — And the Bonuses Already Committed for It."
       />
 
       <BonusEstimationToolbar
@@ -370,21 +370,21 @@ export function BonusEstimationPage() {
       {scope.companyId === null ? (
         <EmptyState
           title="No Company Selected"
-          description="Select a company for this session to estimate its bonus."
+          description="Select a Company for This Session to Estimate Its Bonus."
         />
       ) : !scope.hasLoaded ? (
         <EmptyState
           icon={Filter}
           title="Choose a Range"
-          description="Pick the months the bonus covers above, then press Load. Everything is read off months already processed, so a month the register hasn't priced shows nothing here."
+          description="Pick the Months the Bonus Covers Above, Then Press Load. Everything Is Read off Months Already Processed, So a Month the Register Hasn't Priced Shows Nothing Here."
         />
       ) : view.isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {getApiErrorMessage(
             view.error,
             estimating
-              ? "Couldn't load the bonus estimate."
-              : "Couldn't load the saved bonuses.",
+              ? "Couldn't Load the Bonus Estimate."
+              : "Couldn't Load the Saved Bonuses.",
           )}
         </p>
       ) : estimating ? (
@@ -431,7 +431,7 @@ export function BonusEstimationPage() {
               title={estimate.search ? 'No Matching Employees' : 'Nothing to Estimate'}
               description={
                 estimate.search
-                  ? 'Try a different name, employee code or mobile number.'
+                  ? 'Try a Different Name, Employee Code or Department.'
                   : `No salary has been processed for ${rangeLabel} in this scope. A bonus is a percentage of what was actually paid, so there is nothing to figure one on — process the months from Calculate Salary first.`
               }
             />
@@ -452,14 +452,14 @@ export function BonusEstimationPage() {
           onPaginationChange={saved.onPaginationChange}
           searchValue={saved.search}
           onSearchChange={saved.setSearch}
-          searchPlaceholder="Search employee by name, code or mobile…"
+          searchPlaceholder="Search by Name, Code or Department…"
           emptyState={
             <EmptyState
               icon={Gift}
               title={saved.search ? 'No Matching Employees' : 'No Bonus Saved Yet'}
               description={
                 saved.search
-                  ? 'Try a different name, employee code or mobile number.'
+                  ? 'Try a Different Name, Employee Code or Department.'
                   : `Nothing has been committed for ${rangeLabel} in this scope. Estimate it on the Estimate & Save side, tick the employees and save.`
               }
             />

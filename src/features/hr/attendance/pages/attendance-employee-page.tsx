@@ -34,7 +34,7 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
     return (
       <NotFound
         title="Employee Not Found"
-        description="That attendance link is missing or no longer readable. Open the employee again from Attendance Management."
+        description="That Attendance Link Is Missing or No Longer Readable. Open the Employee Again from Attendance Management."
       />
     )
   }
@@ -78,7 +78,7 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
             onSearchChange={employee.setRosterSearch}
             loading={employee.employeesLoading}
             placeholder={employee.employeeName || 'Select employee'}
-            searchPlaceholder="Search name or code…"
+            searchPlaceholder="Search…"
             className="w-60"
             align="end"
           />
@@ -157,7 +157,7 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
       {employee.isError ? (
         <Card className="p-6">
           <EmptyState
-            title="Couldn't load the month"
+            title="Couldn't Load the Month"
             description={getApiErrorMessage(employee.error)}
           />
         </Card>

@@ -29,6 +29,6 @@ export async function fetchPtReport(
       total: parsed.total,
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the PT report.")
+    throw toApiError(error, "Couldn't Load the PT Report.")
   }
 }

@@ -26,10 +26,10 @@ export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (error) => {
       if (!isBookedPlanLimitError(error)) return
-      toast.info('A booked plan change is limiting your account.', {
+      toast.info('A Booked Plan Change Is Limiting Your Account.', {
         id: 'booked-plan-limit',
         duration: 8000,
-        description: 'Cancel the booked change on the billing page to lift the limit.',
+        description: 'Cancel the Booked Change on the Billing Page to Lift the Limit.',
         action: {
           label: 'Open Billing',
           // Lazy: the router is built with this client, so a static import

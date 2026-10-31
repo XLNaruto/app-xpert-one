@@ -31,7 +31,7 @@ function CompleteTaskForm({
     <form onSubmit={onSubmit} noValidate>
       <DialogHeader>
         <DialogTitle className="pr-10">
-          {needsApproval ? 'Submit for Approval' : 'Complete this Task'}
+          {needsApproval ? 'Submit for Approval' : 'Complete This Task'}
         </DialogTitle>
         <DialogDescription>{target.row.task}</DialogDescription>
       </DialogHeader>
@@ -49,7 +49,7 @@ function CompleteTaskForm({
           </p>
         )}
         <Field label="What Did You Do?" required={rules.noteRequired} error={errors.note?.message}>
-          <Textarea rows={3} placeholder="Describe the work done" {...register('note')} />
+          <Textarea rows={3} placeholder="Describe the Work Done" {...register('note')} />
         </Field>
         <Field label="Proof" required={rules.proofRequired} error={errors.proof?.message}>
           <Controller

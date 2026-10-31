@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { toastApiError } from '@/lib/api-toast'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { usePurchasedPlans } from '../api/use-purchased-plans'
 import { useDownloadInvoice } from '../api/use-billing-mutations'
 import type { PurchasedPlan } from '../types'
@@ -12,13 +12,13 @@ import type { PurchasedPlan } from '../types'
  * Orchestrates the Purchase History screen: the paged read, the per-row invoice
  * download and the way back to billing. The page consumes this and only renders.
  *
- * No search or sort — the endpoint offers neither and always answers newest
- * purchase first — so `usePagination` is used for limit/offset alone.
+ * Search is server-side; there's no sort — the endpoint always answers newest
+ * purchase first.
  */
 export function usePurchaseHistory() {
   const navigate = useNavigate()
-  const { params, limit, offset, onPaginationChange } =
-    usePagination(DEFAULT_PAGE_SIZE)
+  const { params, limit, offset, onPaginationChange, search, setSearch } =
+    usePagination(ALL_PAGE_SIZE)
 
   const { data, isLoading, isError, error } = usePurchasedPlans(params)
   // `mutate` is stable across renders; the mutation object itself isn't.
@@ -39,7 +39,7 @@ export function usePurchaseHistory() {
       requestInvoice(
         { subscriptionId: row.id, invoiceNumber: row.invoiceNumber },
         {
-          onError: (err) => toastApiError(err, "Couldn't download the invoice."),
+          onError: (err) => toastApiError(err, "Couldn't Download the Invoice."),
           onSettled: () => setDownloadingId(null),
         },
       )
@@ -53,6 +53,8 @@ export function usePurchaseHistory() {
     limit,
     offset,
     onPaginationChange,
+    search,
+    setSearch,
     isLoading,
     isError,
     error,

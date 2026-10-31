@@ -29,7 +29,7 @@ export const roleSchema = z.object({
   name: recordNameField('the role name', { max: MAX_ROLE_NAME }),
   permissionCodes: z
     .array(z.string())
-    .min(1, 'Enable at least one permission')
+    .min(1, 'Enable at Least One Permission')
     .max(
       MAX_ROLE_PERMISSIONS,
       `A role cannot carry more than ${MAX_ROLE_PERMISSIONS} permissions`,

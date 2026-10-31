@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { useDepartmentSelect } from '@/features/master/department'
 import { useEmployeeSelect } from '@/features/hr/employee'
@@ -34,7 +34,7 @@ export function useApprovalList() {
   const canDecide = can(`${PERMISSIONS.taskApprovals}:update`)
   const [kind, setKind] = useState<ApprovalKind>('sop')
   const [filters, setFilters] = useState<ApprovalFilters>(defaultApprovalFilters)
-  const pagination = usePagination(DEFAULT_PAGE_SIZE, APPROVAL_DEFAULT_SORT)
+  const pagination = usePagination(ALL_PAGE_SIZE, APPROVAL_DEFAULT_SORT)
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [request, setRequest] = useState<VerdictRequest | null>(null)
 

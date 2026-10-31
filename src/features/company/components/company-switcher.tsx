@@ -42,7 +42,7 @@ export function CompanySwitcher() {
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          {error?.message ?? 'Companies unavailable'}
+          {error?.message ?? 'Companies Unavailable'}
         </TooltipContent>
       </Tooltip>
     )
@@ -52,7 +52,7 @@ export function CompanySwitcher() {
 
   const activeId = selectedCompanyId
   const active = companies.find((c) => c.id === activeId)
-  const label = active?.name ?? 'Select company'
+  const label = active?.name ?? 'Select Company'
 
   return (
     <DropdownMenu
@@ -69,7 +69,7 @@ export function CompanySwitcher() {
               <ChevronDown className="size-4 text-muted-foreground" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">Switch company</TooltipContent>
+          <TooltipContent side="bottom">Switch Company</TooltipContent>
         </Tooltip>
       }
     >

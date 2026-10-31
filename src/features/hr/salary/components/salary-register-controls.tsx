@@ -57,7 +57,7 @@ export function SalaryRegisterControls({
         <Input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Name or employee code…"
+          placeholder="Name or Employee Code…"
           className="h-8 pl-8 text-xs"
         />
       </div>

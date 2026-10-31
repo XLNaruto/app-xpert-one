@@ -89,7 +89,7 @@ export function LeaveAttachmentField({
                 <Eye className="size-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Preview file</TooltipContent>
+            <TooltipContent>Preview File</TooltipContent>
           </Tooltip>
 
           {!disabled && (
@@ -107,7 +107,7 @@ export function LeaveAttachmentField({
                   <X className="size-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Remove attachment</TooltipContent>
+              <TooltipContent>Remove Attachment</TooltipContent>
             </Tooltip>
           )}
         </>
@@ -134,7 +134,7 @@ export function LeaveAttachmentField({
           </button>
         </TooltipTrigger>
         <TooltipContent>
-          {value ? 'Replace file' : 'PDF, JPG, PNG or WebP'}
+          {value ? 'Replace File' : 'PDF, JPG, PNG or WebP'}
         </TooltipContent>
       </Tooltip>
 

@@ -83,7 +83,7 @@ export async function fetchCompanies(
 
     return { items: records, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load companies.")
+    throw toApiError(error, "Couldn't Load Companies.")
   }
 }
 
@@ -99,7 +99,7 @@ export async function fetchCompany(id: number): Promise<Company> {
     const raw = await http.get<unknown>(endpoints.COMPANIES.GET(id))
     return toCompany(companyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Company not found')
+    throw toApiError(error, 'Company Not Found')
   }
 }
 
@@ -121,7 +121,7 @@ export async function createCompany(
     )
     return toCompany(companyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the company.")
+    throw toApiError(error, "Couldn't Create the Company.")
   }
 }
 
@@ -147,7 +147,7 @@ export async function updateCompany(
     )
     return toCompany(companyResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the company.")
+    throw toApiError(error, "Couldn't Update the Company.")
   }
 }
 
@@ -169,6 +169,6 @@ export async function deleteCompany(id: number): Promise<void> {
   try {
     await http.delete<unknown>(endpoints.COMPANIES.DELETE(id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the company.")
+    throw toApiError(error, "Couldn't Delete the Company.")
   }
 }

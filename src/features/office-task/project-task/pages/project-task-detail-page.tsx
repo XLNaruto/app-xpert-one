@@ -173,7 +173,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
         {error ? (
           <ScopedDataError error={error} fallback="Project task not found." what="project tasks" />
         ) : (
-          <EmptyState title="Project Task Not Found" description="It may have been deleted." />
+          <EmptyState title="Project Task Not Found" description="It May Have Been Deleted." />
         )}
       </div>
     )
@@ -217,7 +217,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
                 <DetailItem
                   icon={UserCheck}
                   label="Delegate"
-                  value={task.assignees[0]?.delegate?.name ?? 'Nobody — only they update it'}
+                  value={task.assignees[0]?.delegate?.name ?? 'Nobody — Only They Update It'}
                 />
               </>
             ) : (
@@ -233,11 +233,11 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
               value={`${formatDate(task.startDate)} → ${formatDate(task.deadline)}`}
             />
             <DetailItem icon={Repeat} label="Progress Updates" value={frequencyLabel(task.updatesPerDay, task.updateFrequency)} />
-            <DetailItem icon={Camera} label="Photo Proof" value={task.photoRequired ? 'Required' : 'Not required'} />
+            <DetailItem icon={Camera} label="Photo Proof" value={task.photoRequired ? 'Required' : 'Not Required'} />
             <DetailItem
               icon={ShieldCheck}
               label="Verification"
-              value={task.needsVerification ? 'Required' : 'Not required'}
+              value={task.needsVerification ? 'Required' : 'Not Required'}
             />
           </div>
         </CardContent>
@@ -261,7 +261,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
             onPaginationChange={works.onPaginationChange}
             searchValue={works.search}
             onSearchChange={works.setSearch}
-            searchPlaceholder="Search name, code or mobile…"
+            searchPlaceholder="Search…"
           />
         )}
       </div>

@@ -273,14 +273,14 @@ export function useAdminUserForm(id?: number) {
         { values, record },
         {
           onSuccess: (updated) => {
-            toast.success('User updated')
+            toast.success('User Updated')
             // A role change or a password reset ends every session the user
             // holds, and permissions are minted at login — so the change only
             // truly lands when they sign in again. Say so rather than leaving
             // them wondering why nothing moved.
             if (updated.sessionRevoked) {
               toast.info(
-                'They have been signed out — the change takes effect at their next sign-in.',
+                'They Have Been Signed out — The Change Takes Effect at Their Next Sign-In.',
               )
             }
             goToList()
@@ -294,7 +294,7 @@ export function useAdminUserForm(id?: number) {
 
     createUser.mutate(values, {
       onSuccess: () => {
-        toast.success('User created')
+        toast.success('User Created')
         goToList()
       },
       // An email or mobile number already in use answers 409 with a message

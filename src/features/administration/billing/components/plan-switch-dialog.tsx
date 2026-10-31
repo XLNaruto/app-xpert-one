@@ -168,7 +168,7 @@ function SwitchSummaryView({ summary }: { summary: SwitchSummary }) {
           </>
         )}
         <PlanSide
-          caption={summary.current ? 'To' : 'New plan'}
+          caption={summary.current ? 'To' : 'New Plan'}
           name={summary.target.planName ?? `Plan #${summary.target.planId}`}
           lines={[
             `${term(summary.target.isYearly)} · ${formatRupeesExact(summary.target.price)}`,
@@ -209,7 +209,7 @@ function SwitchSummaryView({ summary }: { summary: SwitchSummary }) {
         )}
         {summary.creditBalanceUsed > 0 && (
           <MoneyRow
-            label={isEstimate ? 'Stored credit used (estimate)' : 'Stored credit used'}
+            label={isEstimate ? 'Stored Credit Used (Estimate)' : 'Stored Credit Used'}
             value={summary.creditBalanceUsed}
             sign="−"
           />
@@ -259,7 +259,7 @@ function AccessModuleGroup({
   defaultOpen: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
-  const screenNames = group.screens.map((screen) => screen.name ?? 'Module access')
+  const screenNames = group.screens.map((screen) => screen.name ?? 'Module Access')
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background">
@@ -306,7 +306,7 @@ function AccessModuleGroup({
                   screen.name ? 'text-foreground' : 'italic text-muted-foreground',
                 )}
               >
-                {screen.name ?? 'Module access'}
+                {screen.name ?? 'Module Access'}
               </span>
               <span className="flex flex-wrap gap-1 sm:max-w-[60%] sm:justify-end">
                 {screen.actions.map((action) => (
@@ -420,10 +420,10 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
 
   const isRequest = kind === 'request'
   const confirmLabel = isRequest
-    ? 'Send request'
+    ? 'Send Request'
     : extendType === 'next_renewal' && hasRunningPlan
-      ? 'Book change'
-      : 'Confirm switch'
+      ? 'Book Change'
+      : 'Confirm Switch'
 
   return (
     <Dialog
@@ -442,8 +442,8 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
           </DialogTitle>
           <DialogDescription>
             {isRequest
-              ? 'Your request goes to our team for approval. Nothing changes until it is approved.'
-              : 'Review the price below, then confirm to change your plan.'}
+              ? 'Your Request Goes to Our Team for Approval. Nothing Changes Until It Is Approved.'
+              : 'Review the Price Below, Then Confirm to Change Your Plan.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -463,7 +463,7 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
                   selected={extendType === 'immediately'}
                   icon={Zap}
                   title="Switch Now"
-                  description="Starts a fresh term today. Unused time on your current plan is credited."
+                  description="Starts a Fresh Term Today. Unused Time on Your Current Plan Is Credited."
                   onSelect={setExtendType}
                 />
                 <TimingOption
@@ -474,8 +474,8 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
                   title="At Next Renewal"
                   description={
                     nextRenewalAllowed
-                      ? 'Your current plan runs to its end, then the new one starts at full price.'
-                      : 'Not available — your current plan has no end date or is set to cancel.'
+                      ? 'Your Current Plan Runs to Its End, Then the New One Starts at Full Price.'
+                      : 'Not Available — Your Current Plan Has No End Date or Is Set to Cancel.'
                   }
                   onSelect={setExtendType}
                 />
@@ -520,12 +520,12 @@ export function PlanSwitchDialog({ flow }: { flow: PlanSwitchFlow }) {
 
           {isRequest && (
             <div className="space-y-2">
-              <Label htmlFor="switch-request-note">Note (optional)</Label>
+              <Label htmlFor="switch-request-note">Note (Optional)</Label>
               <Textarea
                 id="switch-request-note"
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="Anything our team should know, e.g. when you need it by"
+                placeholder="Anything Our Team Should Know, e.g. When You Need It By"
                 aria-invalid={noteTooLong || undefined}
               />
               <p

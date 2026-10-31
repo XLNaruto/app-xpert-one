@@ -52,7 +52,7 @@ export function LeaveApprovalChainListPage() {
     <div>
       <PageHeader
         title="Leave Approval Hierarchy"
-        description="One ordered chain of roles that every company of the account follows."
+        description="One Ordered Chain of Roles That Every Company of the Account Follows."
         actions={
           chain.canUpdate && (
             <div className="flex items-center gap-2">
@@ -110,9 +110,9 @@ export function LeaveApprovalChainListPage() {
                       value: name,
                     }))}
                     placeholder={
-                      chain.isRoleNamesLoading ? 'Loading…' : 'Add a level…'
+                      chain.isRoleNamesLoading ? 'Loading…' : 'Add a Level…'
                     }
-                    searchPlaceholder="Search roles"
+                    searchPlaceholder="Search Roles"
                   />
                 )}
               </div>
@@ -128,7 +128,7 @@ export function LeaveApprovalChainListPage() {
                   <EmptyState
                     icon={Plus}
                     title="Leave Routing Is Off"
-                    description="With no chain configured, anyone who may decide leave can decide any leave — exactly as before this screen existed. Add a level to start routing."
+                    description="With No Chain Configured, Anyone Who May Decide Leave Can Decide Any Leave — Exactly as Before This Screen Existed. Add a Level to Start Routing."
                   />
                 ) : (
                   <ul className="space-y-2">
@@ -213,7 +213,7 @@ export function LeaveApprovalChainListPage() {
               */}
               <div>
                 <p className="text-xs font-medium uppercase text-muted-foreground">
-                  {chain.savedIncludesOwner ? 'Waiting on the owner' : 'No approver'}
+                  {chain.savedIncludesOwner ? 'Waiting on the Owner' : 'No Approver'}
                 </p>
                 {chain.companiesWithOwner.length === 0 ? (
                   <p className="mt-2 text-xs text-muted-foreground">
@@ -281,9 +281,9 @@ export function LeaveApprovalChainListPage() {
                   <span className="block text-sm font-medium text-foreground">
                     I approve the leave no level covers
                   </span>
-                  Ticked, you are the chain's last link. Unticked, you are out of the
-                  routing altogether — nothing is pending with you and your queue is
-                  empty. You can still decide any leave either way.
+                  Ticked, You Are the Chain's Last Link. Unticked, You Are out of the
+                  Routing Altogether — Nothing Is Pending with You and Your Queue Is
+                  Empty. You Can Still Decide Any Leave Either Way.
                 </span>
               </label>
 

@@ -111,7 +111,7 @@ export function PostingSection({
         <FormSection
           icon={Briefcase}
           title="Service Details"
-          description="Where the employee is posted and on what terms"
+          description="Where the Employee Is Posted and on What Terms"
         />
       )}
 
@@ -131,8 +131,8 @@ export function PostingSection({
                 setValue('departmentId', '')
               }}
               {...options.branches}
-              placeholder="Select branch"
-              searchPlaceholder="Search branch"
+              placeholder="Select Branch"
+              searchPlaceholder="Search Branch"
             />
           )}
         />
@@ -141,7 +141,7 @@ export function PostingSection({
       <Field
         label="Department"
         error={errors.departmentId?.message}
-        hint="Only departments of the chosen branch are listed, plus any that belong to the company as a whole."
+        hint="Only Departments of the Chosen Branch Are Listed, Plus Any That Belong to the Company as a Whole."
       >
         <Controller
           control={control}
@@ -153,8 +153,8 @@ export function PostingSection({
               value={field.value}
               onChange={field.onChange}
               options={options.departments}
-              placeholder={options.isDepartmentsLoading ? 'Loading…' : 'Select department'}
-              searchPlaceholder="Search department"
+              placeholder={options.isDepartmentsLoading ? 'Loading…' : 'Select Department'}
+              searchPlaceholder="Search Department"
             />
           )}
         />
@@ -164,7 +164,7 @@ export function PostingSection({
         label="Designation"
         required
         error={errors.designationId?.message}
-        hint="The wage structure comes from the designation — it isn't stored per employee."
+        hint="The Wage Structure Comes from the Designation — It Isn't Stored per Employee."
       >
         <Controller
           control={control}
@@ -175,8 +175,8 @@ export function PostingSection({
               value={field.value}
               onChange={field.onChange}
               {...options.designations}
-              placeholder="Select designation"
-              searchPlaceholder="Search designation"
+              placeholder="Select Designation"
+              searchPlaceholder="Search Designation"
             />
           )}
         />
@@ -227,7 +227,7 @@ export function PostingSection({
                 value={field.value}
                 onChange={field.onChange}
                 options={GRADE_OPTIONS}
-                placeholder="Select grade"
+                placeholder="Select Grade"
               />
               </>
             )
@@ -246,7 +246,7 @@ export function PostingSection({
               value={field.value}
               onChange={field.onChange}
               options={EMPLOYMENT_TYPE_OPTIONS}
-              placeholder="Select employment type"
+              placeholder="Select Employment Type"
             />
           )}
         />
@@ -312,7 +312,7 @@ export function PostingSection({
               label="Renewal Date"
               required
               error={errors.renewalDate?.message}
-              hint="The day this contract comes up for review — a month before the term ends (30 days for a contract measured in days), filled in from the joining date and the period. It is what puts the employee on the Contract Expiry worklist, so override it only if the contract says the review happens on some other day."
+              hint="The Day This Contract Comes up for Review — A Month Before the Term Ends (30 Days for a Contract Measured in Days), Filled in from the Joining Date and the Period. It Is What Puts the Employee on the Contract Expiry Worklist, So Override It Only If the Contract Says the Review Happens on Some Other Day."
               minDate={joiningDate ? new Date(`${joiningDate}T00:00:00`) : undefined}
             />
           )}

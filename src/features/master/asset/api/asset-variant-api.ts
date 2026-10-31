@@ -108,7 +108,7 @@ export async function fetchAssetVariants(
       toAssetVariant,
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't load the variants.")
+    throw toApiError(error, "Couldn't Load the Variants.")
   }
 }
 
@@ -121,7 +121,7 @@ export async function fetchAssetVariant(
     const raw = await http.get<unknown>(endpoints.ASSET_VARIANTS.GET(assetId, id))
     return toAssetVariant(assetVariantResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Asset variant not found')
+    throw toApiError(error, 'Asset Variant Not Found')
   }
 }
 
@@ -142,7 +142,7 @@ export async function createAssetVariant(
     )
     return toAssetVariant(assetVariantResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't create the variant.")
+    throw toApiError(error, "Couldn't Create the Variant.")
   }
 }
 
@@ -164,7 +164,7 @@ export async function updateAssetVariant(
     )
     return toAssetVariant(assetVariantResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the variant.")
+    throw toApiError(error, "Couldn't Update the Variant.")
   }
 }
 
@@ -173,7 +173,7 @@ export async function deleteAssetVariant(assetId: number, id: number): Promise<v
   try {
     await http.delete<unknown>(endpoints.ASSET_VARIANTS.DELETE(assetId, id))
   } catch (error) {
-    throw toApiError(error, "Couldn't delete the variant.")
+    throw toApiError(error, "Couldn't Delete the Variant.")
   }
 }
 
@@ -201,7 +201,7 @@ export async function changeVariantStock(
       movement: toStockMovement(parsed.movement),
     }
   } catch (error) {
-    throw toApiError(error, "Couldn't update the stock.")
+    throw toApiError(error, "Couldn't Update the Stock.")
   }
 }
 
@@ -220,6 +220,6 @@ export async function fetchStockMovements(
       toStockMovement,
     )
   } catch (error) {
-    throw toApiError(error, "Couldn't load the stock history.")
+    throw toApiError(error, "Couldn't Load the Stock History.")
   }
 }

@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { STOCK_MOVEMENT_DEFAULT_SORT } from '../constants'
 import { useAssetStockMovements } from '../api/use-asset'
 import { useAssetVariants, useStockMovements } from '../api/use-asset-variants'
@@ -18,8 +18,25 @@ import type { StockTarget } from '../types'
  * fills in where it doesn't.
  */
 export function useStockHistory(target: StockTarget | null, enabled: boolean) {
-  const { params, limit, offset, onPaginationChange, sorting, onSortingChange } =
-    usePagination(DEFAULT_PAGE_SIZE, STOCK_MOVEMENT_DEFAULT_SORT)
+  const {
+    params,
+    limit,
+    offset,
+    onPaginationChange,
+    sorting,
+    onSortingChange,
+    search,
+    setSearch,
+  } = usePagination(ALL_PAGE_SIZE, STOCK_MOVEMENT_DEFAULT_SORT)
+
+  // The dialog stays mounted between ledgers — one asset's search term means
+  // nothing against the next one's.
+  const targetKey = target
+    ? `${target.level}:${target.assetId}:${target.level === 'variant' ? target.variantId : ''}`
+    : ''
+  useEffect(() => {
+    setSearch('')
+  }, [targetKey, setSearch])
 
   const isAssetLevel = target?.level === 'asset'
   const assetId = target?.assetId ?? NaN
@@ -64,6 +81,8 @@ export function useStockHistory(target: StockTarget | null, enabled: boolean) {
     onPaginationChange,
     sorting,
     onSortingChange,
+    search,
+    setSearch,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,

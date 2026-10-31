@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
@@ -28,7 +29,7 @@ export function useSopAssignmentDetail(id?: number) {
   })
 
   const [range, setRange] = useState<SopRunRange>(defaultRunRange)
-  const pagination = usePagination()
+  const pagination = usePagination(ALL_PAGE_SIZE)
   const runs = useSopAssignmentRuns(id, range, pagination.params)
 
   return {

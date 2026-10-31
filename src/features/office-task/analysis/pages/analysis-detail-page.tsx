@@ -314,7 +314,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
         {detail.error ? (
           <ScopedDataError error={detail.error} fallback="Couldn't load this employee's analysis." what="task analysis" />
         ) : (
-          <EmptyState title="Not Found" description="This employee may have no tasks in the window." />
+          <EmptyState title="Not Found" description="This Employee May Have No Tasks in the Window." />
         )}
       </div>
     )
@@ -396,7 +396,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
         </div>
       ) : sop ? (
         <>
-          <Panel title="By Checklist" description="How each assigned checklist is going.">
+          <Panel title="By Checklist" description="How Each Assigned Checklist Is Going.">
             <DataTable
               columns={checklistColumns}
               data={detail.checklists.rows}
@@ -408,10 +408,18 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.checklists.offset}
               total={detail.checklists.total}
               onPaginationChange={detail.checklists.onPaginationChange}
-              emptyState={<EmptyState icon={ClipboardList} title="No Checklists in the Window" />}
+              searchPlaceholder="Search…"
+              searchValue={detail.checklists.search}
+              onSearchChange={detail.checklists.setSearch}
+              emptyState={
+                <EmptyState
+                  icon={ClipboardList}
+                  title={detail.checklists.search.trim() ? 'No Matching Checklists' : 'No Checklists in the Window'}
+                />
+              }
             />
           </Panel>
-          <Panel title="SOP Tasks" description="Every checklist run in the window, newest first.">
+          <Panel title="SOP Tasks" description="Every Checklist Run In the Window, Newest First.">
             <StatusTabs tabs={SOP_RUN_TABS} value={detail.runs.tab} counts={detail.runs.counts} onChange={detail.runs.setTab} />
             <DataTable
               columns={runColumns}
@@ -424,13 +432,21 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.runs.offset}
               total={detail.runs.total}
               onPaginationChange={detail.runs.onPaginationChange}
-              emptyState={<EmptyState icon={ClipboardList} title="No Tasks in This Tab" />}
+              searchPlaceholder="Search…"
+              searchValue={detail.runs.search}
+              onSearchChange={detail.runs.setSearch}
+              emptyState={
+                <EmptyState
+                  icon={ClipboardList}
+                  title={detail.runs.search.trim() ? 'No Matching Tasks' : 'No Tasks in This Tab'}
+                />
+              }
             />
           </Panel>
         </>
       ) : project ? (
         <>
-          <Panel title="Daily Activity" description="Progress updates posted and hours worked each day.">
+          <Panel title="Daily Activity" description="Progress Updates Posted and Hours Worked Each Day.">
             <TrendLineChart
               data={project.daily}
               xKey="label"
@@ -441,7 +457,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               height={260}
             />
           </Panel>
-          <Panel title="Project Tasks" description="Every project task this employee holds in the window.">
+          <Panel title="Project Tasks" description="Every Project Task This Employee Holds in the Window.">
             <StatusTabs
               tabs={PROJECT_TASK_TABS}
               value={detail.tasks.tab}
@@ -459,7 +475,15 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
               offset={detail.tasks.offset}
               total={detail.tasks.total}
               onPaginationChange={detail.tasks.onPaginationChange}
-              emptyState={<EmptyState icon={FolderKanban} title="No Tasks in This Tab" />}
+              searchPlaceholder="Search…"
+              searchValue={detail.tasks.search}
+              onSearchChange={detail.tasks.setSearch}
+              emptyState={
+                <EmptyState
+                  icon={FolderKanban}
+                  title={detail.tasks.search.trim() ? 'No Matching Tasks' : 'No Tasks in This Tab'}
+                />
+              }
             />
           </Panel>
         </>

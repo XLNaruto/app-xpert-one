@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useAuthStore } from '@/stores/auth-store'
 import { PERMISSIONS, useResourceAccess } from '@/features/permissions'
 import { useSopGroupOptions } from '@/features/office-task/sop-group'
@@ -17,7 +17,7 @@ import type { SopAssignmentFilters } from '../types'
  */
 export function useSopAssignmentList(initialGroupId?: number) {
   const navigate = useNavigate()
-  const pagination = usePagination(DEFAULT_PAGE_SIZE, SOP_ASSIGNMENT_DEFAULT_SORT)
+  const pagination = usePagination(ALL_PAGE_SIZE, SOP_ASSIGNMENT_DEFAULT_SORT)
   const [filters, setFilters] = useState<SopAssignmentFilters>({
     groupId: initialGroupId !== undefined ? String(initialGroupId) : '',
     status: 'all',

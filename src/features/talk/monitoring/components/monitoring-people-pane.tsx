@@ -48,7 +48,7 @@ export function MonitoringPeoplePane({
         <MonitoringSearchInput
           value={personSearch}
           onChange={setPersonSearch}
-          placeholder="Search people..."
+          placeholder="Search People..."
         />
         <MonitoringSegmentedTabs
           options={PEOPLE_SEGMENTS.map(({ value, label }) => ({
@@ -69,7 +69,7 @@ export function MonitoringPeoplePane({
         ) : peopleQuery.isError ? (
           <EmptyState
             icon={AlertCircle}
-            title="Couldn't load people"
+            title="Couldn't Load People"
             description={getApiErrorMessage(
               peopleQuery.error,
               'Something went wrong while reading the Talk directory.',
@@ -84,7 +84,7 @@ export function MonitoringPeoplePane({
                 ? // The endpoint matches the NAME alone — saying "or login"
                   // would send someone hunting with an address that can't match.
                   'No Talk identity matches that name.'
-                : 'Nobody in this segment holds a Talk identity yet.'
+                : 'Nobody in This Segment Holds a Talk Identity Yet.'
             }
           />
         ) : (

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { WEEKOFF_POLICY_DEFAULT_SORT } from '../constants'
 import { useWeekoffPolicies } from '../api/use-weekoff-policies'
@@ -30,7 +30,7 @@ export function useWeekoffPolicyList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, WEEKOFF_POLICY_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, WEEKOFF_POLICY_DEFAULT_SORT)
 
   const { data, isLoading, isError, error } = useWeekoffPolicies(params)
   const deletePolicy = useDeleteWeekoffPolicy()
@@ -48,7 +48,7 @@ export function useWeekoffPolicyList() {
     if (!pendingDelete) return
     deletePolicy.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Week-off policy deleted')
+        toast.success('Week-Off Policy Deleted')
         setPendingDelete(null)
       },
       // A policy still pointed at answers 409 with the reason, which is what to show.

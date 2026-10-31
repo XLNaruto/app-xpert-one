@@ -8,10 +8,10 @@ import { recordNameField } from '@/lib/validation'
  * server-side, so the form never touches it.
  */
 export const departmentSchema = z.object({
-  branchId: z.string().trim().min(1, 'Branch is required'),
+  branchId: z.string().trim().min(1, 'Branch Is Required'),
   departmentName: recordNameField('the department name', { max: 200 }),
   /** Day of the month (1–31) the attendance/salary cycle starts. */
-  monthStartDay: z.string().trim().min(1, 'Month start date is required'),
+  monthStartDay: z.string().trim().min(1, 'Month Start Date Is Required'),
 })
 
 export type DepartmentFormValues = z.infer<typeof departmentSchema>

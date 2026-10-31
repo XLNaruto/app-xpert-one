@@ -142,7 +142,7 @@ export function CompanyListPage() {
     <div>
       <PageHeader
         title="Company"
-        description="Manage your company master records."
+        description="Manage Your Company Master Records."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -155,14 +155,14 @@ export function CompanyListPage() {
 
       {isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load companies."}
+          {error instanceof Error ? error.message : "Couldn't Load Companies."}
         </p>
       ) : (
         <DataTable
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search companies…"
+          searchPlaceholder="Search Companies…"
           itemName="companies"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -179,7 +179,7 @@ export function CompanyListPage() {
             <EmptyState
               icon={Building2}
               title="No Companies Yet"
-              description="Create your first company to get started."
+              description="Create Your First Company to Get Started."
               action={
                 canCreate && (
                   <Button onClick={goToCreate}>

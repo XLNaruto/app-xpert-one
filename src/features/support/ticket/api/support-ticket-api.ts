@@ -105,7 +105,7 @@ export async function fetchSupportTickets(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load your support tickets.")
+    throw toApiError(error, "Couldn't Load Your Support Tickets.")
   }
 }
 
@@ -121,7 +121,7 @@ export async function fetchSupportTicket(id: number): Promise<SupportTicket> {
     const raw = await http.get<unknown>(endpoints.SUPPORT_TICKETS.GET(id))
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, 'Ticket not found')
+    throw toApiError(error, 'Ticket Not Found')
   }
 }
 
@@ -143,7 +143,7 @@ export async function createSupportTicket(
     )
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't raise the ticket.")
+    throw toApiError(error, "Couldn't Raise the Ticket.")
   }
 }
 
@@ -165,7 +165,7 @@ export async function updateSupportTicket(
     )
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't update the ticket.")
+    throw toApiError(error, "Couldn't Update the Ticket.")
   }
 }
 
@@ -187,7 +187,7 @@ export async function reopenSupportTicket(
     )
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't reopen the ticket.")
+    throw toApiError(error, "Couldn't Reopen the Ticket.")
   }
 }
 
@@ -203,7 +203,7 @@ export async function closeSupportTicket(id: number): Promise<SupportTicket> {
     const raw = await http.post<unknown>(endpoints.SUPPORT_TICKETS.CLOSE(id))
     return toSupportTicket(supportTicketResponseSchema.parse(raw))
   } catch (error) {
-    throw toApiError(error, "Couldn't close the ticket.")
+    throw toApiError(error, "Couldn't Close the Ticket.")
   }
 }
 
@@ -245,6 +245,6 @@ export async function fetchSupportSubCategories(
 
     return { items: collected, total }
   } catch (error) {
-    throw toApiError(error, "Couldn't load the sub-categories.")
+    throw toApiError(error, "Couldn't Load the Sub-categories.")
   }
 }

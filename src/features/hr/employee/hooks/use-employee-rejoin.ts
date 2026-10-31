@@ -181,7 +181,7 @@ export function useEmployeeRejoin() {
       {
         onSuccess: () => {
           toast.success(`${target.name || 'Employee'} rejoined`, {
-            description: 'A new posting has been opened — they are active again.',
+            description: 'A New Posting Has Been Opened — They Are Active Again.',
           })
           close()
         },
@@ -221,7 +221,7 @@ export function useEmployeeRejoin() {
       : !eligibility.data.canRejoin
         ? eligibility.data.reason || 'This employee cannot rejoin right now.'
         : !allowed
-          ? "None of this employee's earlier companies are within your reach."
+          ? "None of This Employee's Earlier Companies Are Within Your Reach."
           : null,
     /** A 409 from the save — names where their service is still running. */
     conflict,

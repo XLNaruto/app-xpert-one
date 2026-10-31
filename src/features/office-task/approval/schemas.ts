@@ -81,7 +81,7 @@ export type ProjectApprovalResponse = z.infer<typeof projectApprovalsResponseSch
  * get to go on.
  */
 export function verdictSchema(verdict: 'approved' | 'rejected') {
-  const remarks = z.string().trim().max(500, 'Keep it under 500 characters')
+  const remarks = z.string().trim().max(500, 'Keep It Under 500 Characters')
   return z.object({
     remarks:
       verdict === 'rejected' ? remarks.min(1, 'Say what needs redoing') : remarks,

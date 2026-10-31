@@ -55,7 +55,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
     <div>
       <PageHeader
         title={isEdit ? 'Edit Document' : 'Add Document'}
-        description="Configure document details."
+        description="Configure Document Details."
         actions={
           <Button variant="outline" onClick={goToList}>
             <ArrowLeft className="size-4" />
@@ -76,7 +76,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
             <p className="text-sm text-destructive">
               {loadError instanceof Error
                 ? loadError.message
-                : "Couldn't load this document."}
+                : "Couldn't Load This Document."}
             </p>
           ) : (
             <form
@@ -87,7 +87,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
               <FormSection
                 icon={FileText}
                 title="Document Details"
-                description="Document type, name and whether it is mandatory"
+                description="Document Type, Name and Whether It Is Mandatory"
                 className="mt-0"
               />
 
@@ -106,7 +106,7 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
                       onChange={field.onChange}
                       {...typeSelect}
                       placeholder={`Select ${DOCUMENT_LABELS.documentType}`}
-                      searchPlaceholder="Search document type"
+                      searchPlaceholder="Search Document Type"
                     />
                   )}
                 />
@@ -137,8 +137,8 @@ export function DocumentCreatePage({ data }: DocumentCreatePageProps) {
                       />
                       <span className="text-sm text-muted-foreground">
                         {field.value
-                          ? 'Every employee must submit this'
-                          : 'Optional for employees'}
+                          ? 'Every Employee Must Submit This'
+                          : 'Optional for Employees'}
                       </span>
                     </div>
                   )}

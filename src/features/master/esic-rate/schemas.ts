@@ -12,8 +12,8 @@ const amount = (what: string) =>
     .string()
     .trim()
     .min(1, `Please enter ${what}`)
-    .refine((v) => Number.isFinite(Number(v)), 'Please enter a valid amount')
-    .refine((v) => Number(v) >= 0, 'Amount must be positive')
+    .refine((v) => Number.isFinite(Number(v)), 'Please Enter a Valid Amount')
+    .refine((v) => Number(v) >= 0, 'Amount Must Be Positive')
 
 /** Required percentage field: present, numeric and within 0–100. */
 const percent = (what: string) =>
@@ -21,26 +21,26 @@ const percent = (what: string) =>
     .string()
     .trim()
     .min(1, `Please enter ${what}`)
-    .refine((v) => Number.isFinite(Number(v)), 'Please enter a valid percentage')
-    .refine((v) => Number(v) >= 0, 'Percentage must be positive')
-    .refine((v) => Number(v) <= 100, 'Percentage cannot exceed 100')
+    .refine((v) => Number.isFinite(Number(v)), 'Please Enter a Valid Percentage')
+    .refine((v) => Number(v) >= 0, 'Percentage Must Be Positive')
+    .refine((v) => Number(v) <= 100, 'Percentage Cannot Exceed 100')
 
 /** Create/edit form for an ESIC rate slab. */
 export const esicRateSchema = z
   .object({
-    wef: z.string().trim().min(1, 'Please select W.E.F date'),
+    wef: z.string().trim().min(1, 'Please Select W.E.F Date'),
 
-    wageCeilingLimit: amount('ESIC wage ceiling'),
+    wageCeilingLimit: amount('ESIC Wage Ceiling'),
     minimumRate: amount('minimum rate'),
 
     contributionEndPeriod1: z
       .string()
       .trim()
-      .min(1, 'Please select contribution period 1'),
+      .min(1, 'Please Select Contribution Period 1'),
     contributionEndPeriod2: z
       .string()
       .trim()
-      .min(1, 'Please select contribution period 2'),
+      .min(1, 'Please Select Contribution Period 2'),
 
     employeeEsiContribution: percent('employee contribution'),
     employerEsiContribution: percent('employer contribution'),
@@ -48,9 +48,9 @@ export const esicRateSchema = z
     disabilityDuration: z
       .string()
       .trim()
-      .min(1, 'Please enter disability duration')
-      .refine((v) => Number.isFinite(Number(v)), 'Please enter a valid duration')
-      .refine((v) => Number(v) >= 0, 'Duration must be positive'),
+      .min(1, 'Please Enter Disability Duration')
+      .refine((v) => Number.isFinite(Number(v)), 'Please Enter a Valid Duration')
+      .refine((v) => Number(v) >= 0, 'Duration Must Be Positive'),
 
     disabilityWageLimit: amount('disability wage limit'),
 
@@ -63,7 +63,7 @@ export const esicRateSchema = z
   // year uncovered.
   .refine((v) => v.contributionEndPeriod1 !== v.contributionEndPeriod2, {
     path: ['contributionEndPeriod2'],
-    message: 'Contribution period 2 must differ from period 1',
+    message: 'Contribution Period 2 Must Differ from Period 1',
   })
 
 export type EsicRateFormValues = z.infer<typeof esicRateSchema>

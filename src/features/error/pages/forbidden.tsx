@@ -21,7 +21,7 @@ interface ForbiddenProps {
  */
 export function Forbidden({
   title = 'Access Denied',
-  description = "You don't have permission to view this page. If you think this is a mistake, contact your administrator to request access.",
+  description = "You Don't Have Permission to View This Page. If You Think This Is a Mistake, Contact Your Administrator to Request Access.",
 }: ForbiddenProps) {
   const router = useRouter()
 

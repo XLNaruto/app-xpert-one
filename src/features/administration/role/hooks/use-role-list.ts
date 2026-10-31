@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { encryptId } from '@/lib/crypto'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { ROLE_DEFAULT_SORT } from '../constants'
 import { useRoles } from '../api/use-roles'
@@ -29,7 +29,7 @@ export function useRoleList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, ROLE_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, ROLE_DEFAULT_SORT)
 
   const { data, isLoading, isError, error } = useRoles(params)
   const removeRole = useDeleteRole()
@@ -46,7 +46,7 @@ export function useRoleList() {
     if (!pendingDelete) return
     removeRole.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Role deleted')
+        toast.success('Role Deleted')
         setPendingDelete(null)
       },
       // A role still held by a live user answers 409 with the count, which is

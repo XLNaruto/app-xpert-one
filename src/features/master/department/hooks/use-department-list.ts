@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { ALL_PAGE_SIZE } from '@/components/data-table'
 import { usePagination } from '@/hooks/use-pagination'
 import { toast } from 'sonner'
 import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
-import { DEFAULT_PAGE_SIZE } from '@/lib/pagination'
 import { useBranches } from '@/features/master/branch'
 import { DEPARTMENT_DEFAULT_SORT } from '../constants'
 import { useDepartments } from '../api/use-departments'
@@ -28,7 +28,7 @@ export function useDepartmentList() {
     onPaginationChange,
     sorting,
     onSortingChange,
-  } = usePagination(DEFAULT_PAGE_SIZE, DEPARTMENT_DEFAULT_SORT)
+  } = usePagination(ALL_PAGE_SIZE, DEPARTMENT_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useDepartments(params)
   const deleteDepartment = useDeleteDepartment()
 
@@ -52,11 +52,11 @@ export function useDepartmentList() {
     if (!pendingDelete) return
     deleteDepartment.mutate(pendingDelete.id, {
       onSuccess: () => {
-        toast.success('Department deleted')
+        toast.success('Department Deleted')
         setPendingDelete(null)
       },
       onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to delete department'),
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Department'),
     })
   }
 

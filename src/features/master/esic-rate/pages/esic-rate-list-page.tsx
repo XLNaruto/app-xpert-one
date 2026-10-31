@@ -134,7 +134,7 @@ export function EsicRateListPage() {
     <div>
       <PageHeader
         title="ESIC Rate Setting"
-        description="Manage Employees' State Insurance rate slabs by effective date."
+        description="Manage Employees' State Insurance Rate Slabs by Effective Date."
         actions={
           canCreate && (
             <Button onClick={goToCreate}>
@@ -147,7 +147,7 @@ export function EsicRateListPage() {
 
       {isError ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Couldn't load ESIC rates."}
+          {error instanceof Error ? error.message : "Couldn't Load ESIC Rates."}
         </p>
       ) : (
         /* Search and sort are both server-side, so they span every page. */
@@ -155,7 +155,7 @@ export function EsicRateListPage() {
           columns={columns}
           data={rows}
           isLoading={isLoading}
-          searchPlaceholder="Search ESIC rate…"
+          searchPlaceholder="Search ESIC Rate…"
           itemName="ESIC rates"
           pageSizeOptions={[5, 10, 25, 50]}
           serverPagination
@@ -174,8 +174,8 @@ export function EsicRateListPage() {
               title={search ? 'No Matching ESIC Rates' : 'No ESIC Rates Yet'}
               description={
                 search
-                  ? 'Try a different search term.'
-                  : 'Add your first ESIC rate slab to get started.'
+                  ? 'Try a Different Search Term.'
+                  : 'Add Your First ESIC Rate Slab to Get Started.'
               }
               action={
                 search

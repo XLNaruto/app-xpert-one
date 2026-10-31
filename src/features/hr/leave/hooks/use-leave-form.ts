@@ -218,7 +218,7 @@ export function useLeaveForm(id?: number) {
         onSuccess: (application) => {
           // ONE confirmation for the application, never two for its halves — and
           // it says outright when part of what was just recorded is unpaid.
-          toast.success('Leave recorded', {
+          toast.success('Leave Recorded', {
             description: describeApplication(application, typeLabel),
           })
           goToList()
@@ -233,7 +233,7 @@ export function useLeaveForm(id?: number) {
             setValue('status', 'PENDING', { shouldDirty: true })
             toast.error(getApiErrorMessage(error, "You can't decide this leave."), {
               description:
-                "You aren't an approver for this company, so the status is now Pending — save again to file it for a decision.",
+                "You Aren't an Approver for This Company, So the Status Is Now Pending — Save Again to File It for a Decision.",
             })
             return
           }
@@ -253,7 +253,7 @@ export function useLeaveForm(id?: number) {
       { values, mode: isDecided ? 'notes' : 'schedule' },
       {
         onSuccess: (application) => {
-          toast.success('Leave updated', {
+          toast.success('Leave Updated', {
             description: describeApplication(application, typeLabel),
           })
           goToList()

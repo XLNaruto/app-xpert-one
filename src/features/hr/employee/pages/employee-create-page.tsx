@@ -68,7 +68,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
   const title = employeeId === undefined ? 'Add Employee' : 'Edit Employee'
   const description =
     employeeId === undefined
-      ? 'Save Basic Detail first — the other eight steps hang off the saved employee.'
+      ? 'Save Basic Detail First — The Other Eight Steps Hang off the Saved Employee.'
       : [employee?.name, employee?.code].filter(Boolean).join(' · ') ||
         'Complete the employee record'
 
@@ -115,7 +115,7 @@ export function EmployeeCreatePage({ data }: EmployeeCreatePageProps) {
             <p className="text-sm text-destructive">
               {wizard.loadError instanceof Error
                 ? wizard.loadError.message
-                : "Couldn't load this employee."}
+                : "Couldn't Load This Employee."}
             </p>
           ) : (
             <div>
@@ -244,7 +244,7 @@ function StepBody({
           employeeId={employeeId}
           footer={
             <StepNavFooter onContinue={goToNextTab} onBack={goToPrevTab} continueLabel="Finish">
-              An allowance set here overrides the designation for this year only.
+              An Allowance Set Here Overrides the Designation for This Year Only.
             </StepNavFooter>
           }
         />

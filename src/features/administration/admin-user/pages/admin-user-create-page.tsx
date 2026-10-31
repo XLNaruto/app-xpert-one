@@ -50,7 +50,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
     <div>
       <PageHeader
         title={form.isEdit ? 'Edit User' : 'Add User'}
-        description="Their email address is the login. The role decides what they can do; the scope below decides which companies they can do it in."
+        description="Their Email Address Is the Login. The Role Decides What They Can Do; The Scope Below Decides Which Companies They Can Do It In."
         actions={
           <>
             {form.isOwner && (
@@ -82,7 +82,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
             <p className="text-sm text-destructive">
               {form.loadError instanceof Error
                 ? form.loadError.message
-                : "Couldn't load this user."}
+                : "Couldn't Load This User."}
             </p>
           ) : (
             <form
@@ -93,7 +93,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
               <FormSection
                 icon={UserRound}
                 title="Personal Information"
-                description="The employee this login belongs to. An employee of the role's company — once linked it can be changed, never removed."
+                description="The Employee This Login Belongs To. An Employee of the Role's Company — Once Linked It Can Be Changed, Never Removed."
                 className="mt-0"
               />
 
@@ -103,8 +103,8 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
                 error={form.errors.employeeId?.message}
                 hint={
                   form.hasMoreEmployees
-                    ? 'Showing the first 100 — type to search the rest by name.'
-                    : 'Their name and mobile number are taken from the employee record.'
+                    ? 'Showing the First 100 — Type to Search the Rest by Name.'
+                    : 'Their Name and Mobile Number Are Taken from the Employee Record.'
                 }
                 className="md:col-span-2"
               >
@@ -113,10 +113,10 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
                   onChange={form.setEmployeeId}
                   options={form.employeeOptions}
                   icon={UserRound}
-                  placeholder="Select employee"
+                  placeholder="Select Employee"
                   // Matched server-side, by name, across every company.
                   onSearchChange={form.setEmployeeSearch}
-                  searchPlaceholder="Search employees by name"
+                  searchPlaceholder="Search Employees by Name"
                   loading={form.isEmployeesLoading}
                   panelMinWidth={280}
                   className="w-full"
@@ -128,8 +128,8 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
                 title="Login Credentials"
                 description={
                   form.isEdit
-                    ? 'The email is the login. Leave the password blank to keep the current one — changing it signs the user out everywhere.'
-                    : 'The email is the login, and it has to be unused across the whole platform.'
+                    ? 'The Email Is the Login. Leave the Password Blank to Keep the Current One — Changing It Signs the User out Everywhere.'
+                    : 'The Email Is the Login, and It Has to Be Unused Across the Whole Platform.'
                 }
               />
 
@@ -148,13 +148,13 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
                 error={form.errors.password?.message}
                 hint={
                   form.isEdit
-                    ? 'Leave blank to keep the current password.'
+                    ? 'Leave Blank to Keep the Current Password.'
                     : `At least ${MIN_ADMIN_USER_PASSWORD} characters.`
                 }
               >
                 <PasswordInput
                   autoComplete="new-password"
-                  placeholder={form.isEdit ? 'Leave blank to keep current' : '••••••••'}
+                  placeholder={form.isEdit ? 'Leave Blank to Keep Current' : '••••••••'}
                   {...form.form.register('password')}
                 />
               </Field>
@@ -167,12 +167,12 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
                 label="Confirm Password"
                 required={!form.isEdit}
                 error={form.errors.confirmPassword?.message}
-                hint="Checked in the browser only — re-type the password so a typo can't lock the user out."
+                hint="Checked in the Browser Only — Re-type the Password So a Typo Can't Lock the User Out."
               >
                 <PasswordInput
                   autoComplete="new-password"
                   placeholder={
-                    form.isEdit ? 'Leave blank to keep current' : 'Re-enter the password'
+                    form.isEdit ? 'Leave Blank to Keep Current' : 'Re-enter the Password'
                   }
                   {...form.form.register('confirmPassword')}
                 />
@@ -181,7 +181,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
               <FormSection
                 icon={ShieldCheck}
                 title="Role"
-                description="The role carries the permissions — what this user may do — and its company becomes theirs."
+                description="The Role Carries the Permissions — What This User May Do — And Its Company Becomes Theirs."
               />
 
               <AdminUserRoleFields form={form} />
@@ -189,7 +189,7 @@ export function AdminUserCreatePage({ data }: AdminUserCreatePageProps) {
               <FormSection
                 icon={SlidersHorizontal}
                 title="Scope & Access"
-                description="Which companies this user reaches, and whether they may use Talk. This is theirs, not their role's — two people on one role can cover different offices."
+                description="Which Companies This User Reaches, and Whether They May Use Talk. This Is Theirs, Not Their Role's — Two People on One Role Can Cover Different Offices."
               />
 
               <AdminUserScopeFields form={form} disabled={form.isReachLocked} />

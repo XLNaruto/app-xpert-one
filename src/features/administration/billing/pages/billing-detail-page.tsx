@@ -129,7 +129,7 @@ export function BillingDetailPage() {
     <div>
       <PageHeader
         title="Billing & Subscription"
-        description="Your plan, what it allows, and how much of it you're using."
+        description="Your Plan, What It Allows, and How Much of It You're Using."
         actions={
           <Button type="button" variant="outline" onClick={goToHistory}>
             <History className="size-4" />
@@ -152,7 +152,7 @@ export function BillingDetailPage() {
             <p className="text-sm text-destructive">
               {error instanceof Error
                 ? error.message
-                : "Couldn't load your billing details."}
+                : "Couldn't Load Your Billing Details."}
             </p>
           </CardContent>
         </Card>
@@ -215,8 +215,8 @@ export function BillingDetailPage() {
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {canPurchase
-                      ? 'Compare what each plan allows, then pick the one you want.'
-                      : 'Compare what each plan allows. To change plans, get in touch with us.'}
+                      ? 'Compare What Each Plan Allows, Then Pick the One You Want.'
+                      : 'Compare What Each Plan Allows. To Change Plans, Get in Touch with Us.'}
                   </p>
                 </div>
 
@@ -311,7 +311,7 @@ export function BillingDetailPage() {
             </>
           ) : (
             <>
-              You'll be charged {pendingPrice} per {yearly ? 'year' : 'month'}.
+              You'll Be Charged {pendingPrice} per {yearly ? 'year' : 'month'}.
               We'll take you to the payment page to complete it.
             </>
           ))
@@ -332,7 +332,7 @@ export function BillingDetailPage() {
         title="Cancel the Booked Plan Change?"
         description={
           subscription?.scheduledSwitch
-            ? `${subscription.scheduledSwitch.planName ?? 'The new plan'} won't start at renewal, and your current plan's limits apply again.`
+            ? `${subscription.scheduledSwitch.planName ?? 'The New Plan'} won't start at renewal, and your current plan's limits apply again.`
             : undefined
         }
         confirmLabel="Cancel Change"
@@ -348,7 +348,7 @@ export function BillingDetailPage() {
         variant="destructive"
         icon={Undo2}
         title="Withdraw Your Request?"
-        description="Our team won't act on it. You can send a new request any time."
+        description="Our Team Won't Act on It. You Can Send a New Request Any Time."
         confirmLabel="Withdraw"
         cancelLabel="Keep It"
       />

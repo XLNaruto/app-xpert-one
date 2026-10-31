@@ -17,11 +17,11 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
  */
 function baseLeaveShape() {
   return z.object({
-    employeeId: z.string().trim().min(1, 'Please select an employee'),
-    leaveTypeId: z.string().trim().min(1, 'Please select a leave type'),
-    fromDate: z.string().trim().min(1, 'Please select the from date'),
-    toDate: z.string().trim().min(1, 'Please select the to date'),
-    duration: z.string().trim().min(1, 'Please select the duration'),
+    employeeId: z.string().trim().min(1, 'Please Select an Employee'),
+    leaveTypeId: z.string().trim().min(1, 'Please Select a Leave Type'),
+    fromDate: z.string().trim().min(1, 'Please Select the from Date'),
+    toDate: z.string().trim().min(1, 'Please Select the to Date'),
+    duration: z.string().trim().min(1, 'Please Select the Duration'),
     fromTime: z.string(),
     toTime: z.string(),
     status: z.string(),
@@ -29,10 +29,10 @@ function baseLeaveShape() {
      * The decision note when a leave is RECORDED as a decision — required on
      * `REJECTED`, optional on `APPROVED`, not sent on `PENDING`. Create only.
      */
-    remark: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
-    leaveReason: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
+    remark: z.string().trim().max(2000, 'Cannot Exceed 2000 Characters'),
+    leaveReason: z.string().trim().max(2000, 'Cannot Exceed 2000 Characters'),
     /** The storage KEY from the presign, never the file itself. */
-    attachment: z.string().trim().max(500, 'Cannot exceed 500 characters'),
+    attachment: z.string().trim().max(500, 'Cannot Exceed 500 Characters'),
   })
 }
 
@@ -71,7 +71,7 @@ export function leaveSchemaFor({
       ctx.addIssue({
         code: 'custom',
         path: ['fromDate'],
-        message: 'A leave has to start tomorrow or later',
+        message: 'A Leave Has to Start Tomorrow or Later',
       })
     }
 
@@ -81,7 +81,7 @@ export function leaveSchemaFor({
       ctx.addIssue({
         code: 'custom',
         path: ['remark'],
-        message: 'Say why the leave is being rejected',
+        message: 'Say Why the Leave Is Being Rejected',
       })
     }
 
@@ -102,7 +102,7 @@ export function leaveSchemaFor({
       ctx.addIssue({
         code: 'custom',
         path: ['fromTime'],
-        message: 'Enter a start time as HH:MM',
+        message: 'Enter a Start Time as HH:MM',
       })
       return
     }
@@ -110,7 +110,7 @@ export function leaveSchemaFor({
       ctx.addIssue({
         code: 'custom',
         path: ['toTime'],
-        message: 'Enter an end time as HH:MM',
+        message: 'Enter an End Time as HH:MM',
       })
       return
     }
@@ -120,7 +120,7 @@ export function leaveSchemaFor({
       ctx.addIssue({
         code: 'custom',
         path: ['toTime'],
-        message: 'End time must be after the start time',
+        message: 'End Time Must Be After the Start Time',
       })
     } else if (minutes !== HALF_DAY_HOURS * 60) {
       ctx.addIssue({
@@ -142,11 +142,11 @@ export function leaveSchemaFor({
 export const leaveDecisionSchema = z
   .object({
     status: z.enum(['APPROVED', 'REJECTED']),
-    remark: z.string().trim().max(2000, 'Cannot exceed 2000 characters'),
+    remark: z.string().trim().max(2000, 'Cannot Exceed 2000 Characters'),
   })
   .refine((v) => v.status !== 'REJECTED' || v.remark.trim() !== '', {
     path: ['remark'],
-    message: 'Say why the leave is being rejected',
+    message: 'Say Why the Leave Is Being Rejected',
   })
 
 export type LeaveDecisionFormValues = z.infer<typeof leaveDecisionSchema>

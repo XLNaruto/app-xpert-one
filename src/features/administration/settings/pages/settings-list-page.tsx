@@ -70,7 +70,7 @@ export function SettingsListPage() {
     <div>
       <PageHeader
         title="Settings"
-        description="How this company's employees work — changes are scheduled ahead, never applied on the spot."
+        description="How This Company's Employees Work — Changes Are Scheduled Ahead, Never Applied on the Spot."
         actions={tab === 'settings' && saveActions}
       />
 
@@ -97,7 +97,7 @@ export function SettingsListPage() {
                     <FormSection
                       icon={CalendarClock}
                       title="When It Takes Effect"
-                      description="Nothing changes until this date and time"
+                      description="Nothing Changes Until This Date and Time"
                       className="mt-0"
                     />
                     <div className="mt-4 max-w-xl">
@@ -119,7 +119,7 @@ export function SettingsListPage() {
                   <FormSection
                     icon={ClipboardCheck}
                     title="SOP Task Submission"
-                    description="How employees hand in their daily SOP tasks"
+                    description="How Employees Hand In Their Daily SOP Tasks"
                     // First in the card when the effective-from section is hidden.
                     className={settings.canUpdate ? undefined : 'mt-0'}
                   />
@@ -160,7 +160,7 @@ export function SettingsListPage() {
                   <FormSection
                     icon={FolderKanban}
                     title="Project Task Submission"
-                    description="How employees record progress and hand in project tasks"
+                    description="How Employees Record Progress and Hand In Project Tasks"
                   />
                   <div className="mt-4">
                     {settings.isLoading ? (
@@ -357,14 +357,14 @@ function SettingsHistoryTab({
       },
       {
         id: 'created_by_name',
-        header: 'Changed by',
+        header: 'Changed By',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => row.original.createdByName ?? '—',
       },
       {
         id: 'created_at',
-        header: 'Changed on',
+        header: 'Changed On',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => formatIst(row.original.createdAt),
@@ -397,6 +397,7 @@ function SettingsHistoryTab({
       onPaginationChange={history.onPaginationChange}
       toolbar={
         <FilterBar
+          search={{ value: history.search, onChange: history.setSearch, placeholder: 'Search…' }}
           facets={[
             {
               key: 'setting_key',
@@ -421,11 +422,19 @@ function SettingsHistoryTab({
         />
       }
       emptyState={
-        <EmptyState
-          icon={History}
-          title="No Changes Yet"
-          description="Every change you schedule is listed here, with what became of it."
-        />
+        history.search.trim() ? (
+          <EmptyState
+            icon={History}
+            title="No Matching Changes"
+            description="Try a Different Search Term."
+          />
+        ) : (
+          <EmptyState
+            icon={History}
+            title="No Changes Yet"
+            description="Every Change You Schedule Is Listed Here, with What Became of It."
+          />
+        )
       }
     />
   )

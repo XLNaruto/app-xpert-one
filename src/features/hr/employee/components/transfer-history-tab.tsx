@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { DataTable } from '@/components/data-table'
+import { ALL_PAGE_SIZE, DataTable } from '@/components/data-table'
 import { DetailItem } from '@/components/common/detail-item'
 import { EmptyState } from '@/components/common/empty-state'
 import { Field } from '@/components/common/form-field'
@@ -144,7 +144,7 @@ export function TransferHistoryTab({
           row.original.leavingDate ? (
             formatDate(row.original.leavingDate)
           ) : (
-            <Badge variant="success">Currently working</Badge>
+            <Badge variant="success">Currently Working</Badge>
           ),
       },
       {
@@ -180,7 +180,7 @@ export function TransferHistoryTab({
         <FormSection
           icon={ArrowRightLeft}
           title="Posting History"
-          description="Every posting the employee has held, newest first"
+          description="Every Posting the Employee Has Held, Newest First"
           className="mt-0 flex-1"
         />
         <div className="flex flex-wrap items-center gap-2">
@@ -247,7 +247,7 @@ export function TransferHistoryTab({
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {tab.error instanceof Error
               ? tab.error.message
-              : "Couldn't load the transfer history."}
+              : "Couldn't Load the Transfer History."}
           </p>
         ) : (
           <DataTable
@@ -255,13 +255,13 @@ export function TransferHistoryTab({
             data={tab.rows}
             isLoading={tab.isLoading}
             itemName="postings"
-            pageSize={5}
+            pageSize={ALL_PAGE_SIZE}
             pageSizeOptions={[5, 10, 25]}
             emptyState={
               <EmptyState
                 icon={ArrowRightLeft}
                 title="No Postings Yet"
-                description="The first posting is created together with the employee in Basic Detail."
+                description="The First Posting Is Created Together with the Employee in Basic Detail."
               />
             }
           />
@@ -269,8 +269,8 @@ export function TransferHistoryTab({
       </div>
 
       <StepNavFooter onContinue={onContinue} onBack={onBack}>
-        A transfer closes the open posting and opens a new one — the old row is kept
-        as history, never overwritten.
+        A Transfer Closes the Open Posting and Opens a New One — The Old Row Is Kept
+        as History, Never Overwritten.
       </StepNavFooter>
 
       {/* ── Transfer ────────────────────────────────────────────────────── */}
@@ -280,7 +280,7 @@ export function TransferHistoryTab({
           open={tab.dialog === 'transfer'}
           onOpenChange={(open) => !open && tab.closeDialog()}
           title="Transfer Service"
-          description="One call closes the current posting and opens the new one, so the history survives."
+          description="One Call Closes the Current Posting and Opens the New One, So the History Survives."
           onSubmit={tab.transfer.onSubmit}
           isPending={tab.transfer.isPending}
           submitLabel="Transfer"
@@ -290,7 +290,7 @@ export function TransferHistoryTab({
             <FormSection
               icon={LogOut}
               title="Close the Current Posting"
-              description="The leaving details recorded against the posting being left"
+              description="The Leaving Details Recorded Against the Posting Being Left"
               className="mt-0"
             />
           </div>
@@ -324,7 +324,7 @@ export function TransferHistoryTab({
             <FormSection
               icon={Building2}
               title="The New Posting"
-              description="Where the employee goes next, and on what terms"
+              description="Where the Employee Goes Next, and on What Terms"
             />
           </div>
 
@@ -337,7 +337,7 @@ export function TransferHistoryTab({
             label="Company"
             required
             error={transferErrors.companyId?.message}
-            hint="Leave it as it is for a move inside the same company; pick another to transfer the employee across."
+            hint="Leave It as It Is for a Move Inside the Same Company; Pick Another to Transfer the Employee Across."
           >
             <Controller
               control={tab.transfer.form.control}
@@ -348,8 +348,8 @@ export function TransferHistoryTab({
                   value={field.value}
                   onChange={field.onChange}
                   {...tab.transfer.companySelect}
-                  placeholder="Select company"
-                  searchPlaceholder="Search company"
+                  placeholder="Select Company"
+                  searchPlaceholder="Search Company"
                 />
               )}
             />
@@ -377,7 +377,7 @@ export function TransferHistoryTab({
           open={tab.dialog === 'edit'}
           onOpenChange={(open) => !open && tab.closeDialog()}
           title="Edit Posting"
-          description="Corrects the latest posting in place — nothing is closed and no history is added."
+          description="Corrects the Latest Posting in Place — Nothing Is Closed and No History Is Added."
           onSubmit={tab.edit.onSubmit}
           isPending={tab.edit.isPending}
           submitLabel="Save Changes"
@@ -405,7 +405,7 @@ export function TransferHistoryTab({
         open={tab.dialog === 'leave'}
         onOpenChange={(open) => !open && tab.closeDialog()}
         title="Leave Service"
-        description="Closes the open posting without opening another — the employee exits."
+        description="Closes the Open Posting Without Opening Another — The Employee Exits."
         onSubmit={tab.leave.onSubmit}
         isPending={tab.leave.isPending}
         submitLabel="Close Posting"
@@ -514,7 +514,7 @@ function PostingDetailDialog({
           <DialogDescription>
             {detail
               ? `${detail.serviceDetail.companyName || 'Company'} · ${detail.serviceDetail.designationName || 'No designation'}`
-              : 'The posting and the wage structure it was held under'}
+              : 'The Posting and the Wage Structure It Was Held Under'}
           </DialogDescription>
         </DialogHeader>
 
@@ -529,7 +529,7 @@ function PostingDetailDialog({
             <p className="text-sm text-destructive">
               {error instanceof Error
                 ? error.message
-                : "Couldn't load this posting's detail."}
+                : "Couldn't Load This Posting's Detail."}
             </p>
           ) : (
             <div className="space-y-6">
@@ -537,7 +537,7 @@ function PostingDetailDialog({
                 <FormSection
                   icon={Building2}
                   title="Assignment"
-                  description="Where this posting sat"
+                  description="Where This Posting Sat"
                   className="mt-0"
                 />
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -584,7 +584,7 @@ function PostingDetailDialog({
                 <FormSection
                   icon={Info}
                   title="Important Dates"
-                  description="The span of this posting"
+                  description="The Span of This Posting"
                 />
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <DetailItem
@@ -620,7 +620,7 @@ function PostingDetailDialog({
                     value={
                       detail.serviceDetail.leavingDate
                         ? formatDate(detail.serviceDetail.leavingDate)
-                        : 'Still open'
+                        : 'Still Open'
                     }
                   />
                   <DetailItem
@@ -636,7 +636,7 @@ function PostingDetailDialog({
                 <FormSection
                   icon={ArrowRightLeft}
                   title="Wage Structure"
-                  description="The wage in force for this posting — the employee's own version if one applies, otherwise the designation's as of the posting date"
+                  description="The Wage in Force for This Posting — The Employee's Own Version If One Applies, Otherwise the Designation's as of the Posting Date"
                 />
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <DetailItem
@@ -644,10 +644,10 @@ function PostingDetailDialog({
                     label="Source"
                     value={
                       detail.wageStructure.source === 'EMPLOYEE'
-                        ? "Employee's own wage"
+                        ? "Employee's Own Wage"
                         : detail.wageStructure.source === 'DESIGNATION'
-                          ? 'Designation wage structure'
-                          : 'No wage in force'
+                          ? 'Designation Wage Structure'
+                          : 'No Wage in Force'
                     }
                   />
                   <DetailItem

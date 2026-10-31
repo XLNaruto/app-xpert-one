@@ -81,7 +81,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
     <div>
       <PageHeader
         title={ticket ? `Ticket ${ticket.code}` : 'Employee Ticket'}
-        description="A query one of your employees raised from the app, and the conversation about it."
+        description="A Query One of Your Employees Raised from the App, and the Conversation About It."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={detail.goToList}>
@@ -141,7 +141,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
             <p className="text-sm text-destructive">
               {detail.error instanceof Error
                 ? detail.error.message
-                : "Couldn't load this ticket."}
+                : "Couldn't Load This Ticket."}
             </p>
           </CardContent>
         </Card>
@@ -219,7 +219,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
                 // Stamped by the first office reply and never moved — it's what
                 // makes response time reportable without walking the thread.
                 label="First Replied"
-                value={asMoment(ticket.firstResponseAt) ?? 'Not answered yet'}
+                value={asMoment(ticket.firstResponseAt) ?? 'Not Answered Yet'}
               />
               <DetailItem
                 icon={CalendarClock}
@@ -230,7 +230,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
               <FormSection
                 icon={UserRoundCog}
                 title="Handling"
-                description="Nothing auto-assigns here. A ticket belongs to nobody until somebody takes it or is given it."
+                description="Nothing Auto-Assigns Here. A Ticket Belongs to Nobody Until Somebody Takes It or Is Given It."
               />
 
               <DetailItem
@@ -252,20 +252,20 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
               <DetailItem
                 icon={CalendarClock}
                 label="Taken At"
-                value={asMoment(ticket.assignedAt) ?? 'Nobody has taken it'}
+                value={asMoment(ticket.assignedAt) ?? 'Nobody Has Taken It'}
               />
               <DetailItem
                 icon={PlayCircle}
                 // NOT the first reply: this is when somebody STARTED, that is
                 // when the office first WROTE. Neither derives the other.
                 label="Work Started"
-                value={asMoment(ticket.workStartedAt) ?? 'Not started'}
+                value={asMoment(ticket.workStartedAt) ?? 'Not Started'}
               />
 
               <FormSection
                 icon={Timer}
                 title="Time"
-                description="One of these is effort and three are calendar time. They are not interchangeable."
+                description="One of These Is Effort and Three Are Calendar Time. They Are Not Interchangeable."
               />
 
               <EmployeeTicketTiming
@@ -320,7 +320,7 @@ export function EmployeeTicketDetailPage({ data }: { data?: string }) {
               <FormSection
                 icon={MessagesSquare}
                 title="Conversation"
-                description="The whole thread, oldest first. Your replies are pushed to the employee's device."
+                description="The Whole Thread, Oldest First. Your Replies Are Pushed to the Employee's Device."
                 className="mt-0"
               />
 
