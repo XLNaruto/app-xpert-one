@@ -30,7 +30,7 @@ import type {
 /**
  * The audit block as the table's audit columns read it. The NAME is
  * `created_by_name` — `created_by` is the raw actor id — and it is `null` when
- * the writer wasn't a tenant user, which the audit stack renders as "—".
+ * the writer wasn't a tenant user, which the audit stack renders as "N/A".
  */
 export function toAudit(r: AuditResponse): AuditFields {
   return {

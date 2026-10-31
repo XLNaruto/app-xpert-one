@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { SalaryImportResult, SalaryImportRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface SalaryImportResultDialogProps {
   /** The import's report — `null` closes the dialog. */
@@ -144,7 +145,7 @@ export function SalaryImportResultDialog({
                   </span>
 
                   <span className="min-w-0 flex-1 truncate text-sm font-medium tabular-nums text-foreground">
-                    {row.employeeCode || 'No code'}
+                    {row.employeeCode ? <EmployeeCodeBadge code={row.employeeCode} /> : 'No code'}
                   </span>
 
                   {/* The reason in full on hover — the row keeps one line so a

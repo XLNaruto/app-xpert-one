@@ -52,7 +52,7 @@ function RuleIcon({ icon: Icon, label }: { icon: typeof Camera; label: string })
   )
 }
 
-/** Camera = proof photo required · shield = needs approval. "—" when neither. */
+/** Camera = proof photo required · shield = needs approval. "N/A" when neither. */
 export function RuleIcons({ photo, approval }: { photo: boolean; approval: boolean }) {
   if (!photo && !approval) {
     return (

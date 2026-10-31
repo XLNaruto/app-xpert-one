@@ -27,6 +27,7 @@ import { salaryMonthName } from '../constants'
 import { useSalaryViewDetail } from '../hooks/use-salary-view-detail'
 import { initialsOf } from '../lib/salary-view-mappers'
 import type { SalaryViewHead, SalaryViewRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * One processed salary, in full — the payslip behind a row of View Salary.
@@ -115,7 +116,7 @@ export function SalaryViewDetailPage({ data }: { data?: string }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {row.employeeCode && <Chip>{row.employeeCode}</Chip>}
+            <EmployeeCodeBadge code={row.employeeCode} className="rounded-full px-2.5 py-0.5" />
             {row.gender && <Chip>{row.gender}</Chip>}
             {row.maritalStatus && <Chip>{row.maritalStatus}</Chip>}
             <Badge variant={row.isPaid ? 'success' : 'warning'}>

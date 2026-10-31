@@ -34,7 +34,7 @@ import type {
 } from '../types'
 
 function VerdictCell({ row }: { row: VerdictInfo & { status: string } }) {
-  if (!row.verdict && row.status !== 'pending_approval') return <span className="text-muted-foreground">—</span>
+  if (!row.verdict && row.status !== 'pending_approval') return <span className="text-muted-foreground">N/A</span>
   return (
     <div className="space-y-1">
       <VerdictBadge verdict={row.verdict} />
@@ -174,7 +174,7 @@ export function ApprovalListPage() {
         id: 'note',
         header: "Worker's Note",
         enableSorting: false,
-        cell: ({ row }) => <p className="line-clamp-2 max-w-52 text-sm">{row.original.note || '—'}</p>,
+        cell: ({ row }) => <p className="line-clamp-2 max-w-52 text-sm">{row.original.note || 'N/A'}</p>,
       },
       {
         id: 'proof',
@@ -281,7 +281,7 @@ export function ApprovalListPage() {
         id: 'note',
         header: "Worker's Note",
         enableSorting: false,
-        cell: ({ row }) => <p className="line-clamp-2 max-w-52 text-sm">{row.original.note || '—'}</p>,
+        cell: ({ row }) => <p className="line-clamp-2 max-w-52 text-sm">{row.original.note || 'N/A'}</p>,
       },
       {
         id: 'proof',

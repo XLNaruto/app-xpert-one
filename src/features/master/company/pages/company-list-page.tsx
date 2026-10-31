@@ -102,7 +102,7 @@ export function CompanyListPage() {
         enableSorting: false,
         header: 'Est. Year',
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.establishYear || '—',
+        cell: ({ row }) => row.original.establishYear || 'N/A',
       },
       {
         id: COMPANY_SORT.city,
@@ -113,9 +113,9 @@ export function CompanyListPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const parts = [row.original.city, row.original.stateName].filter(
-            (part) => part && part !== '—',
+            (part) => part && part !== 'N/A',
           )
-          return <span>{parts.length ? parts.join(', ') : '—'}</span>
+          return <span>{parts.length ? parts.join(', ') : 'N/A'}</span>
         },
       },
       {
@@ -123,7 +123,7 @@ export function CompanyListPage() {
         enableSorting: false,
         header: 'Mobile',
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.mobile1 || '—',
+        cell: ({ row }) => row.original.mobile1 || 'N/A',
       },
       // Only `created_at` is sortable on this endpoint.
       ...auditColumns<Company>({ createdAt: COMPANY_SORT.createdAt }),

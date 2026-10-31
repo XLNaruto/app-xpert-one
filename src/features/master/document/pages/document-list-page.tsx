@@ -77,7 +77,7 @@ export function DocumentListPage() {
           <DataTableColumnHeader column={column} title={DOCUMENT_LABELS.documentType} />
         ),
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.documentTypeName || '—',
+        cell: ({ row }) => row.original.documentTypeName || 'N/A',
       },
       {
         id: DOCUMENT_SORT.documentName,

@@ -2,6 +2,7 @@ import { CellTooltip } from '@/components/common/wage-grid-fields'
 import { cn } from '@/lib/utils'
 import { initialsOf } from '../lib/salary-view-mappers'
 import type { SalaryViewRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Who the salary belongs to — the column a reader scans by.
@@ -40,11 +41,7 @@ export function SalaryViewEmployeeCell({
           </span>
         </CellTooltip>
         <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
-          {showCode && row.employeeCode && (
-            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-              #{row.employeeCode}
-            </span>
-          )}
+          {showCode && <EmployeeCodeBadge code={row.employeeCode} />}
           {row.designationName && (
             <CellTooltip label={row.designationName}>
               <span className="min-w-0 cursor-help truncate text-[11px] uppercase tracking-wide text-muted-foreground">

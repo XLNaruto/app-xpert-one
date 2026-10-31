@@ -109,7 +109,7 @@ export function TaskDetailDialog({
               {target.row.submittedAt && (
                 <>
                   <Section title={`What You Submitted · ${formatDateTime(target.row.submittedAt)}`}>
-                    <p className="text-sm">{target.row.note || '—'}</p>
+                    <p className="text-sm">{target.row.note || 'N/A'}</p>
                   </Section>
                   <Section title="Proof">
                     <ProofStrip files={target.row.proof} required={target.row.photoRequired} />

@@ -104,7 +104,7 @@ export function TalkCredentialCreatePage({ data }: TalkCredentialCreatePageProps
                   hint="An Issued Credential Cannot Be Moved to Another Employee — Delete It and Issue a New One."
                 >
                   <div className="flex h-9 items-center rounded-md border border-border/60 bg-muted/40 px-3 text-sm text-foreground">
-                    {form.credential ? employeeLabel(form.credential) : '—'}
+                    {form.credential ? employeeLabel(form.credential) : 'N/A'}
                   </div>
                 </Field>
               ) : (

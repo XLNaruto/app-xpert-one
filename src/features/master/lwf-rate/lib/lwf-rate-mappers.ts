@@ -17,7 +17,7 @@ export function toLwfRate(response: LwfRateResponse, stateName?: string): LwfRat
     id: response.id,
     wef: response.effective_date ?? '',
     stateId: response.state_id ?? 0,
-    stateName: stateName ?? '—',
+    stateName: stateName ?? 'N/A',
     month: response.month ?? '',
     employeeContribution: Number(response.employee_contribution ?? 0),
     employerContribution: Number(response.employer_contribution ?? 0),
@@ -53,16 +53,16 @@ export function lwfRateToFormValues(rate: LwfRate): LwfRateFormValues {
 /** `2026-05-23` → `23 May 2026`; anything unparseable falls back to a dash. */
 export function formatEffectiveDate(wef: string): string {
   const parsed = wef ? parseISO(wef) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
+  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : 'N/A'
 }
 
 /** An audit timestamp as `23 May 2026, 14:30`; missing/unparseable → dash. */
 export function formatTimestamp(value: string | null): string {
   const parsed = value ? parseISO(value) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy, HH:mm') : '—'
+  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy, HH:mm') : 'N/A'
 }
 
 /** `12` → `December`, `0` → `Every Month`. */
 export function formatMonth(month: string): string {
-  return MONTH_OPTIONS.find((option) => option.value === month)?.label ?? '—'
+  return MONTH_OPTIONS.find((option) => option.value === month)?.label ?? 'N/A'
 }

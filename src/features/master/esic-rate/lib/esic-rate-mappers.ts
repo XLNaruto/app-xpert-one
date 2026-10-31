@@ -153,13 +153,13 @@ export function padMonth(month: string): string {
 /** `2026-05-23` → `23 May 2026`; anything unparseable falls back to a dash. */
 export function formatEffectiveDate(wef: string): string {
   const parsed = wef ? parseISO(wef) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
+  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : 'N/A'
 }
 
 /** `09` → `September`; an unknown month falls back to a dash. */
 export function formatMonth(month: string): string {
   const match = MONTH_OPTIONS.find((option) => option.value === padMonth(month))
-  return match?.label ?? '—'
+  return match?.label ?? 'N/A'
 }
 
 /**

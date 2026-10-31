@@ -181,7 +181,7 @@ export function useBranchForm(id?: number, openTab: BranchFormTab = 'detail') {
   const chosen = (value: string, recordId: number | null, name: string) => {
     if (!value) return undefined
     const isSaved = recordId !== null && String(recordId) === value
-    const label = isSaved && name && name !== '—' ? name : undefined
+    const label = isSaved && name && name !== 'N/A' ? name : undefined
     return { value, label }
   }
 

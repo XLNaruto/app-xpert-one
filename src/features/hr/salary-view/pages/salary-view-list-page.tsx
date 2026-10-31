@@ -31,6 +31,7 @@ import { SalaryViewModeTabs } from '../components/salary-view-mode-tabs'
 import { SalaryViewPager } from '../components/salary-view-pager'
 import { SalaryViewToolbar } from '../components/salary-view-toolbar'
 import type { SalaryViewRow, SalaryViewTotals } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * View Salary — the month already processed.
@@ -139,7 +140,11 @@ export function SalaryViewListPage() {
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
-          <span className="font-mono text-sm">{row.original.employeeCode || '—'}</span>
+          row.original.employeeCode ? (
+            <EmployeeCodeBadge code={row.original.employeeCode} />
+          ) : (
+            <span className="text-sm text-muted-foreground">N/A</span>
+          )
         ),
       },
       {
@@ -223,7 +228,7 @@ export function SalaryViewListPage() {
           row.original.paymentDate ? (
             formatDate(row.original.paymentDate)
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">N/A</span>
           ),
       },
     ],
@@ -426,7 +431,7 @@ function BillTotals({ totals }: { totals: SalaryViewTotals | null }) {
               line.strong ? 'text-primary' : 'text-foreground',
             )}
           >
-            {line.value === null ? '—' : formatMoney(line.value)}
+            {formatMoney(line.value ?? 0)}
           </span>
         </span>
       ))}

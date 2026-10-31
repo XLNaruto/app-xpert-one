@@ -26,6 +26,7 @@ import {
 import { useProjectTaskDetail } from '../hooks/use-project-task-detail'
 import { deadlineStanding, timeTaken } from '../lib/project-work-analysis'
 import type { ProjectWorkRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /** One project task: what it is, and every assignee's standing — each opens their own page. */
 export function ProjectTaskDetailPage({ data }: { data?: string }) {
@@ -54,9 +55,11 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
         cell: ({ row }) => (
           <button type="button" onClick={() => openWork(row.original.id)} className="cursor-pointer text-left">
             <p className="font-medium hover:text-primary">{row.original.employeeName}</p>
-            <p className="font-mono text-xs text-muted-foreground">
-              {row.original.taskOtherId ? row.original.mobileNumber : row.original.employeeCode}
-            </p>
+            {row.original.taskOtherId ? (
+              <p className="font-mono text-xs text-muted-foreground">{row.original.mobileNumber}</p>
+            ) : (
+              <EmployeeCodeBadge code={row.original.employeeCode} className="mt-0.5" />
+            )}
             {row.original.delegate && (
               <p className="text-xs text-muted-foreground">Updated by {row.original.delegate.name}</p>
             )}
@@ -137,7 +140,7 @@ export function ProjectTaskDetailPage({ data }: { data?: string }) {
           const standing = deadline ? deadlineStanding(w, deadline, todayIso()) : null
           return (
             <div>
-              <p className="tabular-nums">{timeTaken(w) ?? '—'}</p>
+              <p className="tabular-nums">{timeTaken(w) ?? '0s'}</p>
               {standing && (
                 <p className={cn('text-xs', standing.late ? 'text-destructive' : 'text-success')}>{standing.label}</p>
               )}

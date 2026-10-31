@@ -16,6 +16,7 @@ import {
 } from '../constants'
 import { usePaySalaryForm } from '../hooks/use-pay-salary-form'
 import type { PaySalaryRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface PaySalaryDialogProps {
   open: boolean
@@ -111,12 +112,8 @@ export function PaySalaryDialog({
                 >
                   <UserRound className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                    {row.employeeName || '—'}
-                    {row.employeeCode && (
-                      <span className="ml-2 font-mono text-[11px] font-normal text-muted-foreground">
-                        {row.employeeCode}
-                      </span>
-                    )}
+                    {row.employeeName || 'N/A'}
+                    <EmployeeCodeBadge code={row.employeeCode} className="ml-2 align-middle" />
                   </span>
                   <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
                     {formatMoney(row.netPay)}

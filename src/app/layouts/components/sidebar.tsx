@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type ReactElement } from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
-import { ChevronDown, ExternalLink, PanelLeft, PanelLeftClose, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import { ChevronDown, ExternalLink, PanelLeft, PanelLeftClose, Search, SearchX, X } from 'lucide-react'
 import {
   filterNavByCompany,
   filterNavByPermission,
+  filterNavBySearch,
   navGroups,
   navItemOwnsPath,
   type NavItem,
@@ -14,6 +15,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useUiStore } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 import { SidebarBrand } from '@/components/common/sidebar-brand'
+import { HighlightMatch, SidebarSearch } from './sidebar-search'
 
 
 /**
@@ -57,6 +59,8 @@ export function Sidebar() {
   const toggle = useUiStore((s) => s.toggleSidebar)
   const mobileOpen = useUiStore((s) => s.sidebarMobileOpen)
   const setMobileSidebar = useUiStore((s) => s.setMobileSidebar)
+  const setSidebar = useUiStore((s) => s.setSidebar)
+  const navigate = useNavigate()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { can, isLoading: roleLoading } = useCan()
 
@@ -81,10 +85,75 @@ export function Sidebar() {
   const collapsed = isDesktop && collapsedRaw
   const closeMobile = () => setMobileSidebar(false)
 
-  // Close the mobile drawer whenever the route changes.
+  // Menu search — opened from the icon beside the brand or Ctrl/Cmd + K.
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const searchTerm = searchOpen && !collapsed ? search.trim() : ''
+  const shownGroups = useMemo(
+    () => filterNavBySearch(visibleGroups, searchTerm),
+    [visibleGroups, searchTerm],
+  )
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setSearch('')
+  }
+
+  // Close the mobile drawer and the search whenever the route changes.
   useEffect(() => {
     setMobileSidebar(false)
+    setSearchOpen(false)
+    setSearch('')
   }, [pathname, setMobileSidebar])
+
+  // Ctrl/Cmd + K opens the search from anywhere, expanding the rail or the
+  // mobile drawer first so the box has somewhere to show.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) return
+      e.preventDefault()
+      if (isDesktop) setSidebar(false)
+      else setMobileSidebar(true)
+      setSearchOpen(true)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isDesktop, setSidebar, setMobileSidebar])
+
+  // The rows ↑/↓ step through while searching, in on-screen order — every
+  // surviving parent is expanded, so these are exactly the visible links.
+  const searchTargets = useMemo(
+    () =>
+      shownGroups
+        .flatMap((g) => g.items)
+        .flatMap((item) => (item.children?.length ? item.children : [item]))
+        .filter((item) => item.to),
+    [shownGroups],
+  )
+  // The cursor is tied to the term it was moved under, so typing puts it back
+  // on the first match without an effect.
+  const [cursor, setCursor] = useState({ term: '', index: 0 })
+  const cursorIndex = cursor.term === searchTerm ? cursor.index : 0
+  const selected = searchTerm ? searchTargets[cursorIndex] : undefined
+  const moveCursor = (delta: number) => {
+    const count = searchTargets.length
+    if (!count) return
+    setCursor({ term: searchTerm, index: (cursorIndex + delta + count) % count })
+  }
+
+  // Keep the selected row in view as the cursor moves through a long list.
+  const navRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    navRef.current
+      ?.querySelector('[data-search-selected]')
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [selected])
+
+  // Enter in the box opens the selected row.
+  const openSelected = () => {
+    if (!selected?.to) return
+    if (selected.newTab) window.open(selected.to, '_blank', 'noopener,noreferrer')
+    else navigate({ to: selected.to })
+  }
 
   return (
     <>
@@ -115,22 +184,40 @@ export function Sidebar() {
         {/* Brand + controls */}
         <div
           className={cn(
-            'relative flex h-16 items-center gap-2.5 border-b border-sidebar-border px-4',
-            collapsed ? 'justify-center' : 'justify-end',
+            'flex h-16 items-center gap-1 border-b border-sidebar-border px-4',
+            collapsed && 'justify-center',
           )}
         >
-          {/* Centred on the panel (absolute, so the toggle can't shift it off
-              centre). Too wide for the rail, so hidden while collapsed. */}
+          {/* Centred in the width the controls leave, so a long name truncates
+              before it can run into them. Too wide for the rail, so hidden
+              while collapsed. */}
           {!collapsed && (
             <Link
               to="/dashboard"
               onClick={closeMobile}
               aria-label="XpertOne home"
-              className="absolute left-1/2 -translate-x-1/2"
+              className="mr-2 flex min-w-0 flex-1 justify-center"
             >
-              {/* The active company's logo when it has one, else the wordmark. */}
-              <SidebarBrand className="h-11 w-36" />
+              {/* The active company's logo when it has one, else its name. */}
+              <SidebarBrand className="h-11 w-36 max-w-full" />
             </Link>
+          )}
+          {/* Menu search toggle, beside the collapse toggle — no room for the
+              box on the rail. */}
+          {!collapsed && (
+            <SidebarTooltip label="Search Menu (Ctrl + K)">
+              <button
+                onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+                aria-label="Search menu"
+                aria-pressed={searchOpen}
+                className={cn(
+                  'grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  searchOpen && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                )}
+              >
+                <Search className="size-[18px]" />
+              </button>
+            </SidebarTooltip>
           )}
           {/* Desktop collapse toggle */}
           <SidebarTooltip label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}>
@@ -158,15 +245,33 @@ export function Sidebar() {
           </SidebarTooltip>
         </div>
 
+        {searchOpen && !collapsed && (
+          <SidebarSearch
+            value={search}
+            onChange={setSearch}
+            onClose={closeSearch}
+            onMove={moveCursor}
+            onSubmit={openSelected}
+          />
+        )}
+
         {/* Navigation: section labels → main menu → submenu */}
         {/* `overflow-x-hidden` hides the rows that are still wider than the rail
             mid-transition instead of showing a horizontal scrollbar. */}
-        <nav className="sidebar-scroll flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2 py-2">
+        <nav
+          ref={navRef}
+          className="sidebar-scroll flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2 py-2">
           {/* Until the role answers we can't tell which rows this user has, and
               guessing either way flashes the wrong menu — placeholders instead. */}
           {roleLoading && <NavSkeleton collapsed={collapsed} />}
+          {!roleLoading && searchTerm && shownGroups.length === 0 && (
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-sidebar-foreground/50">
+              <SearchX className="size-6" />
+              <p className="text-sm font-medium">No Menus Found</p>
+            </div>
+          )}
           {!roleLoading &&
-            visibleGroups.map((group) => (
+            shownGroups.map((group) => (
               <div
                 key={group.title}
                 className={cn(
@@ -186,7 +291,7 @@ export function Sidebar() {
                     collapsed && 'hidden',
                   )}
                 >
-                  {group.title}
+                  <HighlightMatch text={group.title} term={searchTerm} />
                 </p>
                 {group.items.map((item) =>
                   item.children?.length ? (
@@ -195,6 +300,8 @@ export function Sidebar() {
                       item={item}
                       collapsed={collapsed}
                       pathname={pathname}
+                      searchTerm={searchTerm}
+                      selectedTo={selected?.to}
                       onNavigate={closeMobile}
                     />
                   ) : (
@@ -202,6 +309,8 @@ export function Sidebar() {
                       key={item.to}
                       item={item}
                       collapsed={collapsed}
+                      searchTerm={searchTerm}
+                      selectedTo={selected?.to}
                       onNavigate={closeMobile}
                     />
                   ),
@@ -245,17 +354,30 @@ const leafClasses = (collapsed: boolean) =>
     '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',
   )
 
+/** The search cursor's row: an outline, so it reads apart from the active route's tint. */
+const searchSelectedClasses = 'bg-sidebar-accent/40 text-sidebar-foreground ring-1 ring-inset ring-sidebar-primary/50'
+
+/** Spread on a row so the sidebar can scroll the search cursor's row into view. */
+const searchSelectedProps = (selected: boolean) =>
+  selected ? { 'data-search-selected': '' } : {}
+
 function NavLeaf({
   item,
   collapsed,
+  searchTerm = '',
+  selectedTo,
   onNavigate,
 }: {
   item: NavItem
   collapsed: boolean
+  searchTerm?: string
+  /** The row the search's ↑/↓ cursor is on. */
+  selectedTo?: string
   onNavigate?: () => void
 }) {
   const Icon = item.icon
   if (!item.to) return null
+  const selected = item.to === selectedTo
 
   // A `newTab` row is a plain anchor, not a <Link>: the router must not treat
   // it as a navigation, and it must never take the active highlight — whatever
@@ -268,10 +390,15 @@ function NavLeaf({
           target="_blank"
           rel="noopener noreferrer"
           onClick={onNavigate}
-          className={leafClasses(collapsed)}
+          {...searchSelectedProps(selected)}
+          className={cn(leafClasses(collapsed), selected && searchSelectedClasses)}
         >
           <Icon className="size-[18px] shrink-0" />
-          {!collapsed && <span className="truncate">{item.label}</span>}
+          {!collapsed && (
+            <span className="truncate">
+              <HighlightMatch text={item.label} term={searchTerm} />
+            </span>
+          )}
           {!collapsed && (
             <ExternalLink className="ml-auto size-3.5 shrink-0 opacity-50" />
           )}
@@ -286,10 +413,15 @@ function NavLeaf({
         to={item.to}
         activeOptions={{ exact: item.exact ?? item.to === '/' }}
         onClick={onNavigate}
-        className={leafClasses(collapsed)}
+        {...searchSelectedProps(selected)}
+        className={cn(leafClasses(collapsed), selected && searchSelectedClasses)}
       >
         <Icon className="size-[18px] shrink-0 transition-colors group-[.active]:text-sidebar-primary" />
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {!collapsed && (
+            <span className="truncate">
+              <HighlightMatch text={item.label} term={searchTerm} />
+            </span>
+          )}
       </Link>
     </SidebarTooltip>
   )
@@ -299,17 +431,24 @@ function NavParent({
   item,
   collapsed,
   pathname,
+  searchTerm = '',
+  selectedTo,
   onNavigate,
 }: {
   item: NavItem
   collapsed: boolean
   pathname: string
+  searchTerm?: string
+  /** The row the search's ↑/↓ cursor is on. */
+  selectedTo?: string
   onNavigate?: () => void
 }) {
   const children = item.children ?? []
   const childActive = children.some((c) => navItemOwnsPath(c, pathname))
   const [open, setOpen] = useState(childActive)
   const Icon = item.icon
+  // While searching, every surviving parent shows its matching children.
+  const expanded = open || searchTerm !== ''
 
   // Auto-open when a child becomes the active route.
   useEffect(() => {
@@ -339,19 +478,21 @@ function NavParent({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+        aria-expanded={expanded}
         className={cn(
           'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
           childActive ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75',
         )}
       >
         <Icon className="size-[18px] shrink-0" />
-        <span className="flex-1 truncate text-left">{item.label}</span>
+        <span className="flex-1 truncate text-left">
+          <HighlightMatch text={item.label} term={searchTerm} />
+        </span>
         <ChevronDown
-          className={cn('size-4 shrink-0 transition-transform', open && 'rotate-180')}
+          className={cn('size-4 shrink-0 transition-transform', expanded && 'rotate-180')}
         />
       </button>
-      {open && (
+      {expanded && (
         <ul className="mt-0.5 ml-4 space-y-0.5 pl-3">
           {children.map((c) =>
             c.to ? (
@@ -360,19 +501,23 @@ function NavParent({
                   to={c.to}
                   activeOptions={{ exact: c.exact ?? false }}
                   onClick={onNavigate}
+                  {...searchSelectedProps(c.to === selectedTo)}
                   className={cn(
                     // `active` by hand too, for routes the row claims via `activeFor`.
                     navItemOwnsPath(c, pathname) && 'active',
                     'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'text-sidebar-foreground/75 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground',
                     '[&.active]:bg-sidebar-accent [&.active]:font-semibold [&.active]:text-sidebar-accent-foreground [&.active]:hover:bg-sidebar-accent',
+                    c.to === selectedTo && searchSelectedClasses,
                   )}
                 >
                   <span className="mt-0.75 grid size-4.5 shrink-0 place-items-center self-start">
                     <span className="size-1.5 rounded-full bg-current opacity-60 transition-opacity group-[.active]:bg-sidebar-primary group-[.active]:opacity-100" />
                   </span>
                   {/* Long labels wrap onto a second line instead of being clipped. */}
-                  <span className="min-w-0 leading-snug text-pretty">{c.label}</span>
+                  <span className="min-w-0 leading-snug text-pretty">
+                    <HighlightMatch text={c.label} term={searchTerm} />
+                  </span>
                 </Link>
               </li>
             ) : null,

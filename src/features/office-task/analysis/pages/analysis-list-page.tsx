@@ -39,7 +39,7 @@ function EmployeeCell({
 }) {
   return (
     <div className="min-w-40">
-      <p className="font-medium">{row.employeeName ?? '—'}</p>
+      <p className="font-medium">{row.employeeName ?? 'N/A'}</p>
       <p className="text-xs text-muted-foreground">{employeeSubtitle(row)}</p>
     </div>
   )

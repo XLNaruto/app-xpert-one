@@ -99,7 +99,7 @@ export function CurrentPlanCard({
 
           <div className="text-right">
             <p className="font-heading text-3xl font-semibold tracking-tight text-foreground">
-              {price === null ? '—' : formatCurrency(price)}
+              {formatCurrency(price ?? 0)}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               per {subscription.isYearly ? 'year' : 'month'}
@@ -143,12 +143,12 @@ export function CurrentPlanCard({
               <span>
                 {subscription.currentPeriodStart
                   ? formatDate(subscription.currentPeriodStart)
-                  : '—'}
+                  : 'N/A'}
               </span>
               <span>
                 {subscription.currentPeriodEnd
                   ? formatDate(subscription.currentPeriodEnd)
-                  : '—'}
+                  : 'N/A'}
               </span>
             </div>
           </div>

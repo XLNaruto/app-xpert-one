@@ -186,7 +186,7 @@ export function adminUserToFormValues(user: AdminUser): AdminUserFormValues {
 /** What the Role column says — an owner holds none, and that's the point. */
 export function roleLabel(user: Pick<AdminUser, 'isOwner' | 'roleName'>): string {
   if (user.isOwner) return 'Account owner'
-  return user.roleName ?? '—'
+  return user.roleName ?? 'N/A'
 }
 
 /**

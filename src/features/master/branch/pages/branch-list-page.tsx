@@ -80,7 +80,7 @@ export function BranchListPage() {
           <div className="flex flex-col">
             <span className="font-medium text-foreground">{row.original.branchName}</span>
             <span className="text-xs text-muted-foreground">
-              {row.original.addressLine1 || '—'}
+              {row.original.addressLine1 || 'N/A'}
             </span>
           </div>
         ),
@@ -94,9 +94,9 @@ export function BranchListPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const parts = [row.original.city, row.original.stateName].filter(
-            (part) => part && part !== '—',
+            (part) => part && part !== 'N/A',
           )
-          return <span>{parts.length ? parts.join(', ') : '—'}</span>
+          return <span>{parts.length ? parts.join(', ') : 'N/A'}</span>
         },
       },
       {
@@ -104,14 +104,14 @@ export function BranchListPage() {
         enableSorting: false,
         header: 'Pin Code',
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.pinCode || '—',
+        cell: ({ row }) => row.original.pinCode || 'N/A',
       },
       {
         accessorKey: 'mobile1',
         enableSorting: false,
         header: 'Mobile',
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.mobile1 || '—',
+        cell: ({ row }) => row.original.mobile1 || 'N/A',
       },
       {
         accessorKey: 'gstNumber',
@@ -119,7 +119,7 @@ export function BranchListPage() {
         header: 'GST Number',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
-          <span className="font-mono text-sm">{row.original.gstNumber || '—'}</span>
+          <span className="font-mono text-sm">{row.original.gstNumber || 'N/A'}</span>
         ),
       },
       // Only `created_at` is sortable on this endpoint.

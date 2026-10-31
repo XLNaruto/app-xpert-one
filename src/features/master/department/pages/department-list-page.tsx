@@ -82,7 +82,7 @@ export function DepartmentListPage() {
         accessorKey: 'departmentCode',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Code" />,
         cell: ({ row }) => (
-          <span className="font-mono text-sm">{row.original.departmentCode || '—'}</span>
+          <span className="font-mono text-sm">{row.original.departmentCode || 'N/A'}</span>
         ),
       },
       {
@@ -96,7 +96,7 @@ export function DepartmentListPage() {
         accessorKey: 'monthStartDay',
         header: 'Month Start Date',
         enableSorting: false,
-        cell: ({ row }) => row.original.monthStartDay ?? '—',
+        cell: ({ row }) => row.original.monthStartDay ?? 'N/A',
       },
       // Only `created_at` is sortable; "Updated" renders without the control.
       ...auditColumns<Department>({ createdAt: DEPARTMENT_SORT.createdAt }),

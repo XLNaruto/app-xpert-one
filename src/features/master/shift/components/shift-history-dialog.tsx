@@ -114,12 +114,12 @@ export function ShiftHistoryDialog({
                       {version.minFullDayHours} / {version.minHalfDayHours} hrs
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                      {version.updatedBy || version.createdBy || '—'}
+                      {version.updatedBy || version.createdBy || 'N/A'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                       {version.updatedAt || version.createdAt
                         ? formatDate((version.updatedAt || version.createdAt) as string)
-                        : '—'}
+                        : 'N/A'}
                     </td>
                   </tr>
                 ))}

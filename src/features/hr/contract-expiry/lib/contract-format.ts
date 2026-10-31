@@ -11,8 +11,8 @@ import type { ContractPeriodType, ExpiringContract } from '../types'
  * reassembled by hand, and the day that was sent is the day that is shown.
  */
 
-/** What an absent date or an unmeasurable figure reads as. */
-export const EM_DASH = '—'
+/** What an absent date or other non-numeric field reads as. */
+export const NOT_AVAILABLE = 'N/A'
 
 const MONTH_NAMES = [
   'Jan',
@@ -31,7 +31,7 @@ const MONTH_NAMES = [
 
 /** `2027-08-14` → `14 Aug 2027`. Anything unparseable is shown as it arrived. */
 export function formatDay(value: string | null | undefined): string {
-  if (!value) return EM_DASH
+  if (!value) return NOT_AVAILABLE
   const [year, month, day] = value.slice(0, 10).split('-')
   const name = MONTH_NAMES[Number(month) - 1]
   if (!year || !name || !day) return value
@@ -43,7 +43,7 @@ export function formatDay(value: string | null | undefined): string {
  * as overdue, so it is spelled out rather than shown as a minus sign.
  */
 export function formatDaysToEnd(days: number | null): string {
-  if (days == null) return EM_DASH
+  if (days == null) return '0 days'
   if (days === 0) return 'ends today'
   if (days < 0) {
     const overdue = Math.abs(days)
@@ -57,7 +57,7 @@ export function formatTerm(
   period: number | null,
   type: ContractPeriodType | null,
 ): string {
-  if (period == null || !type) return EM_DASH
+  if (period == null || !type) return NOT_AVAILABLE
   const noun = PERIOD_TYPE_NOUNS[type]
   return `${period} ${period === 1 ? noun : `${noun}s`}`
 }
@@ -66,7 +66,7 @@ export function formatTerm(
  * The row's placement line — designation · department · branch · company.
  *
  * Every level is optional in this product, so the null segments are skipped
- * rather than printed as em-dashes: four dashes in a row say nothing about where
+ * rather than printed as N/A: four of those in a row say nothing about where
  * somebody works.
  */
 export function formatPlacement(row: ExpiringContract): string {
@@ -76,7 +76,7 @@ export function formatPlacement(row: ExpiringContract): string {
     row.branchName,
     row.companyName,
   ].filter(Boolean)
-  return parts.length ? parts.join(' · ') : EM_DASH
+  return parts.length ? parts.join(' · ') : NOT_AVAILABLE
 }
 
 /* ── Client-side previews — GUIDANCE ONLY ──────────────────────────────────

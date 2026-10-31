@@ -112,7 +112,7 @@ export function AdminUserListPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-sm tabular-nums text-muted-foreground">
-            {row.original.mobileNumber || '—'}
+            {row.original.mobileNumber || 'N/A'}
           </span>
         ),
       },
@@ -141,7 +141,7 @@ export function AdminUserListPage() {
           const { companyId } = row.original
           // An owner belongs to the account rather than to any one company.
           if (companyId === null)
-            return <span className="text-sm text-muted-foreground">—</span>
+            return <span className="text-sm text-muted-foreground">N/A</span>
           return (
             <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
               <Building2 className="size-3.5 shrink-0" />
@@ -173,7 +173,7 @@ export function AdminUserListPage() {
               Enabled
             </Badge>
           ) : (
-            <span className="text-sm text-muted-foreground">—</span>
+            <span className="text-sm text-muted-foreground">N/A</span>
           ),
       },
       {

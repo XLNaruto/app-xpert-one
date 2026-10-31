@@ -17,7 +17,7 @@ interface ShiftScheduleCellProps {
 function stateOf(day: ScheduleDay | undefined) {
   if (!day || day.isWeekOff === null) {
     return {
-      label: '—',
+      label: 'N/A',
       tone: 'text-muted-foreground',
       text: 'Not Scheduled — The Week-Off Policy Decides',
     }

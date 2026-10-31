@@ -85,7 +85,7 @@ export function PtRateListPage() {
         id: PT_RATE_SORT.detail,
         accessorKey: 'detail',
         header: ({ column }) => <DataTableColumnHeader column={column} title="Detail" />,
-        cell: ({ row }) => row.original.detail || '—',
+        cell: ({ row }) => row.original.detail || 'N/A',
       },
       // The API tracks no `updated_at`, and only `created_at` is sortable.
       ...auditColumns<PtRate>({ createdAt: PT_RATE_SORT.createdAt }),

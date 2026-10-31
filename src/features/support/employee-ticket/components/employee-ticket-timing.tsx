@@ -125,7 +125,7 @@ export function EmployeeTicketTiming({
           seconds={
             ticket.resolvedAt ? ticket.timeToResolveSeconds : ticket.wallClockSeconds
           }
-          emptyLabel="—"
+          emptyLabel="0s"
         />
 
         <TimeMetric

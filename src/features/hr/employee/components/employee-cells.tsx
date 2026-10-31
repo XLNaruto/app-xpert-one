@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch'
 import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { useMediaUrl } from '@/hooks/use-media-url'
 import type { Employee } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /** The list's presentational cells, kept out of the page's column definitions. */
 
@@ -39,13 +40,15 @@ export function EmployeeIdentityCell({ employee }: { employee: Employee }) {
       />
       <div className="leading-tight">
         <span className="flex items-center gap-1.5 font-medium text-foreground">
-          {label || '—'}
+          {label || 'N/A'}
           {/* Their service here is closed — relieved, or transferred to another company. */}
           {employee.exit && <Badge variant="destructive">Exited</Badge>}
         </span>
-        <span className="block text-xs text-muted-foreground">
-          {employee.code || 'No code yet'}
-        </span>
+        {employee.code ? (
+          <EmployeeCodeBadge code={employee.code} className="mt-0.5" />
+        ) : (
+          <span className="block text-xs text-muted-foreground">No code yet</span>
+        )}
       </div>
     </div>
   )

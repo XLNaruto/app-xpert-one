@@ -6,6 +6,7 @@ import { useMediaUrl } from '@/hooks/use-media-url'
 import { formatDecimal } from '@/lib/currency'
 import { cn } from '@/lib/utils'
 import type { SalaryRegisterRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface SalaryAttendanceDialogProps {
   /** The row being explained — `null` closes the dialog. */
@@ -83,8 +84,8 @@ export function SalaryAttendanceDialog({
                 {[row.employeePrefix, row.employeeName].filter(Boolean).join(' ') ||
                   'Employee'}
               </h2>
-              <p className="truncate text-xs text-muted-foreground">
-                {row.employeeCode || 'No code'}
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {row.employeeCode ? <EmployeeCodeBadge code={row.employeeCode} /> : 'No code'}
               </p>
             </div>
           </div>

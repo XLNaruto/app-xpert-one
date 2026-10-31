@@ -92,7 +92,7 @@ export function SopGroupListPage() {
         cell: ({ row }) => (
           <div>
             <p className="flex items-center gap-1.5">
-              {row.original.appliesTo || '—'}
+              {row.original.appliesTo || 'N/A'}
               {row.original.targetLocked && (
                 <Tooltip>
                   <TooltipTrigger asChild>

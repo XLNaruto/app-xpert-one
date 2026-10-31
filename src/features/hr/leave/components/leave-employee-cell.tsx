@@ -1,3 +1,4 @@
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Who the leave belongs to — the column a reader scans by.
@@ -25,11 +26,7 @@ export function LeaveEmployeeCell({
       </span>
       <div className="leading-tight">
         <span className="block font-medium text-foreground">{name}</span>
-        {leave.employeeCode && (
-          <span className="mt-0.5 inline-block rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-            #{leave.employeeCode}
-          </span>
-        )}
+        <EmployeeCodeBadge code={leave.employeeCode} className="mt-0.5" />
       </div>
     </div>
   )
@@ -44,5 +41,5 @@ function initialsOf(name: string): string {
     .slice(0, 2)
     .map((word) => word[0])
     .join('')
-  return letters || '—'
+  return letters || 'N/A'
 }

@@ -297,6 +297,6 @@ export function attendanceInitials(name: string): string {
       .filter(Boolean)
       .slice(0, 2)
       .join('')
-      .toUpperCase() || '—'
+      .toUpperCase() || 'N/A'
   )
 }

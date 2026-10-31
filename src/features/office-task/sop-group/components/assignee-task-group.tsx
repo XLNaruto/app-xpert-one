@@ -11,6 +11,7 @@ import { frequencyLabel } from '@/features/office-task/common'
 import { useAssigneeTasks } from '../hooks/use-assignee-tasks'
 import { EditableCell, TruncatedText } from './editable-cell'
 import type { SopGroupForm } from '../hooks/use-sop-group-form'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 const cell = 'border-b border-border px-3 py-2 align-middle'
 const head = 'bg-muted/20 border-b border-border px-3 py-2 text-left text-xs font-medium uppercase text-muted-foreground'
@@ -108,7 +109,7 @@ export function AssigneeTaskGroup({
             <div className="min-w-0">
               <p className="text-sm font-semibold">
                 {a.employeeName || 'Employee'}
-                <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">{a.employeeCode}</span>
+                <EmployeeCodeBadge code={a.employeeCode} className="ml-2 align-middle" />
               </p>
               <p className="text-xs text-muted-foreground">
                 {taskCount} task{taskCount === 1 ? '' : 's'} · {perDay(checklist) + perDay(a.customTasks ?? [])} / day

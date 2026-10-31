@@ -15,9 +15,10 @@ import {
   SIGNAL_OPTIONS,
   SIGNAL_SPECS,
 } from '../constants'
-import { EM_DASH, formatCount, formatDateField } from '../lib/dashboard-format'
+import { NOT_AVAILABLE, formatCount, formatDateField } from '../lib/dashboard-format'
 import type { useAttentionList } from '../hooks/use-attention-list'
 import type { AttentionRow, AttentionSignal } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * The worklist — records needing work, one row per employee, signals as chips.
@@ -79,11 +80,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             >
               {row.original.employeeName ?? `Employee #${row.original.employeeId}`}
             </Link>
-            {row.original.employeeCode ? (
-              <p className="truncate text-xs text-muted-foreground">
-                {row.original.employeeCode}
-              </p>
-            ) : null}
+            <EmployeeCodeBadge code={row.original.employeeCode} className="mt-0.5 flex" />
           </div>
         ),
       },
@@ -93,7 +90,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
         enableSorting: false,
         cell: ({ row }) => (
           <div className="min-w-0 text-xs">
-            <p className="truncate">{row.original.companyName ?? EM_DASH}</p>
+            <p className="truncate">{row.original.companyName ?? NOT_AVAILABLE}</p>
             <p className="truncate text-muted-foreground">
               {[
                 row.original.branchName,
@@ -101,7 +98,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
                 row.original.designationName,
               ]
                 .filter(Boolean)
-                .join(' · ') || EM_DASH}
+                .join(' · ') || NOT_AVAILABLE}
             </p>
           </div>
         ),
@@ -141,7 +138,7 @@ export function AttentionPanel({ list, populationSummary }: AttentionPanelProps)
             {!row.original.contractEndsOn &&
             !row.original.documentExpiresOn &&
             !row.original.joiningDate
-              ? EM_DASH
+              ? NOT_AVAILABLE
               : null}
           </div>
         ),

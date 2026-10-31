@@ -109,7 +109,7 @@ export function TransferHistoryTab({
         cell: ({ row }) => (
           <div className="leading-tight">
             <span className="block font-medium text-foreground">
-              {row.original.companyName || '—'}
+              {row.original.companyName || 'N/A'}
             </span>
             <span className="block text-xs text-muted-foreground">
               {row.original.branchName || 'No branch'}
@@ -122,9 +122,9 @@ export function TransferHistoryTab({
         header: 'Department / Designation',
         cell: ({ row }) => (
           <div className="leading-tight">
-            <span className="block text-sm">{row.original.departmentName || '—'}</span>
+            <span className="block text-sm">{row.original.departmentName || 'N/A'}</span>
             <span className="block text-xs text-muted-foreground">
-              {row.original.designationName || '—'}
+              {row.original.designationName || 'N/A'}
             </span>
           </div>
         ),
@@ -134,7 +134,7 @@ export function TransferHistoryTab({
         header: 'Joined',
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
-          row.original.joiningDate ? formatDate(row.original.joiningDate) : '—',
+          row.original.joiningDate ? formatDate(row.original.joiningDate) : 'N/A',
       },
       {
         accessorKey: 'leavingDate',

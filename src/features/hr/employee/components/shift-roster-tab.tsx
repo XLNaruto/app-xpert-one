@@ -95,7 +95,7 @@ export function ShiftRosterTab({
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
-          row.original.effectiveDate ? formatDate(row.original.effectiveDate) : '—',
+          row.original.effectiveDate ? formatDate(row.original.effectiveDate) : 'N/A',
       },
       {
         id: 'assignment',
@@ -135,7 +135,7 @@ export function ShiftRosterTab({
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.createdBy || '—'}
+            {row.original.createdBy || 'N/A'}
           </span>
         ),
       },
@@ -174,7 +174,7 @@ export function ShiftRosterTab({
         header: 'Date',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => (row.original.workDate ? formatDate(row.original.workDate) : '—'),
+        cell: ({ row }) => (row.original.workDate ? formatDate(row.original.workDate) : 'N/A'),
       },
       {
         accessorKey: 'shiftName',
@@ -204,7 +204,7 @@ export function ShiftRosterTab({
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.createdBy || '—'}
+            {row.original.createdBy || 'N/A'}
           </span>
         ),
       },

@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { ImageWithFallback } from '@/components/common/image-with-fallback'
 import { useMediaResolver } from '@/hooks/use-media-url'
 import type { Employee } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * The face images one employee has enrolled for attendance recognition.
@@ -54,9 +55,7 @@ export function EmployeeFacesDialog({
               {fullName}
             </h2>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              {employee.code && (
-                <span className="font-mono font-medium text-primary">#{employee.code}</span>
-              )}
+              <EmployeeCodeBadge code={employee.code} />
               <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <ScanFace className="size-3.5" />
                 {faces.length} {faces.length === 1 ? 'face' : 'faces'}

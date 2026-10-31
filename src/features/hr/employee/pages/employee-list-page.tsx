@@ -208,7 +208,7 @@ export function EmployeeListPage() {
         header: 'Phone Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.mobileNumber1 || '—',
+        cell: ({ row }) => row.original.mobileNumber1 || 'N/A',
       },
       {
         id: 'email',
@@ -217,7 +217,7 @@ export function EmployeeListPage() {
         enableSorting: false,
         meta: { className: 'min-w-64 whitespace-nowrap' },
         cell: ({ row }) => (
-          <span className="text-muted-foreground">{row.original.email || '—'}</span>
+          <span className="text-muted-foreground">{row.original.email || 'N/A'}</span>
         ),
       },
       {
@@ -226,7 +226,7 @@ export function EmployeeListPage() {
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
-          row.original.birthDate ? formatDate(row.original.birthDate) : '—',
+          row.original.birthDate ? formatDate(row.original.birthDate) : 'N/A',
       },
       // The statutory and bank identifiers, straight off the row — they're
       // columns of the employee record, so no extra read is needed for them.
@@ -235,28 +235,28 @@ export function EmployeeListPage() {
         header: 'Aadhaar No',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.aadharNumber || '—',
+        cell: ({ row }) => row.original.kyc.aadharNumber || 'N/A',
       },
       {
         id: 'uanNumber',
         header: 'UAN Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.uanNumber || '—',
+        cell: ({ row }) => row.original.kyc.uanNumber || 'N/A',
       },
       {
         id: 'pfNumber',
         header: 'PF Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.pfNumber || '—',
+        cell: ({ row }) => row.original.kyc.pfNumber || 'N/A',
       },
       {
         id: 'esicNumber',
         header: 'ESIC Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.esicNumber || '—',
+        cell: ({ row }) => row.original.kyc.esicNumber || 'N/A',
       },
       {
         id: 'bankName',
@@ -267,7 +267,7 @@ export function EmployeeListPage() {
         // list hook loads once.
         cell: ({ row }) => {
           const { bankId } = row.original.kyc
-          return (bankId ? bankNames.get(bankId) : '') || '—'
+          return (bankId ? bankNames.get(bankId) : '') || 'N/A'
         },
       },
       {
@@ -275,14 +275,14 @@ export function EmployeeListPage() {
         header: 'Account Number',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.bankAccountNumber || '—',
+        cell: ({ row }) => row.original.kyc.bankAccountNumber || 'N/A',
       },
       {
         id: 'ifscCode',
         header: 'IFSC Code',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.kyc.ifscCode || '—',
+        cell: ({ row }) => row.original.kyc.ifscCode || 'N/A',
       },
       // The endpoint sorts by either audit stamp, so both headers keep the control.
       ...auditColumns<Employee>({

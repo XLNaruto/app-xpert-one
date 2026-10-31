@@ -227,5 +227,5 @@ export function initialsOf(name: string): string {
     .slice(0, 2)
     .map((word) => word[0])
     .join('')
-  return letters.toUpperCase() || '—'
+  return letters.toUpperCase() || 'N/A'
 }

@@ -37,7 +37,7 @@ export function formatDate(value: string, pattern = 'dd MMM yyyy') {
 
 /** Format an ISO date-time as '27-07-2026 11:23 AM'; missing value → dash. */
 export function formatDateTime(value: string | null | undefined) {
-  if (!value) return '—'
+  if (!value) return 'N/A'
   try {
     return format(parseISO(value), 'dd-MM-yyyy hh:mm a')
   } catch {

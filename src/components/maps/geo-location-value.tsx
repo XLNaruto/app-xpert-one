@@ -40,7 +40,7 @@ export function GeoLocationValue({ value }: GeoLocationValueProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, value])
 
-  if (!parsed) return <>—</>
+  if (!parsed) return <>N/A</>
 
   return (
     <span className="block">

@@ -87,7 +87,7 @@ export function CompanyRequired({ what }: CompanyRequiredProps) {
                   </span>
                   {company.code && (
                     <span className="block truncate text-xs text-muted-foreground">
-                      Code: {company.code}
+                      Company Code: {company.code}
                     </span>
                   )}
                 </span>

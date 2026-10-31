@@ -224,7 +224,7 @@ export function AnalysisDetailPage({ data }: { data?: string }) {
           row.original.needsApproval && (row.original.verdict || row.original.status === 'pending_approval') ? (
             <VerdictBadge verdict={row.original.verdict} />
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">N/A</span>
           ),
       },
     ],

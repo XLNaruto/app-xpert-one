@@ -5,18 +5,13 @@ import type { Granularity, MetricUnit } from '../types'
 /**
  * Every number this screen prints goes through here.
  *
- * THE RULE THAT MATTERS: a null rate is an UNMEASURED rate, never a zero. Any
- * `*_rate`, `share`, `change_pct`, `average_*` or radar score is null when its
- * denominator was zero, and "nobody was present" is a different statement from
- * "nobody present was on time". So every formatter below answers an em-dash for
- * null — and the charts break their lines rather than plotting a point at zero,
- * because plotting a null as zero turns "we did not measure this" into "we
- * scored nothing at this", which is a different and much worse claim to put in
- * front of an HR director.
+ * A null figure (an unmeasured rate, a missing amount) reads as zero, like
+ * every other number in the app. Only a non-numeric field (a date) falls
+ * back to `N/A`.
  */
 
-/** What an unmeasured figure reads as. Never `0`, never `0%`. */
-export const EM_DASH = '—'
+/** What a missing non-numeric field (a date) reads as. */
+export const NOT_AVAILABLE = 'N/A'
 
 /** Month names for a calendar-date label, indexed 1..12 by the string's month. */
 const MONTH_NAMES = [
@@ -41,8 +36,7 @@ export function formatCount(value: number): string {
 
 /** A fractional figure (hours, days) — two decimals at most, none on a whole. */
 export function formatQuantity(value: number | null): string {
-  if (value == null) return EM_DASH
-  return formatDecimal(value)
+  return formatDecimal(value ?? 0)
 }
 
 /**
@@ -53,12 +47,11 @@ export function formatQuantity(value: number | null): string {
  * figure from that API is never added to one from this one.
  */
 export function formatMoney(value: number | null): string {
-  if (value == null) return EM_DASH
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 2,
-  }).format(value)
+  }).format(value ?? 0)
 }
 
 /** Rupees with no decimals — for an axis tick, where the paise are noise. */
@@ -79,8 +72,7 @@ export function formatMoneyShort(value: number): string {
  * serves 82 meaning 82%.
  */
 export function formatRatio(value: number | null, decimals = 1): string {
-  if (value == null) return EM_DASH
-  return `${(value * 100).toFixed(decimals)}%`
+  return `${((value ?? 0) * 100).toFixed(decimals)}%`
 }
 
 /**
@@ -103,9 +95,8 @@ export function formatSigned(value: number): string {
 
 /** Format any figure by the unit its series or breakdown declared. */
 export function formatByUnit(value: number | null, unit: MetricUnit): string {
-  if (value == null) return EM_DASH
   if (unit === 'amount') return formatMoney(value)
-  if (unit === 'count') return formatCount(value)
+  if (unit === 'count') return formatCount(value ?? 0)
   return formatQuantity(value)
 }
 
@@ -218,7 +209,7 @@ export const NOT_YET_COMPUTED = 'Not yet computed'
 
 /** A real date field (`contract_ends_on`, `joining_date`) — a timestamp, so parsed. */
 export function formatDateField(value: string | null): string {
-  if (!value) return EM_DASH
+  if (!value) return NOT_AVAILABLE
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
   return new Intl.DateTimeFormat('en-IN', {
@@ -230,12 +221,11 @@ export function formatDateField(value: string | null): string {
 
 /** Hours as a duration — `2.5` reads "2.5 h". */
 export function formatHours(value: number | null): string {
-  if (value == null) return EM_DASH
-  return `${formatDecimal(value)} h`
+  return `${formatDecimal(value ?? 0)} h`
 }
 
 /** Days, halves included — `12.5` reads "12.5 days". */
 export function formatDays(value: number | null): string {
-  if (value == null) return EM_DASH
+  if (value == null) return '0 days'
   return `${formatDecimal(value)} ${value === 1 ? 'day' : 'days'}`
 }

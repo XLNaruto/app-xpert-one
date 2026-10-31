@@ -15,6 +15,7 @@ import { formatDate } from '@/lib/utils'
 import { describeGroupSpan, formatDuration, formatSplit } from '../lib/leave-summary'
 import type { LeaveDecisionFormValues } from '../schemas'
 import type { LeaveGroup } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Approve or reject one pending leave APPLICATION.
@@ -77,7 +78,8 @@ export function LeaveDecisionDialog({
             </p>
             <p className="mt-0.5 text-muted-foreground">
               {leave.employeeName}
-              {leave.employeeCode ? ` · #${leave.employeeCode}` : ''} ·{' '}
+              <EmployeeCodeBadge code={leave.employeeCode} className="mx-1.5 align-middle" />
+              {!leave.employeeCode && ' '}·{' '}
               {describeGroupSpan(leave)}
             </p>
 

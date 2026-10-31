@@ -671,6 +671,34 @@ export function filterNavByCompany(groups: NavGroup[]): NavGroup[] {
     .filter((group) => group.items.length > 0);
 }
 
+/**
+ * Narrow the menu to the sidebar search `term` (case-insensitive). A matching
+ * section heading or parent keeps everything under it; otherwise a parent stays
+ * only with its matching children. Runs last, on the already-permitted rows.
+ */
+export function filterNavBySearch(groups: NavGroup[], term: string): NavGroup[] {
+  const needle = term.trim().toLowerCase();
+  if (!needle) return groups;
+  const matches = (label: string) => label.toLowerCase().includes(needle);
+
+  const keepItem = (item: NavItem): NavItem | null => {
+    if (matches(item.label)) return item;
+    if (!item.children?.length) return null;
+    const children = item.children
+      .map(keepItem)
+      .filter((child): child is NavItem => child !== null);
+    return children.length ? { ...item, children } : null;
+  };
+
+  return groups
+    .map((group) =>
+      matches(group.title)
+        ? group
+        : { ...group, items: group.items.map(keepItem).filter((item): item is NavItem => item !== null) },
+    )
+    .filter((group) => group.items.length > 0);
+}
+
 /** Page names for routes that don't appear in the sidebar (auth, errors, etc.). */
 const extraTitles: Record<string, string> = {
   "/profile": "My Profile",

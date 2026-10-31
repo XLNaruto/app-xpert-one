@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { DataTable, DataTableColumnHeader, rowNumber } from '@/components/data-table'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { FilterBar } from '@/components/common/filter-bar'
+import { Hint } from '@/components/common/hint'
 import { EmptyState } from '@/components/common/empty-state'
 import { PageHeader } from '@/components/common/page-header'
 import { TableRowActions } from '@/components/common/table-row-actions'
@@ -134,13 +135,13 @@ export function LeaveListPage() {
         ),
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) =>
-          row.original.fromDate ? formatDate(row.original.fromDate) : '—',
+          row.original.fromDate ? formatDate(row.original.fromDate) : 'N/A',
       },
       {
         id: LEAVE_SORT.toDate,
         header: ({ column }) => <DataTableColumnHeader column={column} title="To Date" />,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => (row.original.toDate ? formatDate(row.original.toDate) : '—'),
+        cell: ({ row }) => (row.original.toDate ? formatDate(row.original.toDate) : 'N/A'),
       },
       {
         id: LEAVE_SORT.payType,
@@ -163,7 +164,7 @@ export function LeaveListPage() {
                 <Badge variant="warning">{formatDays(unpaidDays)} unpaid</Badge>
               )}
               {paidDays === 0 && unpaidDays === 0 && (
-                <span className="text-muted-foreground">—</span>
+                <span className="text-muted-foreground">{formatDays(0)}</span>
               )}
               {split && (
                 <Tooltip>
@@ -196,7 +197,7 @@ export function LeaveListPage() {
         */
         cell: ({ row }) => (
           <span className="font-medium text-foreground">
-            {row.original.leaveType || row.original.leaveTypeName || '—'}
+            {row.original.leaveType || row.original.leaveTypeName || 'N/A'}
           </span>
         ),
       },
@@ -300,7 +301,7 @@ export function LeaveListPage() {
             )
           }
           if (pendingWithRole) return <Badge variant="secondary">{pendingWithRole}</Badge>
-          return <span className="text-muted-foreground">—</span>
+          return <span className="text-muted-foreground">N/A</span>
         },
       },
       {
@@ -318,7 +319,7 @@ export function LeaveListPage() {
         cell: ({ row }) => (
           <div className="flex max-w-96 items-start gap-2">
             <span className="text-pretty text-muted-foreground">
-              {row.original.leaveReason || '—'}
+              {row.original.leaveReason || 'N/A'}
             </span>
             {row.original.attachment && (
               /* The clip must not be the thing that wraps — it is one icon and
@@ -355,27 +356,28 @@ export function LeaveListPage() {
       />
 
       {/*
-        "Pending with me" sits beside the status tabs rather than replacing them:
+        "Awaiting My Approval" sits beside the status tabs rather than replacing them:
         it answers a different question (whose desk is this on) from the statuses
         (what happened to it), and the plain list is deliberately unchanged —
         visibility is not routing.
       */}
       <div className="mb-4 flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-border bg-card p-1">
         {LEAVE_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            type="button"
-            onClick={() => leave.changeStatusFilter(tab.value)}
-            aria-pressed={leave.statusFilter === tab.value}
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-              leave.statusFilter === tab.value
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
-          >
-            {tab.label}
-          </button>
+          <Hint key={tab.value} text={tab.hint} side="bottom">
+            <button
+              type="button"
+              onClick={() => leave.changeStatusFilter(tab.value)}
+              aria-pressed={leave.statusFilter === tab.value}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                leave.statusFilter === tab.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+              )}
+            >
+              {tab.label}
+            </button>
+          </Hint>
         ))}
       </div>
 

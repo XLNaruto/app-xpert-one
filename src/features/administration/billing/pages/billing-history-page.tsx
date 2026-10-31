@@ -78,10 +78,10 @@ export function BillingHistoryPage() {
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => {
           const { currentPeriodStart: start, currentPeriodEnd: end } = row.original
-          if (!start && !end) return <span className="text-muted-foreground">—</span>
+          if (!start && !end) return <span className="text-muted-foreground">N/A</span>
           return (
             <span className="text-sm">
-              {start ? formatDate(start) : '—'} – {end ? formatDate(end) : '—'}
+              {start ? formatDate(start) : 'N/A'} – {end ? formatDate(end) : 'N/A'}
             </span>
           )
         },
@@ -99,7 +99,7 @@ export function BillingHistoryPage() {
               {formatCurrency(row.original.payment.amount)}
             </span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">N/A</span>
           ),
       },
       {

@@ -177,9 +177,11 @@ export function useProjectTaskForm(id: number | undefined, onSaved: () => void) 
 
   /**
    * An "other"'s refusals belong under the input they're about: a mobile that
-   * is an employee's, another company's, already registered, or (on edit) a
-   * replacement for someone who has started — and a delegate the picker no
-   * longer offers. Everything else is a toast.
+   * is an employee's here, an employee's login in another company, one someone
+   * else saved a moment ago, or (on edit) a replacement for someone who has
+   * started — and a delegate the picker no longer offers. Everything else is a
+   * toast. The same number as an "other" in another company is not a refusal:
+   * each company keeps its own name for the person.
    */
   const showOtherError = (err: Error): boolean => {
     if (getValues('pickBy') !== 'other' || !(err instanceof ApiError)) return false

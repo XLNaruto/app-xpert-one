@@ -90,7 +90,7 @@ export function PlanUsageMeters({ bars }: { bars: UsageBar[] }) {
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {/* A limit of 0 means the plan states none, not "none allowed". */}
-                  of {hasLimit ? bar.limit : '—'}
+                  of {hasLimit ? bar.limit : 'N/A'}
                 </span>
                 {hasLimit && (
                   <span className="ml-auto text-xs font-medium text-muted-foreground">

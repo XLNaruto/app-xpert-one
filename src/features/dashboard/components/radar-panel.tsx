@@ -8,7 +8,7 @@ import {
   RADAR_GROUP_BY_LABELS,
   RADAR_GROUP_BY_OPTIONS,
 } from '../constants'
-import { EM_DASH, formatCount, formatRatio } from '../lib/dashboard-format'
+import { formatCount, formatRatio } from '../lib/dashboard-format'
 import { PanelCard } from './panel-card'
 import type { useRadarPanel } from '../hooks/use-radar-panel'
 import type { RadarGroupBy } from '../types'
@@ -171,7 +171,7 @@ export function RadarPanel({ panel, height = 320 }: RadarPanelProps) {
                         )}
                       >
                         <Hint text={score == null ? 'No Data — Not Measured' : undefined}>
-                          <span>{score == null ? EM_DASH : formatRatio(score)}</span>
+                          <span>{formatRatio(score)}</span>
                         </Hint>
                       </td>
                     )

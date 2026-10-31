@@ -15,6 +15,7 @@ import { ASSIGNMENT_STATUS_OPTIONS, SOP_ASSIGNMENT_SORT } from '../constants'
 import { useSopAssignmentList } from '../hooks/use-sop-assignment-list'
 import { AssignmentActionDialog } from '../components/assignment-action-dialog'
 import type { SopAssignmentRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * SOP Assignments — which employee runs which SOP group, and for how long.
@@ -79,7 +80,7 @@ export function SopAssignmentListPage({ data }: { data?: string }) {
             onClick={() => list.goToDetail(row.original.id)}
           >
             <p className="font-medium hover:text-primary">{row.original.employeeName}</p>
-            <p className="font-mono text-xs text-muted-foreground">{row.original.employeeCode}</p>
+            <EmployeeCodeBadge code={row.original.employeeCode} className="mt-0.5" />
           </button>
         ),
       },

@@ -7,6 +7,7 @@ import {
   type CalculationField,
 } from '../constants'
 import type { SavedBonusRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface SavedBonusMonthsDialogProps {
   /** The employee whose months are open — `null` closes the dialog. */
@@ -47,12 +48,8 @@ export function SavedBonusMonthsDialog({
           </span>
           <div className="min-w-0">
             <h2 className="truncate font-heading text-lg font-semibold leading-tight text-foreground">
-              {employee.employeeName || '—'}
-              {employee.employeeCode && (
-                <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">
-                  {employee.employeeCode}
-                </span>
-              )}
+              {employee.employeeName || 'N/A'}
+              <EmployeeCodeBadge code={employee.employeeCode} className="ml-2 align-middle" />
             </h2>
             <p className="text-xs text-muted-foreground">
               {formatAmount(employee.totalBonus)} across {employee.months.length}{' '}
@@ -91,25 +88,17 @@ export function SavedBonusMonthsDialog({
                   </Td>
                   <Td>
                     {/* Null where the amount was keyed by hand against no base. */}
-                    {month.baseAmount === null ? <Dash /> : formatAmount(month.baseAmount)}
+                    {formatAmount(month.baseAmount ?? 0)}
                   </Td>
                   <Td>
-                    {month.percentage === null ? (
-                      <Dash />
-                    ) : (
-                      `${formatDecimal(month.percentage)}%`
-                    )}
+                    {`${formatDecimal(month.percentage ?? 0)}%`}
                   </Td>
                   <Td className="font-semibold text-primary">{formatAmount(month.amount)}</Td>
                   <Td>
-                    {month.wagesPerDay === null ? <Dash /> : formatAmount(month.wagesPerDay)}
+                    {formatAmount(month.wagesPerDay ?? 0)}
                   </Td>
                   <Td>
-                    {month.presentDays === null ? (
-                      <Dash />
-                    ) : (
-                      formatDecimal(month.presentDays)
-                    )}
+                    {formatDecimal(month.presentDays ?? 0)}
                   </Td>
                 </tr>
               ))}
@@ -166,5 +155,5 @@ function Td({
 }
 
 function Dash() {
-  return <span className="text-muted-foreground">—</span>
+  return <span className="text-muted-foreground">N/A</span>
 }

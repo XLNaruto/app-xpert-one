@@ -78,6 +78,6 @@ export function withBranchNames(
   const byId = new Map(branches.map((branch) => [branch.id, branch.branchName]))
   return rows.map((row) => ({
     ...row,
-    branchName: (row.branchId !== null && byId.get(row.branchId)) || '—',
+    branchName: (row.branchId !== null && byId.get(row.branchId)) || 'N/A',
   }))
 }

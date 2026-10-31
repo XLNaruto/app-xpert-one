@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { getApiErrorMessage } from '@/lib/api-error'
+import { getApiErrorMessage, isConflictError } from '@/lib/api-error'
 import { IMAGE_CONTENT_TYPES } from '@/lib/uploads'
 import { checkFileContent } from '@/lib/file-signature'
 import { useStateSelect } from '@/features/master/state'
@@ -158,6 +158,18 @@ export function useEmployeeBasicForm({
 
   /* ── Submit ────────────────────────────────────────────────────────────── */
 
+  /**
+   * A primary mobile the employee app already signs in with — another
+   * employee's, or an "other" given tasks by name in any company — is a 409
+   * about that number, so it's shown under the field as well as in the toast.
+   * Other 409s don't name the mobile and stay a toast only.
+   */
+  const showMobileConflict = (error: Error) => {
+    if (isConflictError(error) && /mobile number/i.test(error.message)) {
+      form.setError('mobileNumber1', { message: error.message }, { shouldFocus: true })
+    }
+  }
+
   const submit = handleSubmit(async (values) => {
     // The photo is uploaded as part of the save, not when it was picked. It has
     // to land first: the record stores the key the presigned PUT answers.
@@ -182,7 +194,10 @@ export function useEmployeeBasicForm({
           toast.success('Basic Detail Saved')
           onSaved()
         },
-        onError: (error) => toast.error(getApiErrorMessage(error, "Couldn't save.")),
+        onError: (error) => {
+          showMobileConflict(error)
+          toast.error(getApiErrorMessage(error, "Couldn't save."))
+        },
       })
       return
     }
@@ -194,8 +209,10 @@ export function useEmployeeBasicForm({
         // before any of them can open.
         onCreated(created.id)
       },
-      onError: (error) =>
-        toast.error(getApiErrorMessage(error, "Couldn't create the employee.")),
+      onError: (error) => {
+        showMobileConflict(error)
+        toast.error(getApiErrorMessage(error, "Couldn't create the employee."))
+      },
     })
   })
 

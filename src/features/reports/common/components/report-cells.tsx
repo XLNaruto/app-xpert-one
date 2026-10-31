@@ -1,5 +1,6 @@
 import { formatAmount } from '@/lib/currency'
 import { formatDate } from '@/lib/utils'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * The handful of cells every report prints, so twelve column sets don't restate
@@ -13,7 +14,7 @@ import { formatDate } from '@/lib/utils'
 
 /** No value on file — distinct from a real zero, which prints as ₹0. */
 export function Dash() {
-  return <span className="text-muted-foreground">—</span>
+  return <span className="text-muted-foreground">N/A</span>
 }
 
 /** Free text, dashed when empty. */
@@ -66,8 +67,8 @@ export function CodeCell({ value }: { value: string | null | undefined }) {
 export function EmployeeCell({ name, code }: { name: string; code: string }) {
   return (
     <div className="min-w-0">
-      <p className="truncate font-medium">{name || '—'}</p>
-      {code && <p className="truncate font-mono text-xs text-muted-foreground">{code}</p>}
+      <p className="truncate font-medium">{name || 'N/A'}</p>
+      <EmployeeCodeBadge code={code} className="mt-0.5" />
     </div>
   )
 }

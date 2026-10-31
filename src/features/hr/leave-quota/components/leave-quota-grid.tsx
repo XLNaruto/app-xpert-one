@@ -87,7 +87,7 @@ export function LeaveQuotaGrid({
             {rows.map((row) => (
               <TableRow key={row.leaveTypeId}>
                 <TableCell className="font-medium text-foreground">
-                  {row.leaveType || '—'}
+                  {row.leaveType || 'N/A'}
                   {row.shortCode && (
                     <span className="ml-1.5 text-xs text-muted-foreground">
                       ({row.shortCode})
@@ -223,7 +223,7 @@ function QuotaCell({
  * that gets mistaken for "uncapped", so it says **no paid days** instead.
  */
 function FallbackCell({ row }: { row: LeaveQuotaRow }) {
-  if (row.unlimited) return <span className="text-muted-foreground">—</span>
+  if (row.unlimited) return <span className="text-muted-foreground">N/A</span>
 
   if (row.fallbackSource === 'NONE' || row.fallsBackTo === null) {
     return (

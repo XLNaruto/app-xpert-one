@@ -299,7 +299,7 @@ function SettingsHistoryTab({
                     Withdraw
                   </Button>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-muted-foreground">N/A</span>
                 ),
             },
           ] satisfies ColumnDef<SettingChangeHistoryItem>[])
@@ -360,7 +360,7 @@ function SettingsHistoryTab({
         header: 'Changed By',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.createdByName ?? '—',
+        cell: ({ row }) => row.original.createdByName ?? 'N/A',
       },
       {
         id: 'created_at',

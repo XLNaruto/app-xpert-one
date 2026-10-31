@@ -27,6 +27,7 @@ import { BonusEstimateControls } from '../components/bonus-estimate-controls'
 import { BonusEstimationToolbar } from '../components/bonus-estimation-toolbar'
 import { SavedBonusMonthsDialog } from '../components/saved-bonus-months-dialog'
 import type { BonusEstimateRow, SavedBonusRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Bonus Estimation — what a bonus over a range of months would cost, and what has
@@ -131,14 +132,13 @@ export function BonusEstimationPage() {
         cell: ({ row }) => (
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">
-              {row.original.employeeName || '—'}
+              {row.original.employeeName || 'N/A'}
             </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {row.original.employeeCode && (
-                <span className="font-mono">{row.original.employeeCode}</span>
+            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+              <EmployeeCodeBadge code={row.original.employeeCode} />
+              {row.original.designationName && (
+                <span className="truncate">{row.original.designationName}</span>
               )}
-              {row.original.employeeCode && row.original.designationName && ' · '}
-              {row.original.designationName}
             </p>
           </div>
         ),
@@ -174,7 +174,7 @@ export function BonusEstimationPage() {
               {formatAmount(row.original.advanceBonus)}
             </span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">{formatAmount(0)}</span>
           ),
       },
       {
@@ -188,7 +188,7 @@ export function BonusEstimationPage() {
             return draft.percentage ? (
               <span className="text-sm tabular-nums">{draft.percentage}%</span>
             ) : (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">0%</span>
             )
           }
           return (
@@ -216,7 +216,7 @@ export function BonusEstimationPage() {
                 {formatAmount(Number(draft.amount) || 0)}
               </span>
             ) : (
-              <span className="text-muted-foreground">—</span>
+              <span className="text-muted-foreground">{formatAmount(0)}</span>
             )
           }
           return (
@@ -265,14 +265,13 @@ export function BonusEstimationPage() {
         cell: ({ row }) => (
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">
-              {row.original.employeeName || '—'}
+              {row.original.employeeName || 'N/A'}
             </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {row.original.employeeCode && (
-                <span className="font-mono">{row.original.employeeCode}</span>
+            <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
+              <EmployeeCodeBadge code={row.original.employeeCode} />
+              {row.original.departmentName && (
+                <span className="truncate">{row.original.departmentName}</span>
               )}
-              {row.original.employeeCode && row.original.departmentName && ' · '}
-              {row.original.departmentName}
             </p>
           </div>
         ),
@@ -299,7 +298,7 @@ export function BonusEstimationPage() {
               {formatAmount(row.original.advanceBonus)}
             </span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground">{formatAmount(0)}</span>
           ),
       },
       {

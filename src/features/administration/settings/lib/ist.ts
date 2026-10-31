@@ -25,9 +25,9 @@ function istClock(iso: string) {
   }
 }
 
-/** `2026-10-18T09:49:00.000Z` → `18/10/2026 3:19 PM`; missing → `—`. */
+/** `2026-10-18T09:49:00.000Z` → `18/10/2026 3:19 PM`; missing → `N/A`. */
 export function formatIst(iso: string | null | undefined): string {
-  if (!iso) return '—'
+  if (!iso) return 'N/A'
   const c = istClock(iso)
   if (!c) return iso
   const hour12 = c.hour % 12 === 0 ? 12 : c.hour % 12

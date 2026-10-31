@@ -189,7 +189,7 @@ export function SupportTicketListPage() {
         meta: { className: 'min-w-36 whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.raisedByName || '—'}
+            {row.original.raisedByName || 'N/A'}
           </span>
         ),
       },

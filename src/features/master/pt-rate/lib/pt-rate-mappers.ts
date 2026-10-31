@@ -50,7 +50,7 @@ export function toPtRate(response: PtRateResponse, stateName?: string): PtRate {
     id: response.id,
     wef: response.effective_date ?? '',
     stateId: response.state_id ?? 0,
-    stateName: stateName ?? '—',
+    stateName: stateName ?? 'N/A',
     detail: response.detail ?? '',
     slabs: response.details.map(toPtRateSlab),
     createdBy: '',
@@ -93,5 +93,5 @@ export function ptRateToFormValues(rate: PtRate): PtRateFormValues {
 /** `2026-05-23` → `23 May 2026`; anything unparseable falls back to a dash. */
 export function formatEffectiveDate(wef: string): string {
   const parsed = wef ? parseISO(wef) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
+  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : 'N/A'
 }

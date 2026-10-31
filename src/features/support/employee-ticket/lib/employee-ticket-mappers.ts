@@ -233,7 +233,7 @@ export const statusLabel = (value: string) =>
 export function employeeLabel(
   ticket: Pick<EmployeeTicket, 'employeeName' | 'employeeCode'>,
 ): string {
-  if (!ticket.employeeName) return ticket.employeeCode ?? '—'
+  if (!ticket.employeeName) return ticket.employeeCode ?? 'N/A'
   return ticket.employeeCode
     ? `${ticket.employeeName} (${ticket.employeeCode})`
     : ticket.employeeName

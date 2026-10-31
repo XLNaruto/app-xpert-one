@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Hint } from '@/components/common/hint'
 import { DeltaBadge } from './delta-badge'
 import {
-  EM_DASH,
+  NOT_AVAILABLE,
   formatCount,
   formatDays,
   formatHours,
@@ -352,7 +352,7 @@ function SectionCard({
   )
 }
 
-/** One figure. `EM_DASH` arrives from the formatters — never a fabricated zero. */
+/** One figure. `NOT_AVAILABLE` arrives from the formatters for a missing non-numeric field. */
 function Stat({
   label,
   value,
@@ -364,7 +364,7 @@ function Stat({
   hint?: string
   valueClassName?: string
 }) {
-  const unmeasured = value === EM_DASH
+  const unmeasured = value === NOT_AVAILABLE
   return (
     <div className="min-w-0">
       <p className="truncate text-xs text-muted-foreground">{label}</p>

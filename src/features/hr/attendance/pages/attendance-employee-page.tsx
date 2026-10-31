@@ -14,6 +14,7 @@ import { DAY_STATUS_LABEL, DAY_STATUS_LEGEND, DAY_STATUS_TONE } from '../constan
 import { useAttendanceEmployee } from '../hooks/use-attendance-employee'
 import { AttendanceDayDialog } from '../components/attendance-day-dialog'
 import { AttendanceMonthCalendar } from '../components/attendance-month-calendar'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * One employee's month, as a calendar.
@@ -48,14 +49,14 @@ export function AttendanceEmployeePage({ data }: { data?: string }) {
     <div className="space-y-5">
       {/* Header — who, and the way back to the group they were opened from. */}
       <div className="flex flex-wrap items-center gap-3">
-        <Avatar name={employee.employeeName || '—'} className="size-10" />
+        <Avatar name={employee.employeeName || 'N/A'} className="size-10" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate font-heading text-xl font-semibold tracking-tight">
             {employee.employeeName || 'Employee'}
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {employee.employeeCode ? `Code: ${employee.employeeCode}` : 'Attendance'}
-            {employee.weeklyOff ? ` · Weekly off: ${employee.weeklyOff}` : ''}
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            {employee.employeeCode ? <EmployeeCodeBadge code={employee.employeeCode} /> : 'Attendance'}
+            {employee.weeklyOff && <span>Weekly off: {employee.weeklyOff}</span>}
           </p>
         </div>
         {/* Switch to anyone else in the group this person was opened from,

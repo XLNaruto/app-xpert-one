@@ -86,9 +86,9 @@ export function companySettingsToPayload(
   return changed ? payload : null
 }
 
-/** `START_STOP` → `Start / Stop`; a missing previous value → `—`. */
+/** `START_STOP` → `Start / Stop`; a missing previous value → `N/A`. */
 export function submissionModeLabel(mode: TaskSubmissionMode | null): string {
-  return mode ? SUBMISSION_MODE_SHORT_LABELS[mode] : '—'
+  return mode ? SUBMISSION_MODE_SHORT_LABELS[mode] : 'N/A'
 }
 
 /**

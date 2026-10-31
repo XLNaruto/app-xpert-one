@@ -113,7 +113,7 @@ export function ProjectTaskEmployeePage({ data }: { data?: string }) {
             <DetailItem
               icon={Hourglass}
               label={work.completedAt ? 'Elapsed' : 'Elapsed So Far'}
-              value={timeTaken(work) ?? '—'}
+              value={timeTaken(work) ?? '0s'}
             />
             <DetailItem icon={Flag} label="Deadline" value={formatDate(work.deadline)} />
             <DetailItem

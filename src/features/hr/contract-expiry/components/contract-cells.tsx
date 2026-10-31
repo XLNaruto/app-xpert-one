@@ -6,13 +6,14 @@ import { Hint } from '@/components/common/hint'
 import { RowActionsMenu, type RowAction } from '@/components/common/row-actions-menu'
 import { CONTRACT_STATUS_SPECS } from '../constants'
 import {
-  EM_DASH,
+  NOT_AVAILABLE,
   formatDay,
   formatDaysToEnd,
   formatPlacement,
   formatTerm,
 } from '../lib/contract-format'
 import type { ExpiringContract } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * The pieces a contract row is made of, shared by the full screen and the
@@ -57,8 +58,10 @@ export function ContractEmployeeCell({
       >
         {row.employeeName ?? `Employee #${row.employeeId}`}
       </Link>
-      <p className="truncate text-xs text-muted-foreground">
-        {[row.employeeCode, row.employeeMobile].filter(Boolean).join(' · ') || EM_DASH}
+      <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <EmployeeCodeBadge code={row.employeeCode} />
+        {row.employeeMobile && <span className="truncate">{row.employeeMobile}</span>}
+        {!row.employeeCode && !row.employeeMobile && NOT_AVAILABLE}
       </p>
     </div>
   )
@@ -113,7 +116,7 @@ export function ContractRowActions({
   onRenew: (row: ExpiringContract) => void
   onComplete: (row: ExpiringContract) => void
 }) {
-  if (!canUpdate) return <span className="text-xs text-muted-foreground">{EM_DASH}</span>
+  if (!canUpdate) return <span className="text-xs text-muted-foreground">{NOT_AVAILABLE}</span>
 
   const actions: RowAction[] = [
     {

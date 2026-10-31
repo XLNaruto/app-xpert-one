@@ -103,11 +103,11 @@ export function AttendanceDayTasks({
                       </Badge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-3 py-2 tabular-nums">
-                      {row.start ? clock(row.start) : '—'}
+                      {row.start ? clock(row.start) : 'N/A'}
                     </TableCell>
                     <TableCell className="whitespace-nowrap px-3 py-2 tabular-nums">
                       {!row.start ? (
-                        '—'
+                        'N/A'
                       ) : row.end ? (
                         clock(row.end)
                       ) : (

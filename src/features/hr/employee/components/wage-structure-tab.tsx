@@ -400,8 +400,8 @@ function EffectiveWageBlock({ wage }: { wage: EmployeeWage }) {
           label="Working Days"
           value={
             version.workingDayCalculationType === 'Fixed'
-              ? (version.workingDays ?? '—')
-              : (version.workingDayCalculationType ?? '—')
+              ? (version.workingDays ?? 0)
+              : (version.workingDayCalculationType ?? 'N/A')
           }
         />
         <ReadOnlyTile label="Weekly Off" value={version.weeklyOff ?? 'None'} />
@@ -430,7 +430,7 @@ function EffectiveWageBlock({ wage }: { wage: EmployeeWage }) {
                 ]
                   .filter(Boolean)
                   .join(', ') || 'No deductions')
-              : '—'
+              : 'N/A'
           }
         />
       </div>
@@ -490,9 +490,9 @@ function ActsBlock({ version }: { version: EmployeeWageVersion }) {
 
 /* ── Small pieces ───────────────────────────────────────────────────────── */
 
-/** An amount, or an em dash where the version carries none. */
+/** An amount, or 0 where the version carries none. */
 function money(value: number | null): string {
-  return value === null ? '—' : formatAmount(value)
+  return formatAmount(value ?? 0)
 }
 
 /** "12% of EPF wages", or the flat amount when PF is deducted at a fixed rate. */
@@ -623,7 +623,7 @@ function ComponentTable({
                         : formatAmount(component.amount)}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {acts.length ? acts.join(', ') : '—'}
+                      {acts.length ? acts.join(', ') : 'N/A'}
                     </TableCell>
                     {/*
                       Blank on a plain monthly head — which is what almost every

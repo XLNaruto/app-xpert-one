@@ -47,6 +47,7 @@ import type {
   SalaryRates,
   SalaryRegisterRow,
 } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 type Ctl = Control<SalaryFormValues>
 type Reg = UseFormRegister<SalaryFormValues>
@@ -996,7 +997,11 @@ function EmployeeCell({ row }: { row: SalaryRegisterRow }) {
           {label || NO_VALUE}
         </span>
         <span className="flex items-center gap-1 truncate text-[10px] text-muted-foreground">
-          {row.employeeCode || 'No code'}
+          {row.employeeCode ? (
+            <EmployeeCodeBadge code={row.employeeCode} className="px-1 py-0 text-[10px] leading-3.5" />
+          ) : (
+            'No code'
+          )}
           {/*
             Flagged only when the heads on this row are the EMPLOYEE'S OWN, which
             is the exception: their designation's catalog no longer prices them at

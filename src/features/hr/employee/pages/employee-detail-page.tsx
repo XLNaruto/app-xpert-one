@@ -1,3 +1,4 @@
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 import { useMemo, type ReactNode } from "react";
 import {
   ArrowLeft,
@@ -823,7 +824,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                           <Row
                             key={`${component.payComponentId}-${component.sortOrder}`}
                             primary={component.componentType || "Component"}
-                            secondary={component.amountType || "—"}
+                            secondary={component.amountType || "N/A"}
                             trailing={
                               <span className="text-sm font-semibold text-foreground">
                                 {formatAmount(component.amount)}
@@ -896,7 +897,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                     <Row
                       key={education.id}
                       primary={education.educationName}
-                      secondary={education.board || "—"}
+                      secondary={education.board || "N/A"}
                       trailing={
                         <div className="flex items-center gap-2">
                           {education.passingYear && (
@@ -941,7 +942,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                             }`,
                         ]
                           .filter(Boolean)
-                          .join(" · ") || "—"
+                          .join(" · ") || "N/A"
                       }
                       trailing={
                         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -958,8 +959,8 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                             </Badge>
                           )}
                           <span className="text-xs text-muted-foreground">
-                            {experience.fromDate || "—"} →{" "}
-                            {experience.toDate || "—"}
+                            {experience.fromDate || "N/A"} →{" "}
+                            {experience.toDate || "N/A"}
                           </span>
                         </div>
                       }
@@ -1097,11 +1098,11 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                   {transferRows.map((transfer) => (
                     <Row
                       key={transfer.id}
-                      primary={`${transfer.designationName || "—"} · ${transfer.companyName || "—"}`}
+                      primary={`${transfer.designationName || "N/A"} · ${transfer.companyName || "N/A"}`}
                       secondary={
                         [transfer.branchName, transfer.departmentName]
                           .filter(Boolean)
-                          .join(" · ") || "—"
+                          .join(" · ") || "N/A"
                       }
                       trailing={
                         <div className="flex items-center gap-2">
@@ -1109,7 +1110,7 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                             <Badge variant="success">Current</Badge>
                           )}
                           <span className="text-xs text-muted-foreground">
-                            {onDate(transfer.joiningDate) ?? "—"} →{" "}
+                            {onDate(transfer.joiningDate) ?? "N/A"} →{" "}
                             {onDate(transfer.leavingDate) ?? "present"}
                           </span>
                         </div>
@@ -1193,8 +1194,8 @@ export function EmployeeDetailPage({ data }: { data?: string }) {
                       primary={
                         leave.leaveType || leave.leaveTypeName || "Leave"
                       }
-                      secondary={`${onDate(leave.fromDate) ?? "—"} → ${
-                        onDate(leave.toDate) ?? "—"
+                      secondary={`${onDate(leave.fromDate) ?? "N/A"} → ${
+                        onDate(leave.toDate) ?? "N/A"
                       }`}
                       trailing={
                         <div className="flex items-center gap-2">
@@ -1334,11 +1335,7 @@ function EmployeeHero({
               className="w-auto"
               panelMinWidth={288}
             />
-            {employee.code && (
-              <Badge variant="default" className="font-mono">
-                #{employee.code}
-              </Badge>
-            )}
+            <EmployeeCodeBadge code={employee.code} className="px-2 py-0.5 text-xs" />
           </div>
 
           <p className="mt-1 text-sm text-muted-foreground">
@@ -1582,7 +1579,7 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
                 {asset.identificationTitle}: {asset.identificationValue}
               </Badge>
             )}
-            <Badge variant={look.badge}>{asset.status || "—"}</Badge>
+            <Badge variant={look.badge}>{asset.status || "N/A"}</Badge>
             {asset.stockHeld && <Badge variant="warning">Holding a Unit</Badge>}
             {overdue && <Badge variant="destructive">Overdue</Badge>}
           </div>
@@ -1620,7 +1617,7 @@ function AssetCard({ asset }: { asset: EmployeeAsset }) {
       {/* `createdBy`/`updatedBy` already carry the NAME — see `auditOf`. */}
       <div className="mt-auto flex flex-col gap-0.5 border-t bg-muted/30 px-4 py-2 text-[11px] text-muted-foreground">
         <span>
-          Issued By {asset.createdBy || "—"}
+          Issued By {asset.createdBy || "N/A"}
           {onDate(asset.createdAt) ? ` · ${onDate(asset.createdAt)}` : ""}
         </span>
         {asset.updatedBy && asset.updatedAt !== asset.createdAt && (
@@ -1651,7 +1648,7 @@ function Row({
           {primary}
         </span>
         <span className="block truncate text-xs text-muted-foreground">
-          {secondary || "—"}
+          {secondary || "N/A"}
         </span>
       </div>
       {trailing}

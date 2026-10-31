@@ -82,7 +82,7 @@ export function pfRateToFormValues(rate: PfRate): PfRateFormValues {
 /** `2026-05-23` → `23 May 2026`; anything unparseable falls back to a dash. */
 export function formatEffectiveDate(wef: string): string {
   const parsed = wef ? parseISO(wef) : null
-  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : '—'
+  return parsed && isValid(parsed) ? format(parsed, 'dd MMM yyyy') : 'N/A'
 }
 
 /**

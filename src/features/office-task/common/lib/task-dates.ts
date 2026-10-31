@@ -73,10 +73,9 @@ export function formatClock(totalSeconds: number): string {
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`
 }
 
-/** Seconds as prose: `1h 4m`, `13m 0s`, `—` for nothing. */
+/** Seconds as prose: `1h 4m`, `13m 0s`, `0m 0s` for nothing. */
 export function formatDuration(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds))
-  if (s === 0) return '—'
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
   return h > 0 ? `${h}h ${m}m` : `${m}m ${s % 60}s`

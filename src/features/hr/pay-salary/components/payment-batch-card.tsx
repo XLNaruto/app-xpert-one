@@ -15,6 +15,7 @@ import { cn, formatDate } from '@/lib/utils'
 import { usePaymentBatch } from '../api/use-payment-history'
 import { BATCH_EMPLOYEE_PAGE_SIZE } from '../constants'
 import type { PaymentBatchCard as BatchCard } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface PaymentBatchCardProps {
   card: BatchCard
@@ -236,13 +237,9 @@ function BatchBody({ id }: { id: number }) {
               <UserRound className="size-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium leading-tight text-foreground">
-                  {employee.employeeName || '—'}
+                  {employee.employeeName || 'N/A'}
                 </span>
-                {employee.employeeCode && (
-                  <span className="block font-mono text-[11px] leading-tight text-muted-foreground">
-                    {employee.employeeCode}
-                  </span>
-                )}
+                <EmployeeCodeBadge code={employee.employeeCode} className="mt-0.5" />
               </span>
             </span>
             <span className="w-28 shrink-0 text-right text-sm tabular-nums text-foreground">

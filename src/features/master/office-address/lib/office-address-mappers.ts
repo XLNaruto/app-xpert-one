@@ -40,9 +40,9 @@ export function toOfficeAddress(
     addressLine2: response.address2 ?? '',
     addressLine3: response.address3 ?? '',
     stateId: response.state_id,
-    stateName: response.state_name || stateName || '—',
+    stateName: response.state_name || stateName || 'N/A',
     districtId: response.district_id,
-    districtName: response.district_name || districtName || '—',
+    districtName: response.district_name || districtName || 'N/A',
     city: response.city ?? '',
     pinCode: response.pin_code ?? '',
     createdBy: '',
@@ -109,7 +109,7 @@ export function formatAddress(record: OfficeAddress): string {
     record.city,
     record.pinCode,
   ].filter(Boolean)
-  return parts.length ? parts.join(', ') : '—'
+  return parts.length ? parts.join(', ') : 'N/A'
 }
 
 /**

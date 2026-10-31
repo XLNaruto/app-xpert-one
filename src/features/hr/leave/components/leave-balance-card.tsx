@@ -151,15 +151,14 @@ function BalanceRow({ item }: { item: LeaveBalanceItem }) {
   return (
     <TableRow>
       <TableCell className="font-medium text-foreground">
-        {item.leaveType || '—'}
+        {item.leaveType || 'N/A'}
         {item.shortCode && (
           <span className="ml-1.5 text-xs text-muted-foreground">({item.shortCode})</span>
         )}
       </TableCell>
 
-      {/* An unpaid type has no allowance to state — a `0` there would read as a cap. */}
       <TableCell className="text-right">
-        {isUnpaidType ? '—' : formatDays(item.total)}
+        {formatDays(isUnpaidType ? 0 : item.total)}
       </TableCell>
       <TableCell className="whitespace-nowrap text-right">
         {formatDays(item.used)}
@@ -199,7 +198,7 @@ function BalanceRow({ item }: { item: LeaveBalanceItem }) {
             </TooltipContent>
           </Tooltip>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">{formatDays(0)}</span>
         )}
       </TableCell>
 

@@ -103,7 +103,7 @@ export function EditableCell({
  * Read-only cell text on one line, cut with "…"; the tooltip shows it in full.
  * No tooltip when there's nothing to reveal.
  */
-export function TruncatedText({ text, emptyText = '—' }: { text: string; emptyText?: string }) {
+export function TruncatedText({ text, emptyText = 'N/A' }: { text: string; emptyText?: string }) {
   if (!text.trim()) return <span className="text-muted-foreground">{emptyText}</span>
   return (
     <Tooltip>

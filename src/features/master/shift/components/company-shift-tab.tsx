@@ -127,7 +127,7 @@ export function CompanyShiftTab({ companyId }: CompanyShiftTabProps) {
         // Which dated version these timings are. A row dated ahead of today is a
         // change that hasn't arrived yet, so the shift still works the old hours.
         cell: ({ row }) =>
-          row.original.effectiveDate ? formatDate(row.original.effectiveDate) : '—',
+          row.original.effectiveDate ? formatDate(row.original.effectiveDate) : 'N/A',
       },
       {
         id: SHIFT_SORT.startTime,

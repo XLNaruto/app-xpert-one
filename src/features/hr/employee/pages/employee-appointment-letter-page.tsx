@@ -10,7 +10,6 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { decryptId } from '@/lib/crypto'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Forbidden, NotFound } from '@/features/error'
@@ -18,6 +17,7 @@ import { APPOINTMENT_VARIANTS, LETTER_LANGUAGES } from '../constants'
 import { useEmployeeAppointmentLetter } from '../hooks/use-employee-appointment-letter'
 import { AppointmentOrder } from '../components/appointment-order'
 import { LetterToggle } from '../components/letter-toggle'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 const LANGUAGE_OPTIONS = LETTER_LANGUAGES.map((l) => ({ value: l.value, label: l.native }))
 
@@ -89,7 +89,7 @@ export function EmployeeAppointmentLetterPage({ data }: { data?: string }) {
                   {fields.fullName || 'Employee'}
                 </h1>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  {fields.code && <Badge variant="outline">{fields.code}</Badge>}
+                  <EmployeeCodeBadge code={fields.code} />
                   {fields.designation && <span>{fields.designation}</span>}
                   {fields.joiningDate && <span>• Joined {fields.joiningDate}</span>}
                 </div>

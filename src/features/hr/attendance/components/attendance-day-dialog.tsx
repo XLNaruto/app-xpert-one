@@ -241,11 +241,11 @@ function SessionCard({
         <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
           <span className="inline-flex items-center gap-1 font-medium tabular-nums">
             <LogIn className="size-3.5 text-success" />
-            {inTime || '—'}
+            {inTime || 'N/A'}
           </span>
           <span className="inline-flex items-center gap-1 font-medium tabular-nums">
             <LogOut className="size-3.5 text-destructive" />
-            {outTime || '—'}
+            {outTime || 'N/A'}
           </span>
           {/* An open session is a fact about the day, not a gap in the data. */}
           {session.checkIn && !session.checkOut && (
@@ -328,7 +328,7 @@ function PunchRow({
 
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium tabular-nums">
-          {formatClockTime(punch.time) || punch.eventTime || '—'}
+          {formatClockTime(punch.time) || punch.eventTime || 'N/A'}
         </p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
           {punch.device && (
@@ -385,7 +385,7 @@ function Figure({
         <Icon className="size-3" />
         {label}
       </p>
-      <p className="mt-1 text-sm font-semibold tabular-nums">{value || '—'}</p>
+      <p className="mt-1 text-sm font-semibold tabular-nums">{value || 'N/A'}</p>
     </div>
   )
 }

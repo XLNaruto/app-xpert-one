@@ -100,7 +100,7 @@ export function StockHistoryDialog({
                   <span className="text-sm text-foreground">{name}</span>
                 ) : (
                   // A line about the asset itself names no variant.
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-sm text-muted-foreground">N/A</span>
                 )
               },
             } satisfies ColumnDef<StockMovement>,
@@ -166,7 +166,7 @@ export function StockHistoryDialog({
           // link. The two stack when both are there: the note is the line's
           // story and the person is who it went to, not a second half of it.
           if (!note && employeeId === null) {
-            return <span className="text-sm text-muted-foreground">—</span>
+            return <span className="text-sm text-muted-foreground">N/A</span>
           }
 
           return (

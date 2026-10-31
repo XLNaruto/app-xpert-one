@@ -19,13 +19,14 @@ import { ShiftScheduleFilters } from '../components/shift-schedule-filters'
 import { ShiftScheduleGenerateDialog } from '../components/shift-schedule-generate-dialog'
 import { ShiftScheduleSkippedNotice } from '../components/shift-schedule-skipped-notice'
 import type { ScheduleEmployeeRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Off-Day Schedule — which days each employee is OFF and which they WORK, date by
  * date.
  *
  * Rows are employees, columns are the window's dates. Where a date has an entry
- * it outranks the week-off policy everywhere (attendance, salary); a "—" is a
+ * it outranks the week-off policy everywhere (attendance, salary); a "N/A" is a
  * date with none, which the policy still decides. Generate fills the window from
  * the policies; a click on a cell changes one date.
  */
@@ -61,9 +62,7 @@ export function ShiftScheduleListPage() {
             <span className="block truncate font-medium text-foreground">
               {row.original.employeeName || `#${row.original.employeeId}`}
             </span>
-            {row.original.employeeCode && (
-              <span className="text-xs text-muted-foreground">{row.original.employeeCode}</span>
-            )}
+            <EmployeeCodeBadge code={row.original.employeeCode} className="mt-0.5" />
           </div>
         ),
       },
@@ -206,7 +205,7 @@ function Legend() {
         Scheduled working
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="px-1.5">—</span>
+        <span className="px-1.5">N/A</span>
         Not scheduled — the week-off policy decides
       </span>
       <span className="inline-flex items-center gap-1.5">

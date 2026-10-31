@@ -108,7 +108,7 @@ export function HolidayListPage() {
           row.original.accountingYear ? (
             <Badge variant="outline">FY {row.original.accountingYear}</Badge>
           ) : (
-            '—'
+            'N/A'
           ),
       },
       // Only `created_at` is sortable; "Updated" renders without the control.

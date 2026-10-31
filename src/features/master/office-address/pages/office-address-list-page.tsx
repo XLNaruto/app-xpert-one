@@ -79,7 +79,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         meta: { className: 'whitespace-nowrap' },
         cell: ({ row }) => (
           <span className="font-medium text-foreground">
-            {row.original.officeCode || '—'}
+            {row.original.officeCode || 'N/A'}
           </span>
         ),
       },
@@ -96,7 +96,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         enableSorting: false,
         header: 'Email',
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.email || '—',
+        cell: ({ row }) => row.original.email || 'N/A',
       },
       {
         accessorKey: 'stateName',
@@ -115,7 +115,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
         accessorKey: 'city',
         header: ({ column }) => <DataTableColumnHeader column={column} title="City" />,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.city || '—',
+        cell: ({ row }) => row.original.city || 'N/A',
       },
       // Only PF classifies its offices, so the column follows the form field.
       ...(screen.hasOfficeType
@@ -125,7 +125,7 @@ export function OfficeAddressListPage({ screen }: { screen: OfficeAddressScreen 
               enableSorting: false,
               header: 'Office Type',
               meta: { className: 'whitespace-nowrap' },
-              cell: ({ row }) => row.original.officeType || '—',
+              cell: ({ row }) => row.original.officeType || 'N/A',
             } satisfies ColumnDef<OfficeAddress>,
           ]
         : []),

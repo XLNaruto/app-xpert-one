@@ -191,8 +191,8 @@ function SwitchSummaryView({ summary }: { summary: SwitchSummary }) {
           <div className="rounded-lg bg-muted/40 px-3 py-2">
             <p className="font-medium text-foreground">New term</p>
             <p className="text-muted-foreground">
-              {summary.newTerm.start ? formatDate(summary.newTerm.start) : '—'} →{' '}
-              {summary.newTerm.end ? formatDate(summary.newTerm.end) : '—'}
+              {summary.newTerm.start ? formatDate(summary.newTerm.start) : 'N/A'} →{' '}
+              {summary.newTerm.end ? formatDate(summary.newTerm.end) : 'N/A'}
             </p>
           </div>
         )}

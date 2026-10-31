@@ -119,7 +119,7 @@ export function useEmployeeShiftTab(employeeId: number) {
   const rosterShiftLabel = useCallback(
     (entry: EmployeeRosterEntry) => {
       const name = entry.shiftName || (entry.shiftId !== null ? `#${entry.shiftId}` : '')
-      return name ? withShiftTimes(name, entry.shiftId) : '—'
+      return name ? withShiftTimes(name, entry.shiftId) : 'N/A'
     },
     [withShiftTimes],
   )

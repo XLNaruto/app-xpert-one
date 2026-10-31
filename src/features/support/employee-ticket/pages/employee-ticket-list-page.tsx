@@ -232,7 +232,7 @@ export function EmployeeTicketListPage() {
             {/* EFFORT above, CALENDAR below — the two are routinely orders of
                 magnitude apart, so they're never shown as one number. */}
             <span className="block text-sm tabular-nums text-foreground">
-              {formatDuration(row.original.activeWorkSeconds) ?? '—'}
+              {formatDuration(row.original.activeWorkSeconds) ?? '0s'}
             </span>
             <span className="block text-xs tabular-nums text-muted-foreground">
               {formatDuration(row.original.wallClockSeconds)} elapsed

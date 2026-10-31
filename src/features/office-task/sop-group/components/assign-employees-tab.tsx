@@ -58,8 +58,8 @@ export function AssignEmployeesTab({ f }: { f: SopGroupForm }) {
         description={
           f.picked
             ? f.pickBy === 'role'
-              ? `Panel users who hold the ${target || '—'} role`
-              : `People whose designation is ${target || '—'}`
+              ? `Panel users who hold the ${target || 'N/A'} role`
+              : `People whose designation is ${target || 'N/A'}`
             : `Pick a ${f.pickBy} in Group Details first`
         }
       />

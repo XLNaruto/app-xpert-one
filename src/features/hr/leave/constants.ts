@@ -74,11 +74,10 @@ export const LEAVE_STATUS_FILTER_OPTIONS: ComboboxOption[] = [
  * company's rows whether or not any hierarchy user can.
  */
 export const LEAVE_TABS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'MINE', label: 'Pending with Me' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'APPROVED', label: 'Approved' },
-  { value: 'REJECTED', label: 'Rejected' },
+  { value: '', label: 'All', hint: 'Every Leave Request, Whatever Its Status.' },
+  { value: 'PENDING', label: 'Pending', hint: 'Leaves Not Yet Approved or Rejected.' },
+  { value: 'APPROVED', label: 'Approved', hint: 'Leaves That Have Been Approved.' },
+  { value: 'REJECTED', label: 'Rejected', hint: 'Leaves That Have Been Rejected.' },
 ] as const
 
 /** The tab value that means "my own queue" rather than a status. */

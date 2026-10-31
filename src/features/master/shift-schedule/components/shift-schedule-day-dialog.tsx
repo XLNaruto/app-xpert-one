@@ -12,6 +12,7 @@ import { Combobox } from '@/components/ui/combobox'
 import { Field } from '@/components/common/form-field'
 import { cn, formatDate } from '@/lib/utils'
 import type { ShiftScheduleDayState } from '../hooks/use-shift-schedule-day'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 interface ShiftScheduleDayDialogProps {
   state: ShiftScheduleDayState
@@ -36,7 +37,7 @@ export function ShiftScheduleDayDialog({ state, canDelete }: ShiftScheduleDayDia
             <DialogTitle>{formatDate(target.date, 'EEEE, dd MMM yyyy')}</DialogTitle>
             <DialogDescription>
               {target.employee.employeeName}
-              {target.employee.employeeCode ? ` · ${target.employee.employeeCode}` : ''}
+              <EmployeeCodeBadge code={target.employee.employeeCode} className="ml-1.5 align-middle" />
               {' — '}
               {target.day?.isWeekOff == null
                 ? 'not scheduled; the week-off policy decides.'

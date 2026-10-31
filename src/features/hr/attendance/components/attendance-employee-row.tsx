@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { formatClockTime } from '../lib/attendance-mappers'
 import { DAY_STATUS_LABEL } from '../constants'
 import type { AttendanceEmployee } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /** One punch time, or nothing at all when there's none on record. */
 function Punch({
@@ -82,17 +83,10 @@ export function AttendanceEmployeeRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">
-          {employee.fullName || employee.name || '—'}
+          {employee.fullName || employee.name || 'N/A'}
         </p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-          {employee.code && (
-            <span>
-              CODE:{' '}
-              <span className="rounded bg-muted px-1.5 py-0.5 font-medium tabular-nums text-foreground">
-                {employee.code}
-              </span>
-            </span>
-          )}
+          <EmployeeCodeBadge code={employee.code} />
           <Punch icon={LogIn} label="Check In" value={formatClockTime(employee.checkIn)} />
           <Punch
             icon={LogOut}

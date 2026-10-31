@@ -95,7 +95,7 @@ export function SupportDueBadge({
   label: string | null
   className?: string
 }) {
-  if (!label) return <span className="text-sm text-muted-foreground">—</span>
+  if (!label) return <span className="text-sm text-muted-foreground">N/A</span>
   return (
     <span
       className={cn(

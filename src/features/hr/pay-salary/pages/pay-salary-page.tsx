@@ -32,6 +32,7 @@ import { PaySalaryDialog } from '../components/pay-salary-dialog'
 import { PaySalarySummary } from '../components/pay-salary-summary'
 import { PaySalaryToolbar } from '../components/pay-salary-toolbar'
 import type { PaySalaryRow } from '../types'
+import { EmployeeCodeBadge } from '@/components/common/employee-code-badge'
 
 /**
  * Pay Salary — what is outstanding for the period, and what already went out.
@@ -133,13 +134,9 @@ export function PaySalaryPage() {
         cell: ({ row }) => (
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-foreground">
-              {row.original.employeeName || '—'}
+              {row.original.employeeName || 'N/A'}
             </p>
-            {row.original.employeeCode && (
-              <p className="font-mono text-[11px] text-muted-foreground">
-                {row.original.employeeCode}
-              </p>
-            )}
+            <EmployeeCodeBadge code={row.original.employeeCode} className="mt-0.5" />
           </div>
         ),
       },
@@ -148,7 +145,7 @@ export function PaySalaryPage() {
         header: 'Mobile',
         enableSorting: false,
         meta: { className: 'whitespace-nowrap' },
-        cell: ({ row }) => row.original.mobile || '—',
+        cell: ({ row }) => row.original.mobile || 'N/A',
       },
       {
         id: 'grossPay',
@@ -188,7 +185,7 @@ export function PaySalaryPage() {
               row.original.paymentDate ? (
                 formatDate(row.original.paymentDate)
               ) : (
-                <span className="text-muted-foreground">—</span>
+                <span className="text-muted-foreground">N/A</span>
               ),
           },
     ],
