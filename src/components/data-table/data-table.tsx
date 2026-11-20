@@ -308,9 +308,17 @@ export function DataTable<TData, TValue>({
   // still loading while it holds no batch at the current offset.
   const lazyWaiting = lazyAll && !batches.some((batch) => batch.offset === offset)
   const lazyNextOffset = lastBatch ? lastBatch.offset + lastBatch.rows.length : 0
+  // `data` is a fresh result the store effect hasn't absorbed yet (e.g. a tab
+  // or filter switch just answered with a new list and a new `total`). Until it
+  // is stored, `batches` still describe the OLD list, so a next offset worked
+  // out from them would fetch rows the new first batch already holds and append
+  // them twice.
+  const currentBatch = batches.find((batch) => batch.offset === offset)
+  const lazySettled = currentBatch != null && sameRows(currentBatch.rows, data)
   const lazyHasMore =
     lazyAll &&
     !lazyWaiting &&
+    lazySettled &&
     lastBatch != null &&
     lastBatch.rows.length > 0 &&
     lazyNextOffset < (total ?? 0)
