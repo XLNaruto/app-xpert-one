@@ -84,6 +84,8 @@ export type ScheduledSwitchResponse = z.infer<typeof scheduledSwitchSchema>
 export const subscriptionResponseSchema = z.object({
   id: z.number(),
   plan_id: z.number(),
+  /** Not always sent — the screen falls back to the catalog entry for `plan_id`. */
+  plan_name: z.string().nullish(),
   status: z.string(),
   max_employees: z.number(),
   max_companies: z.number(),

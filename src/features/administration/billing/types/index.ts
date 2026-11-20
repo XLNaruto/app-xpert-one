@@ -41,6 +41,8 @@ export interface Plan {
 export interface Subscription {
   id: number
   planId: number
+  /** The plan's name when the API sends it; otherwise resolve it from the catalog by `planId`. */
+  planName: string | null
   /** `active`, `trialing`, `past_due`, … — a free string on the wire. */
   status: string
   maxEmployees: number

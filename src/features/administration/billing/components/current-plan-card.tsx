@@ -80,7 +80,7 @@ export function CurrentPlanCard({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-heading text-xl font-semibold tracking-tight text-foreground">
-                  {plan?.name ?? `Plan #${subscription.planId}`}
+                  {subscription.planName ?? plan?.name ?? `Plan #${subscription.planId}`}
                 </h2>
                 <Badge variant={subscriptionStatusVariant(subscription.status)}>
                   {subscriptionStatusLabel(subscription.status)}

@@ -96,6 +96,7 @@ export function toSubscription(response: SubscriptionResponse): Subscription {
   return {
     id: response.id,
     planId: response.plan_id,
+    planName: response.plan_name ?? null,
     status: response.status,
     maxEmployees: response.max_employees,
     maxCompanies: response.max_companies,
