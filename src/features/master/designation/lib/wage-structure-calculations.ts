@@ -8,24 +8,27 @@ const HOURS_PER_DAY = 8
 /**
  * The two wage figures a row carries — one captured, one derived, decided by the
  * salary type. A monthly wage is quoted as the basic and spread over the
- * statutory paid days; a daily wage is quoted per day and multiplied back up.
+ * month's working days (`resolveWorkingDays`); a daily wage is quoted per day and multiplied back up.
  * Either way the grid shows the derived side in a disabled field, so the two can
  * never disagree.
  */
 export function deriveWages(
   row: Pick<WageStructureRow, 'salaryType' | 'basicPay' | 'wagePerDay'>,
+  /** The month's working days — `resolveWorkingDays` of the row. */
+  workingDays: number = WAGE_DAYS_PER_MONTH,
 ): { basicPay: number | null; wagePerDay: number | null } {
+  const days = workingDays > 0 ? workingDays : WAGE_DAYS_PER_MONTH
   if (row.salaryType === 'Daily') {
     const perDay = toOptionalAmount(row.wagePerDay)
     return {
-      basicPay: perDay === null ? null : perDay * WAGE_DAYS_PER_MONTH,
+      basicPay: perDay === null ? null : perDay * days,
       wagePerDay: perDay,
     }
   }
   const basic = toOptionalAmount(row.basicPay)
   return {
     basicPay: basic,
-    wagePerDay: basic === null ? null : basic / WAGE_DAYS_PER_MONTH,
+    wagePerDay: basic === null ? null : basic / days,
   }
 }
 
@@ -44,13 +47,14 @@ export function deriveOvertimeRate(
     | 'overtimeApplicable'
     | 'overtimeRatePerHour'
   >,
+  workingDays: number = WAGE_DAYS_PER_MONTH,
 ): number | null {
   if (!row.overtimeApplicable) return null
 
   const entered = toOptionalAmount(row.overtimeRatePerHour)
   if (entered !== null) return entered
 
-  const { wagePerDay } = deriveWages(row)
+  const { wagePerDay } = deriveWages(row, workingDays)
   if (wagePerDay === null) return null
   return (wagePerDay / HOURS_PER_DAY) * 2
 }

@@ -1,7 +1,7 @@
 import { useWatch, type Control } from 'react-hook-form'
 import { Calculator } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { WAGE_DAYS_PER_MONTH } from '../constants'
+import { resolveWorkingDays } from '../lib/designation-calculations'
 import type { DesignationFormValues } from '../schemas'
 
 interface CalculationFormulaStripProps {
@@ -81,7 +81,7 @@ export function CalculationFormulaStrip({ control }: CalculationFormulaStripProp
       /* A rate typed into the form is what's paid; blank derives one. */
       formula: values.overtimeRatePerHour
         ? `OT Hours × ${amountOr(values.overtimeRatePerHour)} per hour`
-        : `OT Hours × (Basic Pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8) × 2`,
+        : `OT Hours × (Basic Pay ÷ ${resolveWorkingDays(values)} ÷ 8) × 2`,
       badgeTone: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
     })
   }

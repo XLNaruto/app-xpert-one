@@ -148,6 +148,8 @@ export const endpoints = {
     GET: (id: number) => `/user/companies/${id}`,
     PATCH: (id: number) => `/user/companies/${id}`,
     DELETE: (id: number) => `/user/companies/${id}`,
+    /** The plan's company allowance vs. companies already created. */
+    LIMIT: '/user/companies/limit',
   },
   BRANCHES: {
     LIST: '/user/branches',

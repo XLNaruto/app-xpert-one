@@ -22,6 +22,7 @@ import {
 } from './component-schedule'
 import type { ComponentSchedule } from './component-schedule'
 import { deriveOvertimeRate, deriveWages } from './wage-structure-calculations'
+import { resolveWorkingDays } from './designation-calculations'
 import {
   fromApiActAmountType,
   fromApiEsicBasis,
@@ -108,7 +109,9 @@ export function zeroedWageStructureRow(heads: WageHeads): WageStructureRow {
 
   return {
     ...row,
-    workingDays: '0',
+    /* Blank, not 0: the API refuses 0, and an empty Fixed figure means "use the
+       calendar's working days". */
+    workingDays: '',
     basicPay: '0',
     wagePerDay: '0',
     extraDayAmountPerDay: '0',
@@ -160,7 +163,8 @@ function toEffectiveMonth(applicableDate: string): string {
 export function wageRowToPayload(
   row: WageStructureRow,
 ): Omit<WageStructureRowPayload, 'company_id'> {
-  const { basicPay, wagePerDay } = deriveWages(row)
+  const workingDays = resolveWorkingDays(row, row.effectiveFrom)
+  const { basicPay, wagePerDay } = deriveWages(row, workingDays)
   // Fixed days and a weekly off are alternatives, each owned by one calc type.
   const isFixedDays = row.workingDayCalculationType === 'Fixed'
 
@@ -171,6 +175,7 @@ export function wageRowToPayload(
       row.workingDayCalculationType,
     ),
     weekly_off: toApiWeeklyOff(row.weeklyOff),
+    // Fixed + empty is `null` — the API then uses the calendar's working days.
     working_days: isFixedDays ? toOptionalAmount(row.workingDays) : null,
     salary_type: toApiWageSalaryType(row.salaryType),
     basic_pay: basicPay,
@@ -178,7 +183,7 @@ export function wageRowToPayload(
     extra_day_amount_per_day: toOptionalAmount(row.extraDayAmountPerDay),
 
     is_overtime_applicable: row.overtimeApplicable,
-    overtime_rate_per_hour: deriveOvertimeRate(row),
+    overtime_rate_per_hour: deriveOvertimeRate(row, workingDays),
 
     is_pf_act_applicable: row.pfActApplicable,
     is_employee_pf_contribution_on_wage_limit:

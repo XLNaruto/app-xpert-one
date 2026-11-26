@@ -55,3 +55,13 @@ export interface CompanyBilling {
   agencyChargePercentage: number | null
   gstPercentage: number | null
 }
+
+/** The plan's company allowance — `GET /user/companies/limit`, camelCased. */
+export interface CompanyLimit {
+  hasActivePlan: boolean
+  /** Null when the account has no running plan. */
+  maxCompanies: number | null
+  usedCompanies: number
+  remainingCompanies: number
+  canCreate: boolean
+}

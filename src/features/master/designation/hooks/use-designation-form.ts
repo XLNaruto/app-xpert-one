@@ -12,7 +12,10 @@ import {
 } from '../schemas'
 import { EMPTY_DESIGNATION_FORM } from '../constants'
 import { useCreateDesignation } from '../api/use-designation-mutations'
-import { calculateWagePerDay } from '../lib/designation-calculations'
+import {
+  calculateWagePerDay,
+  resolveWorkingDays,
+} from '../lib/designation-calculations'
 import { DEFAULT_COMPONENT_SCHEDULE } from '../lib/component-schedule'
 
 /** One allowance / deduction head as listed on the form. */
@@ -83,6 +86,8 @@ export function useDesignationForm() {
     control,
     name: 'workingDayCalculationType',
   })
+  const workingDays = useWatch({ control, name: 'workingDays' })
+  const weeklyOff = useWatch({ control, name: 'weeklyOff' })
   const pfActApplicable = useWatch({ control, name: 'pfActApplicable' })
   const pfDeductionType = useWatch({ control, name: 'pfDeductionType' })
   const esicActApplicable = useWatch({ control, name: 'esicActApplicable' })
@@ -93,7 +98,14 @@ export function useDesignationForm() {
   const lwfActType = useWatch({ control, name: 'lwfActType' })
   const overtimeApplicable = useWatch({ control, name: 'overtimeApplicable' })
 
-  const wagePerDay = calculateWagePerDay(basicPay ?? '')
+  /* Fixed + a figure divides by it; Fixed left empty (and Automatic) divide by
+     the calendar's working days — the create form has no month, so this one. */
+  const effectiveWorkingDays = resolveWorkingDays({
+    workingDayCalculationType,
+    workingDays,
+    weeklyOff,
+  })
+  const wagePerDay = calculateWagePerDay(basicPay ?? '', effectiveWorkingDays)
 
   /**
    * Switching the calculation type clears the field the other mode owns, so a
@@ -151,6 +163,7 @@ export function useDesignationForm() {
 
     basicPay: basicPay ?? '',
     wagePerDay,
+    effectiveWorkingDays,
     workingDayCalculationType,
     changeWorkingDayCalculationType,
     pfActApplicable,

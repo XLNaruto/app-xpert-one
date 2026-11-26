@@ -1,5 +1,10 @@
-import type { CompanyFormValues, CompanyPayload, CompanyResponse } from '../schemas'
-import type { Company, CompanyBilling } from '../types'
+import type {
+  CompanyFormValues,
+  CompanyLimitResponse,
+  CompanyPayload,
+  CompanyResponse,
+} from '../schemas'
+import type { Company, CompanyBilling, CompanyLimit } from '../types'
 
 /** Trimmed value, or `null` when blank — how the API stores "not recorded". */
 function orNull(value: string): string | null {
@@ -144,4 +149,25 @@ export function companyToFormValues(company: Company): CompanyFormValues {
 /** A stored rate as the form holds it; unset reads blank, never `0`. */
 function rate(value: number | null | undefined): string {
   return value == null ? '' : String(value)
+}
+
+/** `GET /user/companies/limit` → the UI's camelCase shape. */
+export function toCompanyLimit(response: CompanyLimitResponse): CompanyLimit {
+  return {
+    hasActivePlan: response.has_active_plan,
+    maxCompanies: response.max_companies,
+    usedCompanies: response.used_companies,
+    remainingCompanies: response.remaining_companies,
+    canCreate: response.can_create,
+  }
+}
+
+/** Why Add is refused — the toast copy for a `can_create: false` answer. */
+export function companyLimitMessage(limit: CompanyLimit): string {
+  if (!limit.hasActivePlan || limit.maxCompanies === null) {
+    return "You don't have an active plan, so companies can't be added. Purchase a plan to continue."
+  }
+  return `You've used ${limit.usedCompanies} of ${limit.maxCompanies} ${
+    limit.maxCompanies === 1 ? 'company' : 'companies'
+  } on your plan. Upgrade to add more.`
 }

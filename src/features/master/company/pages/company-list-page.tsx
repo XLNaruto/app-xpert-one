@@ -32,6 +32,7 @@ export function CompanyListPage() {
     isForbidden,
     forbiddenMessage,
     goToCreate,
+    companyUsage,
     goToDetail,
     goToEdit,
     pendingDelete,
@@ -145,10 +146,15 @@ export function CompanyListPage() {
         description="Manage Your Company Master Records."
         actions={
           canCreate && (
-            <Button onClick={goToCreate}>
-              <Plus className="size-4" />
-              Add New Company
-            </Button>
+            <div className="flex items-center gap-3">
+              {companyUsage && (
+                <span className="text-sm text-muted-foreground">{companyUsage}</span>
+              )}
+              <Button onClick={goToCreate}>
+                <Plus className="size-4" />
+                Add New Company
+              </Button>
+            </div>
           )
         }
       />

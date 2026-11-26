@@ -105,6 +105,7 @@ export {
   zeroedWageStructureRow,
 } from './lib/wage-structure-mappers'
 export { deriveOvertimeRate, deriveWages } from './lib/wage-structure-calculations'
+export { resolveWorkingDays } from './lib/designation-calculations'
 export { effectiveMonthBounds, formatMonth } from './lib/effective-month'
 export {
   missingWageField,

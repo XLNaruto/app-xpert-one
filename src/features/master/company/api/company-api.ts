@@ -4,10 +4,14 @@ import { toApiError } from '@/lib/api-error'
 import { ALL_ROWS, type PageParams, type Paginated } from '@/lib/pagination'
 import { IMAGE_CONTENT_TYPES, uploadFile } from '@/lib/uploads'
 import { COMPANY_DEFAULT_SORT } from '../constants'
-import { companiesResponseSchema, companyResponseSchema } from '../schemas'
-import { companyToPayload, toCompany } from '../lib/company-mappers'
+import {
+  companiesResponseSchema,
+  companyLimitResponseSchema,
+  companyResponseSchema,
+} from '../schemas'
+import { companyToPayload, toCompany, toCompanyLimit } from '../lib/company-mappers'
 import type { CompanyFormValues, CompanyPayload } from '../schemas'
-import type { Company } from '../types'
+import type { Company, CompanyLimit } from '../types'
 
 /**
  * The company master — `/user/companies`. Every company under the caller's
@@ -170,5 +174,15 @@ export async function deleteCompany(id: number): Promise<void> {
     await http.delete<unknown>(endpoints.COMPANIES.DELETE(id))
   } catch (error) {
     throw toApiError(error, "Couldn't Delete the Company.")
+  }
+}
+
+/** GET /user/companies/limit — the plan's company allowance against usage. */
+export async function fetchCompanyLimit(): Promise<CompanyLimit> {
+  try {
+    const raw = await http.get<unknown>(endpoints.COMPANIES.LIMIT)
+    return toCompanyLimit(companyLimitResponseSchema.parse(raw))
+  } catch (error) {
+    throw toApiError(error, "Couldn't Load Your Company Limit.")
   }
 }

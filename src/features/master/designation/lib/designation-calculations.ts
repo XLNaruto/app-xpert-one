@@ -1,3 +1,4 @@
+import { getDay, getDaysInMonth, isValid, parse } from 'date-fns'
 import { WAGE_DAYS_PER_MONTH } from '../constants'
 import type { DesignationFormValues } from '../schemas'
 
@@ -24,13 +25,88 @@ export function toOptionalAmount(value: string | null | undefined): number | nul
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/** The bounds a fixed working-days figure must sit in — a month has 1–31 days. */
+export const WORKING_DAYS_MIN = 1
+export const WORKING_DAYS_MAX = 31
+
+const WEEKDAYS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const
+
 /**
- * Wage for a single day — the monthly basic spread over the statutory 26 paid
- * days. Derived, never captured: the form shows it read-only.
+ * The calendar's working days for a month: the days in it minus its weekly offs.
+ *
+ * `month` is the applicable `yyyy-MM`; blank or malformed reads as the current
+ * month (the designation create form has no month of its own). The off day is
+ * the weekly off chosen, defaulting to Sunday when none is — a Fixed designation
+ * has no weekly off field. "Rotation" has no fixed day, so it takes one off per
+ * full week.
  */
-export function calculateWagePerDay(basicPay: string | number): number {
+export function calendarWorkingDays(month?: string, weeklyOff?: string): number {
+  const parsed = month ? parse(month, 'yyyy-MM', new Date()) : new Date()
+  const date = isValid(parsed) ? parsed : new Date()
+  const days = getDaysInMonth(date)
+
+  if (weeklyOff === 'Rotation') return days - Math.floor(days / 7)
+
+  const named = WEEKDAYS.indexOf(weeklyOff as (typeof WEEKDAYS)[number])
+  const offDay = named === -1 ? 0 : named
+  const year = date.getFullYear()
+  const monthIndex = date.getMonth()
+  let offs = 0
+  for (let day = 1; day <= days; day += 1) {
+    if (getDay(new Date(year, monthIndex, day)) === offDay) offs += 1
+  }
+  return days - offs || WAGE_DAYS_PER_MONTH
+}
+
+/**
+ * The working days a month's wage is spread over. A Fixed type with a figure
+ * typed uses that figure; a Fixed type left empty — and Automatic — use the
+ * calendar's working days for the applicable month, which is what the API does
+ * with `working_days: null`. Always a positive number, so a per-day figure
+ * divided by it is never `NaN` or `Infinity`.
+ */
+export function resolveWorkingDays(
+  row: {
+    workingDayCalculationType?: string
+    workingDays?: string
+    weeklyOff?: string
+  },
+  month?: string,
+): number {
+  if (row.workingDayCalculationType === 'Fixed') {
+    const fixed = toOptionalAmount(row.workingDays)
+    if (
+      fixed !== null &&
+      Number.isInteger(fixed) &&
+      fixed >= WORKING_DAYS_MIN &&
+      fixed <= WORKING_DAYS_MAX
+    ) {
+      return fixed
+    }
+    return calendarWorkingDays(month)
+  }
+  return calendarWorkingDays(month, row.weeklyOff)
+}
+
+/**
+ * Wage for a single day — the monthly basic spread over the month's working
+ * days (see `resolveWorkingDays`). Derived, never captured: the form shows it
+ * read-only.
+ */
+export function calculateWagePerDay(
+  basicPay: string | number,
+  workingDays: number = WAGE_DAYS_PER_MONTH,
+): number {
   const basic = typeof basicPay === 'number' ? basicPay : toAmount(basicPay)
-  return basic / WAGE_DAYS_PER_MONTH
+  return basic / (workingDays > 0 ? workingDays : WAGE_DAYS_PER_MONTH)
 }
 
 /**
@@ -45,7 +121,12 @@ export function calculateWagePerDay(basicPay: string | number): number {
 export function deriveDesignationOvertimeRate(
   values: Pick<
     DesignationFormValues,
-    'basicPay' | 'overtimeApplicable' | 'overtimeRatePerHour'
+    | 'basicPay'
+    | 'overtimeApplicable'
+    | 'overtimeRatePerHour'
+    | 'workingDayCalculationType'
+    | 'workingDays'
+    | 'weeklyOff'
   >,
 ): number | null {
   if (!values.overtimeApplicable) return null
@@ -55,5 +136,5 @@ export function deriveDesignationOvertimeRate(
 
   const basic = toOptionalAmount(values.basicPay)
   if (basic === null) return null
-  return (calculateWagePerDay(basic) / HOURS_PER_DAY) * 2
+  return (calculateWagePerDay(basic, resolveWorkingDays(values)) / HOURS_PER_DAY) * 2
 }

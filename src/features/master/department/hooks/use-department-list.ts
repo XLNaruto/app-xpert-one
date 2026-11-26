@@ -55,8 +55,15 @@ export function useDepartmentList() {
         toast.success('Department Deleted')
         setPendingDelete(null)
       },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to Delete Department'),
+      /*
+       * A 409 means something still depends on the record (the API names what
+       * and how many) — its message is shown as-is. The dialog closes and the
+       * row stays: nothing is removed until the API answers 204.
+       */
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Department')
+        setPendingDelete(null)
+      },
     })
   }
 

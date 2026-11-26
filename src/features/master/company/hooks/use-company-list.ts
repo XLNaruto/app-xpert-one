@@ -7,6 +7,8 @@ import { encryptId } from '@/lib/crypto'
 import { getApiErrorMessage, isForbiddenError } from '@/lib/api-error'
 import { COMPANY_DEFAULT_SORT } from '../constants'
 import { useCompanies } from '../api/use-companies'
+import { useCompanyLimit } from '../api/use-company-limit'
+import { companyLimitMessage } from '../lib/company-mappers'
 import { useDeleteCompany } from '../api/use-company-mutations'
 import type { Company } from '../types'
 
@@ -29,10 +31,27 @@ export function useCompanyList() {
   } = usePagination(ALL_PAGE_SIZE, COMPANY_DEFAULT_SORT)
   const { data, isLoading, isError, error } = useCompanies(params)
   const deleteCompany = useDeleteCompany()
+  // The plan's company allowance (`GET /user/companies/limit`).
+  const { data: companyLimit } = useCompanyLimit()
 
   const [pendingDelete, setPendingDelete] = useState<Company | null>(null)
 
-  const goToCreate = () => navigate({ to: '/master/company/create' })
+  /*
+   * The plan caps how many companies the account may hold. When the API says
+   * one more can't be created (limit used up, or no active plan), Add stops
+   * here with a toast instead of opening a form the save would reject. Until
+   * the limit has loaded, Add goes through — `POST` runs the same check.
+   */
+  const goToCreate = () => {
+    if (companyLimit && !companyLimit.canCreate) {
+      toast.error(
+        companyLimit.hasActivePlan ? 'Company Limit Reached' : 'No Active Plan',
+        { description: companyLimitMessage(companyLimit) },
+      )
+      return
+    }
+    navigate({ to: '/master/company/create' })
+  }
   // Detail and edit reuse the same screens as create; the raw id travels
   // encrypted in `?data=` so it's never exposed in the address bar.
   const goToDetail = (id: number) =>
@@ -47,8 +66,15 @@ export function useCompanyList() {
         toast.success('Company Deleted')
         setPendingDelete(null)
       },
-      onError: (err) =>
-        toast.error(err instanceof Error ? err.message : 'Failed to Delete Company'),
+      /*
+       * A 409 means something still depends on the record (the API names what
+       * and how many) — its message is shown as-is. The dialog closes and the
+       * row stays: nothing is removed until the API answers 204.
+       */
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : 'Failed to Delete Company')
+        setPendingDelete(null)
+      },
     })
   }
 
@@ -75,6 +101,11 @@ export function useCompanyList() {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
     goToCreate,
+    /** "4 / 5 companies" beside Add — null until loaded or with no plan. */
+    companyUsage:
+      companyLimit?.maxCompanies != null
+        ? `${companyLimit.usedCompanies} / ${companyLimit.maxCompanies} companies`
+        : null,
     goToDetail,
     goToEdit,
     pendingDelete,

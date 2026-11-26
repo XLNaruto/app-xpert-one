@@ -25,7 +25,6 @@ import {
   SALARY_TYPE_OPTIONS,
   TDS_CALCULATION_BASE_HINT,
   TDS_CALCULATION_BASE_OPTIONS,
-  WAGE_DAYS_PER_MONTH,
   WEEKLY_OFF_OPTIONS,
   WORKING_DAY_CALCULATION_OPTIONS,
 } from '../constants'
@@ -42,6 +41,7 @@ type DesignationSalarySectionProps = Pick<
   | 'control'
   | 'errors'
   | 'wagePerDay'
+  | 'effectiveWorkingDays'
   | 'workingDayCalculationType'
   | 'changeWorkingDayCalculationType'
   | 'pfActApplicable'
@@ -66,6 +66,7 @@ export function DesignationSalarySection({
   control,
   errors,
   wagePerDay,
+  effectiveWorkingDays,
   workingDayCalculationType,
   changeWorkingDayCalculationType,
   pfActApplicable,
@@ -153,7 +154,11 @@ export function DesignationSalarySection({
         calculation type — with the type cleared, neither is asked for.
       */}
       {workingDayCalculationType === 'Fixed' && (
-        <Field label="Working Days" error={errors.workingDays?.message}>
+        <Field
+          label="Working Days"
+          hint="Leave empty to use calendar working days"
+          error={errors.workingDays?.message}
+        >
           <Input inputMode="numeric" placeholder="Working Days" {...register('workingDays')} />
         </Field>
       )}
@@ -178,7 +183,7 @@ export function DesignationSalarySection({
       )}
       <Field
         label="Calculated Wage Per Day"
-        hint={`Derived, not captured: basic pay ÷ ${WAGE_DAYS_PER_MONTH} days.`}
+        hint={`Derived, not captured: basic pay ÷ ${effectiveWorkingDays} working days.`}
       >
         <Input
           readOnly
@@ -538,7 +543,7 @@ export function DesignationSalarySection({
             title="Overtime Settings"
             tone="border-sky-500/20 bg-sky-500/5"
             iconTone="text-sky-600 dark:text-sky-400"
-            footnote={`Left blank, the rate is derived from the wage per day: basic pay ÷ ${WAGE_DAYS_PER_MONTH} ÷ 8 hours, paid at double.`}
+            footnote={`Left blank, the rate is derived from the wage per day: basic pay ÷ ${effectiveWorkingDays} working days ÷ 8 hours, paid at double.`}
           >
             <Field
               label={amountLabel('OT Rate Per Hour')}

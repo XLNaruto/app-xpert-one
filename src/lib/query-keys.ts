@@ -234,6 +234,11 @@ export const queryKeys = {
         ? ([...queryKeys.company.all, 'list', params] as const)
         : ([...queryKeys.company.all, 'list'] as const),
     detail: (id: number) => [...queryKeys.company.all, 'detail', id] as const,
+    /**
+     * `GET /user/companies/limit` — under `company.all`, so every create and
+     * delete refreshes it along with the list.
+     */
+    limit: () => [...queryKeys.company.all, 'limit'] as const,
     /** Paged, server-searched — backs the scroll-lazy dropdown (`use-*-select`). */
     infinite: (search?: string) =>
       [...queryKeys.company.all, 'infinite', search ?? ''] as const,

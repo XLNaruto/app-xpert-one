@@ -26,6 +26,7 @@ import {
   ComponentScheduleCell,
   deriveOvertimeRate,
   deriveWages,
+  resolveWorkingDays,
   formatMonth,
   TDS_CALCULATION_BASE_HINT,
   TDS_CALCULATION_BASE_OPTIONS,
@@ -871,6 +872,24 @@ function ActSwitch({
   )
 }
 
+/**
+ * The working days a row's wage is spread over — its fixed figure, or the
+ * calendar's working days for the screen's effective month when the figure is left empty
+ * or the days are calculated. Watched narrowly so only the derived cells re-render.
+ */
+function useRowWorkingDays(control: Ctl, index: number): number {
+  const [workingDayCalculationType, workingDays, weeklyOff, month] = useWatch({
+    control,
+    name: [
+      `rows.${index}.workingDayCalculationType`,
+      `rows.${index}.workingDays`,
+      `rows.${index}.weeklyOff`,
+      'effectiveFrom',
+    ],
+  })
+  return resolveWorkingDays({ workingDayCalculationType, workingDays, weeklyOff }, month)
+}
+
 function WorkingDaysCell({ index, control, register }: CellProps) {
   const calcType = useWatch({ control, name: `rows.${index}.workingDayCalculationType` })
   return (
@@ -891,11 +910,12 @@ function BasicPayCell({ index, control, register }: CellProps) {
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const wagePerDay = useWatch({ control, name: `rows.${index}.wagePerDay` })
   const invalid = useFieldInvalid(control, index, 'basicPay')
+  const workingDays = useRowWorkingDays(control, index)
 
   if (salaryType === 'Daily') {
     return (
       <DerivedAmount
-        value={deriveWages({ salaryType, basicPay: '', wagePerDay }).basicPay}
+        value={deriveWages({ salaryType, basicPay: '', wagePerDay }, workingDays).basicPay}
       />
     )
   }
@@ -916,11 +936,12 @@ function WagePerDayCell({ index, control, register }: CellProps) {
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const basicPay = useWatch({ control, name: `rows.${index}.basicPay` })
   const invalid = useFieldInvalid(control, index, 'wagePerDay')
+  const workingDays = useRowWorkingDays(control, index)
 
   if (salaryType === 'Monthly') {
     return (
       <DerivedAmount
-        value={deriveWages({ salaryType, basicPay, wagePerDay: '' }).wagePerDay}
+        value={deriveWages({ salaryType, basicPay, wagePerDay: '' }, workingDays).wagePerDay}
       />
     )
   }
@@ -964,15 +985,19 @@ function OtRateCell({ index, control, register }: CellProps) {
   const salaryType = useWatch({ control, name: `rows.${index}.salaryType` })
   const basicPay = useWatch({ control, name: `rows.${index}.basicPay` })
   const wagePerDay = useWatch({ control, name: `rows.${index}.wagePerDay` })
+  const workingDays = useRowWorkingDays(control, index)
 
   const derived = applicable
-    ? deriveOvertimeRate({
-        salaryType,
-        basicPay,
-        wagePerDay,
-        overtimeApplicable: applicable,
-        overtimeRatePerHour: '',
-      })
+    ? deriveOvertimeRate(
+        {
+          salaryType,
+          basicPay,
+          wagePerDay,
+          overtimeApplicable: applicable,
+          overtimeRatePerHour: '',
+        },
+        workingDays,
+      )
     : null
 
   return (

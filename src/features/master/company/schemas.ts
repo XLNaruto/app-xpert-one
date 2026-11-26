@@ -151,6 +151,21 @@ export const companyResponseSchema = z.object({
 
 export type CompanyResponse = z.infer<typeof companyResponseSchema>
 
+/**
+ * `GET /user/companies/limit` — the plan's company allowance. `max_companies`
+ * is null when no plan is running; `can_create` is the same check
+ * `POST /user/companies` runs, so the two never disagree.
+ */
+export const companyLimitResponseSchema = z.object({
+  has_active_plan: z.boolean(),
+  max_companies: z.number().nullable(),
+  used_companies: z.number(),
+  remaining_companies: z.number(),
+  can_create: z.boolean(),
+})
+
+export type CompanyLimitResponse = z.infer<typeof companyLimitResponseSchema>
+
 /** `GET /user/companies` — an offset-paginated page of companies. */
 export const companiesResponseSchema = z.object({
   items: z.array(companyResponseSchema),

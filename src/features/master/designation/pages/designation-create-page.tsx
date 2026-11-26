@@ -129,6 +129,7 @@ function CreateView() {
               control={form.control}
               errors={form.errors}
               wagePerDay={form.wagePerDay}
+              effectiveWorkingDays={form.effectiveWorkingDays}
               workingDayCalculationType={form.workingDayCalculationType}
               changeWorkingDayCalculationType={form.changeWorkingDayCalculationType}
               pfActApplicable={form.pfActApplicable}

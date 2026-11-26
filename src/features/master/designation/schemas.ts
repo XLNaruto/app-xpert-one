@@ -28,6 +28,20 @@ const optionalMatch = (re: RegExp, message: string) =>
     .refine((v) => v === '' || re.test(v), message)
 
 /**
+ * Working days for a Fixed calculation. Optional on a designation — blank means
+ * "use the calendar's working days for the month" and is sent as `null` — but a
+ * figure that is typed must be a whole number of days a month can have. The API
+ * refuses 0 outright.
+ */
+const optionalWorkingDays = z
+  .string()
+  .trim()
+  .refine(
+    (v) => v === '' || (DIGITS_RE.test(v) && Number(v) >= 1 && Number(v) <= 31),
+    'Enter Working Days Between 1 and 31',
+  )
+
+/**
  * A rate rather than a sum: the same two decimals as an amount, capped at 100.
  * Blank is allowed — the act can be on with its rate still to be decided.
  */
@@ -188,7 +202,7 @@ export const designationSchema = z
       .min(1, 'Basic Pay Is Required')
       .refine((v) => AMOUNT_RE.test(v), 'Enter a valid amount'),
     workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
-    workingDays: optionalMatch(DIGITS_RE, 'Enter a Whole Number'),
+    workingDays: optionalWorkingDays,
     weeklyOff: text,
     extraDayAmountPerDay: optionalMatch(AMOUNT_RE, 'Enter a Valid Amount'),
 
@@ -327,7 +341,7 @@ export const wageStructureRowBaseSchema = z.object({
 
   workingDayCalculationType: z.enum(['', 'Fixed', 'As Per Calculation']),
   weeklyOff: text,
-  workingDays: optionalMatch(DIGITS_RE, 'Enter a Whole Number'),
+  workingDays: optionalWorkingDays,
   salaryType: z.enum(['Daily', 'Monthly']),
   /*
    * One of these two is captured and the other derived, per the salary type —
