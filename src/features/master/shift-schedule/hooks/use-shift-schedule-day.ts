@@ -104,8 +104,8 @@ export function useShiftScheduleDay() {
     /** The shift dropdown — "Normal shift" first, then the company's shifts. */
     shiftSelect: { ...shifts, options: shiftOptions },
     save,
-    /** Only a date whose off / working is actually decided can be reset. */
-    canReset: target?.day?.isWeekOff != null,
+    /** Only a date with a decision or a shift override has anything to reset. */
+    canReset: target?.day?.isWeekOff != null || target?.day?.shiftId != null,
     reset,
     isSaving: setDay.isPending,
     isResetting: resetDay.isPending,

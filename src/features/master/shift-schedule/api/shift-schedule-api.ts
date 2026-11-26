@@ -139,7 +139,8 @@ export async function setScheduleDay({
 
 /**
  * DELETE /user/shift-schedules/employees/:id/days/:date — hand the date back to
- * the week-off policy. A shift override on the date survives.
+ * the week-off policy entirely: the off / working decision and any shift
+ * override are both cleared.
  */
 export async function resetScheduleDay(employeeId: number, date: string): Promise<void> {
   try {

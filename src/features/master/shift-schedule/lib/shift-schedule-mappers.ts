@@ -149,12 +149,8 @@ export function withScheduleDay(
   }
 }
 
-/**
- * The grid after DELETE handed one date back to the policy. A shift override on
- * the same date survives the delete, so that entry stays with its off / working
- * decision cleared; an entry with no override goes altogether.
- */
-export function withoutScheduleDecision(
+/** The grid with one employee's date removed — DELETE clears the whole entry. */
+export function withoutScheduleDay(
   grid: ScheduleGrid,
   employeeId: number,
   date: string,
@@ -164,13 +160,7 @@ export function withoutScheduleDecision(
     items: grid.items.map((row) =>
       row.employeeId !== employeeId
         ? row
-        : {
-            ...row,
-            days: row.days.flatMap((d) => {
-              if (d.workDate !== date) return [d]
-              return d.shiftId !== null ? [{ ...d, isWeekOff: null }] : []
-            }),
-          },
+        : { ...row, days: row.days.filter((d) => d.workDate !== date) },
     ),
   }
 }

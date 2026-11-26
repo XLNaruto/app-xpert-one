@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-keys'
 import {
-  withoutScheduleDecision,
+  withoutScheduleDay,
   withScheduleDay,
 } from '../lib/shift-schedule-mappers'
 import {
@@ -58,7 +58,7 @@ export function useSetScheduleDay() {
   })
 }
 
-/** DELETE …/employees/:id/days/:date — clear the cell's decision locally. */
+/** DELETE …/employees/:id/days/:date — drop the cell's entry locally. */
 export function useResetScheduleDay() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -66,7 +66,7 @@ export function useResetScheduleDay() {
       resetScheduleDay(employeeId, date),
     onSuccess: (_, { employeeId, date }) => {
       queryClient.setQueriesData<ScheduleGrid>(GRID_PAGES, (grid) =>
-        grid ? withoutScheduleDecision(grid, employeeId, date) : grid,
+        grid ? withoutScheduleDay(grid, employeeId, date) : grid,
       )
       queryClient.invalidateQueries({
         queryKey: [...queryKeys.shiftSchedule.all, 'employee', employeeId],

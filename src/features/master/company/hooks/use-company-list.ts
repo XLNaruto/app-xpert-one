@@ -101,11 +101,6 @@ export function useCompanyList() {
     isForbidden,
     forbiddenMessage: isForbidden ? getApiErrorMessage(error) : undefined,
     goToCreate,
-    /** "4 / 5 companies" beside Add — null until loaded or with no plan. */
-    companyUsage:
-      companyLimit?.maxCompanies != null
-        ? `${companyLimit.usedCompanies} / ${companyLimit.maxCompanies} companies`
-        : null,
     goToDetail,
     goToEdit,
     pendingDelete,
