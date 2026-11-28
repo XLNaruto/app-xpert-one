@@ -757,6 +757,8 @@ export function useSalaryForm() {
     draftMonth,
     changeMonth,
     monthBounds,
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: currentMonth(),
     designationId,
     draftDesignationId,
     changeDesignation,

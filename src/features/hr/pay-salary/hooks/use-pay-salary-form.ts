@@ -121,6 +121,8 @@ export function usePaySalaryForm({
 
   return {
     form,
+    /** The date's opening value, and what its × resets to. */
+    today: format(new Date(), 'yyyy-MM-dd'),
     submit,
     cancel,
     isPaying: pay.isPending,

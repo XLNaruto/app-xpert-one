@@ -21,6 +21,8 @@ interface BonusEstimationToolbarProps {
   from: string
   to: string
   onFromChange: (value: string) => void
+  /** The current month (`yyyy-MM`) — the month picker's × resets to it. */
+  thisMonth: string
   onToChange: (value: string) => void
   monthBounds: { minDate: Date; maxDate: Date }
   /**
@@ -71,6 +73,7 @@ export function BonusEstimationToolbar({
   from,
   to,
   onFromChange,
+  thisMonth,
   onToChange,
   monthBounds,
   toMinDate,
@@ -151,6 +154,7 @@ export function BonusEstimationToolbar({
             <MonthPicker
               value={from}
               onChange={onFromChange}
+              resetTo={thisMonth}
               minDate={monthBounds.minDate}
               maxDate={monthBounds.maxDate}
             />
@@ -162,6 +166,7 @@ export function BonusEstimationToolbar({
             <MonthPicker
               value={to}
               onChange={onToChange}
+              resetTo={thisMonth}
               minDate={toMinDate}
               maxDate={monthBounds.maxDate}
             />

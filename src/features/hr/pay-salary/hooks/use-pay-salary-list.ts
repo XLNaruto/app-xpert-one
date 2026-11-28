@@ -286,6 +286,8 @@ export function usePaySalaryList() {
     changePeriod,
     changeDepartment,
     monthBounds,
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: toIsoMonth(today.getMonth() + 1, today.getFullYear()),
     /** The Department field — paged and server-searched, spread onto the toolbar. */
     departments,
     departmentName:

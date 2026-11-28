@@ -348,6 +348,7 @@ export function BonusEstimationPage() {
         onFromChange={scope.changeFrom}
         onToChange={scope.changeTo}
         monthBounds={scope.monthBounds}
+        thisMonth={scope.thisMonth}
         toMinDate={scope.toMinDate}
         departmentId={scope.draft.departmentId}
         departments={scope.departments}

@@ -255,6 +255,8 @@ export function useEmployeeShiftTab(employeeId: number) {
     /** The resolved answer for `lookupDate`, and the date itself. */
     lookupDate,
     setLookupDate,
+    /** The day the lookup opens on, and what its × resets to. */
+    today: todayIso(),
     resolved: shiftOnDay.data,
     isResolving: shiftOnDay.isLoading,
     resolveError: shiftOnDay.error,
@@ -269,6 +271,8 @@ export function useEmployeeShiftTab(employeeId: number) {
     window,
     /** The window's month as `yyyy-MM` — what the month picker binds to. */
     month: window.from.slice(0, 7),
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: todayIso().slice(0, 7),
     goToPreviousMonth,
     goToNextMonth,
     goToThisMonth,

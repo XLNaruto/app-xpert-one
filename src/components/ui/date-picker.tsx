@@ -33,6 +33,12 @@ interface DatePickerProps {
   disabled?: boolean
   /** Show the × button (default true). Off for a field that must always hold a date. */
   clearable?: boolean
+  /**
+   * The day the field falls back to (`yyyy-MM-dd`) — typically today for a
+   * field that opens on today. The × then sets this day instead of `''`, and
+   * stays hidden while it's already selected, where clearing would do nothing.
+   */
+  resetTo?: string
   /** Width utility for the control (defaults to full width). */
   className?: string
 }
@@ -76,6 +82,7 @@ export function DatePicker({
   maxDate,
   disabled = false,
   clearable = true,
+  resetTo,
   className,
 }: DatePickerProps) {
   const parsed = value ? parseISO(value) : null
@@ -184,7 +191,7 @@ export function DatePicker({
         calendarIcon={<CalendarDays className="size-4 text-muted-foreground" />}
       />
 
-      {clearable && value && !disabled && (
+      {clearable && value && value !== resetTo && !disabled && (
         <button
           type="button"
           aria-label="Clear date"
@@ -193,7 +200,7 @@ export function DatePicker({
             event.preventDefault()
             event.stopPropagation()
             setOpen(false)
-            onChange('')
+            onChange(resetTo ?? '')
           }}
         >
           <X className="size-4" />

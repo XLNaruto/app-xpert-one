@@ -23,6 +23,8 @@ interface SalaryToolbarProps {
   month: string
   monthBounds: { minDate: Date; maxDate: Date }
   onMonthChange: (value: string) => void
+  /** The current month (`yyyy-MM`) — the month picker's × resets to it. */
+  thisMonth: string
   /** Run the register for what the two pickers hold. */
   onCalculate: () => void
   /** The pickers hold something the register on screen wasn't read for. */
@@ -67,6 +69,7 @@ export function SalaryToolbar({
   month,
   monthBounds,
   onMonthChange,
+  thisMonth,
   onCalculate,
   hasPendingFilters,
   isCalculating,
@@ -97,6 +100,7 @@ export function SalaryToolbar({
           <MonthPicker
             value={month}
             onChange={onMonthChange}
+            resetTo={thisMonth}
             minDate={monthBounds.minDate}
             maxDate={monthBounds.maxDate}
           />

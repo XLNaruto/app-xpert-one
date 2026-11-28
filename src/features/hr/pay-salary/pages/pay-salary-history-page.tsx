@@ -60,6 +60,7 @@ export function PaySalaryHistoryPage({ data }: { data?: string }) {
             <MonthPicker
               value={view.monthValue}
               onChange={view.changePeriod}
+              resetTo={view.thisMonth}
               minDate={view.monthBounds.minDate}
               maxDate={view.monthBounds.maxDate}
             />

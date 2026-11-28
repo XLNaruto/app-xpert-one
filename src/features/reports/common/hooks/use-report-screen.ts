@@ -219,5 +219,7 @@ export function useReportScreen<TType extends string>(
     employees,
     yearChoices,
     monthBounds,
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: toIsoMonth(today.getMonth() + 1, today.getFullYear()),
   }
 }

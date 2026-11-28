@@ -271,7 +271,7 @@ export function ShiftRosterTab({
           </div>
           <div className="w-44">
             <Field label="Date">
-              <DatePicker value={tab.lookupDate} onChange={tab.setLookupDate} />
+              <DatePicker value={tab.lookupDate} onChange={tab.setLookupDate} resetTo={tab.today} />
             </Field>
           </div>
         </div>
@@ -419,6 +419,7 @@ export function ShiftRosterTab({
               className="w-[130px]"
               value={tab.month}
               onChange={tab.goToMonth}
+              resetTo={tab.thisMonth}
             />
             <Tooltip>
               <TooltipTrigger asChild>

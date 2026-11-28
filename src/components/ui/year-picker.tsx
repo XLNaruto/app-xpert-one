@@ -35,6 +35,14 @@ interface YearPickerProps {
   invalid?: boolean
   /** Compact height, for a dense grid cell. */
   size?: 'default' | 'sm'
+  /** Show the × button (default true). Off for a field that must always hold a year. */
+  clearable?: boolean
+  /**
+   * The year the field falls back to (`yyyy`) — typically the current one for a
+   * field that opens on it. The × then sets this year instead of `''`, and stays
+   * hidden while it's already selected, where clearing would do nothing.
+   */
+  resetTo?: string
   /** Width utility for the control (defaults to full width). */
   className?: string
 }
@@ -70,6 +78,8 @@ export function YearPicker({
   disabled = false,
   invalid = false,
   size = 'default',
+  clearable = true,
+  resetTo,
   className,
 }: YearPickerProps) {
   const parsed = value ? parse(value, ISO_YEAR, new Date()) : null
@@ -124,7 +134,7 @@ export function YearPicker({
         )}
         value={selected}
         onChange={(next) =>
-          onChange(next instanceof Date && isValid(next) ? format(next, ISO_YEAR) : '')
+          onChange(next instanceof Date && isValid(next) ? format(next, ISO_YEAR) : (resetTo ?? ''))
         }
         isOpen={open}
         onCalendarOpen={() => setOpen(true)}
@@ -141,7 +151,9 @@ export function YearPicker({
         clearAriaLabel="Clear year"
         calendarIcon={<CalendarDays className={size === 'sm' ? 'size-3.5' : 'size-4'} />}
         clearIcon={
-          value ? <X className={size === 'sm' ? 'size-3.5' : 'size-4'} /> : null
+          clearable && value && value !== resetTo ? (
+            <X className={size === 'sm' ? 'size-3.5' : 'size-4'} />
+          ) : null
         }
       />
 

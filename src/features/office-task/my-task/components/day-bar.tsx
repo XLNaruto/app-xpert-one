@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
-import { dayLabel } from '@/features/office-task/common'
+import { dayLabel, todayIso } from '@/features/office-task/common'
 
 /** Prev / date / next, the day's name, and a jump back to today. */
 export function DayBar({
@@ -26,7 +26,7 @@ export function DayBar({
       <Button variant="outline" size="icon" aria-label="Previous day" onClick={onPrev}>
         <ChevronLeft className="size-4" />
       </Button>
-      <DatePicker value={date} onChange={onChange} className="w-40" />
+      <DatePicker value={date} onChange={onChange} resetTo={todayIso()} className="w-40" />
       <Button variant="outline" size="icon" aria-label="Next day" onClick={onNext}>
         <ChevronRight className="size-4" />
       </Button>

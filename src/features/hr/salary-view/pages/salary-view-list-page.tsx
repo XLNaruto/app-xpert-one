@@ -244,6 +244,7 @@ export function SalaryViewListPage() {
       onSearchChange={view.setSearch}
       month={view.monthValue}
       monthBounds={view.monthBounds}
+      thisMonth={view.thisMonth}
       onMonthChange={view.changePeriod}
       departmentId={view.departmentId}
       departments={view.departments}

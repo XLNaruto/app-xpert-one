@@ -59,7 +59,7 @@ export function PaySalaryDialog({
   rows,
   onPaid,
 }: PaySalaryDialogProps) {
-  const { form, submit, cancel, isPaying, total } = usePaySalaryForm({
+  const { form, today, submit, cancel, isPaying, total } = usePaySalaryForm({
     open,
     companyId,
     month,
@@ -155,6 +155,7 @@ export function PaySalaryDialog({
                       value={field.value}
                       onChange={field.onChange}
                       maxDate={new Date()}
+                      resetTo={today}
                       disabled={isPaying}
                     />
                   </Field>

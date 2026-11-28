@@ -231,6 +231,7 @@ export function PaySalaryPage() {
       <PaySalaryToolbar
         month={view.monthValue}
         monthBounds={view.monthBounds}
+        thisMonth={view.thisMonth}
         onMonthChange={view.changePeriod}
         departmentId={view.departmentId}
         departments={view.departments}

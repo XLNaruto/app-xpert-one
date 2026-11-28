@@ -46,7 +46,8 @@ export function EmployeeLeaveQuotaTab({
    * The grant is per calendar year, so the year is the screen's first control.
    * It opens on the current one — the year a desk is almost always working in.
    */
-  const [year, setYear] = useState(() => String(new Date().getFullYear()))
+  const thisYear = String(new Date().getFullYear())
+  const [year, setYear] = useState(thisYear)
   const numericYear = Number(year) || new Date().getFullYear()
 
   const quotas = useEmployeeLeaveQuotas(employeeId, numericYear)
@@ -90,7 +91,7 @@ export function EmployeeLeaveQuotaTab({
           label="Year"
           hint="Allowances Are Granted per Calendar Year. Saving Here Touches This Year Only."
         >
-          <YearPicker value={year} onChange={(next) => setYear(next || year)} />
+          <YearPicker value={year} onChange={(next) => setYear(next || year)} resetTo={thisYear} />
         </Field>
       </div>
 

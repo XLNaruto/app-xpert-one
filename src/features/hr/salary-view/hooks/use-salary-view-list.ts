@@ -261,6 +261,8 @@ export function useSalaryViewList() {
     monthValue,
     changePeriod,
     monthBounds,
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: toIsoMonth(today.getMonth() + 1, today.getFullYear()),
     departmentId,
     changeDepartment,
     /** The Department field — paged and server-searched, spread onto the toolbar. */

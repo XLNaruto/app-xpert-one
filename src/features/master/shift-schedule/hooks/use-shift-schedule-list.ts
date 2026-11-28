@@ -140,6 +140,8 @@ export function useShiftScheduleList() {
     filters,
     /** The month the window starts in, for the month picker. */
     month: filters.from.slice(0, 7),
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth: format(new Date(), 'yyyy-MM'),
     setMonth,
     setFrom,
     setTo,

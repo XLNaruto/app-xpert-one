@@ -163,6 +163,7 @@ export function SalaryPage() {
         onDesignationChange={form.changeDesignation}
         month={form.draftMonth}
         monthBounds={form.monthBounds}
+        thisMonth={form.thisMonth}
         onMonthChange={form.changeMonth}
         onCalculate={form.calculate}
         hasPendingFilters={form.hasPendingFilters}

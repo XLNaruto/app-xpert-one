@@ -13,6 +13,8 @@ interface SalaryViewToolbarProps {
   month: string
   monthBounds: { minDate: Date; maxDate: Date }
   onMonthChange: (value: string) => void
+  /** The current month (`yyyy-MM`) — the month picker's × resets to it. */
+  thisMonth: string
   departmentId: number | null
   /** The lazy department dropdown — `useDepartmentSelect`, spread onto the field. */
   departments: PagedSelect
@@ -45,6 +47,7 @@ export function SalaryViewToolbar({
   month,
   monthBounds,
   onMonthChange,
+  thisMonth,
   departmentId,
   departments,
   onDepartmentChange,
@@ -72,6 +75,7 @@ export function SalaryViewToolbar({
         <MonthPicker
           value={month}
           onChange={onMonthChange}
+          resetTo={thisMonth}
           minDate={monthBounds.minDate}
           maxDate={monthBounds.maxDate}
         />

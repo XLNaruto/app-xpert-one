@@ -127,6 +127,7 @@ export function ShiftScheduleListPage() {
             filters={list.filters}
             month={list.month}
             onMonthChange={list.setMonth}
+            thisMonth={list.thisMonth}
             onFromChange={list.setFrom}
             onToChange={list.setTo}
             minTo={list.minTo}

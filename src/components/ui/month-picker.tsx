@@ -62,6 +62,14 @@ interface MonthPickerProps {
    * the panel is made the only way to set the value.
    */
   display?: 'numeric' | 'long'
+  /** Show the × button (default true). Off for a field that must always hold a month. */
+  clearable?: boolean
+  /**
+   * The month the field falls back to (`yyyy-MM`) — typically the current one
+   * for a field that opens on it. The × then sets this month instead of `''`,
+   * and stays hidden while it's already selected, where clearing would do nothing.
+   */
+  resetTo?: string
   /** Width utility for the control (defaults to full width). */
   className?: string
 }
@@ -93,6 +101,8 @@ export function MonthPicker({
   invalid = false,
   size = 'default',
   display = 'numeric',
+  clearable = true,
+  resetTo,
   className,
 }: MonthPickerProps) {
   const parsed = value ? parse(value, ISO_MONTH, new Date()) : null
@@ -191,15 +201,16 @@ export function MonthPicker({
         calendarIcon={<CalendarDays className={size === 'sm' ? 'size-3.5' : 'size-4'} />}
       />
 
-      {value && display !== 'long' && !disabled && (
+      {clearable && value && value !== resetTo && display !== 'long' && !disabled && (
         <button
           type="button"
-          aria-label="Close month picker"
+          aria-label="Clear month"
           className="absolute right-9 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
             setOpen(false)
+            onChange(resetTo ?? '')
           }}
         >
           <X className={size === 'sm' ? 'size-3.5' : 'size-4'} />

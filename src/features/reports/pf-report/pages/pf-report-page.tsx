@@ -75,6 +75,7 @@ export function PfReportPage() {
         to={view.to}
         onToChange={view.setTo}
         monthBounds={view.monthBounds}
+        thisMonth={view.thisMonth}
         isRangeInvalid={view.isRangeInvalid}
         departmentId={view.departmentId}
         onDepartmentChange={view.setDepartmentId}

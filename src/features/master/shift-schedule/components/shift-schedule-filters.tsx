@@ -12,6 +12,8 @@ interface ShiftScheduleFiltersProps {
   filters: ScheduleFilters
   month: string
   onMonthChange: (value: string) => void
+  /** The current month (`yyyy-MM`) — the month picker's × resets to it. */
+  thisMonth: string
   onFromChange: (value: string) => void
   onToChange: (value: string) => void
   minTo: Date
@@ -33,6 +35,7 @@ export function ShiftScheduleFilters({
   filters,
   month,
   onMonthChange,
+  thisMonth,
   onFromChange,
   onToChange,
   minTo,
@@ -76,17 +79,18 @@ export function ShiftScheduleFilters({
           </Field>
 
           <Field label="Month" required>
-            <MonthPicker value={month} onChange={onMonthChange} />
+            <MonthPicker value={month} onChange={onMonthChange} resetTo={thisMonth} />
           </Field>
 
           <Field label="From" required>
-            <DatePicker value={filters.from} onChange={onFromChange} />
+            <DatePicker value={filters.from} onChange={onFromChange} clearable={false} />
           </Field>
 
           <Field label="To" required hint={`At most ${SCHEDULE_MAX_DAYS} days from “From”.`}>
             <DatePicker
               value={filters.to}
               onChange={onToChange}
+              clearable={false}
               minDate={minTo}
               maxDate={maxTo}
             />

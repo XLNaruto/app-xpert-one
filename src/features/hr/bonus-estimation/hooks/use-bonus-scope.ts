@@ -168,6 +168,8 @@ export function useBonusScope() {
     changeTo,
     changeDepartment,
     monthBounds,
+    /** The current month (`yyyy-MM`) — what the month picker's × resets to. */
+    thisMonth,
     /** The To picker's floor — the From month, so an inverted range can't be picked. */
     toMinDate,
     /** The Department field — paged and server-searched, spread onto the toolbar. */

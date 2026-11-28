@@ -25,6 +25,8 @@ interface ReportFilterCardProps<TType extends string> {
   /** The draft range — used when the selected type reads `from`…`to`. */
   from: string
   onFromChange: (value: string) => void
+  /** The current month (`yyyy-MM`) — the month picker's × resets to it. */
+  thisMonth: string
   to: string
   onToChange: (value: string) => void
   monthBounds: { minDate: Date; maxDate: Date }
@@ -71,6 +73,7 @@ export function ReportFilterCard<TType extends string>({
   yearOptions,
   from,
   onFromChange,
+  thisMonth,
   to,
   onToChange,
   monthBounds,
@@ -148,6 +151,7 @@ export function ReportFilterCard<TType extends string>({
                 <MonthPicker
                   value={from}
                   onChange={onFromChange}
+                  resetTo={thisMonth}
                   minDate={monthBounds.minDate}
                   maxDate={monthBounds.maxDate}
                   invalid={isRangeInvalid}
@@ -161,6 +165,7 @@ export function ReportFilterCard<TType extends string>({
                 <MonthPicker
                   value={to}
                   onChange={onToChange}
+                  resetTo={thisMonth}
                   minDate={monthBounds.minDate}
                   maxDate={monthBounds.maxDate}
                   invalid={isRangeInvalid}
