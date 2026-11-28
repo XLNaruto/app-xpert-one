@@ -54,6 +54,7 @@ export function AttendanceListPage() {
             value={attendance.pickerDate}
             onChange={attendance.changeDate}
             maxDate={attendance.maxDate}
+            clearable={attendance.canClearDate}
             className="w-44"
           />
         }

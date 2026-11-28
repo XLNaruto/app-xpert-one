@@ -187,12 +187,13 @@ export function DatePicker({
       {clearable && value && !disabled && (
         <button
           type="button"
-          aria-label="Close date picker"
+          aria-label="Clear date"
           className="absolute right-9 top-1/2 z-10 inline-flex -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
             setOpen(false)
+            onChange('')
           }}
         >
           <X className="size-4" />

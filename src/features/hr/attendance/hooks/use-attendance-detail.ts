@@ -166,6 +166,10 @@ export function useAttendanceDetail(token?: string) {
     pickerDate: pickedDate || detail.data?.date || date || browserToday,
     /** No future day has anything to report — capped at the server's own today. */
     maxDate: parseISO(detail.data?.today || groupList.data?.today || browserToday),
+    /** The field's × only off today — clearing falls back to today. */
+    canClearDate:
+      (pickedDate || detail.data?.date || date || browserToday) !==
+      (detail.data?.today || groupList.data?.today || browserToday),
 
     employees: detail.data?.items ?? [],
     /** Rows on the *filtered* side, across every page. */

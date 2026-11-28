@@ -87,6 +87,7 @@ export function AttendanceDetailPage({ data }: { data?: string }) {
           value={detail.pickerDate}
           onChange={detail.changeDate}
           maxDate={detail.maxDate}
+          clearable={detail.canClearDate}
           className="w-44"
         />
 

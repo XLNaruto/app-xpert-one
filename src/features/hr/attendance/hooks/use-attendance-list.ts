@@ -97,6 +97,12 @@ export function useAttendanceList() {
      * while the first response is still in flight.
      */
     maxDate: parseISO(list.data?.today || browserToday),
+    /**
+     * Show the field's × only once a day other than today is on it — clearing
+     * falls back to today, so on today itself the button would do nothing.
+     */
+    canClearDate:
+      (date || list.data?.date || browserToday) !== (list.data?.today || browserToday),
 
     isLoading: list.isLoading,
     isFetching: list.isFetching,
